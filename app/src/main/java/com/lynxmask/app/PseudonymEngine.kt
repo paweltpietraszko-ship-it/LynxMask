@@ -1,0 +1,315 @@
+package com.lynxmask.app
+
+/**
+ * PseudonymEngine.kt — Silnik pseudonimizacji LynxMask v2.2
+ *
+ * Zmiany v2.1 (sesja 7):
+ *   - GUARD: weryfikacja LookupTables.initialized przed uruchomieniem;
+ *             debug → wyjątek, release → log + degraded mode
+ *   - ADDR-FIX: address pre-processing regex — \s → [^\S\n] w nazwie ulicy
+ *   - DICT-FIX: Warstwa 1 — String.replace() → regex z lookbehind/lookahead
+ *                (\b nie obsługuje polskich diakrytyków; "Jan" nie podmienia
+ *                 "Janusz" ani "Jański")
+ *   - P1-INFRA: token sesji SESJA_{6xALPHANUM} dodany do tekstu przed
+ *                Warstwą 1; sessionId wystawiony w PseudonymResult.
+ *                UWAGA: warstwa storage (SQLCipher sessions table) — P1 Phase 2
+ *
+ * Zmiany v2.2 (sesja 7):
+ *   - DEAD-CODE: Detection/DetectionConfidence/DetectionSource usunięte —
+ *                potwierdzone martwy kod po przejrzeniu wszystkich plików silnika
+ *
+ * Architektura (kolejność wykonania):
+ *   Warstwa 0: OcrNormalizer (normalizacja przed detekcją)
+ *   Warstwa 1: Słownik użytkownika (SQLCipher) — najwyższy priorytet
+ *   Warstwa 2: Regex strukturalne (przeniesione z Triangulum v4.19 + nowe) → StructuralEngine.kt
+ *   Warstwa 3: Czarna lista kontekstowa (imiona PESEL + funkcje + tytuły) → NameEngine.kt
+ *   Warstwa 4: Biała lista (zostaw zawsze) → NameEngine.kt
+ *   Warstwa 5: Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
+ *   Warstwa 6: Output Guard + Risk Score → OutputGuard.kt
+ *
+ * Tokeny zgodne z Triangulum:
+ *   FIRMA_{nnn}, OSOBA_{nnn}, NUMER_{nnn}, KWOTA_{nnn}, ADRES_{nnn}
+ */
+
+// ============================================================
+// Stałe tokenów — zgodne z Triangulum
+// ============================================================
+internal const val TOKEN_FIRMA = "FIRMA"
+internal const val TOKEN_OSOBA = "OSOBA"
+internal const val TOKEN_NUMER = "NUMER"
+internal const val TOKEN_KWOTA = "KWOTA"
+internal const val TOKEN_ADRES = "ADRES"
+
+// ============================================================
+// Data classes
+// ============================================================
+// Detection, DetectionConfidence, DetectionSource — usunięte (martwy kod).
+// Nie były używane w żadnym pliku silnika. Usunięto po weryfikacji
+// StructuralEngine.kt, LookupTables.kt, UserDictionary.kt.
+// Jeśli UI files ich używają — przywróć i oznacz jako TODO do integracji.
+
+data class PseudonymResult(
+    val pseudonymizedText: String,
+    val sessionId: String,                  // P1-INFRA: identyfikator sesji do depseudonimizacji
+    val tokenMap: Map<String, String>,      // token → oryginał (RAM only)
+    val flags: List<PseudonymFlag>,          // miejsca do sprawdzenia przez użytkownika
+    val riskScore: RiskScore,
+    val qualityWarning: String?,            // ostrzeżenie jakości OCR
+    val guardHits: List<GuardHit> = emptyList()  // wycieki wykryte przez OutputGuard
+)
+
+data class PseudonymFlag(
+    val fragment: String,
+    val reason: String,
+    val isContextual: Boolean = false       // true = identyfikacja przez rolę
+)
+
+enum class RiskScore { GREEN, YELLOW, RED }
+
+// ============================================================
+// Regex TOKEN — do wykrywania istniejących tokenów
+// ============================================================
+internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|KWOTA|ADRES)_(\d{3})\b""")
+
+// ============================================================
+// Normalizacja canonical — z Triangulum [V4-2]
+// ============================================================
+private fun canonicalValue(value: String): String =
+    value.replace(Regex("""[\s\-]"""), "")
+
+// ============================================================
+// GŁÓWNY SILNIK
+// ============================================================
+object PseudonymEngine {
+
+    fun pseudonymize(
+        rawText: String,
+        userDictionary: List<Pair<String, String>> = emptyList(),
+        mlKitConfidence: Float? = null,
+        profileType: String = "general"  // z onboardingu
+    ): PseudonymResult {
+
+        // --- Warstwa 0: Normalizacja OCR ---
+        val normResult = OcrNormalizer.normalize(rawText)
+        val quality = OcrNormalizer.assessQuality(normResult.normalizedText, mlKitConfidence)
+        var text = normResult.normalizedText
+
+        // --- GUARD: weryfikacja inicjalizacji LookupTables ---
+        // Lazy regex w NameEngine.kt kompilują się przy pierwszym użyciu.
+        // Jeśli LookupTables nie są gotowe — skompilują się z fallbackiem
+        // 200 imion i NIGDY nie zostaną przebudowane (lazy = raz na zawsze).
+        if (!LookupTables.initialized) {
+            if (BuildConfig.DEBUG) {
+                error("PseudonymEngine: LookupTables.initialize(context) musi być "
+                    + "wywołane przed pierwszym pseudonymize(). Silnik w trybie "
+                    + "awaryjnym — 200 imion zamiast 1874.")
+            } else {
+                android.util.Log.e("PseudonymEngine",
+                    "DEGRADED MODE: LookupTables nie zainicjowane. "
+                    + "Detekcja imion ograniczona do 200 fallback names.")
+            }
+        }
+
+        // --- Pre-processing: naprawa emaili z błędami OCR ---
+        // anna. nowak(@wp.pl  → anna.nowak@wp.pl
+        // robert.jablonski@ finanse24.pl → robert.jablonski@finanse24.pl
+        text = text.replace("(@", "@")                                              // (@ → @
+        text = Regex("""([a-z0-9])\.\s+([a-z0-9])""", RegexOption.IGNORE_CASE)    // anna. nowak → anna.nowak
+            .replace(text) { m -> "${m.groupValues[1]}.${m.groupValues[2]}" }
+        text = Regex("""@\s+([a-z0-9])""", RegexOption.IGNORE_CASE)               // @ wp → @wp
+            .replace(text) { m -> "@${m.groupValues[1]}" }
+        text = Regex("""([a-z0-9])\s+@([a-z0-9])""", RegexOption.IGNORE_CASE)    // abc @wp → abc@wp
+            .replace(text) { m -> "${m.groupValues[1]}@${m.groupValues[2]}" }
+
+        // --- Pre-processing: naprawa adresu podzielonego przez newline OCR ---
+        // "ul. Kazimierza Wielkiego\n14/3" → "ul. Kazimierza Wielkiego 14/3"
+        // Bez tego regex ADRES nie łączy nazwy ulicy z numerem budynku.
+        // ADDR-FIX v2.1: [^\S\n] zamiast \s w nazwie ulicy — \s przepuszczał \n
+        // i mógł zszywać fragmenty z różnych akapitów
+        text = Regex(
+            """((?:ul|al|pl|os)\.[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]\-]{2,50})\n(\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?)""",
+            RegexOption.IGNORE_CASE
+        ).replace(text) { m -> "${m.groupValues[1]} ${m.groupValues[2]}" }
+
+        // --- Struktury danych sesji ---
+        val tokenMap = mutableMapOf<String, String>()
+        val reverseMap = mutableMapOf<String, String>()
+        val counters = mutableMapOf<String, Int>()
+        val flags = mutableListOf<PseudonymFlag>()
+
+        fun assignToken(value: String, tokenType: String): String {
+            val canonical = canonicalValue(value)
+            reverseMap[canonical]?.let { return it }
+            val count = (counters[tokenType] ?: 0) + 1
+            counters[tokenType] = count
+            val token = "${tokenType}_${count.toString().padStart(3, '0')}"
+            tokenMap[token] = value
+            reverseMap[canonical] = token
+            // TODO-1: debug log owinięty w BuildConfig.DEBUG — nie wycieka PII do logcata w release
+            if (tokenType == TOKEN_OSOBA && BuildConfig.DEBUG) {
+                android.util.Log.w("PSE_OSOBA", "$token → \"$value\"  [${Thread.currentThread().stackTrace.getOrNull(3)?.methodName}]")
+            }
+            return token
+        }
+
+        // --- P1-INFRA: Token sesji ---
+        // SESJA_{6xALPHANUM} dodany na początku tekstu pozwala depseudonimizatorowi
+        // zidentyfikować mapę tokenów po tygodniu lub roku.
+        // Nie trafia do tokenMap — to nie PII, to identyfikator sesji.
+        // PseudonymResultPanel odczytuje sessionId z PseudonymResult.sessionId.
+        // Storage (SQLCipher sessions table) — P1 Phase 2.
+        val sessionId = java.util.UUID.randomUUID().toString()
+            .replace("-", "").take(6).uppercase()
+        text = "SESJA_$sessionId\n$text"
+
+        // --- Warstwa 1: Słownik użytkownika ---
+        // Defensywna walidacja typu — zabezpiecza przed błędnym typem z ManualTokenSection
+        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_KWOTA, TOKEN_ADRES)
+        for ((dictValue, tokenType) in userDictionary) {
+            if (dictValue.isBlank()) continue
+            val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
+            val token = assignToken(dictValue, safeType)
+            // DICT-FIX v2.1: regex zamiast String.replace() — zapobiega podmiance fragmentów
+            // większych słów (np. "Jan" → "OSOBA_001" podmienia "Janusz" → "OSOBA_001usz").
+            // \b nie obsługuje polskich diakrytyków — używamy lookbehind/lookahead.
+            val escapedValue = Regex.escape(dictValue)
+            val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
+            val dictRegex = Regex(
+                "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
+                RegexOption.IGNORE_CASE
+            )
+            text = dictRegex.replace(text) { token }
+        }
+
+        // --- Warstwa 2: Regex strukturalne ---
+        android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
+        android.util.Log.d("LynxMask", "ADDRESS_PATTERNS: ${ADDRESS_PATTERNS.size}")
+        for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
+            text = pattern.replace(text) { matchResult ->
+                val match = matchResult.value
+                if (TOKEN_RE.containsMatchIn(match)) match
+                else assignToken(match, tokenType)
+            }
+        }
+
+        // --- Warstwa 3: Czarna lista kontekstowa ---
+        text = applyContextualBlacklist(text, ::assignToken, profileType)
+
+        // --- Warstwa 3c: Propagacja nazwisk ---
+        // Jeśli wykryto "Jan Kowalski" → OSOBA_001,
+        // każde samotne "Kowalski", "Kowalskiego", "Kowalskiemu", "Kowalską" → OSOBA_001
+        // Lookup surnames rozszerzają propagację na formy żeńskie (-ska, -skiej, -ską).
+        //
+        // ZNANE OGRANICZENIE (P5): propagacja działa tylko dla form wyrazów już WYKRYTYCH
+        // w tokenMap. Imię/nazwisko pojawiające się PO tokenie w tekście ("dr OSOBA_003
+        // Lewandowska-Karpowicz") nie jest łapane — wymagałoby osobnego przebiegu skanującego
+        // tekst po tokenizacji w poszukiwaniu wielkich liter za tokenami OSOBA.
+        //
+        // ZNANE OGRANICZENIE: filtr it.length > 3 celowo wyklucza imiona ≤ 3 znaki ("Jan",
+        // "Ewa") — propagacja \bJan[a-ząćęłńóśźż]{0,6}\b trafiałaby "Janusz", "Jański" itd.
+        tokenMap.entries
+            .filter { it.key.startsWith(TOKEN_OSOBA) }
+            .forEach { (token, fullName) ->
+                val words = fullName.trim().split(Regex("""\s+"""))
+                if (words.size >= 2) {
+                    words.filter { it.length > 3 && it[0].isUpperCase() }.forEach { namePart ->
+                        // Regex-based propagacja dla znanych form
+                        val propagateRegex = Regex(
+                            """\b${Regex.escape(namePart)}[a-ząćęłńóśźż]{0,6}\b""",
+                            RegexOption.IGNORE_CASE
+                        )
+                        text = propagateRegex.replace(text) { match ->
+                            if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+                            if (isOnWhiteList(match.value)) return@replace match.value
+                            token
+                        }
+                        // Lookup-based propagacja dla form żeńskich (kamińska, kowalskiej…)
+                        if (LookupTables.initialized) {
+                            val namePartLower = namePart.lowercase()
+                            val relatedForms = LookupTables.surnamesForms
+                                .filter { it.startsWith(namePartLower.take(5)) && it != namePartLower }
+                            for (form in relatedForms) {
+                                val formRegex = Regex("""\b${Regex.escape(form)}\b""", RegexOption.IGNORE_CASE)
+                                text = formRegex.replace(text) { match ->
+                                    if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+                                    if (isOnWhiteList(match.value)) return@replace match.value
+                                    token
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        // --- Warstwa 3d: Wzorce adresów — po NameEngine (widzi pełne adresy) ---
+        // ADDRESS_PATTERNS uruchamiane PO applyContextualBlacklist, żeby NameEngine
+        // mógł użyć kontekstu adresu do rozpoznania poprzedzającego imienia/nazwiska.
+        // findAll + asReversed + replaceRange zamiast pattern.replace — bezpieczniejsze
+        // gdy wzorce adresowe mogą nakładać się na siebie (zamiana od końca).
+        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+            pattern.findAll(text).toList().asReversed().forEach { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                text = text.replaceRange(match.range, assignToken(match.value, tokenType))
+            }
+        }
+
+        // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
+        detectAlgorithmicFlags(text, flags)
+
+        // --- Warstwa 6: Output Guard ---
+        val guardHits = runOutputGuard(text, tokenMap)
+        val guardWarnings = guardHits.map { "${it.level} ${it.label}: ${it.matchedText}" }
+        val riskScore = calculateRiskScore(tokenMap, guardWarnings)
+
+        val qualityWarning = if (quality.showWarning) {
+            "Jakość rozpoznawania tekstu może być niska: ${quality.issues.joinToString(", ")}"
+        } else null
+
+        return PseudonymResult(
+            pseudonymizedText = text,
+            sessionId = sessionId,
+            tokenMap = tokenMap,
+            flags = flags,
+            riskScore = riskScore,
+            qualityWarning = qualityWarning,
+            guardHits = guardHits
+        )
+    }
+
+    // ============================================================
+    // Risk Score
+    // ============================================================
+    private fun calculateRiskScore(
+        tokenMap: Map<String, String>,
+        guardWarnings: List<String>
+    ): RiskScore {
+        var score = 0
+
+        // Wagi per typ tokenu
+        for (token in tokenMap.keys) {
+            score += when {
+                token.startsWith("NUMER") -> 10
+                token.startsWith("OSOBA") -> 15
+                token.startsWith("ADRES") -> 20
+                token.startsWith("FIRMA") -> 5
+                token.startsWith("KWOTA") -> 3
+                else -> 0
+            }
+        }
+
+        // Ostrzeżenia guarda podnoszą ryzyko
+        score += guardWarnings.size * 25
+
+        return when {
+            score == 0 -> RiskScore.GREEN
+            score < 30 -> RiskScore.YELLOW
+            else -> RiskScore.RED
+        }
+    }
+
+    // ============================================================
+    // Odkrywanie tokenu (np. VIN w dowodzie rejestracyjnym)
+    // ============================================================
+    fun revealToken(token: String, tokenMap: Map<String, String>): String? =
+        tokenMap[token]
+}

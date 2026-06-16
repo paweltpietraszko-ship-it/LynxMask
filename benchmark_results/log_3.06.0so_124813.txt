@@ -1,0 +1,1125 @@
+06-13 12:47:01.505 28436 28451 I TestRunner: started: runBenchmark(com.lynxmask.app.BenchmarkInstrumentedTest)
+06-13 12:47:01.542 28436 28451 I System.out: [BENCH] benchDir: /storage/emulated/0/Android/data/com.lynxmask.app/files/bench
+06-13 12:47:01.554  2669  3447 D SatelliteController: isInCarrierRoamingNbIotNtn: satellite is disabled
+06-13 12:47:01.557  2410  2595 D MobileSignalTransitionManager: updateSignalTransition
+06-13 12:47:01.562  2669  3447 D SatelliteController: isInCarrierRoamingNbIotNtn: satellite is disabled
+06-13 12:47:01.569 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_startStopwatch
+06-13 12:47:01.572 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_stopStopwatch(id=1024)
+06-13 12:47:01.636 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_stopStopwatch
+06-13 12:47:01.640 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_createTask(id=1025)
+06-13 12:47:01.684 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_createTask
+06-13 12:47:01.687 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_createAlarm(id=1026)
+06-13 12:47:01.704  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:01.706  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27720, isSameBssidAndFreq true
+06-13 12:47:01.709  1666  2297 I SemWifiLinkQualityMonitor: Link stat: 702 / 0 / 2,00 (8) / 72 / -45.0 || 100.0 : 72,00 / B (B) || 4e28a47c2462: 0,438 / 18,256 / N || N N / 0 0 / Y 2.0 / Y X 0 / 254223186 0 || Invalid
+06-13 12:47:01.729 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_createAlarm
+06-13 12:47:01.732 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_updateAlarm(id=1027)
+06-13 12:47:01.788 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_updateAlarm
+06-13 12:47:01.792 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_resetStopwatch(id=1028)
+06-13 12:47:01.847 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_resetStopwatch
+06-13 12:47:01.850 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_showTask(id=1029)
+06-13 12:47:01.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347621
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:01.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:01.876  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:01.876  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:01.876  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:01.894 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_showTask
+06-13 12:47:01.897 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_findAlarms(id=1030)
+06-13 12:47:01.946 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.sec.android.app.clockpackage.crossappactions#AlarmCrossAppActions_findAlarms
+06-13 12:47:01.953 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_updateTask(id=1031)
+06-13 12:47:02.011 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_updateTask
+06-13 12:47:02.014 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_findTasks(id=1032)
+06-13 12:47:02.061 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_findTasks
+06-13 12:47:02.065 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_createNote(id=1033)
+06-13 12:47:02.118 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_createNote
+06-13 12:47:02.122 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_showNote(id=1034)
+06-13 12:47:02.181 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_showNote
+06-13 12:47:02.186 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_updateNote(id=1035)
+06-13 12:47:02.229 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_updateNote
+06-13 12:47:02.232 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_findNotes(id=1036)
+06-13 12:47:02.278 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.support.senl.nt.app.main.appfunction#NoteFunctions_findNotes
+06-13 12:47:02.281 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.gallery.crossapp.function#PhotoFunctions_findMediaItems(id=1037)
+06-13 12:47:02.333 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.gallery.crossapp.function#PhotoFunctions_findMediaItems
+06-13 12:47:02.337 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_findEvents(id=1038)
+06-13 12:47:02.391 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_findEvents
+06-13 12:47:02.395 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_createEvent(id=1039)
+06-13 12:47:02.443 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_createEvent
+06-13 12:47:02.447 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_updateEvent(id=1040)
+06-13 12:47:02.496 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_updateEvent
+06-13 12:47:02.503 27410 27557 I Routine@Core[4.9.07.7]: TASKD/ActionTaskAdapterFactoryImpl: getAdapter - metaId=appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_showEvent(id=1041)
+06-13 12:47:02.559 27410 27557 I Routine@Core[4.9.07.7]: AppFunctionsActionHandler: isSupported: supportStatus = SUPPORTED, tag = appfunction://com.samsung.android.app.calendar.crossapp#CrossAppEvent_showEvent
+06-13 12:47:02.560 27410 27557 I Routine@Core[4.9.07.7]: ConflictItemConverter: convertConflictActions - 19
+06-13 12:47:02.560 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: migration - begin
+06-13 12:47:02.613 27410 27557 I Routine@Core[4.9.07.7]: MigrationParser: getMigrationData rawMigrationData : [vibrate_once, custom_key_v3, aircommand_open_with_pen, text_to_speech, unlock_with_finger_print, edge_panel_routine_v3, edge_panel_routine_v3, data_saver_routine]
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: MigrationParser: getMemoryMigrationData rawMemoryMigrationData : [motion_smoothness_v3, motion_smoothness_and_screen_resolution_v3, cover_screen_motion_smoothness_v3, brightness_v3, font_size_v3, screen_zoom_v3, screen_layout_and_zoom_v3, screen_resolution_v3, screen_timeout_v3, rotation_screen_v3, multi_window_tray_v3, dark_mode_v3, bixby_text_command_v3, bixby_quick_command_v3, bixby_voice_wake_up_v3, spotify_playlist_v3, play_media_v3, launch_app_v3, close_app_v3, separate_app_sound_v3, dnd_mode_on_v3, custom_notification_v3, hard_key_v3, quick_decline_message_v3, quick_decline_message_v3, video_enhancer_v3, bluetooth_on_v3, instant_session_v3, airplane_mode_on_v3, mobile_network_mode_setting_v3, mobile_data_on_v3, hotspot_on_v3, gps_on_v3, auto_data_sync_v3, sound_sdk3, vibrate_once, connect_url_sdk3, wifi_on_sdk3, lockscreen_shortcut_v3, launch_app_v3, launch_game_v3, samsung_health_during_exercise_v3, samsung_health_during_exercise_when_starting_v3, notification_with_keyword_v3, specify_wifi_v3, wifi_rssi_v3, specify_bluetooth_v3, specify_bluetooth_only_connected_v3, nfc_tagged_v3, airplane_mode_v3, specific_time_v3, time_v3, plugin_gps_location_v3, plugin_gps_location_only_arrived_v3, calling_v3, during_call_v3, connected_headset_v3, plugged_battery_v3, battery_condition_v3, dex_mode_on_v3, fold_state_v3, ringer_mode_v3, night_mode_v3, wifi_on_sdk3]
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:read_notifications, isAvailableToMigrate:true
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:flashlight, isAvailableToMigrate:true
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:message_received, isAvailableToMigrate:false
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:message_received, isAvailableToMigrate:false
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.aodservice, newTag:aod_main_setting, isAvailableToMigrate:true
+06-13 12:47:02.614 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:sec_eye_comfort_shield_routine, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:control_smartthings_not_reversible, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:control_smartthings_not_reversible, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_color_correction, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_power_mode_action, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.accessibility, newTag:accessibility_amplify_ambient_sound, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_camera_flash, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_color_correction, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_color_filter, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_color_inversion, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_extra_dim, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_live_caption, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_mono_audio, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_mute_all_sounds, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_screen_flash, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:accessibility_sound_balance, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.waterplugin, newTag:watch_theater_mode, isAvailableToMigrate:false
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.heartplugin, newTag:watch_theater_mode, isAvailableToMigrate:false
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_enhanced_processing, isAvailableToMigrate:false
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_fast_cable_charging, isAvailableToMigrate:true
+06-13 12:47:02.615 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_fast_wireless_charging, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_processing_speed, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_protect_battery, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.lool, newTag:dc_super_fast_cable_charging, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_enhanced_processing, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_fast_cable_charging, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_fast_wireless_charging, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_power_mode_action, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_processing_speed, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_protect_battery, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.sm_cn, newTag:dc_super_fast_cable_charging, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.dressroom, newTag:change_lock_screen_wallpaper_profile, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: deprecateOldTag() should not deprecate oldTag(lockscreen_shortcut
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:nfc_on_off, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.sec.android.app.launcher, newTag:edge_panel, isAvailableToMigrate:false
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:as_dialing_keypad_tones, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:as_keyboard_sound, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:as_keyboard_vibration, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:as_media_volume, isAvailableToMigrate:true
+06-13 12:47:02.616 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:as_volume, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.sec.android.app.clockpackage, newTag:appfunction://com.sec.android.app.clockpackage.crossappactions#StopwatchCrossAppFunctions_startStopwatch, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.sec.android.app.launcher, newTag:samsung_dex, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.secondscreen, newTag:second_screen_condition_tag, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:vibrate_once, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routineplus, newTag:custom_key_v3, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.service.aircommand, newTag:aircommand_open_with_pen, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:text_to_speech, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:unlock_with_finger_print, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.sec.android.app.launcher, newTag:edge_panel_routine_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.sec.android.app.launcher, newTag:edge_panel_routine_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.android.settings, newTag:data_saver_routine, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:motion_smoothness_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:motion_smoothness_and_screen_resolution_v3, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:cover_screen_motion_smoothness_v3, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:brightness_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:font_size_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:screen_zoom_v3, isAvailableToMigrate:true
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:screen_layout_and_zoom_v3, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:screen_resolution_v3, isAvailableToMigrate:false
+06-13 12:47:02.617 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:screen_timeout_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:rotation_screen_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:multi_window_tray_v3, isAvailableToMigrate:false
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:dark_mode_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:bixby_text_command_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:bixby_quick_command_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:bixby_voice_wake_up_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:spotify_playlist_v3, isAvailableToMigrate:false
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:play_media_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:launch_app_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:close_app_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:separate_app_sound_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:dnd_mode_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:custom_notification_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:hard_key_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:quick_decline_message_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:quick_decline_message_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:video_enhancer_v3, isAvailableToMigrate:false
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:bluetooth_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:instant_session_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:airplane_mode_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:mobile_network_mode_setting_v3, isAvailableToMigrate:true
+06-13 12:47:02.618 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:mobile_data_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:hotspot_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:gps_on_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:auto_data_sync_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:sound_sdk3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:vibrate_once, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:connect_url_sdk3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:wifi_on_sdk3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:lockscreen_shortcut_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:launch_app_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:launch_game_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:samsung_health_during_exercise_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:samsung_health_during_exercise_when_starting_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:notification_with_keyword_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:specify_wifi_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:wifi_rssi_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:specify_bluetooth_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:specify_bluetooth_only_connected_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:nfc_tagged_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:airplane_mode_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:specific_time_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:time_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:plugin_gps_location_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:plugin_gps_location_only_arrived_v3, isAvailableToMigrate:false
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:calling_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:during_call_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:connected_headset_v3, isAvailableToMigrate:true
+06-13 12:47:02.619 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:plugged_battery_v3, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:battery_condition_v3, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:dex_mode_on_v3, isAvailableToMigrate:false
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:fold_state_v3, isAvailableToMigrate:false
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:ringer_mode_v3, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:night_mode_v3, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:wifi_on_sdk3, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: isAvailableToMigrate() newPackageName:com.samsung.android.app.routines, newTag:show_action_list, isAvailableToMigrate:true
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: deprecateOldTag() should not deprecate oldTag(show_action_list
+06-13 12:47:02.620 27410 27557 I Routine@Core[4.9.07.7]: RoutineDataMigrator: migration - end, results = []
+06-13 12:47:02.620 27410 27518 I Routine@Core[4.9.07.7]: WatchMetaUpdateRequester: asyncRequestUpdateMetaToWatch
+06-13 12:47:02.620 27410 27518 I Routine@Core[4.9.07.7]: GooglePlayServiceChecker: isPackageEnabled: com.google.android.gms - result(true)
+06-13 12:47:02.624 29887 32325 W WearableService: onGetService: Wear is not available on this device. Calling package: com.samsung.android.app.routines
+06-13 12:47:02.624 27410 27557 I Routine@Core[4.9.07.7]: MetadataLoadManager: refreshRegisterPackageChangeIntentFilter
+06-13 12:47:02.625 27410 27557 I Routine@Core[4.9.07.7]: MetadataPackageUtil: getMetaLoadedPackageMonitoringList - packages size : 51, targetPackages : [com.samsung.android.app.aodservice, com.android.systemui, com.samsung.android.honeyboard, com.samsung.android.app.dressroom, com.samsung.android.lool, com.sec.android.app.launcher, com.samsung.android.smartmirroring, com.samsung.android.fast, com.samsung.android.app.reminder, com.samsung.android.mdecservice, com.samsung.android.app.routines, com.samsung.android.game.gametools, com.samsung.android.calendar, com.sec.android.app.soundalive, com.samsung.android.mdx, com.samsung.android.app.smartcapture, com.samsung.android.inputshare, com.sec.android.app.clockpackage, com.sec.android.gallery3d, com.samsung.accessibility, com.android.settings, com.samsung.android.app.notes, com.samsung.android.app.telephonyui, com.samsung.android.app.sharelive, com.samsung.accessory.budsunitemgr, com.samsung.android.game.gos, com.samsung.android.app.routineplus, com.samsung.android.app.clockpack, com.samsung.android.app.cocktailbarservice, com.samsung.android.app.galaxyregistry, com.samsung.android.app.smartwidget, com.samsung.android.routinesdkv3, com.samsung.android.secondscreen, com.samsung.android.service.aircommand, com.samsung.android.sidegesturepad, com.samsung.android.sm_cn, com.samsung.android.soundassistant, com.sec.android.desktopmode.uiservice, com.samsung.android.waterplugin, com.samsung.android.heartplugin, com.samsung.wearable.watch6plugin, com.samsung.wearable.watch7plugin, com.samsung.wearable.watchuniteplugin, com.samsung.accessory.popcornmgr, com.samsung.accessory.berrymgr, com.samsung.accessory.jellymgr, com.samsung.accessory.neobeanmgr, com.samsung.accessory.atticmgr, com.samsung.accessory.zenithmgr, com.samsung.accessory.paranmgr, com.samsung.accessory.pearlmgr]
+06-13 12:47:02.625 27410 27557 I Routine@Core[4.9.07.7]: BroadcastRegister: refreshRegisterPackageChangeIntentFilter - packages size: 51
+06-13 12:47:02.625 27410 27557 I Routine@Core[4.9.07.7]: BroadcastRegister: unregisterPackageChangeIntentFilter
+06-13 12:47:02.626 27410 27557 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.626 27410 27518 E Routine@Core[4.9.07.7]: WearNodeHelper: getConnectedNearlyNodes: ExecutionException - java.util.concurrent.ExecutionException: com.google.android.gms.common.api.ApiException: 17: API: Wearable.API is not available on this device. Connection failed with: ConnectionResult{statusCode=API_UNAVAILABLE, resolution=null, message=null}
+06-13 12:47:02.627 27410 27557 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.627  1666  3497 D SEP_UNION_SemDeviceInfoManagerService: Unregister intent = android.intent.action.PACKAGE_ADDED, , package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.628  1666  3497 D SEP_UNION_SemDeviceInfoManagerService: Unregister intent = android.intent.action.PACKAGE_REPLACED, android.intent.action.PACKAGE_CHANGED, android.intent.action.PACKAGE_REMOVED, android.intent.action.PACKAGE_FULLY_REMOVED, android.intent.action.MY_PACKAGE_REPLACED, , package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.628 27410 27557 I Routine@Core[4.9.07.7]: BroadcastRegister: registerPackageAddedIntentFilterInternal
+06-13 12:47:02.628 27410 27557 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.629 27410 27557 I Routine@Core[4.9.07.7]: BroadcastRegister: registerPackageMonitoringIntentFilterInternal
+06-13 12:47:02.629 27410 27557 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.629  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Register intent = android.intent.action.PACKAGE_ADDED,  package = com.samsung.android.app.routines, userId = 0, flag = 0, conditions = null
+06-13 12:47:02.629  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=0
+06-13 12:47:02.630  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Register intent = android.intent.action.PACKAGE_REPLACED, android.intent.action.PACKAGE_CHANGED, android.intent.action.PACKAGE_REMOVED, android.intent.action.PACKAGE_FULLY_REMOVED, android.intent.action.MY_PACKAGE_REPLACED,  package = com.samsung.android.app.routines, userId = 0, flag = 1, conditions = [com.samsung.android.app.aodservice, com.android.systemui, com.samsung.android.honeyboard, com.samsung.android.app.dressroom, com.samsung.android.lool, com.sec.android.app.launcher, com.samsung.android.smartmirroring, com.samsung.android.fast, com.samsung.android.app.reminder, com.samsung.android.mdecservice, com.samsung.android.app.routines, com.samsung.android.game.gametools, com.samsung.android.calendar, com.sec.android.app.soundalive, com.samsung.android.mdx, com.samsung.android.app.smartcapture, com.samsung.android.inputshare, com.sec.android.app.clockpackage, com.sec.android.gallery3d, com.samsung.accessibility, com.android.settings, com.samsung.android.app.notes, com.samsung.android.app.telephonyui, com.samsung.android.app.sharelive, com.samsung.accessory.budsunitemgr, com.samsung.android.game.gos, com.samsung.android.app.routineplus, com.samsung.android.app.clockpack, com.samsung.android.app.cocktailbarservice, com.samsung.android.app.galaxyregistry, com.samsung.android.app.smartwidget, com.samsung.android.routinesdkv3, com.samsung.android.secondscreen, com.samsung.android.service.aircommand, com.samsung.android.sidegesturepad, com.samsung.android.sm_cn, com.samsung.android.soundassistant, com.sec.android.desktopmode.uiservice, com.samsung.android.waterplugin, com.samsung.android.heartplugin, com.samsung.wearable.watch6plugin, com.samsung.wearable.watch7plugin, com.samsung.wearable.watchuniteplugin, com.samsung.accessory.popcornmgr, com.samsung.accessory.berrymgr, com.samsung.accessory.jellymgr, com.samsung.accessory.neobeanmgr, com.samsung.accessory.atticmgr, com.samsung.accessory.zenithmgr, com.samsung.accessory.paranmgr, com.samsung.accessory.pearlmgr]
+06-13 12:47:02.630  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=1
+06-13 12:47:02.630  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=1
+06-13 12:47:02.631  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Adding new UnionBroadcastReceiver for the action: android.intent.action.PACKAGE_CHANGED in User 0
+06-13 12:47:02.631  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=1
+06-13 12:47:02.631  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=1
+06-13 12:47:02.631 27410 27557 I Routine@Core[4.9.07.7]: Pref: removeSharedPrefsData() key=meta_loading_target_package_name
+06-13 12:47:02.631  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=1
+06-13 12:47:02.631  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Adding new UnionBroadcastReceiver for the action: android.intent.action.MY_PACKAGE_REPLACED in User 0
+06-13 12:47:02.633 29887 32325 W WearableService: onGetService: Wear is not available on this device. Calling package: com.samsung.android.app.routines
+06-13 12:47:02.633 27410 27752 I Routine@Core[4.9.07.7]: ModeOrderObserver: ModeOrderObserver:onChange: uri content://com.samsung.android.app.routines.routineprovider/preference
+06-13 12:47:02.634 27410 27557 I Routine@Core[4.9.07.7]: MetadataLoadManager: enableAllConditions
+06-13 12:47:02.634 27410 27557 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=true, reason=ENGINE_COORDINATOR
+06-13 12:47:02.635 27410 27518 E Routine@Core[4.9.07.7]: WearNodeManagerImpl: getNodeId: exception - com.google.android.gms.common.api.ApiException: 17: API: Wearable.API is not available on this device. Connection failed with: ConnectionResult{statusCode=API_UNAVAILABLE, resolution=null, message=null}
+06-13 12:47:02.635 27410 27518 I Routine@Core[4.9.07.7]: WearNodeManagerImpl: getConnectedNodeIdByCapability nodeId:null
+06-13 12:47:02.636 27410 27518 I Routine@Core[4.9.07.7]: WearCommonDataStore: getLastConnectedNodeId: null
+06-13 12:47:02.636 27410 27518 I Routine@Core[4.9.07.7]: WEAR/WearRoutineHostSenderImpl: requestToUpdateMetas: nodeId is null
+06-13 12:47:02.638 27410 27557 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: method=enable_all_conditions
+06-13 12:47:02.639 27410 27557 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=false, reason=ENGINE_COORDINATOR
+06-13 12:47:02.639 27410 27574 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: messageHandler.handleMessage: message=ENABLE_ALL_CONDITIONS
+06-13 12:47:02.640 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerImpl: enableAllConditions
+06-13 12:47:02.648 27410 27410 I Routine@Core[4.9.07.7]: MetadataLoaderJobService: metadataLoadingCompleted: collectPackageInBG - com.lynxmask.app.test
+06-13 12:47:02.648 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerImpl: enableRoutineConditions: routineId=1(uuid=000100, name=Uśpienie)[READY]
+06-13 12:47:02.649 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerImpl: enableCondition: conditionId=manual_execute(id=1, uuid=411174, routineId=1)
+06-13 12:47:02.649 27410 27410 I Routine@Core[4.9.07.7]: MetadataSyncHistory: isMetaDataSyncedWithVersion: latest=147c7ed13aba38a4e792d7ce79875a7334693d6d, currentVersion=147c7ed13aba38a4e792d7ce79875a7334693d6d
+06-13 12:47:02.649 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.649 27410 27518 I Routine@Core[4.9.07.7]: ManualExecutionConditionHandler: onEnabled: tag=manual_execute, instanceId=4111745420686216373
+06-13 12:47:02.649 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerCallbackImpl: unregisterConditionObserver: conditionId=manual_execute(id=1, uuid=411174, routineId=1), targetUri=content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.650 27410 27752 I Routine@Core[4.9.07.7]: ModesOrderManager: getOrderOrDefault: uuid(100)
+06-13 12:47:02.650 27410 27518 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.650 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerCallbackImpl: registerConditionObserver: conditionId=manual_execute(id=1, uuid=411174, routineId=1), targetUri=content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.651  1666  4824 D SEP_UNION_SemDeviceInfoManagerService: Unregister uri = content://com.samsung.android.app.routines.provider.routines.v3/manual_execute, package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.651 27410 27518 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.652  1666  4824 D SEP_UNION_SemDeviceInfoManagerService: Register uri = content://com.samsung.android.app.routines.provider.routines.v3/manual_execute, package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.652  1666  4824 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=0
+06-13 12:47:02.652  1666  4824 D SEP_UNION_SemDeviceInfoManagerService: Creating new UnionContentObserver for the uri:content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.653 27410 27752 I Routine@Core[4.9.07.7]: ModesOrderManager: getOrder: uuid(100) -> order(999)
+06-13 12:47:02.653 27410 27752 I Routine@Core[4.9.07.7]: ModesOrderManager: getOrderOrDefault: uuid(101)
+06-13 12:47:02.654 27410 27410 I Routine@Core[4.9.07.7]: Pref: putSharedPrefsData: key=routine_meta_data_loading_statue, data.size=8
+06-13 12:47:02.656 27410 27752 I Routine@Core[4.9.07.7]: ModesOrderManager: getOrder: uuid(101) -> order(1001)
+06-13 12:47:02.657 27410 27752 I Routine@Core[4.9.07.7]: ModeListHolder: update: size(2) updated(2026/06/13 12:47:02) [ModeMeta(id=1, uuid=100, iconResourceId=2131231140, iconStatusResourceId=2131231637, displayName=Sen, isRunning=false, runningReason=, runningReasonCondition=, isSet=true, isDeleted=false, detailRunningReason=null, order=999, toggleTime=0), ModeMeta(id=2, uuid=101, iconResourceId=2131231296, iconStatusResourceId=2131231647, displayName=Jazda, isRunning=false, runningReason=, runningReasonCondition=, isSet=true, isDeleted=false, detailRunningReason=null, order=1001, toggleTime=0)]
+06-13 12:47:02.659 27410 27410 I Routine@Core[4.9.07.7]: DatabaseJobIntentService: Stop no more task
+06-13 12:47:02.659 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerImpl: enableRoutineConditions: routineId=2(uuid=000101, name=Jazda)[READY]
+06-13 12:47:02.660 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerImpl: enableCondition: conditionId=manual_execute(id=2, uuid=751924, routineId=2)
+06-13 12:47:02.660 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.660 27410 27518 I Routine@Core[4.9.07.7]: ManualExecutionConditionHandler: onEnabled: tag=manual_execute, instanceId=7519240028676705259
+06-13 12:47:02.660 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerCallbackImpl: unregisterConditionObserver: conditionId=manual_execute(id=2, uuid=751924, routineId=2), targetUri=content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.660 27410 27518 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.661 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionStateHandlerCallbackImpl: registerConditionObserver: conditionId=manual_execute(id=2, uuid=751924, routineId=2), targetUri=content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.661  1666  1969 D SEP_UNION_SemDeviceInfoManagerService: Unregister uri = content://com.samsung.android.app.routines.provider.routines.v3/manual_execute, package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.663 27410 27518 I SEP_UNION_SemUnionManager: getUnionService(semeventdelegator)
+06-13 12:47:02.663  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Register uri = content://com.samsung.android.app.routines.provider.routines.v3/manual_execute, package = com.samsung.android.app.routines, userId = 0
+06-13 12:47:02.664  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: PendingIntentWithConditions added f=0
+06-13 12:47:02.664  1666  4826 D SEP_UNION_SemDeviceInfoManagerService: Creating new UnionContentObserver for the uri:content://com.samsung.android.app.routines.provider.routines.v3/manual_execute
+06-13 12:47:02.665 27410 27410 I Routine@Core[4.9.07.7]: RoutineService: onCreate
+06-13 12:47:02.665 27410 27410 I Routine@Core[4.9.07.7]: RoutineService: onStartCommand: com.samsung.android.app.routine.ACTION_METADATA_LOADING_COMPLETE
+06-13 12:47:02.665 27410 27410 I Routine@Core[4.9.07.7]: RoutineService: onMetadataLoadingCompleted
+06-13 12:47:02.666 27410 27577 I Routine@Core[4.9.07.7]: InstanceCleaner: clean() - begin
+06-13 12:47:02.667 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onCreate
+06-13 12:47:02.667 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onSpecificConditionStateChanged: instancedId=4111745420686216373
+06-13 12:47:02.667 27410 27576 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=true, reason=ENGINE_COORDINATOR
+06-13 12:47:02.670 27410 27576 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: method=specific_condition_state_changed
+06-13 12:47:02.670 27410 27576 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: wait until notify... method=specific_condition_state_changed
+06-13 12:47:02.670 27410 27574 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: messageHandler.handleMessage: message=SPECIFIC_CONDITION_STATE_CHANGED
+06-13 12:47:02.670 27410 27410 I Routine@Core[4.9.07.7]: MetadataSyncHistory: isMetaDataSyncedWithVersion: latest=147c7ed13aba38a4e792d7ce79875a7334693d6d, currentVersion=147c7ed13aba38a4e792d7ce79875a7334693d6d
+06-13 12:47:02.671 27410 27410 I Routine@Core[4.9.07.7]: MetadataLoaderJobService: onDestroy
+06-13 12:47:02.671 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onSpecificConditionStateChanged: instancedId=7519240028676705259
+06-13 12:47:02.671 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: conditions.size=1
+06-13 12:47:02.671 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: condition=RoutineCondition(meta=ConditionMeta(id=28, tag=manual_execute, packageName=com.samsung.android.app.routines, componentName=null, componentType=v3, labelResourceId=2131887315, subLabelResourceId=-1, enabledLabelResourceId=0, negativeEnabledLabelResourceId=0, _isSupportNegative=0, descriptionResourceId=0, iconResourceId=2131231565, configActivity=null, category=null, defaultParameter=null, defaultParameterLabel=null, uri=null, correctParam=null, parameterSpecSet=null, supportState=1, attributes=display_description, version=1, defaultLabel=Uruchom ręcznie), _instance=ConditionInstance(id=1, uuid=4111745420686216373, routineId=1, parameterRepresentation=null, param=null, isNegative=0, timestamp=1669794992541, validState=1, extra=, _triggerStatus=0))
+06-13 12:47:02.672 27410 27579 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=true, reason=ENGINE_COORDINATOR
+06-13 12:47:02.674 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: method=specific_condition_state_changed
+06-13 12:47:02.674 27410 27579 W Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive - handlerThread is not in runnable state=TIMED_WAITING
+06-13 12:47:02.675 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: [messageHandler.dump] Handler (b9.a) {fe32ac5} @ 254224155
+06-13 12:47:02.675 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: [messageHandler.dump]   Looper (CoordinatorHandlerThread, tid 446) {41f6c1a}
+06-13 12:47:02.675 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: [messageHandler.dump]     (MessageQueue is using Legacy implementation)
+06-13 12:47:02.675 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: [messageHandler.dump]     (Total messages: 0, polling=false, quitting=false)
+06-13 12:47:02.675 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: wait until notify... method=specific_condition_state_changed
+06-13 12:47:02.677 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.678 27410 27518 E Routine@Core[4.9.07.7]: ResultCode.FailCustomCode: fromValidState: failed to parse. validState=0x1
+06-13 12:47:02.678 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.679 27410 27518 I Routine@Core[4.9.07.7]: ManualExecutionConditionHandler: isSatisfied: tag=manual_execute, result=NOT_SATISFIED
+06-13 12:47:02.680 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: isSatisfied=false (conditionId=manual_execute(id=1, uuid=411174, routineId=1))
+06-13 12:47:02.684 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionProgressCallback: doTriggerOff: routineState=READY (routineId=1(uuid=000100, name=Uśpienie)[READY]) (conditionId=manual_execute(id=1, uuid=411174, routineId=1))
+06-13 12:47:02.686 27410 27518 I Routine@Core[4.9.07.7]: ModeTriggerHandler: onTriggerOffCondition: routineId=1(uuid=000100, name=Uśpienie)[READY], triggeredOffConditionId=manual_execute(id=1, uuid=411174, routineId=1)
+06-13 12:47:02.686 27410 27518 I Routine@Core[4.9.07.7]: ModeTriggerHandler: resolveModeOffSuggestion: not running. routineId=1(uuid=000100, name=Uśpienie)[READY]
+06-13 12:47:02.688 27410 27518 I Routine@Core[4.9.07.7]: COORD/RoutineCommandHandlerImpl: needEndRunning: routineState=READY (routineId=1(uuid=000100, name=Uśpienie)[READY])
+06-13 12:47:02.688 27410 27518 W Routine@Core[4.9.07.7]: COORD/RoutineCommandHandlerImpl: needEndRunning: not handled status. routineState=READY
+06-13 12:47:02.688 27410 27574 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: messageHandler.handleMessage: message=SPECIFIC_CONDITION_STATE_CHANGED
+06-13 12:47:02.689 27410 27576 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: released! method=specific_condition_state_changed
+06-13 12:47:02.689 27410 27576 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=false, reason=ENGINE_COORDINATOR
+06-13 12:47:02.690 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onSpecificConditionStateChanged.onComplete: instancedUuid=4111745420686216373
+06-13 12:47:02.690 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onStartCommand.onConditionStateChanged: result=true
+06-13 12:47:02.692 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: conditions.size=1
+06-13 12:47:02.692 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: condition=RoutineCondition(meta=ConditionMeta(id=28, tag=manual_execute, packageName=com.samsung.android.app.routines, componentName=null, componentType=v3, labelResourceId=2131887315, subLabelResourceId=-1, enabledLabelResourceId=0, negativeEnabledLabelResourceId=0, _isSupportNegative=0, descriptionResourceId=0, iconResourceId=2131231565, configActivity=null, category=null, defaultParameter=null, defaultParameterLabel=null, uri=null, correctParam=null, parameterSpecSet=null, supportState=1, attributes=display_description, version=1, defaultLabel=Uruchom ręcznie), _instance=ConditionInstance(id=2, uuid=7519240028676705259, routineId=2, parameterRepresentation=Uruchom ręcznie po naciśnięciu przycisku lub widgetu start, param=null, isNegative=0, timestamp=0, validState=1, extra=, _triggerStatus=0))
+06-13 12:47:02.695 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.696 27410 27518 E Routine@Core[4.9.07.7]: ResultCode.FailCustomCode: fromValidState: failed to parse. validState=0x1
+06-13 12:47:02.696 27410 27518 I Routine@Core[4.9.07.7]: TASKD/ConditionTaskAdapterFactoryImpl: getAdapter - metaId=manual_execute(id=28)
+06-13 12:47:02.698 27410 27518 I Routine@Core[4.9.07.7]: ManualExecutionConditionHandler: isSatisfied: tag=manual_execute, result=NOT_SATISFIED
+06-13 12:47:02.698 27410 27518 I Routine@Core[4.9.07.7]: COORD/BasicConditionController: evaluateTriggerStatus: isSatisfied=false (conditionId=manual_execute(id=2, uuid=751924, routineId=2))
+06-13 12:47:02.701 27410 27518 I Routine@Core[4.9.07.7]: COORD/ConditionProgressCallback: doTriggerOff: routineState=READY (routineId=2(uuid=000101, name=Jazda)[READY]) (conditionId=manual_execute(id=2, uuid=751924, routineId=2))
+06-13 12:47:02.705 27410 27518 I Routine@Core[4.9.07.7]: ModeTriggerHandler: onTriggerOffCondition: routineId=2(uuid=000101, name=Jazda)[READY], triggeredOffConditionId=manual_execute(id=2, uuid=751924, routineId=2)
+06-13 12:47:02.705 27410 27518 I Routine@Core[4.9.07.7]: ModeTriggerHandler: resolveModeOffSuggestion: not running. routineId=2(uuid=000101, name=Jazda)[READY]
+06-13 12:47:02.708 27410 27518 I Routine@Core[4.9.07.7]: COORD/RoutineCommandHandlerImpl: needEndRunning: routineState=READY (routineId=2(uuid=000101, name=Jazda)[READY])
+06-13 12:47:02.708 27410 27518 W Routine@Core[4.9.07.7]: COORD/RoutineCommandHandlerImpl: needEndRunning: not handled status. routineState=READY
+06-13 12:47:02.708 27410 27579 I Routine@Core[4.9.07.7]: COORD/CoordinatorRequestHandler: onCallReceive: released! method=specific_condition_state_changed
+06-13 12:47:02.708 27410 27579 I Routine@Core[4.9.07.7]: ProcessUtils: setProcessImportant: needForeground=false, reason=ENGINE_COORDINATOR
+06-13 12:47:02.710 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onSpecificConditionStateChanged.onComplete: instancedUuid=7519240028676705259
+06-13 12:47:02.710 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onStartCommand.onConditionStateChanged: result=true
+06-13 12:47:02.711 27410 27410 I Routine@Core[4.9.07.7]: RoutineEngineService: onDestroy
+06-13 12:47:02.733 27410 27577 I Routine@Core[4.9.07.7]: InstanceCleaner: clean() - listToDelete is Empty !
+06-13 12:47:02.733 27410 27577 I Routine@Core[4.9.07.7]: InstanceCleaner: clean() - end
+06-13 12:47:02.745 27410 27577 I Routine@Core[4.9.07.7]: RoutineService: onMetadataLoadingCompleted.onComplete
+06-13 12:47:02.747 27410 27410 I Routine@Core[4.9.07.7]: RoutineService: onDestroy
+06-13 12:47:02.805 28436 28441 W om.lynxmask.app: userfaultfd: MOVE ioctl seems unsupported: Try again
+06-13 12:47:02.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347622
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:02.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:02.876  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:02.876  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:02.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:02.971 27410 28454 I Routine@Core[4.9.07.7]: RunningNotificationUpdater: update
+06-13 12:47:02.985 27410 28454 I Routine@Core[4.9.07.7]: RunningNotificationUpdater: updateNotificationImpl: no running routines, then noti cancel
+06-13 12:47:02.985 27410 28454 I Routine@Core[4.9.07.7]: NotificationUpdateService: Stop no more task
+06-13 12:47:02.989  1331  1420 I VSyncReactor: Current= 120, Period= 120, hwcPeriod= 120
+06-13 12:47:02.991 27410 27410 I Routine@Core[4.9.07.7]: RoutineApplication: onTrimMemory: level : 40
+06-13 12:47:03.207 29887 29887 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.gmscompliance.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentBoundBrokerService }
+06-13 12:47:03.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347623
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:03.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:03.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:03.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:03.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:03.896  2686 20191 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 23 up
+06-13 12:47:03.988  1331  1420 I VSyncReactor: Current= 120, Period= 120, hwcPeriod= 120
+06-13 12:47:03.991  2410  2410 I LockscreenNotificationIconsOnlyController: onNotificationInfoUpdated 0
+06-13 12:47:03.991  2410  2410 I AODNotificationManager: updateNotification()
+06-13 12:47:04.004  1331  1331 I SurfaceFlinger: SFWD update time=254225484382273
+06-13 12:47:04.522  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:8D:CF, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-87, periodicAdvInt=0x0
+06-13 12:47:04.527 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]OVEN[DeviceInfoVersion]1[DeviceStatus]1,2,
+06-13 12:47:04.715  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-65, periodicAdvInt=0x0
+06-13 12:47:04.717  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:04.720 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:04.725  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27721, isSameBssidAndFreq true
+06-13 12:47:04.727  2410  2572 D Tile.WifiTile: handleUpdateState isTransient=false transientEnabling =false cb.isTransient=false state.state = 2 mStateBeforeClick.value =false enabled =true
+06-13 12:47:04.738  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:5C:98, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-91, periodicAdvInt=0x0
+06-13 12:47:04.744 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,44,18,1,3,0,22,18,3,1,-16,4,1,-16,
+06-13 12:47:04.827  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:8D:CF, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-88, periodicAdvInt=0x0
+06-13 12:47:04.832 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]OVEN[DeviceInfoVersion]1[DeviceStatus]1,2,
+06-13 12:47:04.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347624
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:04.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:04.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:04.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:04.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:04.896  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:5C:98, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-87, periodicAdvInt=0x0
+06-13 12:47:04.901 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,44,18,1,3,0,22,18,3,1,-16,4,1,-16,
+06-13 12:47:04.925 28436 28451 D LookupTables: Załadowano: 2082 form imion, 14094 form nazwisk, 107505 nazw ulic (z wariantami ASCII). Przykład: arkadiuszem=true, szymanski=true, lipowa=true
+06-13 12:47:04.925  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-68, periodicAdvInt=0x0
+06-13 12:47:04.926  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-66, periodicAdvInt=0x0
+06-13 12:47:04.931 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:04.935 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:04.960 28436 28455 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+06-13 12:47:04.968 28436 28458 D DecoupledTextDelegate: Start loading thick OCR module.
+06-13 12:47:04.969 28436 28451 I System.out:
+06-13 12:47:04.969 28436 28451 I System.out: [BENCHMARK] Dokumentów: 50
+06-13 12:47:04.969 28436 28451 I System.out: ────────────────────────────────────────────────────────────────────────
+06-13 12:47:04.970 28436 28458 I DynamiteModule: Considering local module com.google.mlkit.dynamite.text.latin:10000 and remote module com.google.mlkit.dynamite.text.latin:0
+06-13 12:47:04.970 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:04.970 28436 28458 I DynamiteModule: Selected local version of com.google.mlkit.dynamite.text.latin
+06-13 12:47:04.971 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.017 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.022  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-65, periodicAdvInt=0x0
+06-13 12:47:05.024 29887 29887 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.common.telemetry.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+06-13 12:47:05.028 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:05.045  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:5C:98, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-91, periodicAdvInt=0x0
+06-13 12:47:05.049 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,44,18,1,3,0,22,18,3,1,-16,4,1,-16,
+06-13 12:47:05.055 28436 28461 D nativeloader: Load /data/app/~~3M8TDp1Zmn425Vnrd6773A==/com.lynxmask.app-QXOlr5eBHXD7U5fv0sOKjQ==/base.apk!/lib/arm64-v8a/libmlkit_google_ocr_pipeline.so using class loader ns clns-9 (caller=/data/app/~~3M8TDp1Zmn425Vnrd6773A==/com.lynxmask.app-QXOlr5eBHXD7U5fv0sOKjQ==/base.apk!classes7.dex): ok
+06-13 12:47:05.061 28436 28461 I native  : I0000 00:00:1781347625.061130   28461 asset_manager_util.cc:61] Created global reference to asset manager.
+06-13 12:47:05.100 28436 28455 D TransportRuntime.SQLiteEventStore: Storing event with priority=DEFAULT, name=FIREBASE_ML_SDK for destination cct
+06-13 12:47:05.105 28436 28455 D TransportRuntime.JobInfoScheduler: Scheduling upload for context TransportContext(cct, DEFAULT, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) with jobId=-1137695815 in 30000ms(Backend next call timestamp 0). Attempt 1
+06-13 12:47:05.108  1666  4826 D ConnectivityManager: StackLog: [android.net.ConnectivityManager.sendRequestForNetwork(ConnectivityManager.java:4740)] [android.net.ConnectivityManager.registerDefaultNetworkCallbackForUid(ConnectivityManager.java:5465)] [com.android.server.job.controllers.ConnectivityController.registerPendingUidCallbacksLocked(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:96)] [com.android.server.job.controllers.ConnectivityController.updateConstraintsSatisfied(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:12)] [com.android.server.job.controllers.ConnectivityController.maybeStartTrackingJobLocked(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:57)] [com.android.server.job.JobSchedulerService.startTrackingJobLocked(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:138)] [com.android.server.job.JobSchedulerService.scheduleAsPackage(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:945)] [com.android.server.job.JobSchedulerService$JobSchedulerStub.schedule(qb/109433444 95132b9b0f7291ccb449ab572e3c43aae8333a54c8b9e5a03af069f9e7373e27:76)] [android.app.job.IJobScheduler$Stub.onTransact(IJobScheduler.java:244)]
+06-13 12:47:05.108  1666  4826 D ConnectivityService: requestNetwork for uid/pid:1000/1666 asUid: 10504 activeRequest: null callbackRequest: 18170 [NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|BLK
+06-13 12:47:05.109  1666  2214 D ConnectivityService:    accepting network in place of null for NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]
+06-13 12:47:05.111  1666  2203 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]
+06-13 12:47:05.112  1666  2203 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]
+06-13 12:47:05.114  1666  2203 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]
+06-13 12:47:05.114  1666  2214 D ConnectivityService: Rematched networks [computed 0ms] [applied 2ms] [issued 3]
+06-13 12:47:05.114  1666  2214 D ConnectivityService: NetworkReassignment :
+06-13 12:47:05.114  1666  2214 D ConnectivityService:   18171 : null → 131
+06-13 12:47:05.114 28436 28455 D TransportRuntime.SQLiteEventStore: Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+06-13 12:47:05.114  1666  2203 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18171, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10504 RequestorUid: 1000 RequestorPkg: android UnderlyingNetworks: Null] ]
+06-13 12:47:05.118 28436 28455 D TransportRuntime.JobInfoScheduler: Scheduling upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) with jobId=-1132715078 in 86400000ms(Backend next call timestamp 0). Attempt 1
+06-13 12:47:05.122 28436 28455 D TransportRuntime.SQLiteEventStore: Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+06-13 12:47:05.125 28436 28455 D TransportRuntime.JobInfoScheduler: Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+06-13 12:47:05.164 28436 28461 I Manager : DeviceManager::DeviceManager
+06-13 12:47:05.165 28436 28461 W ServerFlag: Failed to parse result of GetServerConfigurableFlag, errno=34
+06-13 12:47:05.166 28436 28461 I Manager : findAvailableDevices
+06-13 12:47:05.195 28436 28461 I Manager : Found interface eden-drv (version = EdenDriver_1_3)
+06-13 12:47:05.208 28436 28467 W libc    : Access denied finding property "ro.mediatek.platform"
+06-13 12:47:05.218 28436 28467 I native  : I0000 00:00:1781347625.218584   28467 resource_manager.cc:23] Number of optimal threads: 2
+06-13 12:47:05.219 28436 28467 I native  : I0000 00:00:1781347625.219575   28467 text_detector_thread_pool_context.cc:38] Compute manager max in flight region detector overwrite: 1
+06-13 12:47:05.219 28436 28466 I native  : I0000 00:00:1781347625.219780   28466 text_classifier.cc:32] Creating classifier TfliteTextClassifier
+06-13 12:47:05.221 28436 28466 I native  : I0000 00:00:1781347625.221196   28466 common_util.h:41] Resizing Thread Pool: ocr_segm to 3
+06-13 12:47:05.221 28436 28467 I native  : I0000 00:00:1781347625.221243   28467 common_util.h:41] Resizing Thread Pool: ocr_det_0 to 3
+06-13 12:47:05.223 28436 28467 I native  : I0000 00:00:1781347625.223352   28467 tflite_detector_client_with_shape_cache.cc:76] Interpreter threads: 2
+06-13 12:47:05.223 28436 28467 I tflite  : Initialized TensorFlow Lite runtime.
+06-13 12:47:05.225 28436 28466 I native  : I0000 00:00:1781347625.225288   28466 tflite_lstm_client_base.cc:371] Resizing interpreter pool to 4
+06-13 12:47:05.227 28436 28467 I tflite  : Created TensorFlow Lite XNNPACK delegate for CPU.
+06-13 12:47:05.228 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.229 28436 28467 I native  : I0000 00:00:1781347625.229302   28467 tflite_detector_client_with_shape_cache.cc:105] Caching size: 10
+06-13 12:47:05.230 28436 28467 I native  : I0000 00:00:1781347625.230135   28467 multi_pass_line_recognition_mutator.cc:342] Preloading recognizers.
+06-13 12:47:05.230  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-76, periodicAdvInt=0x0
+06-13 12:47:05.230 28436 28466 I native  : I0000 00:00:1781347625.230439   28466 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/layout/line_splitting_custom_ops/model.tflite
+06-13 12:47:05.231 28436 28466 I native  : I0000 00:00:1781347625.231352   28466 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 1
+06-13 12:47:05.231 28436 28475 I native  : I0000 00:00:1781347625.231771   28475 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/gocr_models/line_recognition_legacy_mobile/Latn_ctc/optical/conv_model.fb
+06-13 12:47:05.232 28436 28475 I native  : I0000 00:00:1781347625.232265   28475 tflite_model_pooled_runner.cc:636] Loading mlkit-google-ocr-models/gocr/gocr_models/line_recognition_legacy_mobile/Latn_ctc/optical/lstm_model.fb
+06-13 12:47:05.234 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:05.234 28436 28466 I native  : I0000 00:00:1781347625.234679   28466 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/layout/line_clustering_custom_ops/model.tflite
+06-13 12:47:05.235 28436 28466 I native  : I0000 00:00:1781347625.235150   28466 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 1
+06-13 12:47:05.237 28436 28475 I native  : I0000 00:00:1781347625.237162   28475 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 4
+06-13 12:47:05.239 28436 28475 I native  : I0000 00:00:1781347625.239374   28475 mobile_langid_v2.cc:58] MobileLangID V2 initialized.
+06-13 12:47:05.239 28436 28475 I native  : I0000 00:00:1781347625.239505   28475 multi_pass_line_recognition_mutator.cc:364] Finished preloading a recognizer for "Latn"
+06-13 12:47:05.239 28436 28467 I native  : I0000 00:00:1781347625.239595   28467 multi_pass_line_recognition_mutator.cc:398] Finished preloading recognizers.
+06-13 12:47:05.242 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:05.242 28436 28461 I om.lynxmask.app: hiddenapi: Accessing hidden field Landroid/graphics/Bitmap;->mNativePtr:J (runtime_flags=0, domain=platform, api=unsupported) from Lcom/google/android/libraries/vision/visionkit/pipeline/alt/zbc; (domain=app, TargetSdkVersion=36) using JNI: allowed
+06-13 12:47:05.242 28436 28461 I native  : I0000 00:00:1781347625.242628   28461 scheduler.cc:693] ImageMetadata: 1240x1754
+06-13 12:47:05.255 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.270 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.287 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.329 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.334 28436 28467 I tflite  : Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+06-13 12:47:05.519 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:05.561 28436 28455 D TransportRuntime.SQLiteEventStore: Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+06-13 12:47:05.563 28436 28455 D TransportRuntime.JobInfoScheduler: Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+06-13 12:47:05.571 28436 28455 D TransportRuntime.SQLiteEventStore: Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+06-13 12:47:05.573 28436 28455 D TransportRuntime.JobInfoScheduler: Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+06-13 12:47:05.617 28436 28451 W PSE_OSOBA: OSOBA_001 → "Barbara Kolow"  [access$pseudonymize$assignToken]
+06-13 12:47:05.663  9823 18279 I SSS:SmsOtpRetrieverTask:  TimeOut!
+06-13 12:47:05.685 28436 28451 I System.out:   [  1] doc_00000.png        faktura                lvl=3 R=50% P=50% ⚠CRIT:1
+06-13 12:47:05.685 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:05.686 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.707 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.709 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:05.814 28168 28264 I Finsky:background: [432] playLoggingServerUrl: https://play.googleapis.com/play/log
+06-13 12:47:05.814 28168 28264 I Finsky:background: [432] playLoggingServerTimestampUrl: https://play.googleapis.com/play/log/timestamp
+06-13 12:47:05.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347625
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:05.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:05.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:05.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:05.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:05.883 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:05.919 28436 28451 W PSE_OSOBA: OSOBA_001 → "Tadeusz Wieczorek"  [access$pseudonymize$assignToken]
+06-13 12:47:05.945 28436 28451 I System.out:   [  2] doc_00001.png        faktura                lvl=0 R=87% P=63%
+06-13 12:47:05.945 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:05.945 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.966 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:05.968 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:06.139 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:06.144  1303  1499 I EDEN    : [Exynos][EDEN][v1.6.23][SERVICE] processAliveMointorMain:253: Try to check pid=(1292)...
+06-13 12:47:06.167 28436 28451 W PSE_OSOBA: OSOBA_001 → "Paweł Szymański"  [access$pseudonymize$assignToken]
+06-13 12:47:06.168 28436 28451 W PSE_OSOBA: OSOBA_002 → "Piotr Kozłowski"  [access$pseudonymize$assignToken]
+06-13 12:47:06.174 28436 28451 W PSE_OSOBA: OSOBA_003 → "zameldowania"  [access$pseudonymize$assignToken]
+06-13 12:47:06.175 28436 28451 W PSE_OSOBA: OSOBA_004 → "SŁU"  [access$pseudonymize$assignToken]
+06-13 12:47:06.195 28436 28451 I System.out:   [  3] doc_00002.png        notatka                lvl=0 R=100% P=71%
+06-13 12:47:06.196 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:06.196 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.235 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.237 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:06.411 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:06.439 28436 28451 W PSE_OSOBA: OSOBA_001 → "Mateusz Woźniak"  [access$pseudonymize$assignToken]
+06-13 12:47:06.448 28436 28451 W PSE_OSOBA: OSOBA_002 → "Wydziatu"  [access$pseudonymize$assignToken]
+06-13 12:47:06.449 28436 28451 W PSE_OSOBA: OSOBA_003 → "nicznie"  [access$pseudonymize$assignToken]
+06-13 12:47:06.465 28436 28451 I System.out:   [  4] doc_00003.png        pismo_urzedowe         lvl=1 R=80% P=50%
+06-13 12:47:06.466 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:06.466 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.516 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.518 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:06.668 28436 28495 D ProfileInstaller: Installing profile for com.lynxmask.app
+06-13 12:47:06.677 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:06.700 28436 28451 W PSE_OSOBA: OSOBA_001 → "Bartosz Dudek"  [access$pseudonymize$assignToken]
+06-13 12:47:06.707 28436 28451 W PSE_OSOBA: OSOBA_002 → "SŁU"  [access$pseudonymize$assignToken]
+06-13 12:47:06.718 28436 28451 I System.out:   [  5] doc_00004.png        notatka                lvl=3 R=60% P=60%
+06-13 12:47:06.719 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:06.719 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.761 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:06.762 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:06.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347626
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:06.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:06.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:06.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:06.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:06.966 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:07.004 28436 28451 W PSE_OSOBA: OSOBA_001 → "Iwona Adamczyk"  [access$pseudonymize$assignToken]
+06-13 12:47:07.032 28436 28451 I System.out:   [  6] doc_00005.png        decyzja_administracyjna lvl=1 R=80% P=80%
+06-13 12:47:07.033 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:07.033 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.076 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.077 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:07.225 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:07.250 28436 28451 W PSE_OSOBA: OSOBA_001 → "Edyta Zajace"  [access$pseudonymize$assignToken]
+06-13 12:47:07.251 28436 28451 W PSE_OSOBA: OSOBA_002 → "Edyta Zając"  [access$pseudonymize$assignToken]
+06-13 12:47:07.259 28436 28451 W PSE_OSOBA: OSOBA_003 → "wydziatu"  [access$pseudonymize$assignToken]
+06-13 12:47:07.275 28436 28451 I System.out:   [  7] doc_00006.png        pismo_urzedowe         lvl=3 R=60% P=42% ⚠CRIT:1
+06-13 12:47:07.276 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:07.276 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.328 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.329 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:07.504 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:07.533 28436 28451 W PSE_OSOBA: OSOBA_001 → "Jakub Dudek"  [access$pseudonymize$assignToken]
+06-13 12:47:07.549 28436 28451 I System.out:   [  8] doc_00007.png        faktura                lvl=2 R=75% P=66%
+06-13 12:47:07.549 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:07.550 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.588 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.589 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:07.740  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:07.746  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27722, isSameBssidAndFreq true
+06-13 12:47:07.748  2410  2572 D Tile.WifiTile: handleUpdateState isTransient=false transientEnabling =false cb.isTransient=false state.state = 2 mStateBeforeClick.value =false enabled =true
+06-13 12:47:07.751  1331  1420 I VSyncReactor: Current= 120, Period= 120, hwcPeriod= 120
+06-13 12:47:07.799 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:07.839 28436 28451 W PSE_OSOBA: OSOBA_001 → "Kamil Wiśniewski"  [access$pseudonymize$assignToken]
+06-13 12:47:07.840 28436 28451 W PSE_OSOBA: OSOBA_002 → "Anna Wieczorek"  [access$pseudonymize$assignToken]
+06-13 12:47:07.845 28436 28451 W PSE_OSOBA: OSOBA_003 → "Anna WVieczorek"  [access$pseudonymize$assignToken]
+06-13 12:47:07.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347627
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:07.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:07.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:07.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:07.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:07.881 28436 28451 I System.out:   [  9] doc_00008.png        umowa                  lvl=1 R=88% P=72% ⚠CRIT:1
+06-13 12:47:07.882 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:07.882 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.892 27989 28016 I Finsky  : [440] Initializing the instant apps module.
+06-13 12:47:07.913 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:07.914 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:08.084 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:08.111 28436 28451 W PSE_OSOBA: OSOBA_001 → "Jakub Kamiński"  [access$pseudonymize$assignToken]
+06-13 12:47:08.135 28436 28451 I System.out:   [ 10] doc_00009.png        pismo_urzedowe         lvl=0 R=80% P=80%
+06-13 12:47:08.135 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:08.135 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.164 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.164 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:08.326  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-74, periodicAdvInt=0x0
+06-13 12:47:08.330 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:08.379 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:08.416 28436 28451 W PSE_OSOBA: OSOBA_001 → "Barbara Pawłowska"  [access$pseudonymize$assignToken]
+06-13 12:47:08.422 28436 28451 W PSE_OSOBA: OSOBA_002 → "Barbara Pawlowska"  [access$pseudonymize$assignToken]
+06-13 12:47:08.458 28436 28451 I System.out:   [ 11] doc_00010.png        umowa                  lvl=0 R=77% P=70%
+06-13 12:47:08.459 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:08.459 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.481  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-77, periodicAdvInt=0x0
+06-13 12:47:08.486 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:08.507 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.508 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:08.578  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:8D:CF, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-89, periodicAdvInt=0x0
+06-13 12:47:08.584 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]OVEN[DeviceInfoVersion]1[DeviceStatus]1,2,
+06-13 12:47:08.635  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-77, periodicAdvInt=0x0
+06-13 12:47:08.640 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:08.687 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:08.724 28436 28451 W PSE_OSOBA: OSOBA_001 → "Marek Dudek"  [access$pseudonymize$assignToken]
+06-13 12:47:08.734  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:8D:CF, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-90, periodicAdvInt=0x0
+06-13 12:47:08.737 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]OVEN[DeviceInfoVersion]1[DeviceStatus]1,2,
+06-13 12:47:08.739 28436 28451 W PSE_OSOBA: OSOBA_002 → "informacji uzyskanych"  [access$pseudonymize$assignToken]
+06-13 12:47:08.748 28436 28451 I System.out:   [ 12] doc_00011.png        umowa                  lvl=3 R=66% P=66%
+06-13 12:47:08.748 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:08.748 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.782 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:08.782 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:08.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347628
+06-13 12:47:08.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:08.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:08.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:08.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:08.877  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:08.877  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:08.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:08.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:08.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:08.946 29887 27458 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+06-13 12:47:08.952 28318 17327 I PlayGamesServices[GamesSyncAdapter]: Starting sync for c0edd3b9
+06-13 12:47:08.955 28318 17327 I PlayGamesServices[GamesSyncAdapter]: Sync duration for c0edd3b9: 2
+06-13 12:47:08.956 29887 27719 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+06-13 12:47:08.961 28318 28258 I PlayGamesServices[GamesSyncAdapter]: Starting sync for b1681f5a
+06-13 12:47:08.962 28318 28258 I PlayGamesServices[GamesSyncAdapter]: Sync duration for b1681f5a: 1
+06-13 12:47:08.970 28318 17327 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+06-13 12:47:08.973 28318 28258 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+06-13 12:47:08.978 29887 28236 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+06-13 12:47:08.985 29887 28236 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+06-13 12:47:08.986 28318 29400 W PlayGamesServices[UiUtils]: AppVersion: Cannot find the installed destination app.
+06-13 12:47:08.986 28318 29400 I GetServiceValidatorImpl: (REDACTED) onGetService() from Client SDK version [%s], Module version [%s], PGA version [%s], Account [%s], Calling package [%s], Game package [%s]
+06-13 12:47:08.988 28318 29400 I GetGamesServiceReqFacto: (REDACTED) Parsing request with ignored arguments. signInOptionsBundle [%s], isRetryingSignIn [%s], skipWelcomePopup [%s], requireGooglePlus [%s]
+06-13 12:47:08.988 28318 29400 I GetGamesServiceReqFacto: Replacing request for `games` scope with `games_lite`
+06-13 12:47:09.000 28318 28500 I SignInPerformer-4: (REDACTED) Handling request [%s], isFirstPartyCaller [%s]
+06-13 12:47:09.001 28318 28500 I SignInPerformer-4: Successfully brokered first-party unauthenticated GamesService [CONTEXT service_id=1 ]
+06-13 12:47:09.001 28318 28500 I GetGamesServiceV2Op: (REDACTED) Successfully brokered GamesService for request %s
+06-13 12:47:09.002 28318 29400 W PlayGamesServices[UiUtils]: AppVersion: Cannot find the installed destination app.
+06-13 12:47:09.002 28318 29400 W PlayGamesServices[UiUtils]: AppVersionName: Cannot find the installed destination app.
+06-13 12:47:09.006 28318 29400 W PlayGamesServices[UiUtils]: AppVersion: Cannot find the installed destination app.
+06-13 12:47:09.006 28318 29400 W PlayGamesServices[UiUtils]: AppVersionName: Cannot find the installed destination app.
+06-13 12:47:09.010 29887 27719 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+06-13 12:47:09.015 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:09.022 27989 27989 I Finsky  : [2] setup::RES: shouldRecoverRestoredPackages: versionCodeSystem 84571730
+06-13 12:47:09.023 27989 27989 I Finsky  : [2] Detected restoreservicev2://recovery not needed, will not run
+06-13 12:47:09.027  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-65, periodicAdvInt=0x0
+06-13 12:47:09.029 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:09.032 29887 28236 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+06-13 12:47:09.034  1666  2214 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+06-13 12:47:09.035  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:8D:CF, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-86, periodicAdvInt=0x0
+06-13 12:47:09.035  1666  2214 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+06-13 12:47:09.035  1666  2214 D InetDiagMessage: Destroyed live tcp sockets for uids={5012} in 4ms
+06-13 12:47:09.037 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]OVEN[DeviceInfoVersion]1[DeviceStatus]1,2,
+06-13 12:47:09.050 28436 28451 W PSE_OSOBA: OSOBA_001 → "Tadeusz Pawłowski"  [access$pseudonymize$assignToken]
+06-13 12:47:09.055 27989 28169 I Finsky  : [482] registerListener
+06-13 12:47:09.056 27989 28169 I Finsky  : [482] DSC: reviveDownloads()
+06-13 12:47:09.056 27989 28169 I Finsky  : [482] Initialized AssetModuleDownloader.
+06-13 12:47:09.057 28436 28451 W PSE_OSOBA: OSOBA_002 → "Tadeusz Paiowski"  [access$pseudonymize$assignToken]
+06-13 12:47:09.059 28168 28303 I Finsky:background: [443] DS: reviveDownloads()
+06-13 12:47:09.078 28168 28506 D ConnectivityManager: StackLog: [android.net.ConnectivityManager.sendRequestForNetwork(ConnectivityManager.java:4740)] [android.net.ConnectivityManager.registerDefaultNetworkCallbackForUid(ConnectivityManager.java:5465)] [android.net.ConnectivityManager.registerDefaultNetworkCallback(ConnectivityManager.java:5432)] [android.net.ConnectivityManager.registerDefaultNetworkCallback(ConnectivityManager.java:5406)] [vgz.a(PG:17)] [qqi.aA(PG:1)] [qqh.j(PG:2203)] [qqh.a(PG:48)] [caxs.d(PG:10)] [caxs.a(PG:7)] [caxr.a(PG:5)] [caxs.d(PG:10)] [caxs.a(PG:7)] [utg.a(PG:771)] [bnyf.d(PG:3)] [bnyh.run(PG:47)] [java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)] [java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)] [vyn.run(PG:415)] [java.lang.Thread.run(Thread.java:1564)]
+06-13 12:47:09.080  1666  4826 D ConnectivityService: requestNetwork for uid/pid:10230/28168 activeRequest: null callbackRequest: 18172 [NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST
+06-13 12:47:09.081  1666  2214 D ConnectivityService:    accepting network in place of null for NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+06-13 12:47:09.083 28168 28332 I Finsky:background: [450] DS: Network is available [NetworkState{connected=true, wifi=true, metered=false, roaming=false}].
+06-13 12:47:09.083 28168 28332 I Finsky:background: [450] DS: Updating downloads for network change
+06-13 12:47:09.084  1666  2203 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+06-13 12:47:09.084  1666  2203 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+06-13 12:47:09.085  1666  2203 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+06-13 12:47:09.085  1666  2203 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=18173, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10230 RequestorUid: 10230 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+06-13 12:47:09.085  1666  2214 D ConnectivityService: Rematched networks [computed 0ms] [applied 2ms] [issued 2]
+06-13 12:47:09.085  1666  2214 D ConnectivityService: NetworkReassignment :
+06-13 12:47:09.085  1666  2214 D ConnectivityService:   18173 : null → 131
+06-13 12:47:09.086 28168 28506 I Finsky:background: [469] DS: downloadState filtering results: {305=false}
+06-13 12:47:09.094 28436 28451 I System.out:   [ 13] doc_00012.png        umowa                  lvl=1 R=88% P=80%
+06-13 12:47:09.094 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:09.095 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.132 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.132 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:09.159 28168 28185 W ding:background: userfaultfd: MOVE ioctl seems unsupported: Connection timed out
+06-13 12:47:09.249 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:09.264 28436 28451 W PSE_OSOBA: OSOBA_001 → "Joanna Wożniak"  [access$pseudonymize$assignToken]
+06-13 12:47:09.267 28436 28451 W PSE_OSOBA: OSOBA_002 → "mail
+06-13 12:47:09.267 28436 28451 W PSE_OSOBA: joanna"  [access$pseudonymize$assignToken]
+06-13 12:47:09.283 28436 28451 I System.out:   [ 14] doc_00013.png        formularz              lvl=3 R=66% P=75%
+06-13 12:47:09.284 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:09.284 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.335 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.336 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:09.515 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:09.540 28436 28451 W PSE_OSOBA: OSOBA_001 → "SŁU"  [access$pseudonymize$assignToken]
+06-13 12:47:09.544 28436 28451 I System.out:   [ 15] doc_00014.png        notatka                lvl=3 R=60% P=75%
+06-13 12:47:09.544 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:09.545 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.590 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.591 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:09.736 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:09.757 28436 28451 W PSE_OSOBA: OSOBA_001 → "Marcin Wisniewski"  [access$pseudonymize$assignToken]
+06-13 12:47:09.758 28436 28451 W PSE_OSOBA: OSOBA_002 → "Jana Pata"  [access$pseudonymize$assignToken]
+06-13 12:47:09.788 28436 28451 I System.out:   [ 16] doc_00015.png        pismo_urzedowe         lvl=3 R=60% P=50%
+06-13 12:47:09.789 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:09.789 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.816 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:09.816 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:09.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347629
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:09.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:09.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:09.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:09.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:09.951 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:09.973 28436 28451 W PSE_OSOBA: OSOBA_001 → "Jan Nowakowski"  [access$pseudonymize$assignToken]
+06-13 12:47:09.988 28436 28451 I System.out:   [ 17] doc_00016.png        faktura                lvl=0 R=87% P=70%
+06-13 12:47:09.989 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:09.989 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.027 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.028 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:10.058 29887 29887 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.common.telemetry.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+06-13 12:47:10.193 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:10.219 28436 28451 W PSE_OSOBA: OSOBA_001 → "Maciej Zając"  [access$pseudonymize$assignToken]
+06-13 12:47:10.220 28436 28451 W PSE_OSOBA: OSOBA_002 → "Maciej Zajac"  [access$pseudonymize$assignToken]
+06-13 12:47:10.231 28436 28451 W PSE_OSOBA: OSOBA_003 → "doręczernia niniejszego"  [access$pseudonymize$assignToken]
+06-13 12:47:10.251 28436 28451 I System.out:   [ 18] doc_00017.png        wezwanie               lvl=1 R=60% P=42% ⚠CRIT:1
+06-13 12:47:10.251 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:10.252 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.276 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.276 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:10.470 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:10.501 28436 28451 W PSE_OSOBA: OSOBA_001 → "Jakub Nowakowski"  [access$pseudonymize$assignToken]
+06-13 12:47:10.502 28436 28451 W PSE_OSOBA: OSOBA_002 → "Paulina Kwiatkowska"  [access$pseudonymize$assignToken]
+06-13 12:47:10.541 28436 28451 I System.out:   [ 19] doc_00018.png        umowa                  lvl=0 R=77% P=87%
+06-13 12:47:10.542 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:10.542 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.573 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.574 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:10.734 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:10.751 28436 28451 W PSE_OSOBA: OSOBA_001 → "Dariusz Jankowski"  [access$pseudonymize$assignToken]
+06-13 12:47:10.752 28436 28451 W PSE_OSOBA: OSOBA_002 → "dariusz jankowsi"  [access$pseudonymize$assignToken]
+06-13 12:47:10.758  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:10.762  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27723, isSameBssidAndFreq true
+06-13 12:47:10.774 28436 28451 I System.out:   [ 20] doc_00019.png        formularz              lvl=2 R=50% P=71% ⚠CRIT:1
+06-13 12:47:10.774 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:10.774 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.829 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:10.829 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:10.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347630
+06-13 12:47:10.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:10.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:10.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:10.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:10.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:10.877  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:10.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:10.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:10.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:10.963 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:10.982 28436 28451 W PSE_OSOBA: OSOBA_001 → "Jana Pavwla"  [access$pseudonymize$assignToken]
+06-13 12:47:10.999 28436 28451 I System.out:   [ 21] doc_00020.png        faktura                lvl=3 R=87% P=53%
+06-13 12:47:11.000 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:11.000 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.031 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.032 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:11.145  1303  1499 I EDEN    : [Exynos][EDEN][v1.6.23][SERVICE] processAliveMointorMain:253: Try to check pid=(1292)...
+06-13 12:47:11.182 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:11.204 28436 28451 W PSE_OSOBA: OSOBA_001 → "Maciej Dudek"  [access$pseudonymize$assignToken]
+06-13 12:47:11.227 28436 28451 I System.out:   [ 22] doc_00021.png        decyzja_administracyjna lvl=2 R=33% P=40% ⚠CRIT:1
+06-13 12:47:11.228 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:11.228 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.258 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.259 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:11.425 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:11.451 28436 28451 W PSE_OSOBA: OSOBA_001 → "Renata Lewandowska"  [access$pseudonymize$assignToken]
+06-13 12:47:11.480 28436 28451 I System.out:   [ 23] doc_00022.png        decyzja_administracyjna lvl=1 R=66% P=100%
+06-13 12:47:11.481 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:11.481 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.515 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.515 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:11.645 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:11.672 28436 28451 I System.out:   [ 24] doc_00023.png        faktura                lvl=3 R=75% P=85%
+06-13 12:47:11.673 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:11.673 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.704 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.705 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:11.853 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:11.871 28436 28451 W PSE_OSOBA: OSOBA_001 → "sŁu"  [access$pseudonymize$assignToken]
+06-13 12:47:11.871 28436 28451 W PSE_OSOBA: OSOBA_002 → "oboczych"  [access$pseudonymize$assignToken]
+06-13 12:47:11.874 28436 28451 I System.out:   [ 25] doc_00024.png        notatka                lvl=2 R=20% P=33% ⚠CRIT:1
+06-13 12:47:11.874 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:11.875 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347631
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:11.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:11.876  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:11.876  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:11.876  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:11.909 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:11.910 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:12.033 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:12.048 28436 28451 W PSE_OSOBA: OSOBA_001 → "Adam Wójik"  [access$pseudonymize$assignToken]
+06-13 12:47:12.051 28436 28451 W PSE_OSOBA: OSOBA_002 → "mail
+06-13 12:47:12.051 28436 28451 W PSE_OSOBA: adam"  [access$pseudonymize$assignToken]
+06-13 12:47:12.063 28436 28451 I System.out:   [ 26] doc_00025.png        formularz              lvl=2 R=44% P=57% ⚠CRIT:1
+06-13 12:47:12.063 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:12.064 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.103 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.103 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:12.233 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:12.249 28436 28451 W PSE_OSOBA: OSOBA_001 → "Marta Kwiatkowska"  [access$pseudonymize$assignToken]
+06-13 12:47:12.250 28436 28451 W PSE_OSOBA: OSOBA_002 → "Andrzej Nowakowski"  [access$pseudonymize$assignToken]
+06-13 12:47:12.256 28436 28451 W PSE_OSOBA: OSOBA_003 → "SŁU"  [access$pseudonymize$assignToken]
+06-13 12:47:12.278 28436 28451 I System.out:   [ 27] doc_00026.png        notatka                lvl=3 R=100% P=83%
+06-13 12:47:12.278 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:12.278 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.288  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:5C:98, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-92, periodicAdvInt=0x0
+06-13 12:47:12.293 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,44,18,1,3,0,22,18,3,1,-16,4,1,-16,
+06-13 12:47:12.302 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.303 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:12.377  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-66, periodicAdvInt=0x0
+06-13 12:47:12.381 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:12.410  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-67, periodicAdvInt=0x0
+06-13 12:47:12.416 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:12.479 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:12.505 28436 28451 W PSE_OSOBA: OSOBA_001 → "Marta Wójcik"  [access$pseudonymize$assignToken]
+06-13 12:47:12.526  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-68, periodicAdvInt=0x0
+06-13 12:47:12.530 28436 28451 I System.out:   [ 28] doc_00027.png        decyzja_administracyjna lvl=0 R=80% P=100%
+06-13 12:47:12.531 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:12.531 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:12.531 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.561 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.562 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:12.600  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:5C:98, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-87, periodicAdvInt=0x0
+06-13 12:47:12.607 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,44,18,1,3,0,22,18,3,1,-16,4,1,-16,
+06-13 12:47:12.675 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:12.695 28436 28451 I System.out:   [ 29] doc_00028.png        formularz              lvl=2 R=9% P=50% ⚠CRIT:3
+06-13 12:47:12.695 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:12.696 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.724  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-67, periodicAdvInt=0x0
+06-13 12:47:12.729 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:12.734 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:12.735 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:12.836  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-66, periodicAdvInt=0x0
+06-13 12:47:12.842 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:12.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347632
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:12.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:12.876  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:12.876  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:12.876  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:12.948 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:12.978 28436 28451 W PSE_OSOBA: OSOBA_001 → "Elżbieta Szymańska"  [access$pseudonymize$assignToken]
+06-13 12:47:13.015 28436 28451 I System.out:   [ 30] doc_00029.png        umowa                  lvl=1 R=77% P=87%
+06-13 12:47:13.015 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:13.016 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.054 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.055 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:13.196 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:13.215 28436 28451 W PSE_OSOBA: OSOBA_001 → "Anna Zielińska"  [access$pseudonymize$assignToken]
+06-13 12:47:13.216 28436 28451 W PSE_OSOBA: OSOBA_002 → "Adam Pawlowski"  [access$pseudonymize$assignToken]
+06-13 12:47:13.217 28436 28451 W PSE_OSOBA: OSOBA_003 → "Adam Pawtowsk"  [access$pseudonymize$assignToken]
+06-13 12:47:13.256 28436 28451 I System.out:   [ 31] doc_00030.png        wezwanie               lvl=2 R=40% P=25%
+06-13 12:47:13.257 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:13.257 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.293 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.293 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:13.429 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:13.448 28436 28451 W PSE_OSOBA: OSOBA_001 → "Beata Kwiatkowska"  [access$pseudonymize$assignToken]
+06-13 12:47:13.457 28436 28451 W PSE_OSOBA: OSOBA_002 → "Wydzialu"  [access$pseudonymize$assignToken]
+06-13 12:47:13.468 28436 28451 I System.out:   [ 32] doc_00031.png        pismo_urzedowe         lvl=2 R=60% P=60%
+06-13 12:47:13.469 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:13.469 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.513 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.514 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:13.702 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:13.730 28436 28451 W PSE_OSOBA: OSOBA_001 → "Grzegorz Potrowski"  [access$pseudonymize$assignToken]
+06-13 12:47:13.759 28436 28451 I System.out:   [ 33] doc_00032.png        umowa                  lvl=3 R=66% P=75%
+06-13 12:47:13.760 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:13.760 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.769  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:13.772  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27724, isSameBssidAndFreq true
+06-13 12:47:13.776  2410  2572 D Tile.WifiTile: handleUpdateState isTransient=false transientEnabling =false cb.isTransient=false state.state = 2 mStateBeforeClick.value =false enabled =true
+06-13 12:47:13.776 28318 28318 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.potokens.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsApiService }
+06-13 12:47:13.778  1331  1420 I VSyncReactor: Current= 120, Period= 120, hwcPeriod= 120
+06-13 12:47:13.778 28318 28318 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.safetynet.service.START xflg=0x4 pkg=com.google.android.gms }
+06-13 12:47:13.788 29887 29887 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.auth.aang.events.services.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+06-13 12:47:13.793 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:13.794 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:13.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347633
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:13.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:13.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:13.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:13.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:13.950 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:13.973 28436 28451 W PSE_OSOBA: OSOBA_001 → "Wojciech Kamiński"  [access$pseudonymize$assignToken]
+06-13 12:47:13.998 28436 28451 I System.out:   [ 34] doc_00033.png        wezwanie               lvl=0 R=80% P=66%
+06-13 12:47:13.999 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:13.999 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.019 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.020 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:14.181 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:14.201 28436 28451 W PSE_OSOBA: OSOBA_001 → "Robert Piotrowski"  [access$pseudonymize$assignToken]
+06-13 12:47:14.201 28436 28451 W PSE_OSOBA: OSOBA_002 → "Jana Pawła"  [access$pseudonymize$assignToken]
+06-13 12:47:14.202 28318 28318 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+06-13 12:47:14.230 28436 28451 I System.out:   [ 35] doc_00034.png        pismo_urzedowe         lvl=0 R=80% P=100%
+06-13 12:47:14.231 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:14.231 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.254 18667 18673 W .adservices.api: Reducing the number of considered missed Gc histogram windows from 1505 to 100
+06-13 12:47:14.255  1238  1238 I Zygote  : Process 27207 exited due to signal 9 (Killed)
+06-13 12:47:14.256  1666  1720 I libprocessgroup: Removed cgroup /sys/fs/cgroup/apps/uid_10323/pid_27207
+06-13 12:47:14.265 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.265 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:14.299 17726 17726 I adbd    : Remote process closed the socket (on MSG_PEEK)
+06-13 12:47:14.299  1238  1238 I Zygote  : Process 26122 exited due to signal 9 (Killed)
+06-13 12:47:14.300  1666  1720 I libprocessgroup: Removed cgroup /sys/fs/cgroup/apps/uid_10231/pid_26122
+06-13 12:47:14.369 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:14.384 28436 28451 I System.out:   [ 36] doc_00035.png        formularz              lvl=2 R=12% P=33% ⚠CRIT:2
+06-13 12:47:14.385 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:14.385 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.423 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.424 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:14.581 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:14.601 28436 28451 W PSE_OSOBA: OSOBA_001 → "Tadeusz Wisniewski"  [access$pseudonymize$assignToken]
+06-13 12:47:14.603 28436 28451 W PSE_OSOBA: OSOBA_002 → "Tadeusz Wiśniewski"  [access$pseudonymize$assignToken]
+06-13 12:47:14.612 28436 28451 W PSE_OSOBA: OSOBA_003 → "Sadowwy przy"  [access$pseudonymize$assignToken]
+06-13 12:47:14.613 28436 28451 W PSE_OSOBA: OSOBA_004 → "sadowy zawiadamia"  [access$pseudonymize$assignToken]
+06-13 12:47:14.644 28436 28451 I System.out:   [ 37] doc_00036.png        wezwanie               lvl=1 R=80% P=44%
+06-13 12:47:14.645 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:14.645 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.684 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.684 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:14.847 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:14.867 28436 28451 W PSE_OSOBA: OSOBA_001 → "Piotr Nowacki"  [access$pseudonymize$assignToken]
+06-13 12:47:14.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347634
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:14.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:14.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:14.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:14.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:14.879 28436 28451 W PSE_OSOBA: OSOBA_002 → "sadowy zawiadamia"  [access$pseudonymize$assignToken]
+06-13 12:47:14.891 28436 28451 I System.out:   [ 38] doc_00037.png        wezwanie               lvl=1 R=60% P=37%
+06-13 12:47:14.892 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:14.892 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.929 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:14.930 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:15.089 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:15.109 28436 28451 W PSE_OSOBA: OSOBA_001 → "Marta Kędzierska"  [access$pseudonymize$assignToken]
+06-13 12:47:15.110 28436 28451 W PSE_OSOBA: OSOBA_002 → "Mariusz Michalski"  [access$pseudonymize$assignToken]
+06-13 12:47:15.113 28436 28451 W PSE_OSOBA: OSOBA_003 → "Marta Kedzierska"  [access$pseudonymize$assignToken]
+06-13 12:47:15.150 28436 28451 I System.out:   [ 39] doc_00038.png        wezwanie               lvl=1 R=80% P=50%
+06-13 12:47:15.151 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:15.151 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.182 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.183 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:15.344 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:15.367 28436 28451 W PSE_OSOBA: OSOBA_001 → "od dria"  [access$pseudonymize$assignToken]
+06-13 12:47:15.370 28436 28451 I System.out:   [ 40] doc_00039.png        decyzja_administracyjna lvl=2 R=20% P=33% ⚠CRIT:1
+06-13 12:47:15.370 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:15.370 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.407 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.408 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:15.532 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:15.554 28436 28451 W PSE_OSOBA: OSOBA_001 → "SŁU"  [access$pseudonymize$assignToken]
+06-13 12:47:15.556 28436 28451 I System.out:   [ 41] doc_00040.png        notatka                lvl=0 R=60% P=75%
+06-13 12:47:15.557 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:15.557 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.600 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.601 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:15.791 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:15.817 28436 28451 W PSE_OSOBA: OSOBA_001 → "Barbara Pawłowska"  [access$pseudonymize$assignToken]
+06-13 12:47:15.818 28436 28451 W PSE_OSOBA: OSOBA_002 → "Mateusz Pawowski"  [access$pseudonymize$assignToken]
+06-13 12:47:15.823 28436 28451 W PSE_OSOBA: OSOBA_003 → "Barbara Pawtowska"  [access$pseudonymize$assignToken]
+06-13 12:47:15.823 28436 28451 W PSE_OSOBA: OSOBA_004 → "Mateusz Pawlowski"  [access$pseudonymize$assignToken]
+06-13 12:47:15.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347635
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:15.876  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:15.876  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:15.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:15.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:15.878 28436 28451 I System.out:   [ 42] doc_00041.png        umowa                  lvl=2 R=77% P=63%
+06-13 12:47:15.878 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:15.879 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.917 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:15.918 28436 28492 D PipelineManager: Start process bitmap
+06-13 12:47:16.055 28436 28492 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:16.072 28436 28451 W PSE_OSOBA: OSOBA_001 → "Wojciech Kwiatkowski"  [access$pseudonymize$assignToken]
+06-13 12:47:16.093 28436 28451 I System.out:   [ 43] doc_00042.png        faktura                lvl=1 R=87% P=70%
+06-13 12:47:16.093 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:16.093 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.096  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x10, addressType=0, address=XX:XX:XX:XX:2E:E4, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-76, periodicAdvInt=0x0
+06-13 12:47:16.101 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]WASHER[DeviceInfoVersion]0[DeviceStatus]2,43,0,-16,
+06-13 12:47:16.111  3739  3949 I ScanController: onScanResult to scannerId: 1- eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C7:EE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-65, periodicAdvInt=0x0
+06-13 12:47:16.116 12587 12958 I [+0200]oneconnect[1.8.45.24_01][CORE]: BleParserForDaDevice.parseBlePacket - DeviceBleDa : [name][BleMac]($)28:6B[DeviceType]REFRIGERATOR[DeviceInfoVersion]0[DeviceStatus]4,1,3,1,43,18,1,3,0,21,18,3,1,-16,4,1,-16,
+06-13 12:47:16.125 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.126 28436 28493 D PipelineManager: Start process bitmap
+06-13 12:47:16.146  1303  1499 I EDEN    : [Exynos][EDEN][v1.6.23][SERVICE] processAliveMointorMain:253: Try to check pid=(1292)...
+06-13 12:47:16.252 28436 28493 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:16.268 28436 28451 W PSE_OSOBA: OSOBA_001 → "Robert Nowak"  [access$pseudonymize$assignToken]
+06-13 12:47:16.286 28436 28451 I System.out:   [ 44] doc_00043.png        pismo_urzedowe         lvl=2 R=80% P=80%
+06-13 12:47:16.287 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:16.287 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.311 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.312 28436 28494 D PipelineManager: Start process bitmap
+06-13 12:47:16.510 28436 28494 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:16.527 28436 28451 W PSE_OSOBA: OSOBA_001 → "Maria Wójcik"  [access$pseudonymize$assignToken]
+06-13 12:47:16.528 28436 28451 W PSE_OSOBA: OSOBA_002 → "Maria Wöjcik"  [access$pseudonymize$assignToken]
+06-13 12:47:16.537 28436 28451 W PSE_OSOBA: OSOBA_003 → "Wydziatu"  [access$pseudonymize$assignToken]
+06-13 12:47:16.556 28436 28451 I System.out:   [ 45] doc_00044.png        pismo_urzedowe         lvl=0 R=80% P=57%
+06-13 12:47:16.556 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:16.556 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.599 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.599 28436 28496 D PipelineManager: Start process bitmap
+06-13 12:47:16.746 28436 28496 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:16.766 28436 28451 W PSE_OSOBA: OSOBA_001 → "nin iejszego"  [access$pseudonymize$assignToken]
+06-13 12:47:16.778 28436 28451 I System.out:   [ 46] doc_00045.png        pismo_urzedowe         lvl=1 R=60% P=60%
+06-13 12:47:16.779 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:16.779  1666  2203 D WifiStaIfaceHidlImpl: getCachedScanData is not implemented by HIDL
+06-13 12:47:16.779 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.784  1666  3480 D SemWifiUsabilityStatsMonitor: onWifiUsabilityStats - seqNum 27725, isSameBssidAndFreq true
+06-13 12:47:16.813 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:16.814 28436 28497 D PipelineManager: Start process bitmap
+06-13 12:47:16.876  1315  1333 E HeatmapThread: ECT Thread time in milliseconds: 1781347636
+06-13 12:47:16.876  1315  1333 D HeatmapThread: !@ batteryplugType : 0
+06-13 12:47:16.876  1315  1333 D HeatmapThread: !@ batteryLevel : 0  batteryTemperature : 0
+06-13 12:47:16.876  1315  1333 D HeatmapThread: !@ Heatmap currtime: 29689127
+06-13 12:47:16.876  1315  1333 D HeatmapThread: !@ Heatmap prevtime: 29689125
+06-13 12:47:16.876  1315  1333 D HeatmapThread: !@ Heatmap plugstarttime: 35791394
+06-13 12:47:16.877  1315  1333 D HeatmapThread: !@ Heatmap prevv_dsoh_update_time: 29676968
+06-13 12:47:16.877  1315  1333 E HeatmapThread: !@Could not open '/efs/FactoryApp/bsoh', errno = 13
+06-13 12:47:16.877  1315  1333 E HeatmapThread: !@ CAM Could not access BSOH EFS
+06-13 12:47:16.877  1315  1333 E HeatmapThread: !@ CAM New BSOH: 0
+06-13 12:47:16.944 28436 28497 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:16.960 28436 28451 W PSE_OSOBA: OSOBA_001 → "Grzegorz Adamczyk"  [access$pseudonymize$assignToken]
+06-13 12:47:16.969 28436 28451 W PSE_OSOBA: OSOBA_002 → "Wydziatu"  [access$pseudonymize$assignToken]
+06-13 12:47:16.984 28436 28451 I System.out:   [ 47] doc_00046.png        pismo_urzedowe         lvl=1 R=80% P=57%
+06-13 12:47:16.984 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:16.984 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.009 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.010 28436 28458 D PipelineManager: Start process bitmap
+06-13 12:47:17.143 28436 28458 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:17.169 28436 28451 W PSE_OSOBA: OSOBA_001 → "nicznie"  [access$pseudonymize$assignToken]
+06-13 12:47:17.171 28436 28451 I System.out:   [ 48] doc_00047.png        pismo_urzedowe         lvl=0 R=40% P=50%
+06-13 12:47:17.172 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:17.172 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.194 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.195 28436 28461 D PipelineManager: Start process bitmap
+06-13 12:47:17.404 28436 28461 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:17.428 28436 28451 W PSE_OSOBA: OSOBA_001 → "Zbigniew Piotrowski"  [access$pseudonymize$assignToken]
+06-13 12:47:17.458 28436 28451 I System.out:   [ 49] doc_00048.png        decyzja_administracyjna lvl=0 R=80% P=80%
+06-13 12:47:17.458 28436 28451 W BitmapFactory: Null Options, creating a new one.
+06-13 12:47:17.458 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.492 28436 28451 I Kumiho-Kumiho: getPackageName: com.lynxmask.app
+06-13 12:47:17.493 28436 28486 D PipelineManager: Start process bitmap
+06-13 12:47:17.643 28436 28486 D PipelineManager: OCR process succeeded via visionkit pipeline.
+06-13 12:47:17.659 28436 28451 W PSE_OSOBA: OSOBA_001 → "Beata Lewandowska"  [access$pseudonymize$assignToken]
+06-13 12:47:17.674 28436 28451 I System.out:   [ 50] doc_00049.png        faktura                lvl=3 R=75% P=66%
+06-13 12:47:17.682 28436 28451 I System.out:
+06-13 12:47:17.682 28436 28451 I System.out: [BUGS_START]
+06-13 12:47:17.685 28436 28451 I System.out: BUGS / ANOMALIE — 2026-06-13 12:47:17
+06-13 12:47:17.685 28436 28451 I System.out: ════════════════════════════════════════════════════════════
+06-13 12:47:17.686 28436 28451 I System.out: [KRYTYCZNE] Pominięte encje wysokiego ryzyka: 14
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00000.png  lvl=3  qs=73  nip_nabywcy=635-777-57-65
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00006.png  lvl=3  qs=83  pesel=61011736050
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00008.png  lvl=1  qs=93  iban=PL05325000033277891807185843
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00017.png  lvl=1  qs=97  iban=PL41169010149375012387120644
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00019.png  lvl=2  qs=86  nip=891-066-05-94
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00021.png  lvl=2  qs=89  pesel=63030738226
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00024.png  lvl=2  qs=84  pesel=74071254017
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00025.png  lvl=2  qs=87  numer_paszportu=MW6085461
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00028.png  lvl=2  qs=80  pesel=96100387725
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00028.png  lvl=2  qs=80  nip=563-688-08-80
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00028.png  lvl=2  qs=80  numer_paszportu=SO7596102
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00035.png  lvl=2  qs=82  pesel=96032171072
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00035.png  lvl=2  qs=82  nip=683-178-21-90
+06-13 12:47:17.686 28436 28451 I System.out:   images/doc_00039.png  lvl=2  qs=87  nip=981-383-65-34
+06-13 12:47:17.686 28436 28451 I System.out: [RECALL<80%] Typy z niskim recall (min. 5 próbek):
+06-13 12:47:17.686 28436 28451 I System.out:   NUMER        74,1%  (120/162)
+06-13 12:47:17.686 28436 28451 I System.out:   OSOBA        57,8%  (37/64)
+06-13 12:47:17.686 28436 28451 I System.out:   ADRES        50,0%  (21/42)
+06-13 12:47:17.686 28436 28451 I System.out:   ?            73,7%  (42/57)
+06-13 12:47:17.686 28436 28451 I System.out:   EMAIL        0,0%  (0/5)
+06-13 12:47:17.686 28436 28451 I System.out: [DIAGNOSTYKA OCR] Tekst OCR dla pierwszych 5 dokumentów z brakami krytycznymi:
+06-13 12:47:17.686 28436 28451 I System.out: Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+06-13 12:47:17.686 28436 28451 I System.out:   ── images/doc_00000.png  lvl=3  qs=73 ──
+06-13 12:47:17.686 28436 28451 I System.out:   Brakujące encje:
+06-13 12:47:17.686 28436 28451 I System.out:     nip_nabywcy = 635-777-57-65
+06-13 12:47:17.686 28436 28451 I System.out:     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+06-13 12:47:17.686 28436 28451 I System.out:   ── images/doc_00006.png  lvl=3  qs=83 ──
+06-13 12:47:17.686 28436 28451 I System.out:   Brakujące encje:
+06-13 12:47:17.686 28436 28451 I System.out:     pesel = 61011736050
+06-13 12:47:17.686 28436 28451 I System.out:     → ✓ JEST w tekście OCR (bug silnika)
+06-13 12:47:17.686 28436 28451 I System.out:   ── images/doc_00008.png  lvl=1  qs=93 ──
+06-13 12:47:17.686 28436 28451 I System.out:   Brakujące encje:
+06-13 12:47:17.686 28436 28451 I System.out:     iban = PL05325000033277891807185843
+06-13 12:47:17.686 28436 28451 I System.out:     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+06-13 12:47:17.686 28436 28451 I System.out:   ── images/doc_00017.png  lvl=1  qs=97 ──
+06-13 12:47:17.686 28436 28451 I System.out:   Brakujące encje:
+06-13 12:47:17.686 28436 28451 I System.out:     iban = PL41169010149375012387120644
+06-13 12:47:17.686 28436 28451 I System.out:     → ✓ JEST w tekście OCR (bug silnika)
+06-13 12:47:17.686 28436 28451 I System.out:   ── images/doc_00019.png  lvl=2  qs=86 ──
+06-13 12:47:17.686 28436 28451 I System.out:   Brakujące encje:
+06-13 12:47:17.686 28436 28451 I System.out:     nip = 891-066-05-94
+06-13 12:47:17.686 28436 28451 I System.out:     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+06-13 12:47:17.686 28436 28451 I System.out: [BUGS_END]
+06-13 12:47:17.688 28436 28451 I System.out: [HTML] Kandydaci do słownika: /sdcard/Android/data/com.lynxmask.app/files/bench/missed_entities.html
+06-13 12:47:17.688 28436 28451 I System.out:        Pobierz: adb pull /sdcard/Android/data/com.lynxmask.app/files/bench/missed_entities.html
+06-13 12:47:17.688 28436 28451 I System.out:
+06-13 12:47:17.688 28436 28451 I System.out: ════════════════════════════════════════════════════════════
+06-13 12:47:17.688 28436 28451 I System.out: BENCHMARK ZAKOŃCZONY
+06-13 12:47:17.688 28436 28451 I System.out:   Recall:          66,7%
+06-13 12:47:17.688 28436 28451 I System.out:   Precision:       64,1%
+06-13 12:47:17.688 28436 28451 I System.out:   Krytyczne braki: 14
+06-13 12:47:17.688 28436 28451 I System.out:   False positives: 123
+06-13 12:47:17.688 28436 28451 I System.out:   Type mismatch:   0  ← zamaskowane złym typem (diagnostyka)
+06-13 12:47:17.688 28436 28451 I System.out:   Błędy:           0
+06-13 12:47:17.688 28436 28451 I System.out:   Raporty na telefonie:
+06-13 12:47:17.688 28436 28451 I System.out:     /sdcard/Android/data/com.lynxmask.app/files/bench/benchmark_report.txt
+06-13 12:47:17.688 28436 28451 I System.out:     /sdcard/Android/data/com.lynxmask.app/files/bench/benchmark_bugs.txt
+06-13 12:47:17.688 28436 28451 I System.out:   Pobierz: adb pull /sdcard/Android/data/com.lynxmask.app/files/bench/benchmark_report.txt
+06-13 12:47:17.688 28436 28451 I System.out: ════════════════════════════════════════════════════════════
+06-13 12:47:17.689 28436 28451 I TestRunner: finished: runBenchmark(com.lynxmask.app.BenchmarkInstrumentedTest)

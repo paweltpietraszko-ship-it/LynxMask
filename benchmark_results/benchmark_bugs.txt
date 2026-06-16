@@ -1,0 +1,89 @@
+BUGS / ANOMALIE — 2026-06-16 22:26:03
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 14
+
+  images/doc_00001.png  lvl=2  qs=85  pesel=72030375656
+  images/doc_00011.png  lvl=2  qs=86  iban=PL22102028924629708341692713
+  images/doc_00017.png  lvl=2  qs=83  pesel=73072227822
+  images/doc_00021.png  lvl=0  qs=100  iban=PL04325000035633956078831852
+  images/doc_00040.png  lvl=2  qs=83  iban=PL24114019870370023024478874
+  images/doc_00067.png  lvl=3  qs=81  dowod_osobisty=FOH614892
+  images/doc_00070.png  lvl=3  qs=78  pesel=71101211123
+  images/doc_00070.png  lvl=3  qs=78  iban=PL42169010142465192502796983
+  images/doc_00072.png  lvl=3  qs=76  dowod_osobisty=ZRB844823
+  images/doc_00073.png  lvl=2  qs=76  pesel=60062580298
+  images/doc_00073.png  lvl=2  qs=76  nip=415-112-22-69
+  images/doc_00089.png  lvl=2  qs=86  nip_sprzedawcy=142-199-06-38
+  images/doc_00089.png  lvl=2  qs=86  nip_nabywcy=451-052-35-26
+  images/doc_00089.png  lvl=2  qs=86  iban=PL87150010131625519045176557
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  OSOBA        57,6%  (53/92)
+  ADRES        64,2%  (52/81)
+  NUMER        73,2%  (188/257)
+  EMAIL        50,0%  (3/6)
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00001.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 72030375656
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00011.png  lvl=2  qs=86 ──
+  Brakujące encje:
+    iban = PL22102028924629708341692713
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00017.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 73072227822
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00021.png  lvl=0  qs=100 ──
+  Brakujące encje:
+    iban = PL04325000035633956078831852
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00040.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    iban = PL24114019870370023024478874
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00067.png  lvl=3  qs=81 ──
+  Brakujące encje:
+    dowod_osobisty = FOH614892
+    → ✓ JEST w tekście OCR (bug silnika)
+
+  ── images/doc_00070.png  lvl=3  qs=78 ──
+  Brakujące encje:
+    pesel = 71101211123
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL42169010142465192502796983
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00072.png  lvl=3  qs=76 ──
+  Brakujące encje:
+    dowod_osobisty = ZRB844823
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00073.png  lvl=2  qs=76 ──
+  Brakujące encje:
+    pesel = 60062580298
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 415-112-22-69
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00089.png  lvl=2  qs=86 ──
+  Brakujące encje:
+    nip_sprzedawcy = 142-199-06-38
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 451-052-35-26
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL87150010131625519045176557
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+

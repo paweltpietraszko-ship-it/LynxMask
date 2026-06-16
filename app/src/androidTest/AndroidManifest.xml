@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    src/androidTest/AndroidManifest.xml
+    Scalany TYLKO z androidTest buildem — nie trafia do debug ani release APK.
+
+    WRITE_EXTERNAL_STORAGE wymagane przez BenchmarkInstrumentedTest.kt do zapisu
+    raportów w /storage/emulated/0/Documents/LynxMask/bench/ (Android ≤ 9).
+    Na Android 10+ zapis do katalogu publicznego przez File() działa bez tego
+    uprawnienia, ale deklaracja jest nieszkodliwa i zapobiega błędom na starszych
+    urządzeniach testowych.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+</manifest>

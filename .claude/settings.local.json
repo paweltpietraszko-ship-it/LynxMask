@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Recurse -File -Path \"C:\\\\Projects\\\\LynxMask\" | Where-Object { $_.Extension -in @\\('.kt', '.xml', '.gradle', '.properties', '.json'\\) } | Select-Object FullName | Sort-Object FullName)",
+      "PowerShell(New-Item *)",
+      "PowerShell(adb shell *)",
+      "PowerShell(winget install *)",
+      "PowerShell(git *)",
+      "PowerShell(git init *)"
+    ]
+  }
+}

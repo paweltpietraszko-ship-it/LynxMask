@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Wrzuć ten plik do: app/src/main/res/values/
+    Nazwa pliku: lynxmask_transparent_theme.xml
+    Android automatycznie połączy go z resztą motywów.
+    NIE musisz nic edytować w istniejących plikach.
+-->
+<resources>
+    <style name="Theme.LynxMask.Transparent" parent="Theme.LynxMask">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

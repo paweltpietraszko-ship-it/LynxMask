@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/xml/data_extraction_rules.xml
+    Wersja: 1.0 (Potok RODO, 10.06.2026)
+
+    DLACZEGO TEN PLIK JEST POTRZEBNY:
+      Na Android 12+ (API 31+) atrybut dataExtractionRules ma PIERWSZEŃSTWO
+      przed allowBackup="false". Bez tego pliku cloud backup mógłby być aktywny
+      na nowszych urządzeniach mimo allowBackup=false w manifeście.
+      Źródło: https://developer.android.com/guide/topics/data/autobackup#xml-syntax
+
+    DLACZEGO PEŁNE WYKLUCZENIE:
+      LynxMask nie ma umowy DPA z Google (Art. 46 RODO).
+      Żadne dane — nawet preferencje UX — nie mogą opuszczać urządzenia.
+      Onboarding po zmianie telefonu jest naturalny (decyzja architektoniczna).
+
+    POKRYCIE DOMEN:
+      root       — katalog główny danych aplikacji (Context.getDataDir())
+                   Obejmuje podkatalogi: files/, databases/, shared_prefs/, cache/
+      file       — Context.getFilesDir() — explicite dla pewności
+      database   — Context.getDatabasePath() — sessions.db, SQLCipher
+      sharedpref — SharedPreferences — lynxmask_login, lynxmask_session_store
+      external   — Context.getExternalFilesDir() — na wypadek przyszłych export
+-->
+<data-extraction-rules>
+
+    <cloud-backup>
+        <exclude domain="root"       path="." />
+        <exclude domain="file"       path="." />
+        <exclude domain="database"   path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external"   path="." />
+    </cloud-backup>
+
+    <device-transfer>
+        <exclude domain="root"       path="." />
+        <exclude domain="file"       path="." />
+        <exclude domain="database"   path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external"   path="." />
+    </device-transfer>
+
+</data-extraction-rules>
