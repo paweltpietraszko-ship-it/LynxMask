@@ -1,0 +1,414 @@
+﻿[
+    {
+        "file":  "images/doc_00007.png",
+        "doc_type":  "pismo_urzedowe",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.353,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "RafaĹ‚ JabĹ‚oĹ„ski",
+                         "adres":  "al. Jana PawĹ‚a II 112, 30-001 Lublin",
+                         "sygnatura_akt":  "I K 7944/2022",
+                         "pesel":  "54081757704",
+                         "telefon":  "+48 509 661 958"
+                     }
+    },
+    {
+        "file":  "images/doc_00021.png",
+        "doc_type":  "faktura",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.181,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "numer_faktury":  "VAT/2024/2017",
+                         "nip_sprzedawcy":  "216-970-03-12",
+                         "regon_sprzedawcy":  "853471555",
+                         "nip_nabywcy":  "678-098-11-22",
+                         "iban":  "PL04325000035633956078831852",
+                         "numer_klienta":  "KL-13523",
+                         "imie_nazwisko_nabywcy":  "Marcin Wieczorek",
+                         "adres_nabywcy":  "ul. Ogrodowa 106, 87-100 WrocĹ‚aw"
+                     }
+    },
+    {
+        "file":  "images/doc_00022.png",
+        "doc_type":  "umowa",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.309,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko_zleceniodawca":  "Aleksandra Lewandowska",
+                         "adres_zleceniodawca":  "ul. Warszawska 130/21, 45-001 WrocĹ‚aw",
+                         "nip_zleceniodawca":  "376-278-14-86",
+                         "pesel_zleceniodawca":  "80082252115",
+                         "imie_nazwisko_zleceniobiorca":  "Magdalena Jankowska",
+                         "adres_zleceniobiorca":  "ul. Zielona 134, 90-001 Zabrze",
+                         "nip_zleceniobiorca":  "174-445-64-09",
+                         "numer_umowy":  "UMOWA/2021/NR/0362",
+                         "iban":  "PL55325000030324788906594740"
+                     }
+    },
+    {
+        "file":  "images/doc_00030.png",
+        "doc_type":  "umowa",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  1.568,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko_zleceniodawca":  "Katarzyna JabĹ‚oĹ„ska",
+                         "adres_zleceniodawca":  "ul. DÄ™bowa 164, 85-001 Rybnik",
+                         "nip_zleceniodawca":  "724-541-16-85",
+                         "pesel_zleceniodawca":  "73112999739",
+                         "imie_nazwisko_zleceniobiorca":  "Paulina PawĹ‚owska",
+                         "adres_zleceniobiorca":  "ul. Krakowska 106, 10-100 Katowice",
+                         "nip_zleceniobiorca":  "553-011-25-19",
+                         "numer_umowy":  "UMOWA/2023/NR/0437",
+                         "iban":  "PL20102028926896306157479307"
+                     }
+    },
+    {
+        "file":  "images/doc_00032.png",
+        "doc_type":  "notatka",
+        "quality_score":  97,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.292,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "autor":  "Katarzyna Michalska",
+                         "osoba":  "Katarzyna ZajÄ…c",
+                         "pesel":  "84072831360",
+                         "telefon":  "+48 578 570 673",
+                         "adres":  "ul. Sienkiewicza 99, 10-100 Sosnowiec"
+                     }
+    },
+    {
+        "file":  "images/doc_00038.png",
+        "doc_type":  "notatka",
+        "quality_score":  99,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.332,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "autor":  "Maciej Michalski",
+                         "osoba":  "Magdalena Adamczyk",
+                         "pesel":  "50051427505",
+                         "telefon":  "+48 695 497 511",
+                         "adres":  "pl. WolnoĹ›ci 105/18, 30-001 Zabrze"
+                     }
+    },
+    {
+        "file":  "images/doc_00043.png",
+        "doc_type":  "notatka",
+        "quality_score":  96,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  1.493,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "autor":  "Grzegorz KamiĹ„ski",
+                         "osoba":  "MaĹ‚gorzata Dudek",
+                         "pesel":  "00322689158",
+                         "telefon":  "+48 785 760 761",
+                         "adres":  "ul. DĹ‚uga 37, 45-001 CzÄ™stochowa"
+                     }
+    },
+    {
+        "file":  "images/doc_00045.png",
+        "doc_type":  "faktura",
+        "quality_score":  97,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  1.608,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "numer_faktury":  "FV-02558/10/2020",
+                         "nip_sprzedawcy":  "300-322-00-57",
+                         "regon_sprzedawcy":  "807378350",
+                         "nip_nabywcy":  "979-450-87-56",
+                         "iban":  "PL91325000035896766385695609",
+                         "numer_klienta":  "KL-94338",
+                         "imie_nazwisko_nabywcy":  "Tadeusz Piotrowski",
+                         "adres_nabywcy":  "al. NiepodlegĹ‚oĹ›ci 159/6, 60-001 Gliwice"
+                     }
+    },
+    {
+        "file":  "images/doc_00054.png",
+        "doc_type":  "notatka",
+        "quality_score":  98,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.642,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "autor":  "Zofia ZajÄ…c",
+                         "osoba":  "Jakub Grabowski",
+                         "pesel":  "84050296767",
+                         "telefon":  "+48 576 602 249",
+                         "adres":  "ul. Krakowska 144, 44-100 Gdynia"
+                     }
+    },
+    {
+        "file":  "images/doc_00056.png",
+        "doc_type":  "pismo_urzedowe",
+        "quality_score":  99,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.151,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Justyna Dudek",
+                         "adres":  "ul. SĹ‚oneczna 19, 85-001 Sosnowiec",
+                         "sygnatura_akt":  "I Ns 5155/2025",
+                         "pesel":  "93022671549",
+                         "telefon":  "+48 736 644 887"
+                     }
+    },
+    {
+        "file":  "images/doc_00057.png",
+        "doc_type":  "wezwanie",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.089,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Aleksandra WiĹ›niewska",
+                         "adres":  "ul. DĹ‚uga 14, 85-001 KrakĂłw",
+                         "pesel":  "57021672567",
+                         "sygnatura_komornicza":  "Km 81215/2025",
+                         "iban":  "PL12150010131442242769653488"
+                     }
+    },
+    {
+        "file":  "images/doc_00059.png",
+        "doc_type":  "pismo_urzedowe",
+        "quality_score":  97,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.307,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Maciej Krawczyk",
+                         "adres":  "ul. Kopernika 119/12, 01-100 Radom",
+                         "sygnatura_akt":  "II C 1319/2020",
+                         "pesel":  "04320138058",
+                         "telefon":  "+48 501 076 967"
+                     }
+    },
+    {
+        "file":  "images/doc_00065.png",
+        "doc_type":  "wezwanie",
+        "quality_score":  96,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  1.974,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Maciej Kowalski",
+                         "adres":  "ul. Szkolna 171/21, 10-100 Warszawa",
+                         "pesel":  "59050136517",
+                         "sygnatura_komornicza":  "Km 48629/2022",
+                         "iban":  "PL76240101355622957456516438"
+                     }
+    },
+    {
+        "file":  "images/doc_00079.png",
+        "doc_type":  "notatka",
+        "quality_score":  97,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.281,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "autor":  "Robert Jankowski",
+                         "osoba":  "Piotr SzymaĹ„ski",
+                         "pesel":  "93060526050",
+                         "telefon":  "+48 530 868 712",
+                         "adres":  "ul. LeĹ›na 199/43, 10-100 RzeszĂłw"
+                     }
+    },
+    {
+        "file":  "images/doc_00090.png",
+        "doc_type":  "umowa",
+        "quality_score":  99,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  1.117,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko_zleceniodawca":  "Anna Kowalska",
+                         "adres_zleceniodawca":  "ul. DĹ‚uga 81, 70-001 Gliwice",
+                         "nip_zleceniodawca":  "322-892-99-40",
+                         "pesel_zleceniodawca":  "78111489447",
+                         "imie_nazwisko_zleceniobiorca":  "Renata Mazur",
+                         "adres_zleceniobiorca":  "ul. SĹ‚oneczna 159, 65-001 Bytom",
+                         "nip_zleceniobiorca":  "979-450-33-80",
+                         "numer_umowy":  "U-00777/2024",
+                         "iban":  "PL10325000039360774907278350"
+                     }
+    },
+    {
+        "file":  "images/doc_00091.png",
+        "doc_type":  "formularz",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  2.023,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Maria Michalska",
+                         "adres":  "ul. WolnoĹ›ci 195/33, 65-001 GdaĹ„sk",
+                         "pesel":  "68102452686",
+                         "dowod_osobisty":  "NYL837929",
+                         "telefon":  "+48 725 364 691",
+                         "email":  "maria_michalska@onet.pl",
+                         "data_urodzenia":  "23.02.1989",
+                         "nip":  "458-273-50-48"
+                     }
+    },
+    {
+        "file":  "images/doc_00098.png",
+        "doc_type":  "decyzja_administracyjna",
+        "quality_score":  100,
+        "ocr_conf_real":  null,
+        "degradation_level":  0,
+        "degradation_params":  {
+                                   "blur_radius":  0.0,
+                                   "noise_sigma":  0.326,
+                                   "contrast_factor":  1.0,
+                                   "rotation_deg":  0.0,
+                                   "perspective_strength":  0.0,
+                                   "shadow_coverage":  0.0,
+                                   "gradient_strength":  0.0
+                               },
+        "entities":  {
+                         "imie_nazwisko":  "Tadeusz Kwiatkowski",
+                         "adres":  "ul. Lipowa 88/40, 70-001 Rybnik",
+                         "pesel":  "74112280384",
+                         "sygnatura_administracyjna":  "PT.054455.2025",
+                         "nip":  "225-601-11-88"
+                     }
+    }
+]

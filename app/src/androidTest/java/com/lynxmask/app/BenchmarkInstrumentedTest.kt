@@ -36,9 +36,10 @@ import java.io.File
 class BenchmarkInstrumentedTest {
 
     companion object {
-        // Zmień na "ground_truth_lvl03.json" aby testować tylko dokumenty lvl 0-3 (68 dok.)
-        // Zmień na "ground_truth.json"       aby testować pełny dataset (100 dok., wszystkie lvl)
-        const val GROUND_TRUTH_FILE = "ground_truth_lvl03.json"
+        // "ground_truth_lvl0.json"   — 17 dok., tylko perfect scan  ← silnik bez szumu OCR
+        // "ground_truth_lvl03.json"  — 68 dok., lvl 0-3             ← standardowy benchmark
+        // "ground_truth.json"        — 100 dok., wszystkie poziomy   ← pełny dataset
+        const val GROUND_TRUTH_FILE = "ground_truth_lvl0.json"
     }
 
     private val context by lazy { InstrumentationRegistry.getInstrumentation().targetContext }
