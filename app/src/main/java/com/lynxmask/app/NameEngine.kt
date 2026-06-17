@@ -389,6 +389,16 @@ private val HONORIFIC_REGEX: Regex by lazy {
     )
 }
 
+// HONORIFIC_NAME_ONLY_REGEX: Pan/Pani + samo imię — bez wymaganego nazwiska.
+// Negative lookahead zapobiega podwójnemu matchowaniu gdy po imieniu jest nazwisko
+// (tym zajmuje się HONORIFIC_REGEX powyżej).
+private val HONORIFIC_NAME_ONLY_REGEX: Regex by lazy {
+    Regex(
+        """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})(?![^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż])""",
+        RegexOption.IGNORE_CASE
+    )
+}
+
 // REGEX-FIX v1.5: [^\S\n] zamiast \s w treści nazwy — poprzednia wersja
 // mogła zszywać koniec jednego akapitu z formą prawną z następnego
 private val FIRMA_LEGAL_REGEX = Regex(
@@ -520,6 +530,16 @@ internal fun applyContextualBlacklist(
         if (surnamePart.length < 4) return@replace match.value
         if (surnamePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
         "${match.groupValues[1]} ${assignToken("$namePart $surnamePart", TOKEN_OSOBA)}"
+    }
+
+    // 3a — Honorifik + samo imię (Pan Marek, Pani Halina) — bez wymaganego nazwiska
+    result = HONORIFIC_NAME_ONLY_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val namePart = match.groupValues[2]
+        if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
+            !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
+        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        "${match.groupValues[1]} ${assignToken(namePart, TOKEN_OSOBA)}"
     }
 
     // 3a — Imię + Nazwisko (kolejność naturalna: Jan Kowalski)
