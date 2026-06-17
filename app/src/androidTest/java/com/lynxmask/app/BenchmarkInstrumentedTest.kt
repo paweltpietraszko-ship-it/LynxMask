@@ -74,6 +74,15 @@ class BenchmarkInstrumentedTest {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         val results    = mutableListOf<DocResult>()
 
+        UserDictionary.clear(context)
+        println("[BENCH_DEBUG] UserDictionary wyczyszczony przed benchmarkiem")
+
+        val dictSize = UserDictionary.entries.size
+        println("[BENCH_DEBUG] UserDictionary: $dictSize encji")
+        UserDictionary.entries.take(10).forEach { (phrase, type) ->
+            println("[BENCH_DEBUG]   '$phrase' → $type")
+        }
+
         println("\n[BENCHMARK] Dokumentów: ${groundTruth.length()}")
         println("─".repeat(72))
 
@@ -472,9 +481,19 @@ class BenchmarkInstrumentedTest {
                 bb.appendLine("  Brakujące encje:")
                 r.entities.filter { !it.found && it.critical }.forEach { e ->
                     bb.appendLine("    ${e.key} = ${e.value}")
-                    val inOcr = e.value.replace(" ", "").replace("-", "")
-                        .let { v -> r.ocrText.replace(" ", "").replace("-", "").contains(v, ignoreCase = true) }
+                    val normVal = e.value.replace(" ", "").replace("-", "")
+                    val normOcr = r.ocrText.replace(" ", "").replace("-", "")
+                    val inOcr = normOcr.contains(normVal, ignoreCase = true)
                     bb.appendLine("    → ${if (inOcr) "✓ JEST w tekście OCR (bug silnika)" else "✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)"}")
+                    if (inOcr) {
+                        // Pokaż fragment RAW OCR wokół znalezionej encji
+                        val idx = r.ocrText.indexOf(e.value.take(3), ignoreCase = true)
+                        if (idx >= 0) {
+                            val from = maxOf(0, idx - 10)
+                            val to   = minOf(r.ocrText.length, idx + e.value.length + 15)
+                            bb.appendLine("    OCR fragment: «${r.ocrText.substring(from, to).replace("\n", "↵")}»")
+                        }
+                    }
                 }
                 bb.appendLine()
             }
