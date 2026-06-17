@@ -1,4 +1,42 @@
-BUGS / ANOMALIE — 2026-06-17 14:46:49
+BUGS / ANOMALIE — 2026-06-17 15:05:25
 ════════════════════════════════════════════════════════════
 
-Brak krytycznych anomalii.
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 1
+
+  images/doc_00021.png  lvl=0  qs=100  iban=PL04325000035633956078831852
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  OSOBA        64,0%  (32/50)
+
+
+[OSOBA POMINIĘTE] 18 encji:
+
+  doc_00004.png  imie_nazwisko=Ĺukasz SzymaĹ„ski  → BRAK_W_OCR
+  doc_00007.png  imie_nazwisko=RafaĹ‚ JabĹ‚oĹ„ski  → BRAK_W_OCR
+  doc_00016.png  imie_nazwisko_nabywcy=Jakub KozĹ‚owski  → BRAK_W_OCR
+  doc_00021.png  imie_nazwisko_nabywcy=Marcin Wieczorek  → BRAK_W_OCR
+  doc_00030.png  imie_nazwisko_zleceniodawca=Katarzyna JabĹ‚oĹ„ska  → BRAK_W_OCR
+  doc_00030.png  imie_nazwisko_zleceniobiorca=Paulina PawĹ‚owska  → BRAK_W_OCR
+  doc_00031.png  imie_nazwisko=MichaĹ‚ KozĹ‚owski  → BRAK_W_OCR
+  doc_00032.png  osoba=Katarzyna ZajÄ…c  → BRAK_W_OCR
+  doc_00035.png  imie_nazwisko_zleceniobiorca=Ĺukasz KamiĹ„ski  → BRAK_W_OCR
+  doc_00036.png  imie_nazwisko=Monika WiĹ›niewska  → BRAK_W_OCR
+  doc_00043.png  autor=Grzegorz KamiĹ„ski  → BRAK_W_OCR
+  doc_00043.png  osoba=MaĹ‚gorzata Dudek  → BRAK_W_OCR
+  doc_00054.png  autor=Zofia ZajÄ…c  → BRAK_W_OCR
+  doc_00055.png  imie_nazwisko=Mariusz SzymaĹ„ski  → BRAK_W_OCR
+  doc_00077.png  imie_nazwisko=Dorota WoĹşniak  → BRAK_W_OCR
+  doc_00079.png  osoba=Piotr SzymaĹ„ski  → BRAK_W_OCR
+  doc_00084.png  imie_nazwisko_zleceniodawca=Joanna SzymaĹ„ska  → BRAK_W_OCR
+  doc_00096.png  imie_nazwisko=MichaĹ‚ Wieczorek  → BRAK_W_OCR
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00021.png  lvl=0  qs=100 ──
+  Brakujące encje:
+    iban = PL04325000035633956078831852
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
