@@ -405,7 +405,13 @@ internal fun isOnWhiteList(word: String): Boolean {
     if (WHITE_LIST_INSTITUTIONS_EXACT.contains(lower)) return true                 // STRUCT-FIX: exact only
     if (WHITE_LIST_CONTRACTUAL.contains(lower)) return true
     if (WHITE_LIST_DOCUMENTS.contains(lower)) return true
-    if (WHITE_LIST_LEGAL_FORMS.any { lower.contains(it) }) return true
+    // LEGAL-FORM-FIX: krótkie formy (≤3 znaki, np. "ag", "ab", "kg") są podciągami
+    // polskich słów ("magdaleny" zawiera "ag", "grabowski" zawiera "ab").
+    // Dla form ≤3 znaki wymagamy dopasowania całego słowa lub końca zdania — nie substringu.
+    if (WHITE_LIST_LEGAL_FORMS.any { form ->
+        if (form.length >= 4 || form.contains('.')) lower.contains(form)
+        else lower == form || lower.endsWith(" $form")
+    }) return true
     if (WHITE_LIST_CALENDAR.contains(lower)) return true
     if (WHITE_LIST_COUNTRIES.contains(lower)) return true
     if (WHITE_LIST_CITIES.contains(lower)) return true         // P7-FIX
@@ -542,6 +548,10 @@ internal fun applyContextualBlacklist(
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
         val surname = match.groupValues[1]
         val namePart = match.groupValues[2]
+        // CASE-FIX: IGNORE_CASE sprawia że [A-Z] w regex pasuje do małej litery.
+        // "imieniu Katarzyny" — 'i' (małe) pasuje do klasy [A-ZŁŚŹĆŃĄĘÓŻ] z IGNORE_CASE.
+        // Realna nazwa własna zaczyna się wielką literą — odrzucamy małoliterowe "nazwiska".
+        if (!surname[0].isUpperCase()) return@replace match.value
         // BUG-1 FIX: sprawdź białą listę dla obu grup
         if (isOnWhiteList(surname)) return@replace match.value
         if (isOnWhiteList(namePart)) return@replace match.value
