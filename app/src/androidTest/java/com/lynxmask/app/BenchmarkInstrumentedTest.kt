@@ -472,6 +472,33 @@ class BenchmarkInstrumentedTest {
         if (critCases.isEmpty() && lowRecall.isEmpty() && errors == 0)
             bb.appendLine("Brak krytycznych anomalii.")
 
+        // ── Diagnostyka pominiętych OSOBA ────────────────────────────────────
+        val osobaCases = results.flatMap { r ->
+            r.entities.filter { !it.found && (it.key.startsWith("imie_") || it.key == "autor" || it.key == "osoba") }
+                .map { r to it }
+        }
+        if (osobaCases.isNotEmpty()) {
+            bb.appendLine()
+            bb.appendLine("[OSOBA POMINIĘTE] ${osobaCases.size} encji:")
+            bb.appendLine()
+            osobaCases.forEach { (r, e) ->
+                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
+                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                // Czy silnik zamaskował coś co zawiera nazwisko (druga część GT)?
+                val surname = e.value.substringAfterLast(" ").lowercase()
+                val maskedBySurname = r.tokens.any { tok ->
+                    tok.original.lowercase().contains(surname) && tok.original.length >= 4
+                }
+                val status = when {
+                    !inOcr          -> "BRAK_W_OCR"
+                    maskedBySurname -> "ODMIANA_ZAMASKOWANA"
+                    else            -> "BUG_SILNIKA"
+                }
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+            }
+            bb.appendLine()
+        }
+
         // ── Diagnostyka OCR dla krytycznych braków ───────────────────────────
         if (critCases.isNotEmpty()) {
             bb.appendLine()
