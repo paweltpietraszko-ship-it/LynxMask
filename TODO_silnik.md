@@ -1,0 +1,1 @@
+# TODO — silnik detekcji OSOBA
