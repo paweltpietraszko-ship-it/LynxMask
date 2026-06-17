@@ -1,0 +1,54 @@
+# ZŁOTY PLIK TESTOWY SILNIKA LYNXMASK
+# Encje w każdej formie gramatycznej — zero OCR, czyste wejście do silnika.
+# Każda linia z encją jest opatrzona tagiem [TYP:wartość_GT] dla parsera testu.
+
+=== OSOBA — mianownik ===
+Zleceniodawca: Jan Kowalski [OSOBA:Jan Kowalski]
+Autor: Anna Wiśniewska [OSOBA:Anna Wiśniewska]
+Pełnomocnik: Piotr Szymański [OSOBA:Piotr Szymański]
+
+=== OSOBA — odmiana dopełniacz ===
+Umowę zawarto z Janem Kowalskim zamieszkałym przy ul. Lipowej 3. [OSOBA:Jan Kowalski]
+Pełnomocnictwo dla Anny Wiśniewskiej córki Marka. [OSOBA:Anna Wiśniewska]
+Dłużnik Piotra Szymańskiego jest zobowiązany do zapłaty. [OSOBA:Piotr Szymański]
+W imieniu Katarzyny Grabowskiej działam na podstawie pełnomocnictwa. [OSOBA:Katarzyna Grabowska]
+Wierzytelność Magdaleny Jankowskiej wynosi 5000 zł. [OSOBA:Magdalena Jankowska]
+
+=== OSOBA — z tytułem/funkcją ===
+Podpisano przez dyrektora Marka Nowakowskiego. [OSOBA:Marek Nowakowski]
+Prezes Zarządu Tomasz Lewandowski zatwierdził. [OSOBA:Tomasz Lewandowski]
+Pan Jakub Kozłowski złożył wniosek. [OSOBA:Jakub Kozłowski]
+
+=== PESEL ===
+PESEL: 85031298765 [NUMER:85031298765]
+nr PESEL 92112345678 [NUMER:92112345678]
+data ur. 1985-03-12, PESEL 85031298765 [NUMER:85031298765]
+
+=== NIP ===
+NIP: 123-456-78-90 [NUMER:123-456-78-90]
+NIP sprzedawcy: 987-654-32-10 [NUMER:987-654-32-10]
+NIP: 1234567890 [NUMER:1234567890]
+
+=== IBAN ===
+Nr konta: PL61 1090 1014 0000 0712 1981 2874 [NUMER:PL61109010140000071219812874]
+IBAN: PL27 1140 2004 0000 3002 0135 5387 [NUMER:PL27114020040000300201355387]
+Konto: PL36109010140000071219812874 [NUMER:PL36109010140000071219812874]
+
+=== DOWÓD OSOBISTY ===
+seria i numer dowodu: ABC 123456 [NUMER:ABC123456]
+Nr dowodu: XYZ987654 [NUMER:XYZ987654]
+dowód osobisty FOH 614 892 [NUMER:FOH614892]
+
+=== ADRES ===
+ul. Lipowa 3, 00-001 Warszawa [ADRES:ul. Lipowa 3]
+zamieszkały przy ul. Marszałkowskiej 15/3 [ADRES:ul. Marszałkowska 15/3]
+adres: ul. Długa 7 m. 2, Kraków [ADRES:ul. Długa 7]
+
+=== EMAIL ===
+e-mail: jan.kowalski@example.com [EMAIL:jan.kowalski@example.com]
+kontakt: anna.wisniewski@firma.pl [EMAIL:anna.wisniewski@firma.pl]
+
+=== TELEFON ===
+tel. 600 123 456 [NUMER:600123456]
+telefon: +48 22 123 45 67 [NUMER:+48221234567]
+kom. 504-987-654 [NUMER:504987654]

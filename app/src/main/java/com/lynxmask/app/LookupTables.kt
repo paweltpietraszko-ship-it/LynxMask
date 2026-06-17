@@ -101,6 +101,40 @@ object LookupTables {
         _initialized  = true
     }
 
+    /** Ładuje pełny słownik z classpath (src/test/resources/) — dla unit testów na JVM. */
+    @Suppress("unused")
+    fun initializeFromClasspath() {
+        if (_initialized) return
+        val names    = loadFormsFromClasspath("names_inflected.json")
+        val surnames = loadFormsFromClasspath("surnames_top1000.json")
+        val streets  = loadFormsFromClasspath("street_names.json")
+        _namesForms    = names.withAsciiVariants()
+        _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
+        _streetForms   = streets.withAsciiVariants()
+        _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
+    }
+
+    private fun loadFormsFromClasspath(filename: String): Set<String> {
+        return try {
+            val text = LookupTables::class.java.classLoader
+                ?.getResourceAsStream(filename)?.bufferedReader()?.readText()
+                ?: return emptySet()
+            val obj = org.json.JSONObject(text)
+            val forms = mutableSetOf<String>()
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                forms.add(key)
+                val arr = obj.getJSONArray(key)
+                for (i in 0 until arr.length()) {
+                    val f = arr.getString(i)
+                    if (f.length >= 2) forms.add(f)
+                }
+            }
+            forms
+        } catch (e: Exception) { emptySet() }
+    }
+
     /** Resetuje stan — używany między testami jeśli potrzeba czystego slate. */
     @Suppress("unused")
     fun resetForTesting() {
