@@ -220,7 +220,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     ),
 
     // --- Dokumenty tożsamości ---
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}\s?\d{6}\b"""),   // Dowód osobisty PL
+    // BUG-DOWOD-FIX: OCR (lvl3 telefon) wstawia spację w środku grupy cyfr.
+    // \d{3}[^\S\n]?\d{3} obsługuje "FOH614892", "FOH 614892", "FOH614 892", "FOH 614 892".
+    // [^\S\n]? — opcjonalna spacja/tab ale nie newline.
+    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{3}[^\S\n]?\d{3}\b"""),  // Dowód osobisty PL
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"

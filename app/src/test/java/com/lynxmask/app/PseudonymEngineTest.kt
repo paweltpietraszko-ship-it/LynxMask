@@ -771,13 +771,18 @@ class PseudonymEngineTest {
             "FOH614892" to true,
             "dowód: FOH614892" to true,
             "seria FOH nr 614892" to true,
-            "ABC123456" to false,  // za krótki — nie dowód
+            "FOH 614892" to true,   // OCR: spacja między serią a numerem
+            "FOH614 892" to true,   // OCR lvl3: spacja w środku grupy cyfr
+            "FOH 614 892" to true,  // OCR lvl3: BUG-DOWOD doc_00067.png
+            "ABC123456" to true,    // 3 litery + 6 cyfr = format dowodu — maskujemy
         )
         for ((text, shouldMask) in cases) {
             val result = pseudonymize(text)
             val masked = result.pseudonymizedText.contains("NUMER_")
-            val ok = masked == shouldMask
-            println("${if (ok) "PASS" else "FAIL"} | $text")
+            if (masked != shouldMask) {
+                error("FAIL: '$text' — oczekiwano masked=$shouldMask, got $masked\n  → ${result.pseudonymizedText}")
+            }
+            println("PASS | $text")
         }
     }
 
