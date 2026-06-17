@@ -347,9 +347,11 @@ private val TITLE_ADJECTIVE_ENDINGS = Regex(
 // w słowniku nazwisk (czyli faktycznie jest przymiotnikiem, nie odmienionem nazwiskiem)
 private fun isAdjective(word: String): Boolean {
     if (!TITLE_ADJECTIVE_ENDINGS.containsMatchIn(word)) return false
-    // Jeśli słownik załadowany i zawiera tę formę → to znane nazwisko, nie przymiotnik
     if (LookupTables.initialized && LookupTables.surnamesForms.isNotEmpty()) {
-        if (LookupTables.surnamesForms.contains(word.lowercase())) return false
+        val w = word.lowercase()
+        if (LookupTables.surnamesForms.contains(w)) return false
+        // startsWith: "kowalskiego".startsWith("kowalski") → odmiana nazwiska, nie przymiotnik
+        if (LookupTables.surnamesForms.any { it.length >= 5 && w.startsWith(it) }) return false
     }
     return true
 }
@@ -440,8 +442,16 @@ private fun applyStreetLookup(
         val streetPart = match.groupValues[1].trim()
         val streetLower = streetPart.lowercase()
 
-        // Sprawdź klucz (mianownik) i formy fleksyjne z bazy
-        if (LookupTables.streetForms.contains(streetLower)) {
+        // Sprawdź klucz (mianownik) i formy fleksyjne z bazy — z prefiksami
+        if (LookupTables.streetForms.contains(streetLower) ||
+            LookupTables.streetForms.contains("ulica $streetLower") ||
+            LookupTables.streetForms.contains("ulicy $streetLower") ||
+            LookupTables.streetForms.contains("aleje $streetLower") ||
+            LookupTables.streetForms.contains("alei $streetLower") ||
+            LookupTables.streetForms.contains("plac $streetLower") ||
+            LookupTables.streetForms.contains("placu $streetLower") ||
+            LookupTables.streetForms.contains("os. $streetLower") ||
+            LookupTables.streetForms.contains("osiedle $streetLower")) {
             assignToken(match.value, TOKEN_ADRES)
         } else {
             match.value
