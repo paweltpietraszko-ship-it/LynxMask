@@ -15,6 +15,7 @@ adb shell rm -f /storage/emulated/0/Documents/LynxMask/ground_truth.json
 adb shell rm -f /storage/emulated/0/Documents/LynxMask/ground_truth_lvl03.json
 
 echo [2/4] Przepychanie datasetu...
+adb push dataset\ground_truth_lvl01.json /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl01.json
 adb push dataset\ground_truth_lvl0.json  /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl0.json
 adb push dataset\ground_truth_lvl03.json /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json
 adb push dataset\images /sdcard/Android/data/com.lynxmask.app/files/bench/images

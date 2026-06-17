@@ -220,11 +220,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     ),
 
     // --- Dokumenty tożsamości ---
-    // BUG-DOWOD-FIX v2: OCR z telefonu (lvl3) daje małe litery serii ("foh614892")
-    // oraz/lub spację w środku cyfr ("FOH 614 892").
-    // (?i): case-insensitive — OCR nie gwarantuje wielkich liter w serii.
-    // \d{3}[^\S\n]?\d{3}: cyfry 3+3 z opcjonalną spacją między grupami.
-    TOKEN_NUMER to Regex("""(?i)\b[A-Z]{3}[^\S\n]?\d{3}[^\S\n]?\d{3}\b"""),  // Dowód osobisty PL
+    // REVERT (?i): case-insensitive zjadał 3-literowe imiona (Jan, Piotr) + cyfry jako dowód.
+    // Wzorzec celowo case-sensitive — seria dowodu to zawsze uppercase w oryginalnym dokumencie.
+    // FOH614892 z OCR lvl3 pozostaje nierozwiązany (BUG-DOWOD odłożony).
+    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{3}[^\S\n]?\d{3}\b"""),  // Dowód osobisty PL
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"

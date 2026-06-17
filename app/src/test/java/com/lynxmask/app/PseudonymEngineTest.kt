@@ -774,7 +774,7 @@ class PseudonymEngineTest {
             "FOH 614892" to true,   // OCR: spacja między serią a numerem
             "FOH614 892" to true,   // OCR lvl3: spacja w środku grupy cyfr
             "FOH 614 892" to true,  // OCR lvl3: spacja w obu miejscach
-            "foh614892" to true,    // OCR lvl3: małe litery serii — BUG-DOWOD doc_00067.png
+            // "foh614892" — BUG-DOWOD odłożony: (?i) powodował pożeranie imion (Jan+cyfry)
             "ABC123456" to true,    // 3 litery + 6 cyfr = format dowodu — maskujemy
         )
         for ((text, shouldMask) in cases) {
