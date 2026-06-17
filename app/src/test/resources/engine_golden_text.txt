@@ -52,3 +52,23 @@ kontakt: anna.wisniewski@firma.pl [EMAIL:anna.wisniewski@firma.pl]
 tel. 600 123 456 [NUMER:600123456]
 telefon: +48 22 123 45 67 [NUMER:+48221234567]
 kom. 504-987-654 [NUMER:504987654]
+
+=== OSOBA — samo nazwisko (surnamesForms) ===
+Kowalska podpisała dokument. [OSOBA:Kowalska]
+Decyzję wydał Wiśniewski. [OSOBA:Wiśniewski]
+
+=== OSOBA — honorifik + samo imię ===
+Pan Marek przyszedł na spotkanie. [OSOBA:Marek]
+Pani Halina złożyła wniosek. [OSOBA:Halina]
+
+=== OSOBA — samo imię bez kontekstu ===
+Raport przygotuje Katarzyna. [OSOBA:Katarzyna]
+Sprawę prowadzi Tomasz. [OSOBA:Tomasz]
+Dokumenty złożyła Katarzynie. [OSOBA:Katarzyna]
+Umowę podpisano z Anną. [OSOBA:Anna]
+
+=== OSOBA — zdrobnienia ===
+Raport przygotuje Kasia. [OSOBA:Kasia]
+Ustaliliśmy z Tomkiem termin spotkania. [OSOBA:Tomek]
+Nie widziałem Kasi w biurze. [OSOBA:Kasia]
+Zadzwoniłem do Tomka wczoraj. [OSOBA:Tomek]
