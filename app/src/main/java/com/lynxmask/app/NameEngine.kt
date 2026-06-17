@@ -532,16 +532,6 @@ internal fun applyContextualBlacklist(
         "${match.groupValues[1]} ${assignToken("$namePart $surnamePart", TOKEN_OSOBA)}"
     }
 
-    // 3a — Honorifik + samo imię (Pan Marek, Pani Halina) — bez wymaganego nazwiska
-    result = HONORIFIC_NAME_ONLY_REGEX.replace(result) { match ->
-        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
-        val namePart = match.groupValues[2]
-        if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
-            !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
-        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
-        "${match.groupValues[1]} ${assignToken(namePart, TOKEN_OSOBA)}"
-    }
-
     // 3a — Imię + Nazwisko (kolejność naturalna: Jan Kowalski)
     result = NAME_FORWARD_REGEX.replace(result) { match ->
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
@@ -582,6 +572,16 @@ internal fun applyContextualBlacklist(
         if (surname.length < 4) return@replace match.value
         if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
         assignToken(match.value, TOKEN_OSOBA)
+    }
+
+    // 3a — Honorifik + samo imię (Pan Marek, Pani Halina) — bez wymaganego nazwiska
+    result = HONORIFIC_NAME_ONLY_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val namePart = match.groupValues[2]
+        if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
+            !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
+        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        "${match.groupValues[1]} ${assignToken(namePart, TOKEN_OSOBA)}"
     }
 
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
