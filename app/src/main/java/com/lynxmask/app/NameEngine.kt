@@ -564,6 +564,17 @@ internal fun applyContextualBlacklist(
         assignToken(match.value, TOKEN_OSOBA)
     }
 
+    // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
+    result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{3,})(?![a-ząćęłńóśźż])""")
+        .replace(result) { match ->
+            if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+            val word = match.groupValues[1]
+            if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
+            if (isOnWhiteList(word)) return@replace match.value
+            if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
+            assignToken(word, TOKEN_OSOBA)
+        }
+
     // 3b: Tytuł/funkcja → następne słowo z wielkiej litery
     result = TITLE_PATTERN_REGEX.replace(result) { match ->
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
