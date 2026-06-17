@@ -61,6 +61,27 @@ Dataset: `ground_truth_lvl03.json` (68 dokumentów, lvl 0-3)
 - cc1621a — kolejność bloków detekcji
 - 547a5b7 — zdrobnienia Jan + TODO_silnik.md
 
+## ROZWIĄZANE PROBLEMY 17.06
+
+### Benchmark — problem z uruchomieniem
+Po każdej większej zmianie plików benchmark może nie zapisać nowych raportów.
+Przyczyna: FileAlreadyExistsException — nie może nadpisać plików w Documents/LynxMask.
+Rozwiązanie: pełny reinstall APK przed każdym benchmarkiem:
+```
+.\gradlew :app:uninstallDebugAndroidTest
+.\gradlew :app:installDebugAndroidTest
+run_benchmark.bat
+```
+Bez reinstallu benchmark działa na starym APK i zwraca stare wyniki lub 0.0%.
+
+### NameEngine — zmiany 17.06
+1. LOOKUP-FIX TITLE_PATTERN — słowo po tytule musi być w namesForms lub surnamesForms
+2. surnamesForms do pozytywnej detekcji — samo nazwisko bez imienia
+3. HONORIFIC_NAME_ONLY — Pan/Pani + samo imię bez wymaganego nazwiska
+4. Kolejność bloków — od najbardziej do najmniej specyficznych
+5. namesForms do pozytywnej detekcji — samo imię bez kontekstu
+6. Zdrobnienia — Kasia, Magda, Tomek, Jasiu i inne dodane do names_inflected.json
+
 ### WAŻNE — jak uruchamiać benchmark
 Przed każdym benchmarkiem pełny reinstall APK testowego:
 ```
