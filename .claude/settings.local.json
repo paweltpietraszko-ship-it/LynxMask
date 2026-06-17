@@ -6,7 +6,66 @@
       "PowerShell(adb shell *)",
       "PowerShell(winget install *)",
       "PowerShell(git *)",
-      "PowerShell(git init *)"
+      "PowerShell(git init *)",
+      "PowerShell($json = Get-Content \"C:\\\\Projects\\\\LynxMask\\\\app\\\\src\\\\main\\\\assets\\\\surnames_top1000.json\" -Raw | ConvertFrom-Json; $keys = $json.PSObject.Properties.Name; Write-Host \"Liczba kluczy \\(nazwisk\\): $\\($keys.Count\\)\"; Write-Host \"Przykład - pierwsze 3 klucze: $\\($keys[0..2] -join ', '\\)\")",
+      "Skill(update-config)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --tests \"com.lynxmask.app.PseudonymEngineTest.testDowodOsobisty\" --no-daemon 2>&1 | Select-Object -Last 30)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --tests \"com.lynxmask.app.PseudonymEngineTest.testDowodOsobisty\" --no-daemon --info 2>&1 | Select-String -Pattern \"PASS|FAIL|IllegalState|testDowodOsobisty|error|ERROR\" | Select-Object -First 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --no-daemon 2>&1 | Select-Object -Last 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --no-daemon 2>&1 | Select-Object -Last 15)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --tests \"com.lynxmask.app.PseudonymEngineTest.testDowodOsobisty\" --no-daemon --info 2>&1 | Select-String -Pattern \"PASS|FAIL|IllegalState\" | Select-Object -First 15)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'bench: Recall 78.4% Precision 67.9% FP 79 CLR 1 \\(lvl01, 34 dok\\) *)",
+      "Bash(git commit -m 'feat: golden test silnika na plain text — zero OCR *)",
+      "Bash(git commit -m 'fix: dwa bugi silnika blokujące OSOBA — Grabowska, Jankowska, imieniu *)",
+      "Bash(adb pull *)",
+      "PowerShell(adb pull *)",
+      "Read(//c/Users/p_pie/Desktop/**)",
+      "Read(//c/Users/p_pie/**)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\p_pie\\\\Desktop\\\\\" | Where-Object { $_.Name -match \"test\" })",
+      "Bash(git show *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest 2>&1)",
+      "Bash(git commit *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PASS|FAIL|oczekiwano|tokeny|Wynik|tests completed|IllegalState|AssertionError\" | Select-Object -First 80)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PASS|FAIL|oczekiwano|tokeny|Wynik|tests completed\" | Select-Object -First 60)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest 2>&1 | Select-String -Pattern \"tests completed|FAILED|BUILD\" | Select-Object -First 10)",
+      "PowerShell($env:PYTHONIOENCODING = \"utf-8\"; cd \"C:\\\\Users\\\\p_pie\\\\Desktop\\\\pseudominizer\"; python generate_lookups_v3.py 2>&1)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PASS|FAIL|oczekiwano|tokeny|Wynik|tests completed\" | Select-Object -First 80)",
+      "PowerShell($env:PYTHONIOENCODING = \"utf-8\"; cd \"C:\\\\Users\\\\p_pie\\\\Desktop\\\\pseudominizer\"; python generate_lookups_v3.py 2>&1 | Select-String -Pattern \"imion|form|Gotowe|names_inflected\")",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:installDebug 2>&1 | Select-String -Pattern \"BUILD|INSTALL|error|Error|apk\" | Select-Object -First 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:uninstallDebugAndroidTest 2>&1 | Select-String -Pattern \"BUILD|UNINSTALL|error\" | Select-Object -First 10)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; .\\\\gradlew :app:installDebugAndroidTest 2>&1 | Select-String -Pattern \"BUILD|INSTALL|error\" | Select-Object -First 10)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; Set-Location \"C:\\\\Projects\\\\LynxMask\"; cmd /c \"run_benchmark.bat\" 2>&1)",
+      "Bash(cmd /c run_benchmark.bat)",
+      "Bash(cmd //c \"adb push dataset\\\\\\\\ground_truth_lvl01.json /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl01.json\")",
+      "Bash(cmd //c \"adb push dataset\\\\\\\\ground_truth_lvl0.json /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl0.json\")",
+      "Bash(cmd //c \"adb push dataset\\\\\\\\ground_truth_lvl03.json /sdcard/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json\")",
+      "Bash(cmd //c \"adb shell ls /sdcard/Android/data/com.lynxmask.app/files/bench/\")",
+      "Bash(adb shell *)",
+      "Bash(adb logcat *)",
+      "Bash(cmd //c \"adb push C:\\\\\\\\Projects\\\\\\\\LynxMask\\\\\\\\dataset\\\\\\\\images /sdcard/Android/data/com.lynxmask.app/files/bench/images\")",
+      "Bash(cmd //c \"adb shell ls /sdcard/Android/data/com.lynxmask.app/files/bench/images/\")",
+      "Bash(cmd *)",
+      "Bash(xxd)",
+      "mcp__claude_ai_Google_Drive__search_files",
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "mcp__claude_ai_Google_Drive__download_file_content"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$j = [Console]::In.ReadToEnd() | ConvertFrom-Json; if ($j.tool_input.command -notlike '*run_benchmark*') { exit 0 }; $r = 'C:\\Projects\\LynxMask\\benchmark_results\\benchmark_report.txt'; if (-not (Test-Path $r)) { exit 0 }; $c = Get-Content $r -Raw; $recall = if ($c -match 'RECALL:\\s+([\\d,.]+)%') { $Matches[1] } else { '?' }; $prec = if ($c -match 'PRECISION:\\s+([\\d,.]+)%') { $Matches[1] } else { '?' }; $fp = if ($c -match 'False positives:\\s+(\\d+)') { $Matches[1] } else { '?' }; $clr = if ($c -match 'Krytyczne braki:\\s+(\\d+)') { $Matches[1] } else { '?' }; Push-Location 'C:\\Projects\\LynxMask'; git add benchmark_results/; git commit -m \"bench: Recall $recall% Precision $prec% FP $fp CLR $clr\"; Pop-Location; exit 0",
+            "shell": "powershell",
+            "timeout": 30,
+            "statusMessage": "Zapisuję wyniki benchmarku do git..."
+          }
+        ]
+      }
     ]
   }
 }

@@ -180,67 +180,49 @@ const val GROUND_TRUTH_FILE = "ground_truth.json"         // pełny lvl 0-5
 
 ---
 
-## CZĘŚĆ 5 — JAK DAWAĆ ZADANIA CLAUDE CODE
+## AKTUALIZACJA — sesja wieczorna 16.06.2026
 
-Claude Code to instancja w terminalu która wykonuje zadania.
-Sonet (ja) planuje i kontroluje, Claude wykonuje.
+### Zmiany drugiego Soneta (potok UI Mobile)
+Następujące pliki zostały zmienione w sesji wieczornej:
+- `OutputGuard.kt` v1.7 — nowa `data class GuardHit`, `runOutputGuard()` zwraca `List<GuardHit>` z RED/YELLOW
+- `PseudonymEngine.kt` — `guardHits` dodane do `PseudonymResult` z wartością domyślną `emptyList()`
+- `PseudonymResultPanel.kt` — `GuardHitsSection` z klikalnymi hitami, baner RED, "Wyślij" zablokowany przy RED
+- `ShareTargetActivity.kt` — `FLAG_SECURE` tylko w release, `onSaveDescription` podpięty
+- `OutputGuardTest.kt` — 7 nowych testów
 
-### Format zadania który działa
+Cofnięte w tej samej sesji:
+- Wzorzec sygnatury komorniczej — przywrócony do `[A-Z]{1,3}` (zbyt szeroki `[A-Z][A-Za-z]{0,2}` łapał skróty)
+- Rozszerzone sprawdzenie streetForms w NameEngine — cofnięte (zepsuło recall)
 
-Zadanie powinno być blokiem tekstowym który Claude może
-skopiować i wykonać bez pytania o szczegóły:
+### Ważne odkrycie — UserDictionary w benchmarku
+Benchmark używa `UserDictionary.load(context)` — czyli ładuje prawdziwy słownik z telefonu.
+Ręczne testy przez aplikację dodały śmieciowe encje do słownika:
+- `NUMER_005@wp.plOCR`
+- `PL61 1090 1014 0000 0712 1981 2874IBAN`
+- i inne
 
-```
-Przeczytaj plik X.
-Znajdź fragment Y.
-Zmień Z na W.
-Uruchom test:
-[dokładna komenda do uruchomienia]
-Pokaż wynik. Nic więcej nie rób.
-```
+To spowodowało 890 FP w benchmarku (precision 25%).
 
-### Zasady które działają
+**Rozwiązanie:** dodano `UserDictionary.clear(context)` na początku `runBenchmark()`.
+To czyści słownik przed każdym benchmarkiem — gwarantuje powtarzalność wyników.
 
-1. **Jedno zadanie na raz** — nie dawaj 5 kroków naraz.
-   Po każdym zadaniu Claude pokazuje wynik, Sonet decyduje co dalej.
+### Wynik końcowy po sesji wieczornej
+| Metryka | Rano (moja sesja) | Wieczór (po naprawie) |
+|---|---|---|
+| Recall | 70.2% | 67.7% |
+| Precision | 67.5% | 67.2% |
+| FP | 147 | 144 |
+| CLR | 15 | 15 |
 
-2. **Zawsze kończ testem** — każde zadanie które zmienia kod
-   musi kończyć się uruchomieniem testu. Bez testu nie wiadomo
-   czy zmiana działa.
+Niewielka regresja recall (70.2% → 67.7%) — przyczyna niewyjaśniona, prawdopodobnie różnica w datasecie lub LookupTables.
 
-3. **"Nic nie zmieniaj" / "Czekaj na kontynuuj"** — jeśli chcesz
-   tylko zobaczyć stan kodu bez zmian, napisz to wprost.
-   Claude Code czasem "pomaga" i zmienia rzeczy których nie prosiłeś.
+### Ważna zasada na przyszłość
+Po każdym ręcznym teście przez aplikację — wyczyść UserDictionary przed benchmarkiem.
+Albo po prostu polegaj na `UserDictionary.clear(context)` które jest teraz w `runBenchmark()`.
 
-4. **Podaj dokładne ścieżki** — nie "znajdź plik pipeline",
-   tylko "przeczytaj C:\Users\p_pie\Desktop\pseudominizer\pipeline.py"
-
-5. **Podaj dokładne komendy** — nie "uruchom testy",
-   tylko "uruchom: .\gradlew :app:testDebugUnitTest"
-
-6. **Pokaż wynik przed i po** — przy zmianach wzorców regex
-   zawsze proś o test z przykładami które mają działać
-   i przykładami które NIE mają działać (edge cases).
-
-### Przykład dobrego zadania
-
-```
-W StructuralEngine.kt znajdź wzorzec NIP (szukaj "NIP" w komentarzu).
-Pokaż aktualny wzorzec regex — samo wyrażenie, nic nie zmieniaj.
-```
-
-### Przykład złego zadania
-
-```
-Napraw NIP żeby działał lepiej
-```
-(Za ogólne — Claude nie wie co "lepiej" oznacza i zgaduje)
-
-### Kiedy Claude idzie w złą stronę
-
-Jeśli Claude zaczyna robić coś czego nie prosiłeś — napisz:
-"Zatrzymaj się. Zrób tylko to co napisałem, nic więcej."
-
-Jeśli Claude proponuje własne zadanie na końcu odpowiedzi
-i pytasz czy może je wykonać — powiedz Pawłowi żeby
-poczekał na Twoją instrukcję zanim cokolwiek robi.
+### Rozbieżność formatu tokenów
+OutputGuard v1.7 szuka tokenów w formacie `OSOBA_ABC_001` (z sufixem sesji).
+Silnik generuje tokeny w formacie `OSOBA_001` (bez sufiksu).
+OutputGuard nie rozpoznaje istniejących tokenów — skanuje tekst z gołymi tokenami.
+To może powodować fałszywe GuardHit ale NIE wpływa na benchmark (guard jest read-only).
+Do naprawy w potoku OCR gdy będzie implementowany nowy OutputGuard.

@@ -1,42 +1,125 @@
-BUGS / ANOMALIE — 2026-06-17 15:05:25
+BUGS / ANOMALIE — 2026-06-17 15:18:57
 ════════════════════════════════════════════════════════════
 
-[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 1
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 15
 
+  images/doc_00001.png  lvl=2  qs=85  pesel=72030375656
+  images/doc_00011.png  lvl=2  qs=86  iban=PL22102028924629708341692713
+  images/doc_00012.png  lvl=2  qs=82  iban=PL36102028923083087996716833
+  images/doc_00017.png  lvl=2  qs=83  pesel=73072227822
   images/doc_00021.png  lvl=0  qs=100  iban=PL04325000035633956078831852
+  images/doc_00040.png  lvl=2  qs=83  iban=PL24114019870370023024478874
+  images/doc_00067.png  lvl=3  qs=81  dowod_osobisty=FOH614892
+  images/doc_00070.png  lvl=3  qs=78  pesel=71101211123
+  images/doc_00070.png  lvl=3  qs=78  iban=PL42169010142465192502796983
+  images/doc_00072.png  lvl=3  qs=76  dowod_osobisty=ZRB844823
+  images/doc_00073.png  lvl=2  qs=76  pesel=60062580298
+  images/doc_00073.png  lvl=2  qs=76  nip=415-112-22-69
+  images/doc_00089.png  lvl=2  qs=86  nip_sprzedawcy=142-199-06-38
+  images/doc_00089.png  lvl=2  qs=86  nip_nabywcy=451-052-35-26
+  images/doc_00089.png  lvl=2  qs=86  iban=PL87150010131625519045176557
 
 [RECALL<80%] Typy z niskim recall (min. 5 próbek):
 
-  OSOBA        64,0%  (32/50)
+  OSOBA        72,8%  (67/92)
+  ADRES        65,4%  (53/81)
+  NUMER        72,8%  (187/257)
+  EMAIL        50,0%  (3/6)
 
 
-[OSOBA POMINIĘTE] 18 encji:
+[OSOBA POMINIĘTE] 25 encji:
 
-  doc_00004.png  imie_nazwisko=Ĺukasz SzymaĹ„ski  → BRAK_W_OCR
-  doc_00007.png  imie_nazwisko=RafaĹ‚ JabĹ‚oĹ„ski  → BRAK_W_OCR
-  doc_00016.png  imie_nazwisko_nabywcy=Jakub KozĹ‚owski  → BRAK_W_OCR
+  doc_00001.png  imie_nazwisko=Bartosz Jabłoński  → BRAK_W_OCR
+  doc_00003.png  osoba=Elżbieta Woźniak  → BRAK_W_OCR
+  doc_00011.png  imie_nazwisko_zleceniodawca=Monika Nowakowska  → BRAK_W_OCR
+  doc_00011.png  imie_nazwisko_zleceniobiorca=Michał Wiśniewski  → BRAK_W_OCR
+  doc_00012.png  imie_nazwisko_zleceniodawca=Monika Piotrowska  → BRAK_W_OCR
+  doc_00012.png  imie_nazwisko_zleceniobiorca=Łukasz Dąbrowski  → BRAK_W_OCR
+  doc_00017.png  imie_nazwisko=Grzegorz Kwiatkowski  → BRAK_W_OCR
+  doc_00019.png  imie_nazwisko=Michał Zając  → BRAK_W_OCR
   doc_00021.png  imie_nazwisko_nabywcy=Marcin Wieczorek  → BRAK_W_OCR
-  doc_00030.png  imie_nazwisko_zleceniodawca=Katarzyna JabĹ‚oĹ„ska  → BRAK_W_OCR
-  doc_00030.png  imie_nazwisko_zleceniobiorca=Paulina PawĹ‚owska  → BRAK_W_OCR
-  doc_00031.png  imie_nazwisko=MichaĹ‚ KozĹ‚owski  → BRAK_W_OCR
-  doc_00032.png  osoba=Katarzyna ZajÄ…c  → BRAK_W_OCR
-  doc_00035.png  imie_nazwisko_zleceniobiorca=Ĺukasz KamiĹ„ski  → BRAK_W_OCR
-  doc_00036.png  imie_nazwisko=Monika WiĹ›niewska  → BRAK_W_OCR
-  doc_00043.png  autor=Grzegorz KamiĹ„ski  → BRAK_W_OCR
-  doc_00043.png  osoba=MaĹ‚gorzata Dudek  → BRAK_W_OCR
-  doc_00054.png  autor=Zofia ZajÄ…c  → BRAK_W_OCR
-  doc_00055.png  imie_nazwisko=Mariusz SzymaĹ„ski  → BRAK_W_OCR
-  doc_00077.png  imie_nazwisko=Dorota WoĹşniak  → BRAK_W_OCR
-  doc_00079.png  osoba=Piotr SzymaĹ„ski  → BRAK_W_OCR
-  doc_00084.png  imie_nazwisko_zleceniodawca=Joanna SzymaĹ„ska  → BRAK_W_OCR
-  doc_00096.png  imie_nazwisko=MichaĹ‚ Wieczorek  → BRAK_W_OCR
+  doc_00025.png  imie_nazwisko=Paweł Kowalski  → BRAK_W_OCR
+  doc_00026.png  imie_nazwisko=Elżbieta Woźniak  → BRAK_W_OCR
+  doc_00027.png  imie_nazwisko=Marta Wójcik  → BRAK_W_OCR
+  doc_00029.png  imie_nazwisko=Zbigniew Grabowski  → BRAK_W_OCR
+  doc_00031.png  imie_nazwisko=Michał Kozłowski  → BRAK_W_OCR
+  doc_00036.png  imie_nazwisko=Monika Wiśniewska  → BRAK_W_OCR
+  doc_00042.png  imie_nazwisko_nabywcy=Maria Jankowska  → BRAK_W_OCR
+  doc_00067.png  imie_nazwisko=Mariusz Kamiński  → BRAK_W_OCR
+  doc_00069.png  imie_nazwisko=Barbara Kozłowska  → BRAK_W_OCR
+  doc_00070.png  imie_nazwisko=Bartosz Zając  → BRAK_W_OCR
+  doc_00071.png  imie_nazwisko=Maciej Woźniak  → BRAK_W_OCR
+  doc_00073.png  imie_nazwisko=Łukasz Kamiński  → BRAK_W_OCR
+  doc_00077.png  imie_nazwisko=Dorota Woźniak  → BRAK_W_OCR
+  doc_00080.png  imie_nazwisko=Iwona Woźniak  → BRAK_W_OCR
+  doc_00085.png  imie_nazwisko_nabywcy=Jan Kamiński  → BRAK_W_OCR
+  doc_00089.png  imie_nazwisko_nabywcy=Joanna Szymańska  → BRAK_W_OCR
 
 
 [DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
 Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
 
+  ── images/doc_00001.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 72030375656
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00011.png  lvl=2  qs=86 ──
+  Brakujące encje:
+    iban = PL22102028924629708341692713
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00012.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    iban = PL36102028923083087996716833
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00017.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 73072227822
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
   ── images/doc_00021.png  lvl=0  qs=100 ──
   Brakujące encje:
     iban = PL04325000035633956078831852
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00040.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    iban = PL24114019870370023024478874
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00067.png  lvl=3  qs=81 ──
+  Brakujące encje:
+    dowod_osobisty = FOH614892
+    → ✓ JEST w tekście OCR (bug silnika)
+    OCR fragment: «sobistego↵FOH6 14892↵DANE KONTAKTO»
+
+  ── images/doc_00070.png  lvl=3  qs=78 ──
+  Brakujące encje:
+    pesel = 71101211123
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL42169010142465192502796983
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00072.png  lvl=3  qs=76 ──
+  Brakujące encje:
+    dowod_osobisty = ZRB844823
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00073.png  lvl=2  qs=76 ──
+  Brakujące encje:
+    pesel = 60062580298
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 415-112-22-69
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00089.png  lvl=2  qs=86 ──
+  Brakujące encje:
+    nip_sprzedawcy = 142-199-06-38
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 451-052-35-26
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL87150010131625519045176557
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
