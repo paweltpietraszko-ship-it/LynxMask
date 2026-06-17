@@ -576,6 +576,9 @@ internal fun applyContextualBlacklist(
         if (namepart.length < 4) return@replace match.value
         // DENYLIST v1.11: słowa pospolite mylone z OSOBA przez kontekst tytułu
         if (namepart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        // LOOKUP-FIX: słowo po tytule musi być imieniem lub nazwiskiem ze słownika
+        if (!LookupTables.namesForms.contains(namepart.lowercase()) &&
+            !LookupTables.surnamesForms.contains(namepart.lowercase())) return@replace match.value
         val token = assignToken(namepart, TOKEN_OSOBA)
         "${match.groupValues[1]} $token"
     }
