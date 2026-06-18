@@ -286,7 +286,8 @@ object PseudonymEngine {
             flags = flags,
             riskScore = riskScore,
             qualityWarning = qualityWarning,
-            guardHits = guardHits
+            guardHits = guardHits,
+            trace = traceLog
         )
     }
 
