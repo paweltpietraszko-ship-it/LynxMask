@@ -207,7 +207,9 @@ object PseudonymEngine {
         }
 
         // --- Warstwa 3: Czarna lista kontekstowa ---
-        text = applyContextualBlacklist(text, ::assignToken, profileType)
+        text = applyContextualBlacklist(text, { value, tokenType ->
+            assignToken(value, tokenType, layer = "NAME_ENGINE", rule = "CONTEXTUAL")
+        }, profileType)
 
         // --- Warstwa 3c: Propagacja nazwisk ---
         // Jeśli wykryto "Jan Kowalski" → OSOBA_001,
