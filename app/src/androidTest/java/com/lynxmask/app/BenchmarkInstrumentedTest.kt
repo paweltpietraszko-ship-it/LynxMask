@@ -141,7 +141,7 @@ class BenchmarkInstrumentedTest {
             // od konkretnego typu kolekcji zwracanej przez UserDictionary.entries
             val normalized  = OcrNormalizer.normalize(ocrText)
             val dictEntries = UserDictionary.entries.toList()
-            val engineResult = PseudonymEngine.pseudonymize(normalized.normalizedText, dictEntries)
+            val engineResult = PseudonymEngine.pseudonymize(normalized.normalizedText, dictEntries, traceMode = true)
 
             // Tokeny: tokenMap to Map<token, original>
             val tokens = engineResult.tokenMap.map { (token, original) ->
@@ -160,7 +160,7 @@ class BenchmarkInstrumentedTest {
                 dumpFile.writeText(tokenDump)
             }
 
-            analyze(gt, tokens, ocrText, error = null)
+            analyze(gt, tokens, ocrText, error = null, trace = engineResult.trace)
         } catch (e: Exception) {
             analyze(gt, emptyList(), ocrText = "", error = e.message ?: "błąd")
         }
@@ -224,6 +224,7 @@ class BenchmarkInstrumentedTest {
         tokens: List<DetectedToken>,
         ocrText: String,
         error: String?,
+        trace: List<DetectionTrace> = emptyList(),
     ): DocResult {
         val gtEntities = gt.optJSONObject("entities") ?: JSONObject()
         // names() zwraca null dla pustego JSONObject — null!! = NPE, dlatego null-safe
@@ -305,6 +306,7 @@ class BenchmarkInstrumentedTest {
             fpCount   = fp,
             summary   = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
                                 typeMismatch),
+            trace     = trace,
         )
     }
 
@@ -537,6 +539,15 @@ class BenchmarkInstrumentedTest {
 
         generateDictionaryHtml(results)
 
+        // Zapis trace do pliku
+        val traceFile = File(benchDir, "benchmark_trace.txt")
+        val traceLines = results.flatMap { result ->
+            result.trace.map { t ->
+                "${result.file}\t${t.layer}\t${t.rule}\t${t.token}\t${t.matchedText}"
+            }
+        }
+        traceFile.writeText("DOC\tLAYER\tRULE\tTOKEN\tMATCHED_TEXT\n" + traceLines.joinToString("\n"))
+
         val publicDir = File("/storage/emulated/0/Documents/LynxMask")
         publicDir.mkdirs()
         benchDir.listFiles()?.forEach { file ->
@@ -685,5 +696,6 @@ function exportSelected() {
         val ocrLen: Int, val ocrText: String, val error: String?,
         val tokens: List<DetectedToken>, val entities: List<EntityResult>,
         val fpCount: Int, val summary: Summary,
+        val trace: List<DetectionTrace> = emptyList(),
     )
 }
