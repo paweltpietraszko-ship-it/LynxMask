@@ -519,6 +519,24 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
         }
 
+        // ── Diagnostyka pominiętych ADRES ────────────────────────────────────
+        val adresCases = results.flatMap { r ->
+            r.entities.filter { !it.found && (it.key == "adres" || it.key.startsWith("adres")) }
+                .map { r to it }
+        }
+        if (adresCases.isNotEmpty()) {
+            bb.appendLine()
+            bb.appendLine("[ADRES POMINIĘTE] ${adresCases.size} encji:")
+            bb.appendLine()
+            adresCases.forEach { (r, e) ->
+                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
+                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+            }
+            bb.appendLine()
+        }
+
         // ── Diagnostyka OCR dla krytycznych braków ───────────────────────────
         if (critCases.isNotEmpty()) {
             bb.appendLine()
