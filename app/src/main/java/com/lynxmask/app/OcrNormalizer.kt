@@ -163,6 +163,20 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_UL_PREFIX v1.4: naprawa skrótu "ul." rozbitego przez OCR
+    //
+    // "u. Nazwa" → "ul. Nazwa"  (OCR zgubił l)
+    // "u Nazwa"  → "ul. Nazwa"  (OCR zgubił l i kropkę)
+    //
+    // Warunek bezpieczeństwa: lookbehind wyklucza środek słowa —
+    // przed "u" musi być spacja, newline lub początek linii.
+    // Lookahead wymaga wielkiej litery — tylko nazwy własne (ulice).
+    // ----------------------------------------------------------
+    private val OCR_UL_PREFIX = Regex(
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])u\.?[^\S\n]+(?=[A-ZŁŚŹĆŃĄĘÓŻ])"""
+    )
+
+    // ----------------------------------------------------------
 
     fun normalize(rawText: String): NormalizationResult {
         var text = rawText
@@ -220,6 +234,12 @@ object OcrNormalizer {
         text = OCR_EMAIL_LOCALSPACE.replace(text) { m ->
             corrections++
             "${m.groupValues[1]}_${m.groupValues[2]}"
+        }
+
+        // 9. OCR: "u. Nazwa" lub "u Nazwa" → "ul. Nazwa"
+        text = OCR_UL_PREFIX.replace(text) { m ->
+            corrections++
+            "ul. "
         }
 
         return NormalizationResult(text, corrections)

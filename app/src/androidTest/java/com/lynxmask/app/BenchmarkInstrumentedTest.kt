@@ -128,7 +128,7 @@ class BenchmarkInstrumentedTest {
         return try {
             // ML Kit OCR
             val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                ?: return analyze(gt, emptyList(), "", "bitmap null: ${imgFile.name}")
+                ?: return analyze(gt, emptyList(), ocrText = "", error = "bitmap null: ${imgFile.name}")
             val mlImage  = InputImage.fromBitmap(bitmap, 0)
             val ocrText: String = suspendCancellableCoroutine { cont ->
                 recognizer.process(mlImage)
@@ -160,7 +160,7 @@ class BenchmarkInstrumentedTest {
                 dumpFile.writeText(tokenDump)
             }
 
-            analyze(gt, tokens, ocrText, error = null, trace = engineResult.trace)
+            analyze(gt, tokens, ocrText, normalizedText = normalized.normalizedText, error = null, trace = engineResult.trace)
         } catch (e: Exception) {
             analyze(gt, emptyList(), ocrText = "", error = e.message ?: "błąd")
         }
@@ -234,6 +234,7 @@ class BenchmarkInstrumentedTest {
         gt: JSONObject,
         tokens: List<DetectedToken>,
         ocrText: String,
+        normalizedText: String = ocrText,
         error: String?,
         trace: List<DetectionTrace> = emptyList(),
     ): DocResult {
@@ -318,6 +319,7 @@ class BenchmarkInstrumentedTest {
             summary   = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
                                 typeMismatch),
             trace     = trace,
+            normalizedText = normalizedText,
         )
     }
 
@@ -509,7 +511,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             osobaCases.forEach { (r, e) ->
                 val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
+                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
                 // Czy silnik zamaskował coś co zawiera nazwisko (druga część GT)?
                 val surname = e.value.substringAfterLast(" ").lowercase()
                 val maskedBySurname = r.tokens.any { tok ->
@@ -537,7 +539,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             emailCases.forEach { (r, e) ->
                 val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
+                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
                 bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
@@ -556,7 +558,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             adresCases.forEach { (r, e) ->
                 val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
+                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
                 bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
@@ -576,7 +578,7 @@ class BenchmarkInstrumentedTest {
                 r.entities.filter { !it.found && it.critical }.forEach { e ->
                     bb.appendLine("    ${e.key} = ${e.value}")
                     val normVal = normalizeForCompare(e.value)
-                    val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
+                    val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
                     bb.appendLine("    → ${if (inOcr) "✓ JEST w tekście OCR (bug silnika)" else "✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)"}")
                     if (inOcr) {
                         // Pokaż fragment RAW OCR wokół znalezionej encji
@@ -759,5 +761,6 @@ function exportSelected() {
         val tokens: List<DetectedToken>, val entities: List<EntityResult>,
         val fpCount: Int, val summary: Summary,
         val trace: List<DetectionTrace> = emptyList(),
+        val normalizedText: String = ocrText,
     )
 }
