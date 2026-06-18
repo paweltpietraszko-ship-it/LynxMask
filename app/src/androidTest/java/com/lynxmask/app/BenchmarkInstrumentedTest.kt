@@ -196,7 +196,18 @@ class BenchmarkInstrumentedTest {
         "email" to "EMAIL",
     )
 
-    private fun norm(v: String) = v.replace(" ", "").replace("-", "").lowercase()
+    private fun norm(v: String): String {
+        val diacritics = mapOf(
+            'ą' to 'a', 'ć' to 'c', 'ę' to 'e', 'ł' to 'l', 'ń' to 'n',
+            'ó' to 'o', 'ś' to 's', 'ź' to 'z', 'ż' to 'z',
+            'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
+            'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
+        )
+        return v.replace(" ", "").replace("-", "")
+            .map { diacritics[it] ?: it }
+            .joinToString("")
+            .lowercase()
+    }
 
     // Fuzzy match tylko dla kluczy numerycznych — dla nazwisk byłoby niebezpieczne
     private val numericKeys = setOf(
