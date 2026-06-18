@@ -177,6 +177,24 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_PESEL_DIGITS v1.4: naprawa liter zamiennych na cyfry w numerze PESEL
+    //
+    // OCR myli cyfry z literami: T→7, I/l→1, O→0, S→5, B→8, G→6, Z→2
+    // Reguła działa TYLKO w kontekście po słowie "PESEL" — zero ryzyka
+    // fałszywych zamian w pozostałym tekście.
+    //
+    // Przykład: "PESEL T2030375656" → "PESEL 72030375656"
+    // ----------------------------------------------------------
+    private val OCR_PESEL_DIGITS = Regex(
+        """(?i)(?<=PESEL\s{0,3}:?\s{0,3})([TIlOSBGZ0-9]{11})(?!\d)"""
+    )
+    private val PESEL_CHAR_MAP = mapOf(
+        'T' to '7', 'I' to '1', 'l' to '1',
+        'O' to '0', 'S' to '5', 'B' to '8',
+        'G' to '6', 'Z' to '2',
+    )
+
+    // ----------------------------------------------------------
 
     fun normalize(rawText: String): NormalizationResult {
         var text = rawText
@@ -240,6 +258,13 @@ object OcrNormalizer {
         text = OCR_UL_PREFIX.replace(text) { m ->
             corrections++
             "ul. "
+        }
+
+        // 10. OCR: litery zamienione na cyfry w numerze PESEL
+        text = OCR_PESEL_DIGITS.replace(text) { m ->
+            val fixed = m.groupValues[1].map { PESEL_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.groupValues[1]) corrections++
+            fixed
         }
 
         return NormalizationResult(text, corrections)

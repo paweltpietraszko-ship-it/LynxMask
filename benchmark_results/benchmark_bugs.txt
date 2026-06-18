@@ -1,9 +1,8 @@
-BUGS / ANOMALIE — 2026-06-18 15:23:59
+BUGS / ANOMALIE — 2026-06-18 15:43:27
 ════════════════════════════════════════════════════════════
 
-[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 15
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 14
 
-  images/doc_00001.png  lvl=2  qs=85  pesel=72030375656
   images/doc_00011.png  lvl=2  qs=86  iban=PL22102028924629708341692713
   images/doc_00012.png  lvl=2  qs=82  iban=PL36102028923083087996716833
   images/doc_00017.png  lvl=2  qs=83  pesel=73072227822
@@ -22,7 +21,7 @@ BUGS / ANOMALIE — 2026-06-18 15:23:59
 [RECALL<80%] Typy z niskim recall (min. 5 próbek):
 
   ADRES        67,9%  (55/81)
-  NUMER        72,8%  (187/257)
+  NUMER        73,2%  (188/257)
 
 
 [OSOBA POMINIĘTE] 17 encji:
@@ -127,11 +126,6 @@ BUGS / ANOMALIE — 2026-06-18 15:23:59
 
 [DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
 Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
-
-  ── images/doc_00001.png  lvl=2  qs=85 ──
-  Brakujące encje:
-    pesel = 72030375656
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
   ── images/doc_00011.png  lvl=2  qs=86 ──
   Brakujące encje:
