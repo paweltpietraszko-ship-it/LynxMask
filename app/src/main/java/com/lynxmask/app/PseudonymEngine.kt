@@ -55,7 +55,8 @@ data class PseudonymResult(
     val flags: List<PseudonymFlag>,          // miejsca do sprawdzenia przez użytkownika
     val riskScore: RiskScore,
     val qualityWarning: String?,            // ostrzeżenie jakości OCR
-    val guardHits: List<GuardHit> = emptyList()  // wycieki wykryte przez OutputGuard
+    val guardHits: List<GuardHit> = emptyList(),  // wycieki wykryte przez OutputGuard
+    val trace: List<DetectionTrace> = emptyList()
 )
 
 data class PseudonymFlag(
@@ -65,6 +66,13 @@ data class PseudonymFlag(
 )
 
 enum class RiskScore { GREEN, YELLOW, RED }
+
+data class DetectionTrace(
+    val layer: String,
+    val rule: String,
+    val matchedText: String,
+    val token: String
+)
 
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
@@ -86,8 +94,11 @@ object PseudonymEngine {
         rawText: String,
         userDictionary: List<Pair<String, String>> = emptyList(),
         mlKitConfidence: Float? = null,
-        profileType: String = "general"  // z onboardingu
+        profileType: String = "general",  // z onboardingu
+        traceMode: Boolean = false
     ): PseudonymResult {
+
+        val traceLog = mutableListOf<DetectionTrace>()
 
         // --- Warstwa 0: Normalizacja OCR ---
         val normResult = OcrNormalizer.normalize(rawText)
@@ -137,7 +148,7 @@ object PseudonymEngine {
         val counters = mutableMapOf<String, Int>()
         val flags = mutableListOf<PseudonymFlag>()
 
-        fun assignToken(value: String, tokenType: String): String {
+        fun assignToken(value: String, tokenType: String, layer: String = "UNKNOWN", rule: String = "UNKNOWN"): String {
             val canonical = canonicalValue(value)
             reverseMap[canonical]?.let { return it }
             val count = (counters[tokenType] ?: 0) + 1
@@ -145,6 +156,9 @@ object PseudonymEngine {
             val token = "${tokenType}_${count.toString().padStart(3, '0')}"
             tokenMap[token] = value
             reverseMap[canonical] = token
+            if (traceMode) {
+                traceLog.add(DetectionTrace(layer = layer, rule = rule, matchedText = value, token = token))
+            }
             // TODO-1: debug log owinięty w BuildConfig.DEBUG — nie wycieka PII do logcata w release
             if (tokenType == TOKEN_OSOBA && BuildConfig.DEBUG) {
                 android.util.Log.w("PSE_OSOBA", "$token → \"$value\"  [${Thread.currentThread().stackTrace.getOrNull(3)?.methodName}]")
