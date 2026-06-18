@@ -40,7 +40,7 @@ class BenchmarkInstrumentedTest {
         // "ground_truth_lvl0.json"   — 17 dok., tylko perfect scan  ← minimalna wersja
         // "ground_truth_lvl03.json"  — 68 dok., lvl 0-3             ← standardowy benchmark
         // "ground_truth.json"        — 100 dok., wszystkie poziomy   ← pełny dataset
-        const val GROUND_TRUTH_FILE = "ground_truth_lvl03.json"
+        const val GROUND_TRUTH_FILE = "ground_truth_lvl01.json"
     }
 
     private val context by lazy { InstrumentationRegistry.getInstrumentation().targetContext }
@@ -63,7 +63,7 @@ class BenchmarkInstrumentedTest {
         val gtFile = File(benchDir, GROUND_TRUTH_FILE)
         check(gtFile.exists()) {
             "Brak $GROUND_TRUTH_FILE — wgraj dataset:\n" +
-            "adb push dataset/$GROUND_TRUTH_FILE /sdcard/Android/data/com.lynxmask.app/files/bench/$GROUND_TRUTH_FILE"
+            "adb push dataset/$GROUND_TRUTH_FILE /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/$GROUND_TRUTH_FILE"
         }
 
         val groundTruth = JSONArray(gtFile.readText())
