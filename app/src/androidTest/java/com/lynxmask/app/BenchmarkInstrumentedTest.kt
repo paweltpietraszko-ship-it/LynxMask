@@ -339,6 +339,19 @@ class BenchmarkInstrumentedTest {
         println("${"═".repeat(60)}\n")
     }
 
+    private fun normalizeForCompare(s: String): String {
+        val diacritics = mapOf(
+            'ą' to 'a', 'ć' to 'c', 'ę' to 'e', 'ł' to 'l', 'ń' to 'n',
+            'ó' to 'o', 'ś' to 's', 'ź' to 'z', 'ż' to 'z',
+            'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
+            'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
+        )
+        return s.replace(" ", "").replace("-", "")
+            .map { diacritics[it] ?: it }
+            .joinToString("")
+            .lowercase()
+    }
+
     private fun saveReports(results: List<DocResult>) {
         val totalEnt  = results.sumOf { it.summary.total }
         val totalDet  = results.sumOf { it.summary.detected }
@@ -484,8 +497,8 @@ class BenchmarkInstrumentedTest {
             bb.appendLine("[OSOBA POMINIĘTE] ${osobaCases.size} encji:")
             bb.appendLine()
             osobaCases.forEach { (r, e) ->
-                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
-                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                val normVal = normalizeForCompare(e.value)
+                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                 // Czy silnik zamaskował coś co zawiera nazwisko (druga część GT)?
                 val surname = e.value.substringAfterLast(" ").lowercase()
                 val maskedBySurname = r.tokens.any { tok ->
@@ -511,8 +524,8 @@ class BenchmarkInstrumentedTest {
             bb.appendLine("[EMAIL POMINIĘTE] ${emailCases.size} encji:")
             bb.appendLine()
             emailCases.forEach { (r, e) ->
-                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
-                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                val normVal = normalizeForCompare(e.value)
+                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
             }
@@ -529,8 +542,8 @@ class BenchmarkInstrumentedTest {
             bb.appendLine("[ADRES POMINIĘTE] ${adresCases.size} encji:")
             bb.appendLine()
             adresCases.forEach { (r, e) ->
-                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
-                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                val normVal = normalizeForCompare(e.value)
+                val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
             }
@@ -548,9 +561,8 @@ class BenchmarkInstrumentedTest {
                 bb.appendLine("  Brakujące encje:")
                 r.entities.filter { !it.found && it.critical }.forEach { e ->
                     bb.appendLine("    ${e.key} = ${e.value}")
-                    val normVal = e.value.replace(" ", "").replace("-", "")
-                    val normOcr = r.ocrText.replace(" ", "").replace("-", "")
-                    val inOcr = normOcr.contains(normVal, ignoreCase = true)
+                    val normVal = normalizeForCompare(e.value)
+                    val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                     bb.appendLine("    → ${if (inOcr) "✓ JEST w tekście OCR (bug silnika)" else "✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)"}")
                     if (inOcr) {
                         // Pokaż fragment RAW OCR wokół znalezionej encji
