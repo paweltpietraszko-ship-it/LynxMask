@@ -501,6 +501,24 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
         }
 
+        // ── Diagnostyka pominiętych EMAIL ────────────────────────────────────
+        val emailCases = results.flatMap { r ->
+            r.entities.filter { !it.found && it.key == "email" }
+                .map { r to it }
+        }
+        if (emailCases.isNotEmpty()) {
+            bb.appendLine()
+            bb.appendLine("[EMAIL POMINIĘTE] ${emailCases.size} encji:")
+            bb.appendLine()
+            emailCases.forEach { (r, e) ->
+                val normVal = e.value.replace(" ", "").replace("-", "").lowercase()
+                val inOcr = r.ocrText.replace(" ", "").replace("-", "").lowercase().contains(normVal)
+                val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+            }
+            bb.appendLine()
+        }
+
         // ── Diagnostyka OCR dla krytycznych braków ───────────────────────────
         if (critCases.isNotEmpty()) {
             bb.appendLine()
