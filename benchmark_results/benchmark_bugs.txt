@@ -1,4 +1,4 @@
-BUGS / ANOMALIE — 2026-06-18 13:48:02
+BUGS / ANOMALIE — 2026-06-18 14:48:21
 ════════════════════════════════════════════════════════════
 
 [KRYTYCZNE] Pominięte encje wysokiego ryzyka: 15
@@ -23,10 +23,9 @@ BUGS / ANOMALIE — 2026-06-18 13:48:02
 
   ADRES        67,9%  (55/81)
   NUMER        72,8%  (187/257)
-  EMAIL        50,0%  (3/6)
 
 
-[OSOBA POMINIĘTE] 18 encji:
+[OSOBA POMINIĘTE] 17 encji:
 
   doc_00001.png  imie_nazwisko=Bartosz Jabłoński  → BRAK_W_OCR
     OCR[300]: Komomik Sądowy przy SR Paznań-Grunwald Janusz Wierzbicki Sygn akt Km 901322023 Data 03 02 2025 Bartosz Jablosk Nepodlegosd 136 20-100 Rytnik ta poduawie tyn wtonawczego komomik sadouy zaadania, 2 w sprmsie prowatzone pod sygn Km 90 132/202 wsz pospe Batosz Jablosk, PESEL T2030375656 žamiescialyla al
@@ -44,8 +43,6 @@ BUGS / ANOMALIE — 2026-06-18 13:48:02
     OCR[300]: Sygn PO032500 2018 Data wydania 22 02 2023 Ns podstawie: po rozpatrenk wniosku Michal Zaiac art 104 ustawy z dnia 14 caerwca 1960 .- Kodeks postepowania administracyhego t Dz Uz2023 r. poz. T75 ze zm) PESEL 600814 15038 NP. 360-554-26-70 adres: Koscuszk 167, 44-100 Zabrze ORZEKAM: UZASADNENIE Zaklad
   doc_00021.png  imie_nazwisko_nabywcy=Marcin Wieczorek  → BRAK_W_OCR
     OCR[300]: Data wystawienia: 29.11.2022 Numer klienta: KL-13523 SPRZEDAWCA: Kancelaria Prawna LEGIS S.C. Adres: ul. Kopernika 159/16, 87-100 Rad om NIP: 216-970-03-12 REGON: 853471555 Nr konta: PLO4325000035633956078831852 NABYWCA: Marcin WNieczorek Adres: ul. Ogrodowa 106, 87-100 Wrocaw NIP: 678-098-11-22 Lp.
-  doc_00025.png  imie_nazwisko=Paweł Kowalski  → BUG_SILNIKA
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Jmięi nazaisko Pavet Kowask Dats urodrenia PESEL 13.01.1997 N dowodu osobistego 60092947300 DANE KONTAKTOWE EFN333471 Adres Zamieszkania Telefon: Warszawska 117, 50-001 Biaystok Adres e-mail +48 608 172 582 pawelkowalski@onet pl DANE PODATKOWE Data NP Gesl doyczy) 548-407-7
   doc_00029.png  imie_nazwisko=Zbigniew Grabowski  → BRAK_W_OCR
     OCR[300]: Zaklad Ubezpieczen Spolecznych Oddzia w Warszawie Sygn. aktC 6157/2022 Zignew Grabowsk epodkegokd 1698 02-200 Rasab ParniPana Zigpiew Gosbowsk, PESEL 75120927337 do zbania pienyh wjaiieh w tiie 14 di od daty dorgcania nhijcego pisa w spraie dstyczc Wacie pytah prosimy o kortalt 48 S79 876 o9e WEZWAN
   doc_00031.png  imie_nazwisko=Michał Kozłowski  → BRAK_W_OCR
@@ -66,12 +63,8 @@ BUGS / ANOMALIE — 2026-06-18 13:48:02
     OCR[300]: Du yi 2512202 SPRZEDAWCA ETA SA Ads Loa 1218s001 Sosnowe NP sQ1EGON soSTT90 t PsososssoestNS ABVWCA Joa Smaa As Spe 1$7,s0-01 na Ga P4516sx Nug &Ca AT AGZNE DOo ZAPATY 4 P Po pee Pa7s001013ssoest7ess? Temin god S i od dy w y Wy Ora FAKTURA VAT FVOS009o7022
 
 
-[EMAIL POMINIĘTE] 3 encji:
+[EMAIL POMINIĘTE] 1 encji:
 
-  doc_00025.png  email=pawelkowalski@onet.pl  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Jmięi nazaisko Pavet Kowask Dats urodrenia PESEL 13.01.1997 N dowodu osobistego 60092947300 DANE KONTAKTOWE EFN333471 Adres Zamieszkania Telefon: Warszawska 117, 50-001 Biaystok Adres e-mail +48 608 172 582 pawelkowalski@onet pl DANE PODATKOWE Data NP Gesl doyczy) 548-407-7
-  doc_00067.png  email=mariusz_kaminski@o2.pl  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Mariusz Kaminski Data urodzenia 07.05.1986 PESEL: T2061686776 Nr dowodu osobistego FOH6 14892 DANE KONTAKTOWE Adres zamieszkania Kopermika 91, 60-001 Zielona Góra Telefon: +48 578 323 660 Adres emait mariusz kaminski@o2 pl DANE PODATKOWE NIP (esl dotyczy): 
   doc_00072.png  email=krzysztof.nowakowski@onet.pl  → BRAK_W_OCR
     OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwsko Krzysztof Nowakowski Data urodzenia PESEL: 25. 11.1980 N dowodu osobistego ZRBBA4823 62031459836 DANE KONTAKTOWE Adres zamieszkania d Nowida 45/9, 02-200 Kraków Telefon Data +48 533 392 617 Adres e-mail krzysztof nowakowski@onet pl DANE PODATKOWE NP (esl doty
 
