@@ -182,7 +182,7 @@ object PseudonymEngine {
         for ((dictValue, tokenType) in userDictionary) {
             if (dictValue.isBlank()) continue
             val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
-            val token = assignToken(dictValue, safeType)
+            val token = assignToken(dictValue, safeType, layer = "DICT", rule = "USER_DICTIONARY")
             // DICT-FIX v2.1: regex zamiast String.replace() — zapobiega podmiance fragmentów
             // większych słów (np. "Jan" → "OSOBA_001" podmienia "Janusz" → "OSOBA_001usz").
             // \b nie obsługuje polskich diakrytyków — używamy lookbehind/lookahead.
@@ -202,7 +202,7 @@ object PseudonymEngine {
             text = pattern.replace(text) { matchResult ->
                 val match = matchResult.value
                 if (TOKEN_RE.containsMatchIn(match)) match
-                else assignToken(match, tokenType)
+                else assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
             }
         }
 
@@ -263,7 +263,7 @@ object PseudonymEngine {
         for ((tokenType, pattern) in ADDRESS_PATTERNS) {
             pattern.findAll(text).toList().asReversed().forEach { match ->
                 if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                text = text.replaceRange(match.range, assignToken(match.value, tokenType))
+                text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType))
             }
         }
 
