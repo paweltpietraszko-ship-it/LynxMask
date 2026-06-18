@@ -142,6 +142,27 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_EMAIL_SPACES v1.4: naprawa artefaktów spacji w adresach email
+    //
+    // Reguła 1 — spacja przed TLD (uruchamiać PIERWSZA):
+    //   "jan@onet pl" → "jan@onet.pl"
+    //   Wzorzec: @domena + spacja + 2-4 litery TLD
+    //   Bezpieczne: wymaga @ na początku, TLD ≤ 4 litery — nie skleja zdań
+    //
+    // Reguła 2 — spacja w local-part przed @ (uruchamiać PO regule TLD):
+    //   "mariusz kaminski@o2.pl" → "mariusz_kaminski@o2.pl"
+    //   Wzorzec: fragment + spacja + fragment + lookahead @domena.tld
+    //   Zamiana spacji → podkreślnik (dozwolony w RFC 5321)
+    //   Lookahead wymaga pełnej domeny z kropką — dlatego reguła TLD musi być pierwsza
+    // ----------------------------------------------------------
+    private val OCR_EMAIL_TLDSPACE = Regex(
+        """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z]{2,4})\b"""
+    )
+    private val OCR_EMAIL_LOCALSPACE = Regex(
+        """([a-zA-Z0-9._%+\-]{2,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}\b)"""
+    )
+
+    // ----------------------------------------------------------
 
     fun normalize(rawText: String): NormalizationResult {
         var text = rawText
@@ -186,6 +207,19 @@ object OcrNormalizer {
             } else {
                 m.value  // nie skleja — brak w liście
             }
+        }
+
+        // 7. OCR-spacja przed TLD emaila — "jan@onet pl" → "jan@onet.pl"
+        text = OCR_EMAIL_TLDSPACE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}.${m.groupValues[2]}"
+        }
+
+        // 8. OCR-spacja w local-part emaila — "jan kowalski@wp.pl" → "jan_kowalski@wp.pl"
+        //    Po kroku 7 — lookahead wymaga już poprawnej domeny z kropką
+        text = OCR_EMAIL_LOCALSPACE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}_${m.groupValues[2]}"
         }
 
         return NormalizationResult(text, corrections)

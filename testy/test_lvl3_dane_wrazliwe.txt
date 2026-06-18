@@ -1,0 +1,211 @@
+DOKUMENT TESTOWY — LynxMask
+Poziom degradacji: lvl3 (szum OCR, spacje w liczbach, artefakty polskich znaków)
+Data: 2026-06-18
+Cel: sprawdzenie czy silnik wykrywa i maskuje wszystkie dane wrażliwe
+
+================================================================
+SEKCJA 1 — OSOBY (różne wzorce)
+================================================================
+
+Zleceniodawca: Jan Kowalski, zamieszkały ul. Szkolna 150, 20-100 Kielce.
+Zleceniobiorca: Wiśniewska Monika, adres: os. Słoneczne 7/3, 30-001 Kraków.
+Pełnomocnik: Pani Anna Grabowska, PESEL: 78052312345.
+Ordynator oddziału: dr hab. Piotr Zając, nr PWZ 1234567.
+Podpisano: BARTOSZ LEWANDOWSKI (OCR artefakt — wielkie litery).
+Świadek: Łukasz Szymański, data urodzenia 12.03.1980.
+
+-- OCR lvl3: polskie znaki zdegradowane --
+Wykonawca: Tomasz Wierzbicki (OCR: Tomasz Wi3rzbicki).
+Najemca: Agnieszka Dąbrowska (OCR: Agnieszka Dabrowska).
+Kurator: Józef Malinowski (OCR: Jozef Malinowski).
+
+================================================================
+SEKCJA 2 — EMAILE (edge case'y)
+================================================================
+
+-- Standardowy --
+Kontakt: joanna.grabowska@interia.pl
+E-mail służbowy: piotr.zajac@kancelaria.com.pl
+
+-- BUG-EMAIL-PARTIAL: imię w local-part --
+email zleceniobiorcy: anna.kowalska@wp.pl
+adres e-mail: jan.wisniewski@onet.pl
+
+-- OCR lvl3: spacja w local-part (pułapka) --
+Kontakt email: lszyman ski@interia.pl
+E-mail: m.wisniew ska@gmail.com
+
+-- OCR lvl3: spacja przed @ --
+Adres mailowy: pkowalski @firma.pl
+
+-- Z kontekstem e-mail: --
+e-mail: bartosz.lewandowski@prawnik.pl
+e-mail : anna.nowak@centrum-med.pl
+
+-- NIE powinno być zamaskowane --
+Strona www: www.lynxmask.pl
+Link: https://kancelaria.com/kontakt
+
+================================================================
+SEKCJA 3 — NUMERY PESEL (różne wzorce OCR)
+================================================================
+
+PESEL: 65051012345
+pesel pacjenta: 80012312345
+pe5el: 90 030 612 345
+PES3L nr: 01 271 391 176
+PESEL wnioskodawcy: 55041523456
+
+-- Bez słowa kluczowego (strukturalny) --
+Dane: 78052312345, zameldowany w Lublinie.
+
+================================================================
+SEKCJA 4 — NIP i REGON
+================================================================
+
+NIP: 873-054-80-39
+NIP sprzedawcy: 521-33-15-332
+NIP nabywcy: 9571066250
+REGON: 012345678
+
+-- OCR lvl3 --
+NlP: 651-554-28-60
+N1P: 549 744 89 42
+
+================================================================
+SEKCJA 5 — TELEFONY
+================================================================
+
+tel. kom.: 48 606 219 727
+Telefon: +48 512 345 678
+tel. stacjonarny: 81 123-45-67
+Kontakt: (22) 765-43-21
+Fax: 12 456 78 90
+
+================================================================
+SEKCJA 6 — ADRESY
+================================================================
+
+-- Pełny adres --
+Zamieszkały: ul. Szkolna 150, 20-100 Kielce
+Adres korespondencyjny: al. Niepodległości 12, 60-001 Poznań
+
+-- OCR lvl3: adres rozbity newline --
+Adres dostawy: ul. Kazimierza Wielkiego
+14/3, 50-001 Wrocław
+
+-- Różne prefiksy --
+os. Słoneczne 7/3, 30-001 Kraków
+pl. Wolności 1, 61-738 Poznań
+
+-- Bez kodu pocztowego --
+Ulica: Szkolna 150
+al. Marszałkowska 84/92
+
+================================================================
+SEKCJA 7 — DOKUMENTY TOŻSAMOŚCI
+================================================================
+
+dowód osobisty: ABC 123456
+Dowód os.: DEF 789012
+D.O. XYZ 345678
+seria i numer: GHI 901234
+
+paszport: AB1234567
+Paszport nr PA 2345678
+
+Prawo jazdy: PL/2019/12345678
+
+================================================================
+SEKCJA 8 — NUMER KONTA I IBAN
+================================================================
+
+-- IBAN ze spacjami (powinien być wykryty) --
+Nr konta: PL 36 1020 2892 0020 0886 2353 5888
+
+-- IBAN bez spacji (BUG-IBAN-NOSPACES — może nie być wykryty) --
+IBAN: PL62102028920020886235358884
+
+-- Z kontekstem --
+IBAN: PL 61 1090 1014 0000 0712 1981 2874
+
+================================================================
+SEKCJA 9 — PUŁAPKI: NIE POWINNO BYĆ ZAMASKOWANE
+================================================================
+
+-- Daty --
+Data zawarcia: 15 marca 2024
+Termin płatności: 2024-03-15
+Dnia 12.06.2026 r. strony ustaliły.
+
+-- Kwoty --
+Wynagrodzenie: 1 234,56 zł brutto
+Opłata: 99,99 EUR
+Wartość netto: 8 500,00 PLN
+
+-- Odniesienia do przepisów --
+art. 23 ust. 1 RODO
+§ 5 pkt 2 lit. a) ustawy z dnia 10 maja 2018 r.
+Dz.U. 2018 poz. 1000
+
+-- Nazwy instytucji (biała lista) --
+Sąd Rejonowy w Kielcach
+Urząd Skarbowy Kraków-Śródmieście
+Prokuratura Rejonowa Warszawa-Śródmieście
+
+-- Skróty które nie są encjami --
+Sp. z o.o. (forma prawna — nie maskuj nazwy bez nazwy własnej)
+e-mail: (samo słowo bez adresu — nie powinno crashować)
+pl. (skrót placu — nie maskuj jako OSOBA)
+
+-- Liczby które nie są PESEL/NIP --
+Numer faktury: FV/2024/001234
+Pozycja: 123456
+Rok budowy: 1998
+
+================================================================
+SEKCJA 10 — SCENARIUSZ MIESZANY (najtrudniejszy)
+================================================================
+
+Umowa nr UZ/2026/0042 zawarta w Kielcach dnia 18 czerwca 2026 r.
+pomiędzy Janem Kowalskim, PESEL 65051012345, NIP 873-054-80-39,
+zamieszkałym ul. Szkolna 150, 20-100 Kielce, tel. 48 606 219 727,
+e-mail: jan.kowalski@wp.pl (OCR: jan. kowalski@wp.pl)
+a Moniką Wiśniewską, PESEL 80012312345,
+zamieszkałą os. Słoneczne 7/3, 30-001 Kraków,
+nr konta PL 36 1020 2892 0020 0886 2353 5888.
+
+Pełnomocnik strony: Pani Anna Grabowska, adwokat, nr wpisu 12345,
+e-mail: a.grabowska@kancelaria.pl, tel.: +48 512 345 678.
+
+Świadek: dr Piotr Zając, dowód osobisty ABC 123456,
+kontakt: piotr.za jac@onet.pl (OCR: spacja w local-part).
+
+Zatwierdzono przez Sąd Rejonowy w Kielcach, sygn. akt I C 234/26.
+Wartość sporu: 12 500,00 zł. Termin rozprawy: 15 września 2026 r.
+
+================================================================
+OCZEKIWANE MASKI — LISTA KONTROLNA
+================================================================
+
+OSOBA (8):     Jan Kowalski, Monika Wiśniewska, Anna Grabowska,
+               Piotr Zając, Bartosz Lewandowski, Łukasz Szymański,
+               Tomasz Wierzbicki, Agnieszka Dąbrowska
+EMAIL (7):     joanna.grabowska@interia.pl, piotr.zajac@kancelaria.com.pl,
+               anna.kowalska@wp.pl, jan.wisniewski@onet.pl,
+               bartosz.lewandowski@prawnik.pl, anna.nowak@centrum-med.pl,
+               a.grabowska@kancelaria.pl
+               (+ 3 z OCR spacją — mogą przepaść: BUG-EMAIL-PARTIAL)
+PESEL (6):     65051012345, 80012312345, 90030612345, 01271391176,
+               55041523456, 78052312345
+NIP (5):       873-054-80-39, 521-33-15-332, 9571066250,
+               651-554-28-60, 549-744-89-42
+TELEFON (5):   48 606 219 727, +48 512 345 678, 81 123-45-67,
+               (22) 765-43-21, 12 456 78 90
+ADRES (6):     ul. Szkolna 150 / 20-100 Kielce,
+               al. Niepodległości 12 / 60-001 Poznań,
+               ul. Kazimierza Wielkiego 14/3 / 50-001 Wrocław,
+               os. Słoneczne 7/3 / 30-001 Kraków
+DOKUMENT (6):  ABC 123456, DEF 789012, XYZ 345678, GHI 901234,
+               AB1234567, PL/2019/12345678
+IBAN (3):      PL36..., PL62..., PL61...

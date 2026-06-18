@@ -40,7 +40,7 @@ class BenchmarkInstrumentedTest {
         // "ground_truth_lvl0.json"   — 17 dok., tylko perfect scan  ← minimalna wersja
         // "ground_truth_lvl03.json"  — 68 dok., lvl 0-3             ← standardowy benchmark
         // "ground_truth.json"        — 100 dok., wszystkie poziomy   ← pełny dataset
-        const val GROUND_TRUTH_FILE = "ground_truth_lvl01.json"
+        const val GROUND_TRUTH_FILE = "ground_truth_lvl03.json"
     }
 
     private val context by lazy { InstrumentationRegistry.getInstrumentation().targetContext }
@@ -521,6 +521,7 @@ class BenchmarkInstrumentedTest {
                     else            -> "BUG_SILNIKA"
                 }
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
             }
             bb.appendLine()
         }
@@ -539,6 +540,7 @@ class BenchmarkInstrumentedTest {
                 val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
             }
             bb.appendLine()
         }
@@ -557,6 +559,7 @@ class BenchmarkInstrumentedTest {
                 val inOcr = normalizeForCompare(r.ocrText).contains(normVal)
                 val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
             }
             bb.appendLine()
         }
