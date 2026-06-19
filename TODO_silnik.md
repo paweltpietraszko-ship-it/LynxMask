@@ -2,9 +2,7 @@
 
 ## Następna sesja (priorytet)
 
-1. **BUG-PESEL1** — `PESE1` (cyfra 1 zamiast L) — lookbehind nie matchuje
-   - Fix: zmienić `(?<=PESEL\s{0,3}:?\s{0,3})` → `(?<=PESE[Ll1]\s{0,3}:?\s{0,3})` w OcrNormalizer.kt linia 189
-   - Test: dodać przypadek `PESE1: T2030375656` do OcrNormalizerPeselTest.kt
+1. ~~**BUG-PESEL1**~~ — ✅ NAPRAWIONE 19.06 (OCR_PESEL_WORD)
 
 2. **BUG-EMAIL-TLD1** — `@wp p1` — TLD z cyfrą nie naprawiane
    - Fix: zmienić `([a-zA-Z]{2,4})\b` → `([a-zA-Z0-9]{2,4})\b` w OCR_EMAIL_TLDSPACE (OcrNormalizer.kt linia 159)
@@ -15,6 +13,12 @@
    - Sprawdzić trace dla dokumentów z krytycznym brakiem NUMER
 
 4. **ADRES recall ~68%** — przejrzeć bugs.txt sekcja [ADRES POMINIĘTE]
+
+5. **Nowy dataset testowy** — wygenerować dokumenty z wariantami OCR które naprawiliśmy (PESE1, PE5EL, UI.Nazwa, NlP, emaile ze spacją) — benchmark nie mierzy nowych reguł
+
+6. **Zdjęcia z aparatu** — zebrać realne artefakty OCR z różnych typów dokumentów → analiza → nowe reguły OcrNormalizera
+
+7. **Dataset overfitting** — obecny benchmark mierzy tylko znane dokumenty, nie wykrywa nowych luk w silniku
 
 ---
 
@@ -35,11 +39,9 @@
 
 ## OcrNormalizer — otwarte bugi
 
-### BUG-PESEL1
-- Wejście: `PESE1: T2030375656` (OCR zamienił L na 1)
-- Wynik: lookbehind `(?<=PESEL...)` nie matchuje bo szuka "PESEL" nie "PESE1"
-- Numer nie naprawiony mimo reguły OCR_PESEL_DIGITS
-- Rozwiązanie: `PESE[Ll1]` w lookbehind
+### ~~BUG-PESEL1~~ — ✅ NAPRAWIONE 19.06
+- OCR_PESEL_WORD zastąpił OCR_PESEL_DIGITS — obsługuje PESE1, PE5EL, P E S E L, PEB3L
+- 9 testów jednostkowych, 0 FAILED
 
 ### BUG-NIP-SPLIT
 - Wejście: `NIP: I42-I99-O6-38` (OCR artefakty)

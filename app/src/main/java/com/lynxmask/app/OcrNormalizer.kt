@@ -195,11 +195,27 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL
+    // Przykład: "PESEL: 6802041 8568" → "PESEL: 68020418568"
+    // ----------------------------------------------------------
+    private val OCR_PESEL_SPLIT = Regex(
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([0-9][0-9\s]{10,14}[0-9])"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_NIP_DIGITS: NIP z kreskami (XXX-XXX-XX-XX) lub bez (10 cyfr)
     // Słowa kluczowe: NIP / NlP / N1P (artefakty OCR I→l/1)
     // ----------------------------------------------------------
     private val OCR_NIP_DIGITS = Regex(
         """(?i)(?<=(?:NIP|NlP|N1P)\s{0,3}:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_NIP_SPLIT: spacja wstawiona przez OCR wewnątrz NIP
+    // Przykład: "NIP: 740-61 7-82-26" → "NIP: 740-617-82-26"
+    // ----------------------------------------------------------
+    private val OCR_NIP_SPLIT = Regex(
+        """(?i)(N[lI1]?P\s{0,3}:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -289,11 +305,25 @@ object OcrNormalizer {
             m.value.substring(0, m.value.length - m.groupValues[1].length) + fixed
         }
 
+        // 10b. OCR: spacja wstawiona przez OCR wewnątrz numeru PESEL
+        text = OCR_PESEL_SPLIT.replace(text) { m ->
+            val fixed = m.groupValues[2].replace(" ", "")
+            if (fixed != m.groupValues[2]) corrections++
+            m.groupValues[1] + fixed
+        }
+
         // 11. OCR: litery zamienione na cyfry w NIP (z kreskami lub bez)
         text = OCR_NIP_DIGITS.replace(text) { m ->
             val fixed = m.groupValues[1].map { if (it == '-') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
             fixed
+        }
+
+        // 11b. OCR: spacja wstawiona przez OCR wewnątrz NIP
+        text = OCR_NIP_SPLIT.replace(text) { m ->
+            val fixed = m.groupValues[2].replace(" ", "")
+            if (fixed != m.groupValues[2]) corrections++
+            m.groupValues[1] + fixed
         }
 
         // 12. OCR: litery zamienione na cyfry w REGON (9 lub 14 cyfr)

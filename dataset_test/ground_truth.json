@@ -1,0 +1,52 @@
+[
+  {
+    "file": "images/doc_00000.png",
+    "doc_type": "pismo_urzedowe",
+    "quality_score": 100,
+    "ocr_conf_real": null,
+    "degradation_level": 0,
+    "degradation_params": {
+      "blur_radius": 0.0,
+      "noise_sigma": 1.313,
+      "contrast_factor": 1.0,
+      "rotation_deg": 0.0,
+      "perspective_strength": 0.0,
+      "shadow_coverage": 0.0,
+      "gradient_strength": 0.0
+    },
+    "entities": {
+      "imie_nazwisko": "Rafał Kozłowski",
+      "adres": "ul. Wolności 166/9, 02-200 Łódź",
+      "sygnatura_akt": "I Co 1893/2017",
+      "pesel": "50051262607",
+      "telefon": "+48 539 016 301"
+    }
+  },
+  {
+    "file": "images/doc_00001.png",
+    "doc_type": "umowa",
+    "quality_score": 92,
+    "ocr_conf_real": null,
+    "degradation_level": 1,
+    "degradation_params": {
+      "blur_radius": 0.0,
+      "noise_sigma": 5.757,
+      "contrast_factor": 0.934,
+      "rotation_deg": 0.369,
+      "perspective_strength": 0.0,
+      "shadow_coverage": 0.0,
+      "gradient_strength": 0.0
+    },
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Marek Jankowski",
+      "adres_zleceniodawca": "ul. Sportowa 92, 44-100 Bielsko-Biała",
+      "nip_zleceniodawca": "431-899-49-47",
+      "pesel_zleceniodawca": "81110607132",
+      "imie_nazwisko_zleceniobiorca": "Sylwia Nowak",
+      "adres_zleceniobiorca": "ul. Słoneczna 180, 00-001 Rybnik",
+      "nip_zleceniobiorca": "718-650-46-74",
+      "numer_umowy": "UMW/2019/521",
+      "iban": "PL20240101352975094330694471"
+    }
+  }
+]

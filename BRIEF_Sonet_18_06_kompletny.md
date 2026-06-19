@@ -88,6 +88,21 @@ Dataset: `ground_truth_lvl03.json` — **68 dokumentów**, lvl 0–3
 
 ---
 
+## CO ZROBIONE 19.06 ✅
+
+1. ✅ **OCR_UL_PREFIX rozszerzony** — obsługuje `UI./uI./ul bez kropki/ulica/ULICA`
+   - Warianty: `ul`, `UI`, `uI`, `u1`, `u.`, `ul.`, `UI.` + zero lub więcej spacji + wielka litera
+   - Pełne słowo: `ulica`/`ULICA` ze spacją
+   - KNOWN LIMITATION: `UI.Nazwa` bez spacji między prefiksem a nazwą — nie obsługiwane (zbyt ryzykowne FP)
+   - 10 testów jednostkowych, 0 FAILED
+2. ✅ **OCR_PESEL_WORD** — zastąpił `OCR_PESEL_DIGITS` (lookbehind → pełny wzorzec słowa)
+   - Obsługuje: `PESE1`, `PE5EL`, `P E S E L`, `PEB3L`, `pesel` małymi literami
+   - BUG-PESEL1 naprawiony
+   - 9 testów jednostkowych, 0 FAILED
+3. ℹ️ **Benchmark nadal 74,3%** — reguły działają poprawnie, ale dataset lvl03 nie zawiera wariantów `PESE1`/`PE5EL`/`UI.Nazwa` — nowe reguły nie mają gdzie się zmierzyć
+
+---
+
 ## CO ZROBIONE DZIŚ (sesja popołudniowa 18.06) ✅
 
 1. ✅ **Benchmark przełączony na lvl03** (68 dokumentów zamiast 34)
@@ -141,7 +156,7 @@ Sekcje diagnostyczne w bugs.txt:
 
 | Bug | Plik | Opis |
 |---|---|---|
-| **BUG-PESEL1** | OcrNormalizer.kt | `PESE1` (cyfra 1 zamiast L) — lookbehind szuka `PESEL` nie `PESE1`; fix: `PESE[Ll1]` |
+| ~~**BUG-PESEL1**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_PESEL_WORD` obsługuje wszystkie warianty słowa PESEL |
 | **BUG-NIP-SPLIT** | OcrNormalizer.kt + StructuralEngine.kt | NIP naprawiony częściowo → silnik łapie fragmenty osobno jako dwa NUMER |
 | **BUG-EMAIL-TLD1** | OcrNormalizer.kt | `@wp p1` — TLD `p1` zawiera cyfrę, `OCR_EMAIL_TLDSPACE` szuka tylko liter; fix: dodać cyfry do TLD |
 | **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | Email częściowo zamaskowany — wyciek nazwiska+domeny gdy local-part to imię |
@@ -154,18 +169,20 @@ Sekcje diagnostyczne w bugs.txt:
 
 ## CO ZROBIĆ JAKO PIERWSZE (następna sesja)
 
-1. **BUG-PESEL1** — zmienić lookbehind w `OCR_PESEL_DIGITS` z `PESEL` na `PESE[Ll1]`
-   - Plik: `OcrNormalizer.kt` linia 189
-   - Test: `OcrNormalizerPeselTest.kt` — dodać przypadek `PESE1: T2030375656`
-
-2. **BUG-EMAIL-TLD1** — rozszerzyć `OCR_EMAIL_TLDSPACE` o cyfry w TLD
+1. **BUG-EMAIL-TLD1** — rozszerzyć `OCR_EMAIL_TLDSPACE` o cyfry w TLD
    - Plik: `OcrNormalizer.kt` linia 159
    - Obecny: `([a-zA-Z]{2,4})\b` → zmienić na `([a-zA-Z0-9]{2,4})\b`
 
-3. **BUG-NIP-SPLIT** — zbadać w bugs.txt które NIPy są rozbite na tokeny
+2. **BUG-NIP-SPLIT** — zbadać w bugs.txt które NIPy są rozbite na tokeny
    - Sprawdzić trace dla dokumentów z krytycznym brakiem NUMER
 
-4. **ADRES recall ~68%** — kolejny duży cel; przejrzeć bugs.txt sekcja ADRES POMINIĘTE
+3. **ADRES recall ~68%** — kolejny duży cel; przejrzeć bugs.txt sekcja ADRES POMINIĘTE
+
+4. **Nowy dataset** — wygenerować dokumenty z wariantami OCR które naprawiliśmy (PESE1, PE5EL, UI.Nazwa, NlP, emaile ze spacją) — benchmark mierzy tylko znane dokumenty, nowe reguły nie mają gdzie się zmierzyć
+
+5. **Zdjęcia z aparatu** — zebrać realne artefakty OCR z różnych typów dokumentów → analiza → nowe reguły OcrNormalizera
+
+6. **Dataset overfitting** — obecny benchmark nie wykrywa nowych luk, mierzy tylko wcześniej znane przypadki
 
 ---
 
