@@ -1,3 +1,10 @@
+# Generowane datasety — nie commitować
+dataset_fresh/
+dataset_test/
+dataset_B/
+dataset_C/
+dataset_2026*/
+
 *.iml
 .gradle
 /local.properties
