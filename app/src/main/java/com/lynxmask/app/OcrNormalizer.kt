@@ -173,7 +173,7 @@ object OcrNormalizer {
     // Lookahead wymaga wielkiej litery — tylko nazwy własne (ulice).
     // ----------------------------------------------------------
     private val OCR_UL_PREFIX = Regex(
-        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])u\.?[^\S\n]+(?=[A-ZŁŚŹĆŃĄĘÓŻ])"""
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(?:[uU][lI1]\.?[^\S\n]*|[uU]\.[^\S\n]*|(?:ulica|ULICA)[^\S\n]+)(?=[A-ZŁŚŹĆŃĄĘÓŻ])"""
     )
 
     // ----------------------------------------------------------
@@ -188,10 +188,32 @@ object OcrNormalizer {
     private val OCR_PESEL_DIGITS = Regex(
         """(?i)(?<=PESEL\s{0,3}:?\s{0,3})([TIlOSBGZ0-9]{11})(?!\d)"""
     )
-    private val PESEL_CHAR_MAP = mapOf(
+    private val OCR_NUMERIC_CHAR_MAP = mapOf(
         'T' to '7', 'I' to '1', 'l' to '1',
         'O' to '0', 'S' to '5', 'B' to '8',
         'G' to '6', 'Z' to '2',
+    )
+
+    // ----------------------------------------------------------
+    // OCR_NIP_DIGITS: NIP z kreskami (XXX-XXX-XX-XX) lub bez (10 cyfr)
+    // Słowa kluczowe: NIP / NlP / N1P (artefakty OCR I→l/1)
+    // ----------------------------------------------------------
+    private val OCR_NIP_DIGITS = Regex(
+        """(?i)(?<=(?:NIP|NlP|N1P)\s{0,3}:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
+    // ----------------------------------------------------------
+    private val OCR_REGON_DIGITS = Regex(
+        """(?i)(?<=REGON\s{0,3}:?\s{0,3})([TIlOSBGZ0-9]{9}(?:[TIlOSBGZ0-9]{5})?)(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
+    // ----------------------------------------------------------
+    private val OCR_IBAN_DIGITS = Regex(
+        """(?i)(?<=(?:IBAN|Nr konta)\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,36}[TIlOSBGZ0-9A-Z])(?!\w)"""
     )
 
     // ----------------------------------------------------------
@@ -262,7 +284,28 @@ object OcrNormalizer {
 
         // 10. OCR: litery zamienione na cyfry w numerze PESEL
         text = OCR_PESEL_DIGITS.replace(text) { m ->
-            val fixed = m.groupValues[1].map { PESEL_CHAR_MAP[it] ?: it }.joinToString("")
+            val fixed = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.groupValues[1]) corrections++
+            fixed
+        }
+
+        // 11. OCR: litery zamienione na cyfry w NIP (z kreskami lub bez)
+        text = OCR_NIP_DIGITS.replace(text) { m ->
+            val fixed = m.groupValues[1].map { if (it == '-') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.groupValues[1]) corrections++
+            fixed
+        }
+
+        // 12. OCR: litery zamienione na cyfry w REGON (9 lub 14 cyfr)
+        text = OCR_REGON_DIGITS.replace(text) { m ->
+            val fixed = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.groupValues[1]) corrections++
+            fixed
+        }
+
+        // 13. OCR: litery zamienione na cyfry w IBAN / Nr konta
+        text = OCR_IBAN_DIGITS.replace(text) { m ->
+            val fixed = m.groupValues[1].map { if (it == ' ') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
             fixed
         }

@@ -30,6 +30,7 @@ Pokaż go z numerami linii. Nic nie zmieniaj.
 - **Testy Mobile:** `.\gradlew :app:testDebugUnitTest`
 - **Benchmark Mobile:** `run_benchmark.bat` (w katalogu projektu)
 - **Wyniki benchmarku:** `benchmark_results\benchmark_report.txt`, `benchmark_bugs.txt`, `benchmark_trace.txt`
+- **Pliki testowe (ręczne):** `C:\Projects\LynxMask\testy\` i `C:\Projects\LynxMask\tests\`
 
 ---
 
@@ -41,28 +42,32 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 ```
 Bez tego: "ERROR: JAVA_HOME is not set". `run_benchmark.bat` już to ustawia automatycznie.
 
+**WAŻNE:** Po każdej zmianie kodu aplikacji wymagany pełny reinstall APK przed benchmarkiem:
+```
+.\gradlew :app:installDebug
+.\gradlew :app:installDebugAndroidTest
+run_benchmark.bat
+```
+
 ---
 
 ## STAN BENCHMARKU
 
-### Ostatni run: 2026-06-18 08:23 (po commitach 18.06) ✅
-Dataset: `ground_truth_lvl01.json` — 34 dokumenty, lvl 0-1
+### Ostatni run: 2026-06-18 16:13 ✅
+Dataset: `ground_truth_lvl03.json` — **68 dokumentów**, lvl 0–3
 
-| Metryka | Wartość |
-|---|---|
-| Recall | **82,6%** |
-| Precision | 66,4% |
-| F1 | 73,6% |
-| FP | 89 |
-| CLR (krytyczne braki) | 1 |
-| OSOBA recall | 64,0% (32/50) |
-| ADRES recall | 82,9% (34/41) |
-| NUMER recall | 90,0% (108/120) |
-| EMAIL recall | 100% (2/2) |
-| Lvl 0 | 80,2% |
-| Lvl 1 | 85,0% |
+| Metryka | Poprzednio (lvl01) | Teraz (lvl03) |
+|---|---|---|
+| Recall | 82,6% | **74,3%** |
+| Precision | 66,4% | ~69% |
+| EMAIL recall | 50% | **83,3%** |
+| NUMER recall | 90,0% | **73,5%** |
+| OSOBA recall | 64,0% | **81,5%** |
+| ADRES recall | 82,9% | ~68% |
+| Lvl 3 recall | — | **71,7%** |
+| Krytyczne braki | 1 | **13** |
 
-ADRES wzrósł z 80,5% → 82,9% dzięki fix norm() z polskimi znakami. OSOBA bez zmiany — wymaga pracy w silniku.
+*Spadek Recall 82,6%→74,3% nie jest regresją — dataset lvl03 zawiera trudniejsze dokumenty (lvl 2–3) których wcześniej nie było.*
 
 ---
 
@@ -78,10 +83,30 @@ ADRES wzrósł z 80,5% → 82,9% dzięki fix norm() z polskimi znakami. OSOBA be
 | `735c9ff` | feat: DetectionTrace — NAME_ENGINE/CONTEXTUAL zamiast UNKNOWN/UNKNOWN |
 | `e3d92a5` | fix: benchmark na lvl01 (34 dok.) |
 | `167bd70` | feat: benchmark zapisuje benchmark_trace.txt |
+| `dfd9e55` | fix: OcrNormalizer v1.4 — email spaces, ul. prefix; benchmark normalizedText; EMAIL 50%→83,3% |
+| `2710eeb` | fix: OcrNormalizer v1.5 — kontekstowa naprawa cyfr w PESEL (T→7, O→0 itd.) |
 
 ---
 
-## DETECTIONTRACE — NOWY SYSTEM DIAGNOSTYCZNY
+## CO ZROBIONE DZIŚ (sesja popołudniowa 18.06) ✅
+
+1. ✅ **Benchmark przełączony na lvl03** (68 dokumentów zamiast 34)
+2. ✅ **Diagnostyka raw OCR[300]** dodana do bugs.txt (sekcje OSOBA/EMAIL/ADRES POMINIĘTE)
+3. ✅ **normalizedText w analyze()** — BRAK_W_OCR sprawdza teraz tekst po OcrNormalizerze
+4. ✅ **OcrNormalizer v1.4–v1.5** — nowe reguły:
+   - `OCR_EMAIL_TLDSPACE` — `jan@onet pl` → `jan@onet.pl`
+   - `OCR_EMAIL_LOCALSPACE` — `jan kowalski@wp.pl` → `jan_kowalski@wp.pl`
+   - `OCR_UL_PREFIX` — `u. Nazwa` / `u Nazwa` → `ul. Nazwa`
+   - `OCR_PESEL_DIGITS` — litery jako cyfry po słowie PESEL (T→7, O→0 itd.)
+   - `OCR_NIP_DIGITS` — litery jako cyfry po słowie NIP/NlP/N1P
+   - `OCR_REGON_DIGITS` — litery jako cyfry po słowie REGON
+   - `OCR_IBAN_DIGITS` — litery jako cyfry po słowie IBAN / Nr konta
+5. ✅ **Testy jednostkowe** dla wszystkich nowych reguł — 123 testów, 2 failed (BUG-AL-OPEN, znane)
+6. ✅ **Plik testowy** `tests\test_ocr_normalizer_hard.txt` — dokument z celowymi artefaktami OCR do ręcznego testu przez telefon
+
+---
+
+## DETECTIONTRACE — SYSTEM DIAGNOSTYCZNY
 
 W `PseudonymEngine.kt` dodano `DetectionTrace` — śledzi która warstwa wykryła każdy token.
 
@@ -93,9 +118,6 @@ Warstwy w trace:
 - `NAME_ENGINE / CONTEXTUAL` — Warstwa 3 (NameEngine — imiona, adresy uliczne)
 - `ADDRESS / ADRES` — Warstwa 3d (kody pocztowe + miasto)
 
-`applyStreetLookup()` w NameEngine.kt wykrywa "ulica + numer" (np. Szkolna 150) i przechodzi przez NAME_ENGINE/CONTEXTUAL.
-Warstwa 3d (ADDRESS_PATTERNS) wykrywa tylko kody pocztowe + miasto.
-
 Plik trace: `benchmark_results\benchmark_trace.txt`
 
 ---
@@ -103,91 +125,61 @@ Plik trace: `benchmark_results\benchmark_trace.txt`
 ## ARCHITEKTURA BENCHMARKU — BenchmarkInstrumentedTest.kt
 
 Kluczowe funkcje:
-- `norm(v)` — normalizacja do porównania GT vs token: usuwa spacje, myślniki, polskie znaki → ASCII, lowercase. **Zaktualizowana 18.06** — teraz z konwersją polskich znaków (ą→a itd.)
+- `norm(v)` — normalizacja do porównania GT vs token: usuwa spacje, myślniki, polskie znaki → ASCII, lowercase
 - `normalizeForCompare(s)` — identyczna logika, używana w sekcjach diagnostycznych bugs.txt
-- `analyze()` — logika `found`: typ-agnostyczna, length≥6 + substring match + fuzzyMatch dla numerów
+- `analyze(gt, tokens, ocrText, normalizedText, error, trace)` — `normalizedText` = tekst PO OcrNormalizerze; BRAK_W_OCR sprawdza `r.normalizedText` nie `r.ocrText`
 - `saveReports()` — generuje report.txt, bugs.txt, trace.txt
 
 Sekcje diagnostyczne w bugs.txt:
-- `[OSOBA POMINIĘTE]` — z diagnostyką BRAK_W_OCR / ODMIANA_ZAMASKOWANA / BUG_SILNIKA
-- `[EMAIL POMINIĘTE]` — z diagnostyką BRAK_W_OCR / BUG_SILNIKA
-- `[ADRES POMINIĘTE]` — z diagnostyką BRAK_W_OCR / BUG_SILNIKA **[NOWE 18.06]**
+- `[OSOBA POMINIĘTE]` — z diagnostyką BRAK_W_OCR / ODMIANA_ZAMASKOWANA / BUG_SILNIKA + OCR[300]
+- `[EMAIL POMINIĘTE]` — z diagnostyką BRAK_W_OCR / BUG_SILNIKA + OCR[300]
+- `[ADRES POMINIĘTE]` — z diagnostyką BRAK_W_OCR / BUG_SILNIKA + OCR[300]
 
 ---
 
-## NOWE BUGI ODKRYTE 18.06
-
-### BUG-EMAIL-PARTIAL — KRYTYCZNY (nowy)
-**Objaw:** `anna.grabowska@interia.pl` → `OSOBA_008.grabowska@interia.pl`
-- NameEngine zamaskował imię (`anna` → `OSOBA_008`)
-- Ale email regex (Warstwa 2) NIE złapał całego adresu email
-- Wynik: w tekście widoczne `.grabowska@interia.pl` — wyciek nazwiska + domeny
-- **ZBADANO 18.06 (diagnostyka, bez fixa):**
-  - Wzorzec email pozycja 0 (`\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b`) — MATCHUJE `joanna.grabowska@interia.pl` poprawnie
-  - Kolejność warstw w PseudonymEngine.kt: W2 (STRUCTURAL) działa **przed** W3 (NameEngine) — kolejność prawidłowa
-  - `"pl"` jest na `WHITE_LIST_COMMON_WORDS` (jako skrót placu) — może interferować z domeną `.pl`
-  - Hipoteza: konkretny dokument ma artefakt OCR przed emailem który psuje `\b` lub wzorzec pozycji 1 matchuje fragment przed `@` i oddaje go NameEngine
-  - Do zrobienia: zajrzeć do `benchmark_bugs.txt` sekcja `[EMAIL POMINIĘTE]` — zobaczyć dokładny tekst który przepadł
-
-### BUG-EMAIL-SPLIT — średni (nowy)
-**Objaw:** `e-mail:` → `NUMER_001-mail:`
-- Strukturalny regex złapał `e` jako NUMER, zostawiając `-mail:` w tekście
-- Prawdopodobnie wzorzec email dopasowuje za krótkie ciągi
-- **ZBADANO 18.06 (wstępnie):** wzorzec pozycji 1 w STRUCTURAL_PATTERNS: `(?i)\be[- ]?mail\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z]{2,}\b` — do weryfikacji czy `\be` nie jest łapane przez inny wzorzec wcześniej
-
----
-
-## OTWARTE BUGI (ze starszych sesji)
+## OTWARTE BUGI
 
 | Bug | Plik | Opis |
 |---|---|---|
-| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | **NOWY** email częściowo zamaskowany — wyciek nazwiska+domeny |
-| **BUG-EMAIL-SPLIT** | StructuralEngine.kt | **NOWY** `e-mail:` → `NUMER_001-mail:` |
-| BUG-DOWOD | StructuralEngine.kt | FOH614892 — OCR daje `FOH6 14892` ze spacją, wzorzec nie łapie |
-| BUG-AL-OPEN | PseudonymEngine.kt | Adresy z "al." — nie dotykać bez planu |
-| BUG-OUTPUTGUARD-FORMAT | OutputGuard.kt | Guard szuka OSOBA_ABC_001, silnik generuje OSOBA_001 |
-| BUG-IBAN-NOSPACES | StructuralEngine.kt | IBAN bez spacji (PL36...) nie łapany |
+| **BUG-PESEL1** | OcrNormalizer.kt | `PESE1` (cyfra 1 zamiast L) — lookbehind szuka `PESEL` nie `PESE1`; fix: `PESE[Ll1]` |
+| **BUG-NIP-SPLIT** | OcrNormalizer.kt + StructuralEngine.kt | NIP naprawiony częściowo → silnik łapie fragmenty osobno jako dwa NUMER |
+| **BUG-EMAIL-TLD1** | OcrNormalizer.kt | `@wp p1` — TLD `p1` zawiera cyfrę, `OCR_EMAIL_TLDSPACE` szuka tylko liter; fix: dodać cyfry do TLD |
+| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | Email częściowo zamaskowany — wyciek nazwiska+domeny gdy local-part to imię |
+| **BUG-DOWOD** | StructuralEngine.kt | `FOH6 14892` — OCR spacja w środku, wzorzec nie łapie |
+| **BUG-AL-OPEN** | PseudonymEngine.kt | Adresy z "al." — nie dotykać bez planu |
+| **BUG-OUTPUTGUARD-FORMAT** | OutputGuard.kt | Guard szuka OSOBA_ABC_001, silnik generuje OSOBA_001 |
+| **BUG-IBAN-NOSPACES** | StructuralEngine.kt | IBAN bez spacji (PL36...) nie łapany |
 
 ---
 
 ## CO ZROBIĆ JAKO PIERWSZE (następna sesja)
 
-1. ~~**Uruchom nowy benchmark**~~ ✅ DONE — run 08:23, Recall 82,6%, ADRES 82,9%
+1. **BUG-PESEL1** — zmienić lookbehind w `OCR_PESEL_DIGITS` z `PESEL` na `PESE[Ll1]`
+   - Plik: `OcrNormalizer.kt` linia 189
+   - Test: `OcrNormalizerPeselTest.kt` — dodać przypadek `PESE1: T2030375656`
 
-2. **BUG-EMAIL-PARTIAL** — zajrzeć do `benchmark_bugs.txt` sekcja `[EMAIL POMINIĘTE]`
-   - Wzorzec i kolejność warstw zbadane — są poprawne
-   - Potrzebny: dokładny tekst dokumentu który przepada (z bugs.txt)
-   - Hipoteza: artefakt OCR przed emailem lub interferencia wzorca pozycji 1 z NameEngine
+2. **BUG-EMAIL-TLD1** — rozszerzyć `OCR_EMAIL_TLDSPACE` o cyfry w TLD
+   - Plik: `OcrNormalizer.kt` linia 159
+   - Obecny: `([a-zA-Z]{2,4})\b` → zmienić na `([a-zA-Z0-9]{2,4})\b`
 
-3. **BUG-EMAIL-SPLIT** — przy okazji BUG-EMAIL-PARTIAL
-   - Sprawdzić czy wzorzec pozycji 1 (`\be[- ]?mail...`) nie jest blokowany przez wcześniejszy wzorzec STRUCTURAL
+3. **BUG-NIP-SPLIT** — zbadać w bugs.txt które NIPy są rozbite na tokeny
+   - Sprawdzić trace dla dokumentów z krytycznym brakiem NUMER
 
----
-
-## WAŻNE ZASADY BENCHMARKU
-
-- Przed benchmarkiem po zmianie kodu: pełny reinstall APK testowego:
-  ```
-  .\gradlew :app:uninstallDebugAndroidTest
-  .\gradlew :app:installDebugAndroidTest
-  run_benchmark.bat
-  ```
-- `UserDictionary.clear(context)` na początku `runBenchmark()` — nie usuwać
-- Android 16 (Samsung SM-A536B): `getExternalFilesDir()` = `/storage/emulated/0/Android/data/...`
-- JAVA_HOME musi być ustawiony przed gradlew (run_benchmark.bat robi to automatycznie)
+4. **ADRES recall ~68%** — kolejny duży cel; przejrzeć bugs.txt sekcja ADRES POMINIĘTE
 
 ---
 
-## WERSJE PLIKÓW MOBILE (stan 2026-06-18)
+## WERSJE PLIKÓW MOBILE (stan 2026-06-18 wieczór)
 
 | Plik | Wersja | Co zmieniono |
 |---|---|---|
+| OcrNormalizer.kt | v1.5 | OCR_EMAIL, OCR_UL_PREFIX, OCR_PESEL/NIP/REGON/IBAN_DIGITS, OCR_NUMERIC_CHAR_MAP |
 | StructuralEngine.kt | v1.9 | bez zmian 18.06 |
 | NameEngine.kt | v1.11+ | bez zmian 18.06 |
-| PseudonymEngine.kt | v2.3+ | DetectionTrace, traceMode, assignToken z layer/rule |
-| BenchmarkInstrumentedTest.kt | — | norm() z ASCII, normalizeForCompare(), sekcje ADRES/EMAIL POMINIĘTE, trace.txt, lvl01 |
+| PseudonymEngine.kt | v2.3+ | DetectionTrace, traceMode |
+| BenchmarkInstrumentedTest.kt | — | lvl03, normalizedText w analyze(), OCR[300] w bugs.txt |
 | run_benchmark.bat | — | /storage/emulated/0/, pull benchmark_trace.txt |
-| TODO_silnik.md | — | sekcja ŚRODOWISKO + sekcja EMAIL edge case (18.06 sesja 2) |
+| TODO_silnik.md | — | aktualizacja 18.06 |
 
 ---
 
