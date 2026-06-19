@@ -87,7 +87,9 @@
       "PowerShell(Move-Item *)",
       "PowerShell(Copy-Item *)",
       "PowerShell(cd C:\\\\Projects\\\\LynxMask; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew :app:testDebugUnitTest --tests \"com.lynxmask.app.OcrNormalizerUlTest\" --info 2>&1 | Select-String -Pattern \"PRZED:|PO:|PASSED|FAILED|OcrNormalizerUlTest|tests were|BUILD\")",
-      "PowerShell(cd C:\\\\Projects\\\\LynxMask; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PRZED:|PO:|PASSED|FAILED|tests completed|BUILD|> Task\")"
+      "PowerShell(cd C:\\\\Projects\\\\LynxMask; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PRZED:|PO:|PASSED|FAILED|tests completed|BUILD|> Task\")",
+      "PowerShell(cd C:\\\\Projects\\\\LynxMask; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew :app:testDebugUnitTest --tests \"com.lynxmask.app.OcrNormalizerPeselTest\" --info 2>&1 | Select-String -Pattern \"PRZED:|PO:|PASSED|FAILED|OcrNormalizerPeselTest|tests completed|BUILD\")",
+      "PowerShell(cd C:\\\\Projects\\\\LynxMask; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew :app:testDebugUnitTest --info 2>&1 | Select-String -Pattern \"PRZED:|PO:|PASSED|FAILED|tests completed|BUILD\")"
     ]
   },
   "hooks": {
