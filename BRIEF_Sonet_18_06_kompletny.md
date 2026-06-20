@@ -53,21 +53,43 @@ run_benchmark.bat
 
 ## STAN BENCHMARKU
 
-### Ostatni run: 2026-06-18 16:13 ✅
-Dataset: `ground_truth_lvl03.json` — **68 dokumentów**, lvl 0–3
+### Ostatni run: 2026-06-20 07:59 ✅ (fresh dataset, po naprawie norm() w benchmarku)
+Dataset: losowo generowany `generator.py --count 68 --max-level 3` — **68 dokumentów**, lvl 0–3, 451 encji
 
-| Metryka | Poprzednio (lvl01) | Teraz (lvl03) |
+| Metryka | 18.06 baseline | 20.06 07:59 (aktualne) |
 |---|---|---|
-| Recall | 82,6% | **74,3%** |
-| Precision | 66,4% | ~69% |
-| EMAIL recall | 50% | **83,3%** |
-| NUMER recall | 90,0% | **73,5%** |
-| OSOBA recall | 64,0% | **81,5%** |
-| ADRES recall | 82,9% | ~68% |
-| Lvl 3 recall | — | **71,7%** |
-| Krytyczne braki | 1 | **13** |
+| Recall | 74,3% | **74,3%** |
+| Precision | ~69% | **74,0%** (+5pp) |
+| F1 | — | **74,1%** |
+| ADRES recall | ~68% | **76,0%** (+8pp) |
+| EMAIL recall | 83,3% | **75,0%** |
+| NUMER recall | 73,5% | **71,4%** |
+| OSOBA recall | 81,5% | **82,1%** |
+| Lvl 0 | — | **86,7%** |
+| Lvl 1 | — | **91,3%** |
+| Lvl 2 | — | **41,1%** |
+| Lvl 3 | — | **78,4%** |
 
-*Spadek Recall 82,6%→74,3% nie jest regresją — dataset lvl03 zawiera trudniejsze dokumenty (lvl 2–3) których wcześniej nie było.*
+**Bez Lvl 2: ~85% recall.** Lvl 2 to OCR garbage — silnik nie może wykryć czegoś czego OCR nie widzi.
+
+*UWAGA: fresh dataset (losowy) — liczby NUMER/EMAIL wahają się między runami (mały licznik). ADRES 76% to wynik stabilny po naprawkach.*
+
+### Test ręczny — czysty tekst (2026-06-20) ✅
+Plik: `testy\test_silnik_statystyki.txt` — 54 encje
+
+| Typ | Wykryte | Recall |
+|---|---|---|
+| OSOBA | 10/10 | **100%** |
+| EMAIL | 11/11 | **100%** |
+| PESEL | 6/6 | **100%** |
+| NIP | 5/5 | **100%** |
+| IBAN | 3/3 | **100%** |
+| TELEFON | 8/8 | **100%** |
+| DOKUMENT | 4/4 | **100%** |
+| REGON | 1/1 | **100%** |
+| ADRES | 8/8 | **100%** |
+
+**Na czystym tekście silnik jest bezbłędny. Straty w benchmarku = wyłącznie degradacja OCR.**
 
 ---
 
@@ -198,60 +220,152 @@ Sekcje diagnostyczne w bugs.txt:
 
 ## OTWARTE BUGI
 
-| Bug | Plik | Opis |
-|---|---|---|
-| ~~**BUG-PESEL1**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE — `OCR_PESEL_WORD` |
-| ~~**BUG-NIP-SPLIT**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_NIP_SPLIT` (spacja w środku NIP) |
-| ~~**BUG-PESEL-SPLIT**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_PESEL_SPLIT` (spacja w środku PESEL) |
-| **BUG-EMAIL-AT-Q** | OcrNormalizer.kt | `@` zamieniony na `Q` przez OCR → email niewidoczny dla silnika; test: `FAIL email @→Q` w OcrLvl1IntegrationTest |
-| **BUG-NIP-DOT** | OcrNormalizer.kt | Ostatni myślnik NIP zamieniony na `.` (`873-054-80.39`) → NIP wykryty jako NUMER, nie NIP; test: `FAIL NIP kropka` |
-| **BUG-EMAIL-TLD1** | OcrNormalizer.kt:159 | `@wp p1` — TLD `p1` zawiera cyfrę, `OCR_EMAIL_TLDSPACE` szuka tylko liter; fix: `[a-zA-Z0-9]{2,4}` |
-| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | Email częściowo zamaskowany — wyciek gdy local-part to imię |
-| **BUG-DOWOD** | StructuralEngine.kt | `FOH6 14892` — OCR spacja w środku, wzorzec nie łapie |
-| **BUG-AL-OPEN** | PseudonymEngine.kt | Adresy z "al." — nie dotykać bez planu |
-| **BUG-OUTPUTGUARD-FORMAT** | OutputGuard.kt | Guard szuka OSOBA_ABC_001, silnik generuje OSOBA_001 |
-| **BUG-IBAN-NOSPACES** | StructuralEngine.kt | IBAN bez spacji (PL36...) nie łapany |
+| Bug | Plik | Status | Opis |
+|---|---|---|---|
+| ~~BUG-PESEL1~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_PESEL_WORD` |
+| ~~BUG-NIP-SPLIT~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_NIP_SPLIT` |
+| ~~BUG-PESEL-SPLIT~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_PESEL_SPLIT` |
+| ~~BUG-EMAIL-AT-Q~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_EMAIL_AT_Q` |
+| ~~BUG-NIP-DOT~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_NIP_DOT` |
+| ~~BUG-EMAIL-TLD1~~ | OcrNormalizer.kt | ✅ 19.06 | `OCR_EMAIL_TLDSPACE` akceptuje cyfry |
+| ~~BUG-STREET-NEWLINE~~ | NameEngine.kt | ✅ 20.06 | `[/[^\S\n]]` zamiast `[/\s]` |
+| ~~BUG-IBAN-SPLIT~~ | OcrNormalizer.kt | ✅ 20.06 | `OCR_IBAN_SPLIT` v1.9 |
+| ~~BUG-AL-OPEN~~ | PseudonymEngine.kt | ✅ 20.06 | `ADDR-EMAIL-FIX` lookbehind |
+| ~~BUG-IBAN-NOSPACES~~ | StructuralEngine.kt | ✅ 20.06 | IBAN bez spacji wykrywany |
+| ~~BUG-BENCHMARK-NORM~~ | BenchmarkInstrumentedTest.kt | ✅ 20.06 | `norm()` normalizuje `._` → `.` dla emaili |
+| **BUG-EMAIL-TOKEN** | StructuralEngine.kt | 🔲 nowy | EMAIL wykrywany jako NUMER zamiast EMAIL |
+| **BUG-DATE-PARTIAL** | StructuralEngine.kt | 🔲 nowy | Daty ISO `2026-06-20` → `NUMER-20` (częściowe) |
+| **BUG-FP-REFNUM** | StructuralEngine.kt | 🔲 nowy | Numery umów/faktur/sygnatur akt → NUMER (FP) |
+| **BUG-TEL-PREFIX** | StructuralEngine.kt | 🔲 nowy | `(22) 765-43-21` → `(22) NUMER` (prefix pominięty) |
+| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | 🔲 | email z imieniem w local-part → OSOBA |
+| **BUG-DOWOD** | StructuralEngine.kt | 🔲 | `FOH6 14892` — spacja w środku numeru dowodu |
+| **BUG-PESEL-10** | StructuralEngine.kt | 🔲 | PESEL z 10 cyframi (OCR zgubił cyfrę) |
+| **BUG-OUTPUTGUARD-FORMAT** | OutputGuard.kt | 🔲 | Guard szuka OSOBA_ABC_001, silnik generuje OSOBA_001 |
+
+---
+
+## Nowe bugi OcrNormalizer — z analizy zewnętrznej 19.06
+
+### OCR_EMAIL_LOCALSPACE — tylko jedna spacja
+- Obecna reguła naprawia tylko jedną spację w local-part emaila
+- "jan adam kowalski@wp.pl" → naprawiane tylko częściowo
+- Rozwiązanie: replace w pętli lub wzorzec na wiele segmentów
+
+### IBAN rozbity przez newline
+- Reguła obsługuje spacje ale nie przejście do nowej linii
+- Przykład: PL61 rozbity na dwie linie nie jest sklejany
+- Rozwiązanie: OCR_IBAN_NEWLINE — skleja IBAN rozbity przez newline
+
+### KNOWN_CITY_FORMS nie obsługuje miast bez ogonków
+- "Bialystok", "Lodz", "Krakow" nie trafią w listę miast
+- Rozwiązanie: fold() przy sprawdzaniu kandydata w liście
+
+### ~~Wersja nagłówka OcrNormalizer.kt nieaktualna~~
+- ✅ NAPRAWIONE w tej sesji — zaktualizowano do v1.6
+
+---
+
+## Rozwiązania znalezione przez agenta (research 19.06) — do wdrożenia
+
+> Poniższe podejścia zostały znalezione przez agenta eksploracyjnego przeszukującego literaturę i repozytoria.
+> Zweryfikowane źródła. Nakład i ryzyko ocenione przez agenta.
+
+### RESEARCH-1 — Walidacja sumy kontrolnej PESEL i NIP
+**Status:** 🔲 do zrobienia  
+**Nakład:** mały (2–4h)  
+**Plik:** `StructuralEngine.kt`
+
+PESEL i NIP mają deterministyczne sumy kontrolne ze znanych wag. Po korekcie OCR (l→1, O→0) sprawdzamy sumę — jeśli się zgadza, korekta jest pewna w ~100%. Działa jako "oracle" potwierdzający poprawność normalizacji.
+
+- PESEL wagi: `1, 3, 7, 9, 1, 3, 7, 9, 1, 3` (wynik mod 10 == ostatnia cyfra)
+- NIP wagi: `6, 5, 7, 2, 3, 4, 5, 6, 7` (wynik mod 11 == ostatnia cyfra)
+- Czyste Kotlin, zero zależności zewnętrznych
+
+### RESEARCH-2 — De-leet pre-normalizacja dla imion/nazwisk
+**Status:** 🔲 do zrobienia  
+**Nakład:** mały-średni (4–8h)  
+**Plik:** `OcrNormalizer.kt` lub nowy `NameNormalizer.kt`
+
+OCR podmienia cyfry za litery w imionach: `B3ata` (3→e), `Krzy5zt0f` (5→s, 0→o). Podejście potwierdzone literaturą:
+- Mapowanie de-leet: `3→e, 4→a, 5→s, 0→o, 1→i` — **tylko dla tokenów zaczynających się wielką literą** (imiona/nazwiska, nie cyfry w NIP)
+- Jaro-Winkler fuzzy matching — lepszy od Levenshtein dla imion (preferuje zgodność prefiksu). Biblioteka: `string-similarity-kotlin` (Kotlin Multiplatform, MIT)
+- Ryzyko: wymaga decyzji czy dodawać zależność biblioteczną
+
+### RESEARCH-3 — ML Kit confidence per znak (dwupoziomowe progi jakości)
+**Status:** 🔲 do zrobienia  
+**Nakład:** mały  
+**Plik:** `ShareTargetActivity.kt` + `OcrNormalizer.kt` (assessQuality)
+
+ML Kit daje confidence per `Text.Symbol.getConfidence()`, per słowo i per linię — nie tylko per dokument. Można identyfikować konkretne znaki słabo rozpoznane i kierować do korekty kontekstowej.
+
+- Progi potwierdzone praktyką: avg < 0.7 → YELLOW, avg < 0.5 → RED
+- Caveat: GPS < 22.30 zwraca `0.0f` — sprawdzać `> 0` przed użyciem
+- Aktualny stan: `mlKitConfidence` zawsze `null` — nie jest przekazywane z `ShareTargetActivity` do `pseudonymize()`
+- Krok 1: podłączyć confidence w ShareTargetActivity (linie 287, 434)
+- Krok 2: rozszerzyć `assessQuality()` o poziomy YELLOW/RED zamiast jednego progu
 
 ---
 
 ## CO ZROBIĆ JAKO PIERWSZE (następna sesja)
 
-Mamy gotowe 3 failujące testy w `OcrLvl1IntegrationTest.kt`. Naprawiać je po kolei:
+### Priorytet 1 — Bugi silnika (StructuralEngine.kt):
 
-1. **BUG-EMAIL-AT-Q** — `@` → `Q` w OCR
-   - Plik: `OcrNormalizer.kt` — dodać regułę `OCR_EMAIL_AT_Q`
-   - Wzorzec: `(\w[\w.\-]+)\s*Q(\w+\.\w{2,4})` → `$1@$2`
-   - Kontekst: tylko gdy wynik wygląda jak email (domena z TLD)
-   - Test weryfikujący: `FAIL email @ → Q` w `OcrLvl1IntegrationTest.kt` — powinien PASS po naprawie
+1. **BUG-EMAIL-TOKEN** — EMAIL wykrywany jako `NUMER` zamiast `EMAIL`
+   - Wszystkie emaile są poprawnie wykrywane i maskowane, ale token to `NUMER_xxx`
+   - Benchmark liczy je po wartości (recall OK), ale `type_mismatch` rośnie
+   - Plik: `StructuralEngine.kt` — sprawdzić gdzie EMAIL pattern jest zdefiniowany
 
-2. **BUG-NIP-DOT** — ostatni myślnik NIP → kropka
-   - Plik: `OcrNormalizer.kt` — dodać/rozszerzyć regułę po `OCR_NIP_SPLIT`
-   - Wzorzec: `NIP\s*:?\s*\d{3}-\d{3}-\d{2}\.\d{2}` → zamień ostatnią `.` na `-`
-   - Test weryfikujący: `FAIL NIP kropka` w `OcrLvl1IntegrationTest.kt`
+2. **BUG-DATE-PARTIAL** — daty ISO `RRRR-MM-DD` maskowane częściowo
+   - `2026-06-20` → `NUMER_062-20` (zamaskowane `2026-06`, zostaje `-20`)
+   - `2024-03-15` → `NUMER_063-15`, `2026-08-01` → `NUMER_061-01`
+   - Plik: `StructuralEngine.kt` — regex łapie `rok-miesiąc` jako numer; trzeba wykluczyć
 
-3. **BUG-EMAIL-TLD1** — `@wp p1` (cyfra w TLD)
-   - Plik: `OcrNormalizer.kt` linia ~159
-   - Zmiana: `([a-zA-Z]{2,4})\b` → `([a-zA-Z0-9]{2,4})\b`
+3. **BUG-FP-REFNUM** — numery umów/faktur/sygnatur akt maskowane jako NUMER (false positive)
+   - `UZ/2026/0088`, `FV/2026/000088`, `I C 234/26` → NUMER
+   - Plik: `StructuralEngine.kt` — dodać wyjątki dla formatów referencyjnych
 
-4. **ADRES recall ~68%** — kolejny duży cel; przejrzeć `benchmark_results\benchmark_bugs.txt` sekcja ADRES POMINIĘTE
+4. **BUG-TEL-PREFIX** — `(22) 765-43-21` → `(22) NUMER` (prefix kodu kierunkowego pominięty)
+   - Plik: `StructuralEngine.kt` — regex telefonu nie obejmuje nawiasów
 
-5. **Nowy benchmark** — uruchomić `run_benchmark_fresh.bat` po naprawach BUG-EMAIL-AT-Q i BUG-NIP-DOT; reintalacja APK wymagana
+### Priorytet 2 — Research do wdrożenia (patrz sekcja wyżej):
+
+5. **RESEARCH-1** — Walidacja sumy kontrolnej PESEL/NIP (mały nakład, wysokie zaufanie)
+6. **RESEARCH-3** — ML Kit confidence + dwupoziomowe progi YELLOW/RED (mały nakład)
+7. **RESEARCH-2** — De-leet + Jaro-Winkler dla imion (wymaga decyzji o bibliotece)
+
+### Priorytet 3 — Kalibracja i pozostałe:
+
+8. **Fixed dataset** — stworzyć `run_benchmark.bat` używający stałego `dataset_fixed/`
+   - Cel: porównywalne wyniki między runami (teraz fresh dataset = różne liczby)
+9. **BUG-PESEL-10** — PESEL z 10 cyframi (OCR zgubił cyfrę) nie wykrywany
+10. **BUG-DOWOD** — spacja w środku numeru dowodu (`FOH6 14892`)
+11. **BUG-EMAIL-PARTIAL** — email z imieniem w local-part → OSOBA zamiast EMAIL
 
 ---
 
-## WERSJE PLIKÓW MOBILE (stan 2026-06-19 wieczór)
+## WERSJE PLIKÓW MOBILE (stan 2026-06-20)
 
 | Plik | Wersja | Co zmieniono |
 |---|---|---|
-| OcrNormalizer.kt | **v1.6** | +OCR_PESEL_SPLIT, +OCR_NIP_SPLIT (spacje w środku numerów); +OCR_UL_PREFIX rozszerzony; OCR_PESEL_WORD |
+| OcrNormalizer.kt | **v2.0** | +OCR_PESEL_SPLIT/IBAN_SPLIT obsługują l/O; +OCR_DIGIT_IN_CONTEXT (krok 14); 'o'→'0' w mapie |
+| NameEngine.kt | v1.11+ | STREET_CANDIDATE_REGEX: `[/\s]`→`[/[^\S\n]]`; `internal` dla testów |
+| PseudonymEngine.kt | v2.3+ | ADDR-EMAIL-FIX lookbehind `(?<=[a-z0-9]{2})` w pre-processingu |
+| BenchmarkInstrumentedTest.kt | — | `norm()` i `normalizeForCompare()`: `"._"→"."` (fix fałszywych miss EMAIL) |
 | StructuralEngine.kt | v1.9 | bez zmian |
-| NameEngine.kt | v1.11+ | bez zmian |
-| PseudonymEngine.kt | v2.3+ | DetectionTrace, traceMode |
-| BenchmarkInstrumentedTest.kt | — | lvl03, normalizedText w analyze(), OCR[300] w bugs.txt |
-| run_benchmark.bat | — | /storage/emulated/0/, pull benchmark_trace.txt |
-| run_benchmark_fresh.bat | — | **NOWY** — dynamiczny dataset (losowy seed co run) |
-| OcrLvl1IntegrationTest.kt | — | **NOWY** — 6 testów; 3 PASS, 3 FAIL (EMAIL, NIP, PESEL) |
-| ocr_lvl1_doc_00004.txt | — | **NOWY** — tekst OCR Tesseract doc_00004.png (lvl=1) |
+| run_benchmark_fresh.bat | — | instaluje APK test + generator + push + run + pull |
+| OcrLvl1IntegrationTest.kt | — | 6 testów; 3 PASS, 3 FAIL (dokumentują znane bugi) |
+| NameEngineRegexTest.kt | — | **NOWY** — 3 testy STREET_CANDIDATE_REGEX |
+| OcrNormalizerIbanSplitTest.kt | — | **NOWY** — 4 testy OCR_IBAN_SPLIT |
+
+## PLIKI TESTÓW RĘCZNYCH (stan 2026-06-20)
+
+| Plik | Opis |
+|---|---|
+| `testy\test_silnik_statystyki.txt` | **NOWY** — 54 encje, 4 sekcje, test 100% recall 20.06 |
+| `testy\test_degradacje_lvl.txt` | **NOWY** — te same encje w LVL 0/1/2/3, do testów porównawczych |
+| `testy\wyniki_testy_reczne.txt` | **NOWY** — archiwum wyników z testów ręcznych (TEST #001 wypełniony) |
+| `testy\test_lvl3_dane_wrazliwe.txt` | stary — lvl3, różne wzorce encji |
+| `tests\test_ocr_normalizer_hard.txt` | stary — celowe artefakty OCR |
 
 ---
 

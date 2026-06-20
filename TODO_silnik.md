@@ -92,3 +92,45 @@ run_benchmark.bat
 ### KNOWN_CITY_FORMS nie obsługuje miast bez ogonków
 - "Bialystok", "Lodz", "Krakow" nie trafią w listę miast
 - Rozwiązanie: przy sprawdzaniu w KNOWN_CITY_FORMS stosować fold() (usunięcie ogonków) dla kandydata
+
+---
+
+## Kolejka do wdrożenia (stan 2026-06-20)
+
+### Z research agenta 19.06 (rozwiązania z internetu — zweryfikowane)
+
+**RESEARCH-1 — Walidacja sumy kontrolnej PESEL/NIP** 🔲
+- Plik: StructuralEngine.kt
+- PESEL wagi: 1,3,7,9,1,3,7,9,1,3 — wynik mod 10 == ostatnia cyfra
+- NIP wagi: 6,5,7,2,3,4,5,6,7 — wynik mod 11 == ostatnia cyfra
+- Po korekcie l→1 sprawdź sumę — jeśli OK, korekta pewna w ~100%
+
+**RESEARCH-2 — De-leet dla imion/nazwisk** 🔲
+- Plik: OcrNormalizer.kt (nowy krok przed NameEngine)
+- Mapowanie: 3→e, 4→a, 5→s, 0→o, 1→i — TYLKO tokeny zaczynające się wielką literą
+- Jaro-Winkler fuzzy matching: biblioteka string-similarity-kotlin (Kotlin Multiplatform, MIT)
+- Wymaga decyzji: dodać zależność czy zaimplementować samodzielnie
+
+**RESEARCH-3 — ML Kit confidence + dwupoziomowe progi** 🔲
+- Plik: ShareTargetActivity.kt (podłączyć) + OcrNormalizer.kt (assessQuality)
+- getConfidence() per Symbol/Element/Line dostępne w ML Kit
+- Progi: avg < 0.7 → YELLOW, avg < 0.5 → RED
+- Caveat: GPS < 22.30 zwraca 0.0f — sprawdzać > 0 przed użyciem
+- Aktualnie mlKitConfidence zawsze null (linie 287 i 434 ShareTargetActivity)
+
+### Z analizy kodu (bugi zidentyfikowane)
+
+**BUG-EMAIL-TOKEN** 🔲 — StructuralEngine.kt
+- EMAIL wykrywany jako NUMER zamiast EMAIL
+
+**BUG-DATE-PARTIAL** 🔲 — StructuralEngine.kt
+- 2026-06-20 → NUMER_062-20 (zamaskowane rok-miesiąc, zostaje -20)
+
+**BUG-FP-REFNUM** 🔲 — StructuralEngine.kt
+- UZ/2026/0088, FV/2026/000088, I C 234/26 → NUMER (false positive)
+
+**BUG-TEL-PREFIX** 🔲 — StructuralEngine.kt
+- (22) 765-43-21 → (22) NUMER (prefix pominięty)
+
+**Fixed dataset** 🔲 — run_benchmark.bat
+- Cel: porównywalne wyniki między runami (teraz fresh dataset)
