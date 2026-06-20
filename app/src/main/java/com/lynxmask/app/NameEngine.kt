@@ -442,8 +442,8 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
-private val STREET_CANDIDATE_REGEX = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/\s]\d{1,4}[A-Za-z]?)?)\b"""
+internal val STREET_CANDIDATE_REGEX = Regex(
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
 
 private fun applyStreetLookup(

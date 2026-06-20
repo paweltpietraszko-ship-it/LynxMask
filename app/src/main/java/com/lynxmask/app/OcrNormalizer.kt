@@ -1,9 +1,14 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 1.8
+// Wersja: 1.9
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
+//
+// Zmiany v1.9 (20.06):
+//   - OCR_IBAN_SPLIT: spacja wstawiona przez OCR w środku numeru IBAN
+//     "PL02114019872105222748309 170" → "PL02114019872105222748309170"
+//     Warunek: suma cyfr po obu stronach spacji == 26 (dokładna długość polskiego IBAN)
 //
 // Zmiany v1.2:
 //   - OCR_DIGIT_AS_LETTER: cyfry między literami → litera
@@ -271,6 +276,17 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_IBAN_SPLIT v1.9: spacja wstawiona przez OCR wewnątrz numeru IBAN
+    // "PL02114019872105222748309 170" → "PL02114019872105222748309170"
+    // Warunek bezpieczeństwa: łączy TYLKO gdy łączna liczba cyfr == 26
+    // (dokładna długość polskiego IBAN po PL). Chroni przed sklejaniem
+    // niezwiązanych liczb zaczynających się od "PL".
+    // ----------------------------------------------------------
+    private val OCR_IBAN_SPLIT = Regex(
+        """\bPL(\d{2,25})[^\S\n](\d{1,24})\b"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
     // ----------------------------------------------------------
     private val OCR_IBAN_DIGITS = Regex(
@@ -388,6 +404,16 @@ object OcrNormalizer {
             val fixed = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
             fixed
+        }
+
+        // 13a. OCR: spacja wstawiona przez OCR w środku IBAN — "PL...9 170" → "PL...9170"
+        text = OCR_IBAN_SPLIT.replace(text) { m ->
+            val part1 = m.groupValues[1]
+            val part2 = m.groupValues[2]
+            if (part1.length + part2.length == 26) {
+                corrections++
+                "PL$part1$part2"
+            } else m.value
         }
 
         // 13. OCR: litery zamienione na cyfry w IBAN / Nr konta

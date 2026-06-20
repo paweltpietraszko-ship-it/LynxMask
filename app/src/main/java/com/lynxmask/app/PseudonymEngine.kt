@@ -125,7 +125,10 @@ object PseudonymEngine {
         // anna. nowak(@wp.pl  → anna.nowak@wp.pl
         // robert.jablonski@ finanse24.pl → robert.jablonski@finanse24.pl
         text = text.replace("(@", "@")                                              // (@ → @
-        text = Regex("""([a-z0-9])\.\s+([a-z0-9])""", RegexOption.IGNORE_CASE)    // anna. nowak → anna.nowak
+        // ADDR-EMAIL-FIX: lookbehind (?<=[a-z0-9]{2}) wyklucza 2-literowe skróty adresowe
+        // (al., ul., pl., os.) — bez niego "al. Jerozolimskie" → "al.Jerozolimskie"
+        // i ADDRESS_PATTERNS Pattern3 ([^\S\n]+ po skrócie) nie może dopasować.
+        text = Regex("""(?<=[a-z0-9]{2})([a-z0-9])\.\s+([a-z0-9])""", RegexOption.IGNORE_CASE) // anna. nowak → anna.nowak
             .replace(text) { m -> "${m.groupValues[1]}.${m.groupValues[2]}" }
         text = Regex("""@\s+([a-z0-9])""", RegexOption.IGNORE_CASE)               // @ wp → @wp
             .replace(text) { m -> "@${m.groupValues[1]}" }
