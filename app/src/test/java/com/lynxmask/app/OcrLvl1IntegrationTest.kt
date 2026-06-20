@@ -78,18 +78,18 @@ class OcrLvl1IntegrationTest {
     // ── TESTY KTÓRE FAILUJĄ (znane bugi OCR) ─────────────────────────────────
 
     @Test
-    fun `FAIL email wykrywany mimo ze znak malpa zamieniony na Q przez OCR`() {
+    fun `email wykrywany mimo ze znak malpa zamieniony na Q przez OCR`() {
         // OCR daje: "lukaszszymanski Qinteria.pl"
-        // OcrNormalizer nie obsługuje '@' → 'Q'
-        // OCZEKIWANY FAIL — do naprawy w OcrNormalizer
+        // OCR_EMAIL_AT_Q w OcrNormalizer naprawia Q → @ przed przekazaniem do silnika
+        // Silnik zapisuje email jako NUMER_xxx (brak TOKEN_EMAIL w architekturze)
         val ocrText = loadOcrText()
         println("Fragment OCR z emailem: " +
             ocrText.lines().firstOrNull { it.contains("Qinteria") || it.contains("interia") })
         val result = PseudonymEngine.pseudonymize(ocrText)
         println("tokenMap: ${result.tokenMap}")
         assertTrue(
-            "EMAIL 'lukaszszymanski@interia.pl' nie wykryty — OCR zamienil '@' na 'Q'",
-            result.tokenMap.keys.any { it.startsWith("EMAIL") }
+            "Email 'lukaszszymanski@interia.pl' powinien byc wykryty jako NUMER_xxx",
+            result.tokenMap.values.any { it.contains("@") && it.contains("interia") }
         )
     }
 

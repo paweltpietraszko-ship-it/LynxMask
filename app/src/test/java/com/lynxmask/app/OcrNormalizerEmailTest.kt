@@ -46,6 +46,16 @@ class OcrNormalizerEmailTest {
     }
 
     @Test
+    fun `OCR_EMAIL_AT_Q naprawa Q na malpe`() {
+        val input = "lukaszszymanski Qinteria.pl"
+        val result = OcrNormalizer.normalize(input)
+        println("PRZED: $input")
+        println("PO:    ${result.normalizedText}")
+        println("Poprawek: ${result.corrections}")
+        assertTrue("Q powinno byc zamienione na @", result.normalizedText.contains("lukaszszymanski@interia.pl"))
+    }
+
+    @Test
     fun `FAIL BUG-EMAIL-TLD1 TLD z cyfra nie jest naprawiany`() {
         // OCR: l→1 w TLD, "bartosz@prawnik p1" zamiast "bartosz@prawnik.pl"
         // OCR_EMAIL_TLDSPACE szuka [a-zA-Z]{2,4} — nie matchuje "p1" bo zawiera cyfrę

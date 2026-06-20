@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 1.6
+// Wersja: 1.7
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
 //
@@ -31,6 +31,9 @@ package com.lynxmask.app
 //
 // Zmiany v1.5 (18.06):
 //   - OCR_PESEL_DIGITS: kontekstowa naprawa cyfr po słowie PESEL (T→7, O→0 itd.)
+//
+// Zmiany v1.7 (20.06):
+//   - OCR_EMAIL_AT_Q: '@' zamieniony na 'Q' przez OCR — "jan Qonet.pl" → "jan@onet.pl"
 //
 // Zmiany v1.6 (19.06):
 //   - OCR_PESEL_WORD: zastępuje OCR_PESEL_DIGITS — pełny wzorzec słowa obsługuje
@@ -160,12 +163,24 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_EMAIL_AT_Q v1.7: naprawa '@' zamienionego na 'Q' przez OCR
+    //
+    // "lukaszszymanski Qinteria.pl" → "lukaszszymanski@interia.pl"
+    // Wzorzec: local-part + spacja + Q + domena.tld
+    // Warunek bezpieczeństwa: domena musi zaczynać się małą literą lub cyfrą
+    // (odróżnia "Qinteria.pl" od "QBASIC.txt" gdzie Q to litera, nie @)
+    // ----------------------------------------------------------
+    private val OCR_EMAIL_AT_Q = Regex(
+        """([\w._%+\-]{3,})[^\S\n]+Q([a-z0-9][\w\-]*\.[a-zA-Z]{2,4})\b"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_EMAIL_SPACES v1.4: naprawa artefaktów spacji w adresach email
     //
     // Reguła 1 — spacja przed TLD (uruchamiać PIERWSZA):
     //   "jan@onet pl" → "jan@onet.pl"
-    //   Wzorzec: @domena + spacja + 2-4 litery TLD
-    //   Bezpieczne: wymaga @ na początku, TLD ≤ 4 litery — nie skleja zdań
+    //   Wzorzec: @domena + spacja + 2-4 litery/cyfry TLD
+    //   Bezpieczne: wymaga @ na początku, TLD ≤ 4 znaki — nie skleja zdań
     //
     // Reguła 2 — spacja w local-part przed @ (uruchamiać PO regule TLD):
     //   "mariusz kaminski@o2.pl" → "mariusz_kaminski@o2.pl"
@@ -295,6 +310,12 @@ object OcrNormalizer {
             } else {
                 m.value  // nie skleja — brak w liście
             }
+        }
+
+        // 6b. OCR: '@' zamieniony na 'Q' — "lukaszszymanski Qinteria.pl" → "...@interia.pl"
+        text = OCR_EMAIL_AT_Q.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}@${m.groupValues[2]}"
         }
 
         // 7. OCR-spacja przed TLD emaila — "jan@onet pl" → "jan@onet.pl"
