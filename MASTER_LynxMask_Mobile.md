@@ -1,0 +1,321 @@
+# MASTER — LynxMask Mobile
+**Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
+**Data konsolidacji:** 20.06.2026
+**Źródła:** BRIEF_Sonet_18_06_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO_silnik.md (20.06, OCR + silnik), TODO_LynxMask_mobile_12_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA_ARCHITEKTURY_mobile_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
+
+## Zasada nadrzędna przy aktualizacji
+Nie pisz od nowa. Odznaczaj DONE, dopisuj nowe. Najnowszy dokument wygrywa przy konflikcie. Ground truth z git/Claude Code wygrywa nad dokumentem.
+
+---
+
+## DLA INSTANCJI DOCELOWEJ — PRZECZYTAJ NAJPIERW
+
+**Ten master jest źródłem STANU, nie kolejności.** Numeracja sekcji to porządek dokumentu, nie ranking. Masz prawo i obowiązek przeustawić potoki pod to, co akurat ważne — nie idź ślepo po kolei.
+
+**Trzy decyzje należą do Pawła i blokują pracę — NIE podejmuj ich sam, dopytaj:** format tokenu (blokuje Potok 7 — sekcja 8), los Potoku LT (sekcja 8), sposób de-leet (sekcja 8). Jeśli czegoś nie ma w masterze, a wygląda na ustalone — możesz poprosić o przeszukanie wcześniejszych sesji, ale traktuj stare zapisy jako „do weryfikacji na świeżo", nie jako pewnik.
+
+**Reguła sztafety wewnątrz Mobile:** normalizer (OcrNormalizer), silnik (NameEngine/StructuralEngine) i UI dzielą trzy pliki na szwach — PseudonymEngine.kt, PseudonymEngineTest.kt, ShareTargetActivity.kt — oraz wspólny benchmark. Idą JEDEN PO DRUGIM, nie równolegle. Mobile vs Desktop mogą iść równolegle (zero wspólnych plików).
+
+**Rzeczy współdzielone z Desktop (jeden właściciel = Paweł):** format tokenu + spójność TOKEN_RE, samouczenie (sekcja 19), sync .lynxdict, taksonomia 9 typów. Nie zmieniać jednostronnie.
+
+**Zasady nienaruszalne / miny:** sekcja 18. Przeczytaj przed dotknięciem silnika lub OCR.
+
+**Środowisko i benchmark:** sekcja 11 — pełna obowiązkowa sekwencja reinstalla + run_benchmark_fresh.bat.
+
+### Jak pisać polecenia do Claude Code
+Jedno zadanie na raz. Format polecenia:
+```
+Przeczytaj plik: C:\Projects\LynxMask\app\src\main\java\com\lynxmask\app\<plik>.kt
+Znajdź fragment <X>. Pokaż z numerami linii.
+Nic nie zmieniaj. Czekaj na dalsze instrukcje.
+```
+Po diagnozie wydajesz pojedynczą zmianę. Po każdej zmianie: test (`.\gradlew :app:testDebugUnitTest`), dopiero potem commit. Małe zadanie → test → wynik → następne. Gdy Claude Code idzie w złą stronę: „Zatrzymaj się. Zrób tylko to, co napisałem." Kompletne pliki, nie fragmenty; ta sama nazwa = nadpisanie; czytaj realny kod przed pisaniem; nie dotykaj plików skończonych.
+
+---
+
+## 0. CO ZMIENIŁO SIĘ PRZY KONSOLIDACJI (przeczytaj raz)
+
+- **Stare liczby recall z 13.06 (OSOBA 57,8%, EMAIL 0%) — WYRZUCONE.** Decyzja właściciela: dzisiejsze dane wiążące, stare do kosza.
+- **EMAIL nie jest zepsuty.** Benchmark zaniża, bo myli kropkę z podkreślnikiem w części lokalnej (krzysztof_nowakowski vs krzysztof.nowakowski). Realny recall ≈ 100% (6/6). To błąd pomiaru, nie luka silnika. NIE planować „naprawy EMAIL recall".
+- **ADRES nie jest zepsuty.** Potwierdzone trace'em (Claude Code 20.06): wszystkie pominięcia to BRAK_W_OCR. Silnik nie ma buga adresowego. 87,8% to sufit jakości OCR na LVL2/3. NIE optymalizować pod ADRES benchmark.
+- **Potok 3c-FIX NIE istnieje w Mobile.** Nazwy BUG-IBAN-PL / BUG-EMAIL-ZERO / BUG-WHITELIST-OCR / BUG-SLU-FP to projekt Desktop. Sekcja 3c-FIX ze starego TODO usunięta jako zanieczyszczenie.
+- **Potok LT (Morfeusz) — premisa nieaktualna.** Generatora fleksji imion/nazwisk NIE MA. Dane JSON już są i są załadowane. Historyczny problem OSOBA był logiką (surnamesForms nieużywane do detekcji), już naprawioną w sesji 17–18.06. LT przeniesiony do „decyzje otwarte" — prawdopodobnie nie ma czego realizować.
+- **Mapa architektury 09.06 — wersje martwe**, szkielet (funkcje per plik, zależności, diagnostyka) nadal użyteczny.
+
+---
+
+## 1. STAN AKTUALNY — TRZY OSOBNE LICZBY (nie zlepiać)
+
+| Pomiar | Wynik | Co realnie mówi |
+|---|---|---|
+| Czysty dokument, ręcznie przez apkę, LVL0–1 | 100% maskowania | silnik na czystym tekście działa; mówi o przypadkach, które przetestowano |
+| Benchmark z OCR, LVL03, 68 dok. | ogólny 74,3% | OSOBA 81,5%, EMAIL 83,3% (real ≈100%, błąd pomiaru), ADRES 87,8% (sufit OCR), NUMER ~73%, FP 91 |
+| Zachowanie na NIEZNANYM dokumencie (dok. #101) | **NIEZBADANE** | ani testy ręczne, ani benchmark tego nie pokazują — patrz sekcja 7 |
+
+**Wariancja benchmarku:** świeży dataset = inne dokumenty co run, recall waha się ±5%. To nie regresja. Regresja = ten sam dataset gorszy wynik.
+**Lvl2 generatora ma błąd kalibracji** (blur po szumie, kontrast 70% gorszy niż lvl3). To problem generatora, nie silnika. Nie walczyć z lvl2.
+
+---
+
+## 2. OTWARTE ZADANIA SILNIKA (priorytet z konsultacji ChatGPT + Opus, potwierdzony)
+
+Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do lookupu, maskuj oryginalny span.**
+
+| # | Zadanie | Plik | Opis | Status |
+|---|---|---|---|---|
+| S1 | CAPS LOCK w nazwiskach | NameEngine | KOWALSKI JAN, PIETRASZKO PAWEL niewykrywane. toLookupForm() → lookup, bramka tylko gdy trafia w słownik (eliminuje UMOWA/RODO/REGON) | 🔲 |
+| S2 | ASCII imiona | NameEngine | Stanislaw, Lukasz niewykrywane — słownik ma tylko formy z ogonkami. fold() przy starcie, foldedNames map | 🔲 |
+| S3 | Inicjały przy nazwiskach | NameEngine | K. Kowalski → maskować całość. INITIALS_RE, rozszerz span w lewo. Niskie ryzyko FP (tylko przy potwierdzonym nazwisku) | 🔲 |
+| S4 | Kwoty słownie | StructuralEngine | „dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy | 🔲 |
+| S5 | Walidacja sumy kontrolnej PESEL (RESEARCH-1) | StructuralEngine | PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność ~100% | 🔲 |
+| S6 | Sklejanie nazwisk | NameEngine | „Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms | 🔲 |
+| S7 | BUG-EMAIL-TOKEN | StructuralEngine | EMAIL wykrywany jako NUMER zamiast EMAIL | 🔲 |
+| S8 | BUG-DATE-PARTIAL | StructuralEngine | 2026-06-20 → maskuje rok-miesiąc, zostaje „-20" | 🔲 |
+| S9 | BUG-FP-REFNUM | StructuralEngine | UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive) | 🔲 |
+| S10 | BUG-TEL-PREFIX | StructuralEngine | (22) 765-43-21 → prefiks (22) pomijany | 🔲 |
+| S11 | Email z imieniem w local-part | StructuralEngine + NameEngine | „email: joanna.grabowska@interia.pl" → imię maskowane jako OSOBA, wzorzec kontekstowy „e-mail:" wchodzi w konflikt z NameEngine. Zbadać kolejność | 🔲 |
+
+---
+
+## 3. OTWARTE ZADANIA NORMALIZERA (OcrNormalizer.kt — osobny pas, NIE silnik)
+
+| # | Zadanie | Opis | Status |
+|---|---|---|---|
+| N1 | BUG-EMAIL-TLD1 | @wp p1 — TLD z cyfrą. Fix: `([a-zA-Z]{2,4})\b` → `([a-zA-Z0-9]{2,4})\b` (linia 159) | ✅ 19.06 |
+| N2 | BUG-NIP-SPLIT | NIP naprawiony tylko do połowy, silnik łapie fragmenty jako dwa NUMER. Zbadać który fragment nie jest naprawiany | 🔲 |
+| N3 | OCR_EMAIL_LOCALSPACE wiele spacji | naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów | 🔲 |
+| N4 | IBAN przez newline | „PL61 1020...\n0000..." nie sklejany. Reguła OCR_IBAN_NEWLINE | 🔲 |
+| N5 | KNOWN_CITY_FORMS bez ogonków | Bialystok, Lodz, Krakow — stosować fold() dla kandydata | 🔲 |
+| N6 | De-leet imion/nazwisk (RESEARCH-2) | 3→e,4→a,5→s,0→o,1→i tylko dla tokenów z wielkiej litery. Jaro-Winkler. **Decyzja: dodać zależność string-similarity-kotlin czy własna implementacja** | 🔲 |
+| N7 | Nagłówek wersji nieaktualny | nagłówek mówi v1.3, realnie v1.6. Zaktualizować | ✅ 20.06 (v2.0) |
+
+---
+
+## 4. UI — POTOK 6.2 (W TOKU) i powiązane
+
+| Zadanie / Bug | Plik | Status |
+|---|---|---|
+| Express Mode — pełny przepływ (priorytet 1) | MainActivity / UI / Rust-brak (mobile RAM) | 🟢 w toku |
+| RESEARCH-3 — ML Kit confidence + progi (avg<0.7 YELLOW, <0.5 RED) | ShareTargetActivity + OcrNormalizer assessQuality | 🔲 (mlKitConfidence teraz null, linie 287/434) |
+| assessQuality shouldReject dla confidence<0.5 + obsługa odrzucenia w UI + override | OcrNormalizer + UI | 🔲 |
+| Luka reset hasła — „Zapomniałem hasła" daje dostęp bez uwierzytelnienia | LoginScreen.kt | 🔲 |
+| BUG-SS-1 INSERT OR REPLACE nadpisuje NULLami | SessionStore.kt | 🔲 |
+| BUG-SS-3 init() na Main thread — ANR | SessionStore.kt | 🔲 |
+| AUD-M05 silent failure AES-GCM/SQLCipher | SessionStore.kt | 🔲 |
+| AUD-M06 security-crypto 1.1.0-alpha06 → 1.0.0 | build.gradle.kts | 🔲 |
+| BUG-16 „Zamaskuj i zapamiętaj" hardcoded OSOBA — selektor typu | PseudonymResultPanel.kt | 🔲 |
+| BUG-17 ManualTokenSection brak TOKEN_KWOTA | PseudonymResultPanel.kt | 🔲 |
+| BUG-DESCRIPTION-01 pole „Opis dokumentu" bez zapisu | PseudonymResultPanel.kt | 🔲 |
+| BUG-20 camera required="true" po usunięciu kamery | AndroidManifest.xml | 🔲 sprawdzić |
+| Testy JUnit 6.2: SessionStore (load/save/list/delete/deleteAll/TTL), Deanonymizer (detectSessionId/restore) | — | 🔲 |
+
+---
+
+## 5. KOLEJKA POTOKÓW
+
+| # | Status | Zakres | Zależy od |
+|---|---|---|---|
+| 6.2 | 🟢 W TOKU | UI, Express Mode, SessionStore, LoginScreen | RODO ✅ |
+| UI-2 | ⏳ czeka | nowy układ PseudonymResultPanel — patrz sekcja 17 | 6.2 (wspólny PseudonymResultPanel.kt) |
+| Silnik (S1–S11) | 🔲 GOTOWY | luki silnika z sekcji 2 | — (różne pliki niż 6.2, ale wspólny PseudonymEngineTest — sztafeta) |
+| Normalizer (N1–N7) | 🔲 GOTOWY | OcrNormalizer | — (osobny plik) |
+| 7 — taksonomia 9 typów + format tokenu | ⏳ czeka | OSOBA/ADRES/NUMER/ORGANIZACJA/EMAIL/TELEFON/SYGNATURA/DATA/KWOTA | **DECYZJA: format tokenu (sekcja 8)** + silnik blisko celu |
+| OCR (potok) | 📋 po 7 | BUG-GUARD, BUG-DICT engine, UserDictionary | 7 |
+| .LYNXDICT | 📋 po OCR | sync słownika desktop→mobile | OCR |
+
+**Reguła sztafety wewnątrz Mobile:** normalizer, silnik i UI dzielą trzy pliki na szwach — PseudonymEngine.kt, PseudonymEngineTest.kt, ShareTargetActivity.kt — oraz wspólny benchmark. Dlatego idą JEDEN PO DRUGIM, nie równolegle. Mobile vs Desktop mogą iść równolegle (zero wspólnych plików).
+
+---
+
+## 6. BUGI ZAMROŻONE / BEZPIECZEŃSTWO SILNIKA
+
+| Bug | Plik | Opis | Status |
+|---|---|---|---|
+| BUG-AL-OPEN | PseudonymEngine.kt | adresy „al." niemaskowane — wielokrotne nieudane próby. **NIE dotykać bez nowej strategii** | ❄️ zamrożony |
+| BUG-GUARD | OutputGuard.kt | Guard nie zna tokenMap sesji — przepuszcza PII | 🔲 potok OCR |
+| BUG-DICT (engine) | PseudonymEngine.kt | silnik nie konsultuje UserDictionary przed maskowaniem | 🔲 potok OCR |
+| BUG-MOBILE-TEXTINPUT | ShareTargetActivity | pole „wklej tekst" nie uruchamia pseudonimizacji | 🔲 osobna sesja |
+| TOKEN_RE przed Potokiem 7 | NameEngine.kt | format z sufiksem zepsuje TOKEN_RE — naprawić PRZED Potokiem 7 | 🔲 zależne od decyzji 8 |
+
+---
+
+## 7. OBRONA PRZED „DOKUMENTEM #101" (najważniejsze, niezbadane)
+
+100% na ręcznie wybranych czystych dokumentach mówi tylko, że silnik radzi sobie z przypadkami, o których pomyślano. Benchmark ze świeżym datasetem łapie regresję, ale ma sufit: generator produkuje tylko takie dokumenty, jakie zaprogramował autor — „świeży" nie znaczy „nowy". Klasy błędu, której generator nigdy nie tworzy, benchmark nie pokaże (to overfitting z TODO_silnik pkt 7). Liczbą wartą pilnowania nie jest „jak wysoki recall", tylko „jaki najprostszy dokument umiem ręcznie zbudować, żeby go jeszcze zepsuć".
+
+Dwie rzeczy realnie testują dok. #101:
+- **Zdjęcia z aparatu** — realne artefakty OCR z różnych typów dokumentów (TODO_silnik pkt 6). Brudniejsze niż cokolwiek z generatora.
+- **Dokumenty adwersaryjne** — celowo budowane pod znane słabe miejsca (CAPS LOCK, ASCII imiona, kwoty słownie, sklejone nazwiska, inicjały).
+- **Fixed dataset** — porównywalność między runami (run_benchmark.bat), obok fresh.
+
+---
+
+## 8. DECYZJE OTWARTE
+
+1. **Format tokenu (BLOKUJE Potok 7).** Kandydaci: TYP_XXX_NNN (3 znaki) vs OSOBA_D0ECAF_001 (6 heks). **Rekomendacja: 6-znakowy heks, identyczny Mobile i Desktop** — realny problem to rozjazd TOKEN_RE (AUD-M08), 3 znaki dają za mało entropii na ochronę przed wstrzyknięciem tokenu. Do potwierdzenia przez właściciela.
+2. **Potok LT.** Premisa nieaktualna (dane są, logika naprawiona). Decyzja: skasować czy zostawić jako odległy backlog?
+3. **RESEARCH-2 de-leet.** Dodać zależność string-similarity-kotlin czy implementować samodzielnie?
+
+---
+
+## 9. DECYZJE ZAMKNIĘTE (nie wracać)
+
+- BUG-ARCH: hasło NIE wiązane kryptograficznie z kluczem SQLCipher — Android Keystore + AES-256-GCM wystarczające (Art. 32 RODO). Nie implementować key wrapping.
+- Słownik bazowy user_dictionary_default.json — w paczce instalatora (bundle), nie OTA.
+- Taksonomia 9 typów (Potok 7) POTWIERDZONA. FIRMA+INSTYTUCJA→ORGANIZACJA. DOKUMENT usunięty (NIP/PESEL/IBAN itd. zostają NUMER). DATA nowy typ kontekstowy. (Raport 3c wymieniał 10 typów z DOKUMENT — NIEAKTUALNE, użyć 9.)
+- Testy JUnit type-agnostic — utrzymane.
+- PESEL odczyt z OCR (OCR_PESEL_WORD) — ✅ NAPRAWIONE 19.06. (Uwaga: to inna warstwa niż S5 walidacja sumy kontrolnej — nie mylić.)
+
+---
+
+## 10. NAPRAWIONE W SESJACH 17–18.06 (informacyjnie)
+
+NameEngine: LOOKUP-FIX TITLE_PATTERN, surnamesForms do pozytywnej detekcji (to była realna przyczyna niskiego OSOBA), HONORIFIC_NAME_ONLY, namesForms standalone, zdrobnienia 174→197 imion, kolejność bloków wg specyficzności.
+Benchmark/diagnostyka: DetectionTrace, ścieżki Android 16, sekcje EMAIL/ADRES POMINIĘTE, norm()/normalizeForCompare() z ASCII, run_benchmark_fresh.bat.
+OcrNormalizer v1.3→v1.6: 9 reguł OCR, emaile ze spacjami, prefiks ul., cyfry w PESEL/NIP/IBAN/REGON, OCR_UL_PREFIX, OCR_PESEL_WORD, PESEL_SPLIT, NIP_SPLIT.
+OcrNormalizer v1.6→v2.0 (20.06): OCR_PESEL_SPLIT rozszerzony na klasy [TIlOo0-9] (obsługuje l/O/o jako cyfry ze spacją), OCR_IBAN_SPLIT analogicznie, OCR_NUMERIC_CHAR_MAP+'o'→'0' (zależność z OCR_ZERO_AS_O krok 3), nowy krok 14 OCR_DIGIT_IN_CONTEXT (l/O/I między cyframi → cyfra). 214 testów, 0 FAILED.
+
+---
+
+## 11. ŚRODOWISKO
+
+```
+set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
+set PATH=%JAVA_HOME%\bin;%PATH%
+cd C:\Projects\LynxMask
+```
+Pełny reinstall przed benchmarkiem po zmianie kodu aplikacji (OBOWIĄZKOWY):
+```
+.\gradlew :app:uninstallDebug
+.\gradlew :app:installDebug
+.\gradlew :app:uninstallDebugAndroidTest
+.\gradlew :app:installDebugAndroidTest
+run_benchmark_fresh.bat
+```
+Bez installDebug zmiany w silniku nie trafiają na telefon. Telefon podłączony i odblokowany.
+Testy jednostkowe: `.\gradlew :app:testDebugUnitTest`
+Po każdej zmianie silnika: test DOCX na telefonie (silnik w izolacji) PRZED benchmarkiem obrazowym (OCR+silnik razem).
+
+---
+
+## 12. WERSJE PLIKÓW — DO WERYFIKACJI
+
+Najnowsze udokumentowane: OcrNormalizer v2.0, NameEngine v1.10, StructuralEngine v1.7. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
+
+---
+
+## 13. SILNIK — NIŻSZY PRIORYTET / DO WERYFIKACJI
+
+Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają status nieznany po ostatnich potokach. Weryfikować przy najbliższej okazji dotykania danego pliku.
+
+| Bug | Plik | Opis | Status |
+|---|---|---|---|
+| FP-FRAGMENTY-OCR | NameEngine | fragmenty słów / złamane linie jako OSOBA („nicznie", „mail\njoanna"). Propozycja: OSOBA musi zawierać tylko litery, bez cyfr/znaków spec. | 🔲 niski |
+| BUG-PESEL-OCR-SILNIK | StructuralEngine | doc_00006: PESEL w OCR ale niezamaskowany, \b\d{11}\b nie złapał (prawd. błąd OCR w cyfrach). Wymaga tekstu OCR do diagnozy | 🔲 do zbadania |
+| BUG-28 | NameEngine | lazy NAME_FORWARD/BACKWARD/HONORIFIC_REGEX kompilowany z fallback 200 imion PRZED LookupTables.init() | 🔲 po OCR |
+| BUG-08 | PseudonymEngine | propagacja nazwisk nie łapie członu po tokenie („dr OSOBA_003 Lewandowska-Karpowicz") | 🔲 TBD |
+| BUG-07 | LookupTables | generateFeminineVariants niepełne (tylko -ski/-cki/-dzki) | 🔲 TBD |
+| BUG-29 | NameEngine | priorytet flag: niekontekstowe wypychają kontekstowe — może być by design | 🔲 TBD |
+| BUG-01 | PseudonymEngine | `\s+` w regexie emaili łączy przez `\n` — fix: `[^\S\n]+`. Niskie ryzyko | 🔲 przy pracy na PseudonymEngine (Potok 7?) |
+| BUG-02 | OutputGuard | cicha degradacja gdy LookupTables niezainicjowane — v1.6 częściowo (warning), stan po załadowaniu nieznany. Oryginalnie wysokie ryzyko | 🔲 weryfikacja w Potoku OCR |
+| BUG-03 | OutputGuard / StructuralEngine | niezgodność wzorca EMAIL — Guard nie alarmuje dla domen od cyfry (user@1und1.de) | 🔲 niski |
+| BUG-04 | UserDictionary | `_loaded` nie resetowane po clear() — fix: `_loaded=false` w clear() | 🔲 Potok OCR |
+| BUG-05 | StructuralEngine | tablice rejestracyjne bez kontekstu — FP na kodach produktów/paragrafach. v1.4 częściowy fix, stan po v1.5/v1.7 nieznany | 🔲 weryfikacja przy pracy na StructuralEngine |
+
+---
+
+## 14. UI — DROBNE I POLISH (Potok 6.2 lub TBD)
+
+| Zadanie / Bug | Plik | Status |
+|---|---|---|
+| „Zapisz w bibliotece" usunąć z DepseudonymizationScreen Ekran 2 | DepseudonymizationScreen | 🔲 6.2 |
+| Edytuj dokument w LibraryScreen — podpiąć PseudonymResultPanel z istniejącą sesją | LibraryScreen | 🔲 6.2 |
+| Styl BottomNavBar „cegły": odsunięcie od krawędzi, aktywny = podświetlenie + pionowa kreska | UI | 🔲 6.2 |
+| „PDF · DOCX · TXT · Obraz" pod przyciskiem Wybierz plik w Hub | UI | 🔲 6.2 |
+| SecurityModal — suwak TTL | UI | 🔲 6.2 |
+| Logo PSE w nagłówku LibraryScreen | LibraryScreen | 🔲 6.2 |
+| TODO-6: separator fragmentów „===" | ShareTargetActivity | 🔲 6.2 |
+| AndroidManifest — sprawdzić lynxmask_login SharedPreferences vs allowBackup=false | AndroidManifest.xml | 🔲 6.2 |
+| BUG-LOG-DBL podwójna normalizacja w logOcrAnalysis() | DebugLogBuffer.kt | 🔲 6.2 opcjonalnie |
+| clearOnExit — metoda istnieje, niepodpięta w MainActivity.onStop() | DebugLogBuffer.kt | 🔲 6.2 |
+| BUG-21 ClipboardCheckActivity/TileService — weryfikacja po załadowaniu manifestu | AndroidManifest.xml | 🔲 TBD |
+| BUG-13 wyciek TextRecognizer przy wyjątku — brak try-finally wokół recognizer.close() | ShareTargetActivity.kt | 🔲 TBD nieprzypisany |
+| BUG-18 „Pomiń" tylko na pierwszej karcie — może być by design | OnboardingScreen.kt | 🔲 TBD |
+
+---
+
+## 15. ODŁOŻONE BEZ TERMINU / DECYZJE OTWARTE (uzupełnienie)
+
+- **Potok 9 — eksport `.lynx` przez WiFi/LAN.** Brak briefu, wymaga decyzji o architekturze. Brak terminu.
+- **BUG-PIPELINE-DUPLICATE** — pseudonymize+save+audit zdublowane w dwóch ścieżkach ShareTargetActivity. Nieaktywny, do obserwacji.
+- **AUD-M04 — isMinifyEnabled=false** — brak obfuskacji w release. Wymaga reguł ProGuard (SQLCipher+Compose). Osobna sesja po stabilizacji silnika.
+
+---
+
+## 16. POTOKI ZAMKNIĘTE (historia — nie wracać bez nowych dowodów)
+
+- **3b** ✅ StructuralEngine v1.5, NameEngine v1.9
+- **RODO** ✅ LoginScreen v2.0, SessionStore v1.4, MainActivity v2.1
+- **BUG-DICT** ✅ UserDictionary v1.3, ShareTargetActivity v2.8-DICT
+- **3c** ✅ (częściowy sukces) StructuralEngine v1.7, NameEngine v1.10, 77 testów, benchmark infra
+- Naprawione bugi: BUG-10/11/12/15/19/23/24/25 (kamera usunięta Potok 1), BUG-22 (NameEngine v1.7), BUG-31 (Potok 2), BUG-26/27 (RODO/3b).
+- **Uwaga:** „3c-FIX" figurujący w starym TODO mobile NIE jest potokiem Mobile (nazwy bugów = Desktop). Nie wskrzeszać.
+
+---
+
+## 17. POTOK UI-2 — UKŁAD EKRANU WYNIKOWEGO (PseudonymResultPanel.kt)
+
+Uzgodniony z właścicielem (sesja 17.06, BRIEF_Sonet_kontynuacja_17_06). Powód przebudowy: stary układ otwierał ManualDialog jako osobne okno (skakanie między dwoma ekranami), a pole „wklej / Tekst do maskowania" zajmowało miejsce i nic nie robiło. Nowy układ maskuje wbudowanie i odzyskuje to miejsce.
+
+**Kolejność od góry:**
+1. **Baner RED** — znika automatycznie gdy wszystkie RED hity obsłużone.
+2. **RED hity** — klikalne, każdy znika po zamaskowaniu.
+3. **YELLOW hity** — klikalne, znikają po zamaskowaniu lub „ignoruj".
+4. **Przycisk „Podgląd tekstu"** → modal z pełnym tekstem po maskowaniu. ✅ ZROBIONE
+5. **Wbudowany formularz maskowania** — przeniesiony z ManualDialog BEZ osobnego okna: pole tekstowe + chipy typów + „Maskuj". ❌ NIEZROBIONE — to jest sedno potoku.
+6. **„👁 ukrytych"** + przyciski akcji.
+7. **„Wyślij"** zablokowany gdy są aktywne RED hity. ✅ ZROBIONE
+
+**Bugi powiązane z UI-2 (status do weryfikacji — z sesji 17.06):**
+| Bug | Opis | Status |
+|---|---|---|
+| Baner RED nie znika | nie znika po obsłużeniu wszystkich RED — powinien zniknąć gdy lista RED pusta | 🔲 |
+| YELLOW hit nie znika | po zamaskowaniu hit zostaje na ekranie — GuardHitsSection nie wie że manualMasks się zmieniło | 🔲 |
+| Wklejenie do pola maskowania nic nie robi | zaznaczony niezamaskowany numer wklejony w pole „Tekst do maskowania" nie maskuje | 🔲 |
+| BUG-UI-TOKEN-SKLEJANIE | token przylega do sąsiedniego słowa bez spacji (FIRMA_001Firma:) — występuje też na Desktop | 🔲 weryfikacja |
+| Names guard flaguje własne tokeny | OutputGuard łapie fragmenty zawierające token (FIRMA_\d+, OSOBA_\d+) jako „Niezidentyfikowana nazwa własna" — guard musi pomijać fragmenty z tokenem | 🔲 weryfikacja (powiązane z BUG-GUARD) |
+
+**Reguła OutputGuard RED/YELLOW (uzgodniona z właścicielem):**
+- **RED (blokujący)** — wzorce wysokiego zaufania, użytkownik musi zdecydować przed wysłaniem: 11 cyfr (PESEL), PL+26 cyfr (IBAN), format NIP (XXX-XXX-XX-XX), format dowodu (litery+cyfry, np. ABC123456 / ciągły bez spacji jak FOH614892).
+- **YELLOW (informacyjny)** — wzorce, które mogą być PII albo czymś innym; użytkownik widzi zaznaczenie, ale może wysłać bez klikania.
+
+**Status silnika OutputGuard (sesja 17.06):** v1.7 zwraca List<GuardHit> z RED/YELLOW, 7/7 testów, GuardHits trafiają do UI (baner, lista, klikalne). Zapis do biblioteki naprawiony, screenshoty odblokowane w debug.
+
+**Uwaga o platformach:** UI-2 istnieje też po stronie Desktop (Pseudonimizuj.tsx / PseudonymResultPanel) z tym samym konceptem układu — to potok bliźniaczy, nie ten sam plik. Trzymać spójność wyglądu między platformami; kod osobny.
+
+---
+
+## 18. ZASADY NIENARUSZALNE / MINY (nie cofać bez wyraźnego uzasadnienia)
+
+Decyzje, które instancja łatwo cofnie „naprawiając" coś — a cofnięcie psuje projekt. Każda była już raz przemyślana lub okupiona błędem.
+
+- **TOKEN_RE używa `(?!\d)`, NIE `\b`.** Zapobiega bugowi token-w-tokenie. Nie zmieniać na `\b`. Dotyczy też decyzji o formacie tokenu (sekcja 8) — jakikolwiek format wybierzesz, zachowaj kotwiczenie przez `(?!\d)`.
+- **MIDWORD_SPACE_RE zostało CELOWO usunięte.** Globalne sklejanie spacji w środku słów niszczyło tekst. **NIE wprowadzać ponownie** globalnego sklejania jako „naprawy OCR" — to już próbowano i zepsuło wynik. Naprawy spacji robić punktowo w OcrNormalizerze (jak N3/N4), nie globalnie.
+- **FLAG_SECURE zawsze włączone** (blokada zrzutów ekranu w release; w debug odblokowane osobno).
+- **isDebug = BuildConfig.DEBUG**, nigdy zahardkodowane `true`.
+- **OSOBA_DENYLIST** istnieje i filtruje fałszywe trafienia w detekcji nazwisk — uwzględniać przy zmianach NameEngine.
+- **Zasady pracy z Claude Code:** kompletne pliki (nigdy fragmenty), ta sama nazwa pliku = nadpisanie, czytaj realny kod przed pisaniem, nie dotykaj plików oznaczonych jako skończone.
+
+---
+
+## 19. SAMOUCZENIE — BUG-SAMOUCZENIE (fundament, do zbudowania na obu platformach)
+
+To nie jest pojedynczy bug, to fundament całego systemu (potwierdzone 20.06). Pętla:
+1. Silnik maskuje np. „Nowaka" jako OSOBA_001.
+2. Użytkownik widzi, że to część adresu — **odkrywa token**.
+3. Korekta trafia do słownika profilu: „Nowaka = ADRES, nie OSOBA".
+4. Przy następnym dokumencie silnik już wie.
+
+Bez możliwości odkrycia tokenu silnik nie ma jak się korygować — dlatego część luk silnika (np. mylne OSOBA) rozwiąże się sama, gdy ten mechanizm powstanie. Decyzja właściciela: robić silnik dalej ze świadomością, że odkrywanie tokenów część problemów wchłonie. Mobile: zależne od BUG-DICT engine (silnik konsultuje UserDictionary) + BUG-GUARD. **Współdzielone z Desktop — patrz desktop master sekcja 4.**
+
+Powiązany detal silnika (wdrażany 20.06): blok „samo nazwisko z surnamesForms" w NameEngine — niski priorytet, po warstwach adresowych i firmowych, z bramką TOKEN_RE.containsMatchIn + OSOBA_DENYLIST.
