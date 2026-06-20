@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 1.7
+// Wersja: 1.8
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
 //
@@ -31,6 +31,9 @@ package com.lynxmask.app
 //
 // Zmiany v1.5 (18.06):
 //   - OCR_PESEL_DIGITS: kontekstowa naprawa cyfr po słowie PESEL (T→7, O→0 itd.)
+//
+// Zmiany v1.8 (20.06):
+//   - OCR_NIP_DOT: kropka zamiast ostatniego myślnika NIP — "873-054-80.39" → "873-054-80-39"
 //
 // Zmiany v1.7 (20.06):
 //   - OCR_EMAIL_AT_Q: '@' zamieniony na 'Q' przez OCR — "jan Qonet.pl" → "jan@onet.pl"
@@ -252,6 +255,15 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_NIP_DOT: kropka zamiast ostatniego myślnika w NIP
+    // Przykład: "873-054-80.39" → "873-054-80-39"
+    // Wzorzec bardzo specyficzny (3-3-2.2) — minimalny FP w polskich dokumentach
+    // ----------------------------------------------------------
+    private val OCR_NIP_DOT = Regex(
+        """(\d{3}-\d{3}-\d{2})\.(\d{2})(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
     // ----------------------------------------------------------
     private val OCR_REGON_DIGITS = Regex(
@@ -363,6 +375,12 @@ object OcrNormalizer {
             val fixed = m.groupValues[2].replace(" ", "")
             if (fixed != m.groupValues[2]) corrections++
             m.groupValues[1] + fixed
+        }
+
+        // 11c. OCR: kropka zamiast ostatniego myślnika w NIP — "873-054-80.39" → "873-054-80-39"
+        text = OCR_NIP_DOT.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}-${m.groupValues[2]}"
         }
 
         // 12. OCR: litery zamienione na cyfry w REGON (9 lub 14 cyfr)

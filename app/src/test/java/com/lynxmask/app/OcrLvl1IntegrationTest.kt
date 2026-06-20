@@ -94,19 +94,18 @@ class OcrLvl1IntegrationTest {
     }
 
     @Test
-    fun `FAIL NIP wykrywany jako NIP mimo ze ostatni myslnik zamieniony na kropke przez OCR`() {
+    fun `NIP wykrywany z poprawnym myslnikiem mimo ze OCR zamienil ostatni myslnik na kropke`() {
         // OCR daje: "873-054-80.39" zamiast "873-054-80-39"
-        // Silnik wykrywa numer jako NUMER_002, ale NIE jako NIP — kropka łamie wzorzec NIP
-        // OCZEKIWANY FAIL — do naprawy w OcrNormalizer (OCR_NIP_DOT) lub StructuralEngine
+        // OCR_NIP_DOT w OcrNormalizer naprawia kropkę na myślnik przed przekazaniem do silnika
+        // Silnik zapisuje NIP jako NUMER_xxx (brak TOKEN_NIP w architekturze)
         val ocrText = loadOcrText()
         println("Fragment OCR z NIP: " +
             ocrText.lines().firstOrNull { it.contains("873") || it.contains("054") })
         val result = PseudonymEngine.pseudonymize(ocrText)
-        println("tokenMap keys: ${result.tokenMap.keys}")
         println("tokenMap: ${result.tokenMap}")
         assertTrue(
-            "NIP '873-054-80-39' nie wykryty jako NIP_xxx — OCR zamienil ostatni myslnik na kropke; jest NUMER_002",
-            result.tokenMap.keys.any { it.startsWith("NIP") }
+            "NIP '873-054-80-39' powinien byc wykryty z poprawnym myslnikiem (nie kropka)",
+            result.tokenMap.values.any { it.contains("873-054-80-39") }
         )
     }
 
