@@ -319,3 +319,29 @@ To nie jest pojedynczy bug, to fundament całego systemu (potwierdzone 20.06). P
 Bez możliwości odkrycia tokenu silnik nie ma jak się korygować — dlatego część luk silnika (np. mylne OSOBA) rozwiąże się sama, gdy ten mechanizm powstanie. Decyzja właściciela: robić silnik dalej ze świadomością, że odkrywanie tokenów część problemów wchłonie. Mobile: zależne od BUG-DICT engine (silnik konsultuje UserDictionary) + BUG-GUARD. **Współdzielone z Desktop — patrz desktop master sekcja 4.**
 
 Powiązany detal silnika (wdrażany 20.06): blok „samo nazwisko z surnamesForms" w NameEngine — niski priorytet, po warstwach adresowych i firmowych, z bramką TOKEN_RE.containsMatchIn + OSOBA_DENYLIST.
+
+---
+
+## 20. PODZIAŁ LUK SILNIKA: POWTARZALNE vs JEDNORAZOWE
+
+**Założenie produktu:** reguła dowozi ~80+%, samouczenie dobija do 95% na encjach POWTARZALNYCH. To dzieli luki silnika na dwie klasy o różnym priorytecie. Instancja docelowa **NIE łata ręcznie luk z klasy A**, dopóki samouczenie nie działa — bo je przykryje.
+
+### Klasa A — wartości POWTARZALNE (oddane samouczeniu, niski priorytet ręcznej naprawy)
+
+OSOBA, ORGANIZACJA/instytucje, miasta, ulice, adresy. Te same wartości wracają w kolejnych dokumentach tego samego użytkownika, więc korekta raz wpisana do słownika profilu działa na przyszłość. Tu silnik może zostać „na osiemdziesiąt parę procent" — samouczenie domknie różnicę.
+
+Przykłady z realnego dokumentu 19.06: „Góra" brane za OSOBA, „Bolesławiec" pominięte jako miejsce urodzenia, miasto w adresie.
+
+### Klasa B — identyfikatory JEDNORAZOWE (muszą osiągnąć 95% samą REGUŁĄ, teraz)
+
+PESEL, NIP, IBAN, nr dowodu/paszportu, e-mail, telefon, data i miejsce urodzenia, sygnatury. Samouczenie ich **NIE podniesie** — każdy pojawia się raz i nie wraca, nie ma czego zapamiętać. PESEL tego pacjenta nie powtórzy się w następnym dokumencie. Dla klasy B nie ma drugiej szansy z pamięci, więc to jedyne luki detekcji warte naprawy przed zbudowaniem samouczenia.
+
+### Próg per typ, nie uśredniony
+
+Klasa B celuje w bardzo wysoką wykrywalność (każde pominięcie = wyciek), akceptuje trochę FP. Klasa A trzyma 95% i tnie FP (nadgorliwość psuje tekst, pominięcie mniej groźne). Uśredniony recall ukryłby wyciek pojedynczego PESEL w morzu poprawnych trafień — pilnować per typ.
+
+### Kolejność wynikowa
+
+1. Zbuduj samouczenie wcześnie — zdejmuje pracę nad klasą A.
+2. Z luk detekcji rusz teraz tylko klasę B.
+3. Resztę klasy A oceń dopiero po włączeniu pętli korekt — zobaczysz, ile w ogóle zostało.
