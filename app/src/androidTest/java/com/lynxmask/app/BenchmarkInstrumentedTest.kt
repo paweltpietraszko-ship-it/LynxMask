@@ -136,6 +136,7 @@ class BenchmarkInstrumentedTest {
                     .addOnFailureListener { e -> cont.resumeWithException(e) }
             }
 
+
             // OcrNormalizer + PseudonymEngine z UserDictionary
             // .toList() jest bezpieczniejsze niż ArrayList() — działa niezależnie
             // od konkretnego typu kolekcji zwracanej przez UserDictionary.entries
@@ -203,7 +204,9 @@ class BenchmarkInstrumentedTest {
             'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
             'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
         )
-        return v.replace(" ", "").replace("-", "")
+        // OCR_EMAIL_LOCALSPACE zamienia spację w local-part → '_', a GT ma '.':
+        // "malgorzata._kowalska" vs "malgorzata.kowalska" — normalizujemy "._" → "."
+        return v.replace(" ", "").replace("-", "").replace("._", ".")
             .map { diacritics[it] ?: it }
             .joinToString("")
             .lowercase()
@@ -359,7 +362,7 @@ class BenchmarkInstrumentedTest {
             'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
             'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
         )
-        return s.replace(" ", "").replace("-", "")
+        return s.replace(" ", "").replace("-", "").replace("._", ".")
             .map { diacritics[it] ?: it }
             .joinToString("")
             .lowercase()

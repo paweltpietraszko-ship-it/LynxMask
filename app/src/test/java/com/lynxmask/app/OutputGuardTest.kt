@@ -50,10 +50,11 @@ class OutputGuardTest {
 
     @Test
     fun ownTokenNotFlagged() {
-        val hits = guard("Dane osoby OSOBA_ABC_001 zostały ukryte")
+        // OSOBA_001 — aktualny format tokenu (TYPE_NNN), musi być wykluczony przez token exclusion regex
+        val hits = guard("Dane osoby OSOBA_001 zostały ukryte")
         val red = hits.filter { it.level == "RED" }
         assertTrue(
-            "Token OSOBA_ABC_001 nie powinien być flagowany jako RED, hits: $red",
+            "Token OSOBA_001 nie powinien być flagowany jako RED, hits: $red",
             red.isEmpty()
         )
     }

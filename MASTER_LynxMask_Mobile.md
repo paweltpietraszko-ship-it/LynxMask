@@ -174,6 +174,7 @@ NameEngine: LOOKUP-FIX TITLE_PATTERN, surnamesForms do pozytywnej detekcji (to b
 Benchmark/diagnostyka: DetectionTrace, ścieżki Android 16, sekcje EMAIL/ADRES POMINIĘTE, norm()/normalizeForCompare() z ASCII, run_benchmark_fresh.bat.
 OcrNormalizer v1.3→v1.6: 9 reguł OCR, emaile ze spacjami, prefiks ul., cyfry w PESEL/NIP/IBAN/REGON, OCR_UL_PREFIX, OCR_PESEL_WORD, PESEL_SPLIT, NIP_SPLIT.
 OcrNormalizer v1.6→v2.0 (20.06): OCR_PESEL_SPLIT rozszerzony na klasy [TIlOo0-9] (obsługuje l/O/o jako cyfry ze spacją), OCR_IBAN_SPLIT analogicznie, OCR_NUMERIC_CHAR_MAP+'o'→'0' (zależność z OCR_ZERO_AS_O krok 3), nowy krok 14 OCR_DIGIT_IN_CONTEXT (l/O/I między cyframi → cyfra). 214 testów, 0 FAILED.
+OutputGuard v1.7→v2.0 (20.06): Pełne przepisanie. Nowe RED: PESEL_SPACE (`\b(?:\d[ \-]?){10}\d\b` — artefakty OCR), TELEFON_PELNY (z kropką/0048/nawiasami, mandatory separator blokuje REGON compact). YELLOW SYGNATURA/LICZBA zawężone kotwicą słowną w oknie 35 znaków (eliminuje FP „1/1 etatu", „734/1 KC"). Nowe YELLOW: URODZENIE, MIEJSCE_UR, EMAIL_FRAGMENT (`\S+@\S+` — zniekształcone maile). Usunięte: REGON, PL_PREFIX, TELEFON. Naprawiony token exclusion. 3 pliki testów: OutputGuardTest.kt (7), OutputGuardRedesignFpTpTest.kt (45), OutputGuardDiagnosticTest.kt (2 metody, 68 dok.). 54 testy, 0 FAILED.
 
 ---
 
@@ -200,7 +201,7 @@ Po każdej zmianie silnika: test DOCX na telefonie (silnik w izolacji) PRZED ben
 
 ## 12. WERSJE PLIKÓW — DO WERYFIKACJI
 
-Najnowsze udokumentowane: OcrNormalizer v2.0, NameEngine v1.10, StructuralEngine v1.7. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
+Najnowsze udokumentowane: OcrNormalizer v2.0, NameEngine v1.10, StructuralEngine v1.7, OutputGuard v2.0. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
 
 ---
 
@@ -283,13 +284,13 @@ Uzgodniony z właścicielem (sesja 17.06, BRIEF_Sonet_kontynuacja_17_06). Powód
 | YELLOW hit nie znika | po zamaskowaniu hit zostaje na ekranie — GuardHitsSection nie wie że manualMasks się zmieniło | 🔲 |
 | Wklejenie do pola maskowania nic nie robi | zaznaczony niezamaskowany numer wklejony w pole „Tekst do maskowania" nie maskuje | 🔲 |
 | BUG-UI-TOKEN-SKLEJANIE | token przylega do sąsiedniego słowa bez spacji (FIRMA_001Firma:) — występuje też na Desktop | 🔲 weryfikacja |
-| Names guard flaguje własne tokeny | OutputGuard łapie fragmenty zawierające token (FIRMA_\d+, OSOBA_\d+) jako „Niezidentyfikowana nazwa własna" — guard musi pomijać fragmenty z tokenem | 🔲 weryfikacja (powiązane z BUG-GUARD) |
+| ~~Names guard flaguje własne tokeny~~ | Token exclusion w OutputGuard v2.0 naprawiony — regex `\b(?:OSOBA\|ADRES\|NUMER\|...)_\d{3}\b` zastąpił martwy `\b[A-Z]{2,}_[A-Z]{3}_\d{3}\b`. „Niezidentyfikowana nazwa własna" to osobny mechanizm NameEngine.kt:691 (PseudonymFlag, nie GuardHit) — ma własny TOKEN_RE. | ✅ 20.06 |
 
 **Reguła OutputGuard RED/YELLOW (uzgodniona z właścicielem):**
 - **RED (blokujący)** — wzorce wysokiego zaufania, użytkownik musi zdecydować przed wysłaniem: 11 cyfr (PESEL), PL+26 cyfr (IBAN), format NIP (XXX-XXX-XX-XX), format dowodu (litery+cyfry, np. ABC123456 / ciągły bez spacji jak FOH614892).
 - **YELLOW (informacyjny)** — wzorce, które mogą być PII albo czymś innym; użytkownik widzi zaznaczenie, ale może wysłać bez klikania.
 
-**Status silnika OutputGuard (sesja 17.06):** v1.7 zwraca List<GuardHit> z RED/YELLOW, 7/7 testów, GuardHits trafiają do UI (baner, lista, klikalne). Zapis do biblioteki naprawiony, screenshoty odblokowane w debug.
+**Status silnika OutputGuard (sesja 20.06):** v2.0 — przepisany w całości. 54 testy (0 FAILED). Nowe reguły RED: PESEL_SPACE, TELEFON_PELNY (szerszy — kropka/0048/nawiasy). YELLOW SYGNATURA i LICZBA zawężone kotwicą słowną (okno 35 znaków). Nowe YELLOW: URODZENIE, MIEJSCE_UR, EMAIL_FRAGMENT. Usunięte: REGON, PL_PREFIX (silnik maskuje). Naprawiony token exclusion regex — aktualny format TYPE_NNN (`\b(?:OSOBA|ADRES|...)_\d{3}\b`). Diagnostyka na 68 dok.: 46 YELLOW (wyłącznie SYGNATURA — sygnatury komornicze/sądowe/umów niezamaskowane przez silnik), 0 RED, 0 token w matchedText.
 
 **Uwaga o platformach:** UI-2 istnieje też po stronie Desktop (Pseudonimizuj.tsx / PseudonymResultPanel) z tym samym konceptem układu — to potok bliźniaczy, nie ten sam plik. Trzymać spójność wyglądu między platformami; kod osobny.
 
@@ -320,6 +321,8 @@ Bez możliwości odkrycia tokenu silnik nie ma jak się korygować — dlatego c
 
 Powiązany detal silnika (wdrażany 20.06): blok „samo nazwisko z surnamesForms" w NameEngine — niski priorytet, po warstwach adresowych i firmowych, z bramką TOKEN_RE.containsMatchIn + OSOBA_DENYLIST.
 
+**Sync .lynxdict / GuardAllowlist — kierunek potwierdzony (właściciel, 20.06):** Mobile prowadzi projekt tego słownika, Desktop (Python) będzie z niego czerpał, nie odwrotnie. Wymóg: schemat danych musi być przenośny między Kotlin i Python — prosty JSON / proste typy w warstwie wymiany (.lynxdict), bez Kotlin-specific serializacji. Lokalne szyfrowanie-at-rest po stronie Mobile (EncryptedFile/Keystore) zostaje osobne od formatu wymiany — nie mieszać tych dwóch warstw.
+
 ---
 
 ## 20. PODZIAŁ LUK SILNIKA: POWTARZALNE vs JEDNORAZOWE
@@ -345,3 +348,49 @@ Klasa B celuje w bardzo wysoką wykrywalność (każde pominięcie = wyciek), ak
 1. Zbuduj samouczenie wcześnie — zdejmuje pracę nad klasą A.
 2. Z luk detekcji rusz teraz tylko klasę B.
 3. Resztę klasy A oceń dopiero po włączeniu pętli korekt — zobaczysz, ile w ogóle zostało.
+
+---
+
+## 21. SPRZĄTANIE OutputGuard — POTOK (20.06)
+
+**Cel:** Guard jako siatka bezpieczeństwa — łapie to, czego silnik nie zdążył lub nie potrafi. Zasada niezależności (sekcja 18): Guard NIE zna tokenMap sesji, działa wyłącznie na wzorcach w tekście wyjściowym.
+
+### Rozważone reguły znakowe (podczas projektowania v2.0)
+
+- REGON (9/14 cyfr) — **usunięty**: silnik maskuje REGON jako NUMER; Guard nie powinien duplikować.
+- PL_PREFIX (PL + cyfry) — **usunięty**: obsłużony przez IBAN RED.
+- TELEFON (stary, tylko `\d{9}`) — **zastąpiony** przez TELEFON_PELNY (szerszy, RED).
+- LICZBA bez kotwicy — **zawężona**: kotwica słowna w oknie 35 znaków eliminuje FP „1/1 etatu", „734/1 KC".
+- SYGNATURA bez kotwicy — **zawężona**: j.w.
+
+### Krok 1 — WYNIK FINALNY, ZATWIERDZONY (20.06)
+
+Testy: 54/54 zielone (7 OutputGuardTest + 45 OutputGuardRedesignFpTpTest + 2 diagnostyczne). Jedna iteracja:
+TELEFON_PELNY mylił NIP z telefonem (kierunkowy \d{2,3} łapał początek NIP) — naprawione na \d{2} (polskie
+kierunkowe zawsze 2-cyfrowe).
+
+Walidacja na pełnym benchmarku (68 dok.): RED=0, YELLOW=46, FP=0, własne tokeny w matchedText=0. Wszystkie
+46 hitów to SYGNATURA — TP w 100% przypadków (sygnatury komornicze, sądowe, numery umów, fragmenty faktur).
+Stary FP (2026-31) wyeliminowany. 10 dokumentów „czysty formularz" (PESEL+NIP+IBAN+email+telefon) = 0 hitów.
+
+URODZENIE/MIEJSCE_UR nie odpaliły na 68 dok. — benchmark używa etykiety „Data urodzenia: XX.XX.XXXX" (już
+maskowanej przez silnik jako DATA), nie skróconej „ur. XX.XX.XXXX". Reguły potwierdzone działające na
+korpusie 7-dok (sanity check). Nie traktować braku odpaleń na 68-dok jako defektu reguły.
+
+**KROK 1 ZAMKNIĘTY.**
+
+### Nowo potwierdzona luka silnika — kandydat na S12 (zanotowane, nie ruszane dziś)
+
+46 hitów SYGNATURA na 68 dok. to systemowa luka: StructuralEngine nie wykrywa sygnatur spraw/umów/faktur.
+Inna strona S9 (który dotyczy NADMIAROWEGO maskowania podobnych numerów jako NUMER) — tu chodzi o BRAK
+maskowania jako SYGNATURA. Kandydat na nowe zadanie silnika, część zakresu „sygnatury" z Klasy B (sekcja 20),
+świadomie odłożona z dzisiejszej sesji. Guard pełni rolę siatki bezpieczeństwa do czasu naprawy silnika.
+
+### KONIEC SESJI 20.06 — START NASTĘPNEJ INSTANCJI TUTAJ
+
+Zrobione dziś: format tokenu zamknięty, zasada niezależności Guard (sekcja 18), Guard przeprojektowany i
+zwalidowany empirycznie na 68 dok. (Krok 1 zamknięty), propozycja GuardAllowlist z otwartymi pytaniami
+(sekcja 19), kierunek sync z Desktop potwierdzony (Mobile prowadzi, Python-przenośny schemat).
+
+Następny krok (Krok 2, sekcja 21): mechanizm odkrywania tokenu + BUG-DICT engine + GuardAllowlist. Czeka na
+potwierdzenie właściciela co do przycisku „to nie PII" vs samo „ignoruj" (sekcja 19).

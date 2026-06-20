@@ -1,256 +1,166 @@
-BUGS / ANOMALIE — 2026-06-19 17:31:24
+BUGS / ANOMALIE — 2026-06-20 11:37:56
 ════════════════════════════════════════════════════════════
 
-[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 21
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 15
 
-  images/doc_00008.png  lvl=3  qs=85  dowod_osobisty=HJN868021
-  images/doc_00013.png  lvl=2  qs=83  pesel=51112635710
-  images/doc_00013.png  lvl=2  qs=83  nip=970-241-73-08
-  images/doc_00014.png  lvl=2  qs=78  pesel=79042541679
-  images/doc_00014.png  lvl=2  qs=78  dowod_osobisty=ZWR592084
-  images/doc_00014.png  lvl=2  qs=78  nip=697-158-52-94
-  images/doc_00016.png  lvl=2  qs=80  pesel=67121783607
-  images/doc_00019.png  lvl=2  qs=84  pesel=65052238485
-  images/doc_00024.png  lvl=3  qs=86  nip_sprzedawcy=463-988-28-15
-  images/doc_00029.png  lvl=3  qs=74  pesel=77092651038
-  images/doc_00031.png  lvl=2  qs=86  dowod_osobisty=MSS739745
-  images/doc_00033.png  lvl=2  qs=82  iban=PL49114019878690464618334808
-  images/doc_00040.png  lvl=2  qs=85  dowod_osobisty=BBK095234
-  images/doc_00041.png  lvl=2  qs=85  iban=PL03150010130221672515827800
-  images/doc_00044.png  lvl=2  qs=83  pesel=98042803251
-  images/doc_00044.png  lvl=2  qs=83  dowod_osobisty=WAL171456
-  images/doc_00044.png  lvl=2  qs=83  nip=685-005-13-69
-  images/doc_00060.png  lvl=2  qs=81  pesel=99121930444
-  images/doc_00064.png  lvl=2  qs=75  iban=PL92102028922151427452311593
-  images/doc_00065.png  lvl=2  qs=86  pesel=04270997497
-  images/doc_00065.png  lvl=2  qs=86  dowod_osobisty=PKN776981
+  images/doc_00005.png  lvl=2  qs=86  nip_sprzedawcy=506-502-70-27
+  images/doc_00005.png  lvl=2  qs=86  nip_nabywcy=830-004-73-00
+  images/doc_00005.png  lvl=2  qs=86  iban=PL38150010137384237964639885
+  images/doc_00009.png  lvl=2  qs=84  pesel=01241905608
+  images/doc_00009.png  lvl=2  qs=84  dowod_osobisty=EJL210924
+  images/doc_00009.png  lvl=2  qs=84  nip=195-382-41-07
+  images/doc_00019.png  lvl=3  qs=80  numer_paszportu=FS3778162
+  images/doc_00020.png  lvl=3  qs=85  dowod_osobisty=WYE829272
+  images/doc_00026.png  lvl=2  qs=81  iban=PL78325000036777972103736599
+  images/doc_00027.png  lvl=3  qs=82  pesel=99020468574
+  images/doc_00042.png  lvl=2  qs=84  pesel=61101019661
+  images/doc_00046.png  lvl=2  qs=85  dowod_osobisty=KUK189660
+  images/doc_00046.png  lvl=2  qs=85  numer_paszportu=NF6736225
+  images/doc_00061.png  lvl=3  qs=80  iban=PL53169010143399766123346788
+  images/doc_00062.png  lvl=3  qs=85  dowod_osobisty=CWT002411
 
 [RECALL<80%] Typy z niskim recall (min. 5 próbek):
 
-  OSOBA        71,4%  (70/98)
-  ADRES        67,9%  (55/81)
-  NUMER        70,8%  (179/253)
-  EMAIL        37,5%  (3/8)
+  OSOBA        79,8%  (71/89)
+  NUMER        74,0%  (213/288)
+  EMAIL        70,0%  (7/10)
 
 
-[OSOBA POMINIĘTE] 28 encji:
+[OSOBA POMINIĘTE] 18 encji:
 
-  doc_00013.png  imie_nazwisko=Tadeusz Krawczyk  → BRAK_W_OCR
-    OCR[300]: Sg KPoos02 apoie PESEL ST6710 NP S0-34sn ORZEKAM uZASADENE pro por Sone POUCZENE rca 4T PUN Urzd Skabowy w Warsze DECYZIAADMINISTRACYJNA wsprae naotenu kary pienne
-  doc_00014.png  imie_nazwisko=Anna Lewandowska  → BRAK_W_OCR
-    OCR[300]: DIE OSOBowE WUOSKoOAWCY Anna Lewdoska 21 02 192 PESEL T0425416 doodu obieg zNRSSOOB4 DAIE KONTAKTOWE Ades zieshaia Teun Jna Pa 1061344100 Osne 48 507 s44 409 Ades emal DANE POOATKOWE NP e dy 697.45862 Podgis WNIOSEK oZMIANĘ DANYCH
-  doc_00015.png  imie_nazwisko_nabywcy=Dorota Woźniak  → BRAK_W_OCR
-    OCR[300]: Data wystawienia: 16,05.2024 Numer klienta: KL-33467 SPRZEDAWCA: Centrum Medyczne MEDYK Sp. z 0.0. Adres: ul. Szkolna 34, 90-001 Bielsko-Biała NIP: 743-332-66-94 REGON: 740072920 Nr konta: PL31240101351312106665975744 NABYWCA: Dorota WNożniak Adres: ul. Kolejowa 91/19, 30-001 Bytom NIP: 787-328-62-6
-  doc_00016.png  autor=Edyta Wójcik  → BRAK_W_OCR
-    OCR[300]: Du 12 2024 Dyczy zgszenia s nstaacg Wotn2004 PESEL GF27E0 Ads pod ym,sxe Ga NOTATKA SsŁuZBOWA
-  doc_00016.png  osoba=Beata Pawłowska  → BRAK_W_OCR
-    OCR[300]: Du 12 2024 Dyczy zgszenia s nstaacg Wotn2004 PESEL GF27E0 Ads pod ym,sxe Ga NOTATKA SsŁuZBOWA
-  doc_00019.png  imie_nazwisko=Natalia Adamczyk  → BRAK_W_OCR
-    OCR[300]: Urzad Skarbowy Krakow Sroamiescie Sygn at K8118202s aa Adack Koloa 18631 30-001 Ton ala Adamczk PESEL 65062236485 Dei napote at 155$ 1 Kodku pospoaria adagego tj Dz U z 2023 por 75 a zm), Uzt Skartoy KaSicie wys PaiyPara o zania pisenyh wjaie w emiie 14 di od daty Wacie pyta prosimy o kortat 48 500 
-  doc_00025.png  imie_nazwisko=Jakub Piotrowski  → BRAK_W_OCR
-    OCR[300]: Komomik Sadowy przy SR Warszaa Mokctów Tomasz Malinowsk Sygn at K 3677420z2 Dat 16 12 2022 J Ptows Kakowka s0-001 Zelona Gora ta podtaie tyu yonwcaego komom sdowy aadamia Jb Ptow PESEL 82041915963 ZAWIADOMIENIE O WSZcZĘCIU EGZEKUCJI zanesctya Kkoat9, 50-001 2Dona Gora Lcna kaot zahia ynos 2406 PUu(o
-  doc_00027.png  imie_nazwisko_nabywcy=Michał Woźniak  → BRAK_W_OCR
-    OCR[300]: Data wystawienia: 14.03.2022 Numer klienta: KL-67177 SPRZEDAWCA: GAMMA Sp. z o.0. S.KA. Adres: ul. Warszawska 77, 70-001 Torurń NIP: 907-671-42-94 REGON: 787458850 Nr konta: PL73109010149908095593427691 NABYWCA: Michat Wożniak Adres: ul. Piaskowa 31, 41-200 Toruń NIP: 189-802-57-02 Lp. Nazwa uslugi 
-  doc_00029.png  autor=Mateusz Krawczyk  → BRAK_W_OCR
-    OCR[300]: Oata 30 01 2025 Sporzadrka Mateusz Kaczk Dotyczy zgloszenia zaginięcia dokumertu tozsamosci Waiu 30 01 2025 do biura zgfonasię nastpujca oscba Agnieska Wecaorek PESEL: 7708265 1038 Ades: Rátana 12906, 31-001 Wiocaa Te 48 489 661 582 Roamowa twala ok 20 minut. Sprawa zostal zarejestrowan whiosku Zlec
-  doc_00029.png  osoba=Agnieszka Wieczorek  → BRAK_W_OCR
-    OCR[300]: Oata 30 01 2025 Sporzadrka Mateusz Kaczk Dotyczy zgloszenia zaginięcia dokumertu tozsamosci Waiu 30 01 2025 do biura zgfonasię nastpujca oscba Agnieska Wecaorek PESEL: 7708265 1038 Ades: Rátana 12906, 31-001 Wiocaa Te 48 489 661 582 Roamowa twala ok 20 minut. Sprawa zostal zarejestrowan whiosku Zlec
-  doc_00030.png  imie_nazwisko=Aleksandra Nowakowska  → BRAK_W_OCR
-    OCR[300]: Urzad Reguacj Energetyki Sygn at s 9702/2023 Aleksandra Nowakoska Zelona 179 10-100 Pagnan Aleksandra owakowska, PESEL 9905 1634874 Driaając na podstae at 156$1 Kodeksu postepowania adinistracyjnego tị Dz U. z 2023 r poz 775 a zm). Urząd Regacj Energetyi wzya Pani Pana do zotenia pisemych wjasrie te
-  doc_00031.png  imie_nazwisko=Elżbieta Dąbrowska  → BUG_SILNIKA
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY lmięi nark Elbieta Debrowska Data urodzenia 04 10. 1966 PESEL s2011800616 dowodu oscbistego MSST3974s DANE KONTAKTOWE Ades zamieszkaia Telefon Dhga 12/42. 10-100 Lubln +48 730 206 757 Ades emal elzbietadabrowska Gpocta pl DANE POOATKOWE NP (el doyczy 157-102-42-24 Data Podp
-  doc_00033.png  imie_nazwisko_zleceniodawca=Zbigniew Michalski  → BRAK_W_OCR
-    OCR[300]: h dia 1106200 ponięny 1Digie Ma zemi Lena 185 44100 BaoBa NP S2380r.8 701 PESEL 912166ses 2 dz Kaw zeay Zeona 170 86001 Gdask NP 7347-651 y dDiior $1. Predmiot umowy ceoca eca, Decnira pre do wona $2 Wynagrodzene i pltrose Za wyonaie pzet moy Zenidca gci Za nt paadunk boy Decity BAN PLASs4o15e 789os
-  doc_00033.png  imie_nazwisko_zleceniobiorca=Andrzej Kowalczyk  → BRAK_W_OCR
-    OCR[300]: h dia 1106200 ponięny 1Digie Ma zemi Lena 185 44100 BaoBa NP S2380r.8 701 PESEL 912166ses 2 dz Kaw zeay Zeona 170 86001 Gdask NP 7347-651 y dDiior $1. Predmiot umowy ceoca eca, Decnira pre do wona $2 Wynagrodzene i pltrose Za wyonaie pzet moy Zenidca gci Za nt paadunk boy Decity BAN PLASs4o15e 789os
-  doc_00034.png  osoba=Ewa Nowakowska  → BRAK_W_OCR
-    OCR[300]: Data 30 09 2021 Sporzadza Tomasz Weczorek Dotyczy skargi na warunki lokalowe Wdriu 30 09 2021 do biura zgloslasię nastepujca oscba Ewa iowakowska PESEL 71091784906 Ades: u Zebna 50, 40001 Belsko-Bala Tel:+48 485 095 008 Roamowa trwala ok 20 minu Sprawazostal zarejpstrowana w systmie ewidencj korespo
-  doc_00041.png  imie_nazwisko_zleceniodawca=Marek Wójcik  → BRAK_W_OCR
-    OCR[300]: a 2201 205 penly Mak Wa NP S-20 o6ST PESEL S0S4OS8 y 2 Mak Deo Deenoa NP T462ss5 $1.Pzediot umoy DcdcaeaDecenira K 10.00 Bya $2 Wynagrodzene i pltrose Z nt poendunk arkoy Decby BAN PRO31s00101 30z2 1672515 T00 $3 Czas trwania umowy Unos e a c ny 12misi $4 Poutol Sony zboi Deceioak UMOWA O SwIADCZENI
-  doc_00041.png  imie_nazwisko_zleceniobiorca=Marek Dąbrowski  → BRAK_W_OCR
-    OCR[300]: a 2201 205 penly Mak Wa NP S-20 o6ST PESEL S0S4OS8 y 2 Mak Deo Deenoa NP T462ss5 $1.Pzediot umoy DcdcaeaDecenira K 10.00 Bya $2 Wynagrodzene i pltrose Z nt poendunk arkoy Decby BAN PRO31s00101 30z2 1672515 T00 $3 Czas trwania umowy Unos e a c ny 12misi $4 Poutol Sony zboi Deceioak UMOWA O SwIADCZENI
-  doc_00044.png  imie_nazwisko=Joanna Zając  → BRAK_W_OCR
-    OCR[300]: DAIE OSOBOWE WUOSKODAWCY Inię i naisk Jona Zec Data urodenia 2507.1986 PESEL se0428032s1 dowod oscbiteg WAL17146 paszport JPS780722 DANE KONTAKTOWE Ades zamiesania Mckiecaa 19, 65001 Csutyn Telelon +8 S36 665 039 Ades emal jpanna zjcpocr p DANE PODATKOWE NP Ge dotycay 6a5 005-1349 Daa Podpis ZGŁOSZE
-  doc_00052.png  imie_nazwisko_zleceniodawca=Zbigniew Woźniak  → BRAK_W_OCR
-    OCR[300]: zasata dnia 06.03 2024 pomięday 1.Zbigniew Wotiak zamieszkatymiy Ogrodowa 102/00, s0001 Rybik NHP 267-12-96- 15 (PESEL S705193 3447 zanyi dale Dleceniodavca 2 Jan Zaj zmiezkatymg Chapina 97, 80-001 Toru NP 496-766-34-69 zwany daej.Dleceniobiorca' $1. Przedmiot umowy $2 Wynagrodzenie i platnosc Zecen
-  doc_00059.png  autor=Barbara Kozłowska  → BRAK_W_OCR
-    OCR[300]: Data 23.06 2023 Sporządzila: Bafbara Kozlowska Dotyczy: skargi na warunki lokalowe W dniu 23 06 2023 do biura zgloslasię następująca osoba: Jan Paslowski PESEL: 64 111889349 Adres: . Zelona 200/10, 70-001 Warszawa Tel: +48 665 891 450 Rozmowa trnwala ok 20 mnut. Spraxa zostala zarejestrowana w sysle
-  doc_00059.png  osoba=Jan Pawłowski  → BRAK_W_OCR
-    OCR[300]: Data 23.06 2023 Sporządzila: Bafbara Kozlowska Dotyczy: skargi na warunki lokalowe W dniu 23 06 2023 do biura zgloslasię następująca osoba: Jan Paslowski PESEL: 64 111889349 Adres: . Zelona 200/10, 70-001 Warszawa Tel: +48 665 891 450 Rozmowa trnwala ok 20 mnut. Spraxa zostala zarejestrowana w sysle
-  doc_00060.png  autor=Tadeusz Jankowski  → BRAK_W_OCR
-    OCR[300]: Dut 3003 2023 Sporzaca Tade owsk Dotyczy zgbszenia aariinstalac Wau 3003 2023 do brzgoslaię naspcaocba tukasz Dprwa PESEL 99121830444 Ades Dbowa 195 00001 Rzeó T 48 733 362 708 Roamowa treaa ok 20 mt Spr 2osta wniosku Tadeusz Jarkowsk NOTATKA SŁUŽBOWA 7 as rboczych oraz in oteia
-  doc_00060.png  osoba=Łukasz Dąbrowski  → BRAK_W_OCR
-    OCR[300]: Dut 3003 2023 Sporzaca Tade owsk Dotyczy zgbszenia aariinstalac Wau 3003 2023 do brzgoslaię naspcaocba tukasz Dprwa PESEL 99121830444 Ades Dbowa 195 00001 Rzeó T 48 733 362 708 Roamowa treaa ok 20 mt Spr 2osta wniosku Tadeusz Jarkowsk NOTATKA SŁUŽBOWA 7 as rboczych oraz in oteia
-  doc_00064.png  imie_nazwisko_zleceniodawca=Karolina Szymańska  → BRAK_W_OCR
-    OCR[300]: 2907 2023podny NP z6461 PESEL Osa2 Z NP 5730 $1 Poet umowy cca $2 Wynagroene i pros A PSmzzsse $3 Czas trwnia umowy $4 Poutose Sy UMOWAO SwIADCZENIE USŁUG UMW2021n63
-  doc_00064.png  imie_nazwisko_zleceniobiorca=Elżbieta Kowalczyk  → BRAK_W_OCR
-    OCR[300]: 2907 2023podny NP z6461 PESEL Osa2 Z NP 5730 $1 Poet umowy cca $2 Wynagroene i pros A PSmzzsse $3 Czas trwnia umowy $4 Poutose Sy UMOWAO SwIADCZENIE USŁUG UMW2021n63
-  doc_00065.png  imie_nazwisko=Rafał Kowalski  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Ratal Kowask Data urodzenia 15.04.1966 PESEL: 0427099 7497 N dowodu osobistego PKNT76981 DANE KONTAKTOWE Adres zamieszkania: d. Warszawska 47, 01-100 Lódź Telefon: +48 508 219 388 Adres e-mail ratal kowalski@poczta pl DANE PODATKOWE NP Gesl dotyczy) 601-834
-  doc_00066.png  autor=Michał Krawczyk  → BRAK_W_OCR
-    OCR[300]: Data 2610 2024 Sporządrla Michal Kravczk Dtyczy: interwencji dotyczącej zadkuzenia czynszowego W dniu 26 10 2024 do bira zgloslasię nastgpjca oscba Renata Zajc PESEL 80033152587 Adres: . Kaiatowa 14,41-200 Kelce Tel: +48 484 980 645 Rozmowa trwala ok 20 minut Sprawa zostaa zarejestrowana w systemie 
-  doc_00066.png  osoba=Renata Zając  → BRAK_W_OCR
-    OCR[300]: Data 2610 2024 Sporządrla Michal Kravczk Dtyczy: interwencji dotyczącej zadkuzenia czynszowego W dniu 26 10 2024 do bira zgloslasię nastgpjca oscba Renata Zajc PESEL 80033152587 Adres: . Kaiatowa 14,41-200 Kelce Tel: +48 484 980 645 Rozmowa trwala ok 20 minut Sprawa zostaa zarejestrowana w systemie 
+  doc_00005.png  imie_nazwisko_nabywcy=Małgorzata Kamińska  → BRAK_W_OCR
+    OCR[300]: D y 190620a SPRZEDANCA NP S640 027 REGON sOGr2 kota Ps003rzsss ABYWCA Mgn Kns Ades NP Snea 9 so01 0 0047300 Ng C vAT 4ne ss Po p Psoosos7ses Temin pd S od dy wy y FAKTURA VAT o560042023
+  doc_00009.png  imie_nazwisko=Rafał Szymański  → BRAK_W_OCR
+    OCR[300]: DAIE OSOeoWE WaoSKOOAWCY Ru Soy PESEL EAZ04 DAIE KORTAKTOWE 8 723 333 Ae m DAIE POOATKOWE 6341r Puis FORMULARz DANYCH OSoBowYCH
+  doc_00014.png  imie_nazwisko=Sylwia Kozłowska  → BUG_SILNIKA
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Sytwia Kozowska Data urodzenia: 16.05.1952 PESEL: 85040365630 Nr dowodu osobistego BOM611473 DANE KONTAKTOWE Adres zamieszkania .Wiosenna 88, 10-100 Lublin Telefon: +48 577 507 634 Adres e-mail: sylwiakozlowska@ poczta pl DANE PODATKOWE NIP (esli dotyczy): 
+  doc_00015.png  imie_nazwisko_zleceniobiorca=Mariusz Pawłowski  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 18.10.2022 pomiędzy: t.Zbigniew Wożniak zamieszkalymlą al. Jana Pawta ll 190, 44-100 Poznań NIP: 818-874-86-94 | PESEL 50043047425 zwanylą dalej Zleceniodawca 2 Marusz Pawlowski zamieszkalymlą al. Jana Pawta 10/18, 60-001 Radom NIP: 692-139-47-87 zwanylą dalej ,Zleceniobiorca" $1. Przed
+  doc_00023.png  imie_nazwisko=Robert Wiśniewski  → BRAK_W_OCR
+    OCR[300]: Urząd Reguacj Energetyki Sygn. akt ll C 6466/2016 Robert Wiiniewski u. Sportowa 34 80-001 Gdaisk Robert Wiániewski, PESEL: 01222491047 Dzialając na podstawe art 155 5 1 Kodeksu postępowania administracyjnego (tj Dz U. z 2023 r paz 775 2e zm), Urzad Regulacj Energetyki wzywa Panią/Pana do zbzenia pis
+  doc_00025.png  imie_nazwisko_zleceniodawca=Piotr Kamiński  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 20.01.2020 pomiedzy: 1. Piotr Kamiski zamie szkalym/ą: ul. Lipowa 12, 01-100 Olsztyn NIP:524-535-84-64 PESỆL: 58022683819 Zwanylą dalej Zleceniodawca* 2. Sylwia Wiśniewska zamieszkałymlą: ul. Chopina 120, 10-100 Kielce NIP: 387-839-96-42 zwanylą dalej .Zleceniobiorca" $ 1. Przedmiot umo
+  doc_00026.png  imie_nazwisko_zleceniodawca=Jakub Krawczyk  → BRAK_W_OCR
+    OCR[300]: zi 1606 2023 pony NP 473433PESEL O4O9on6 2 s $1 Paedot umowy Z $2 Wynagodzene iptrose ga t, so01 Cayo A PUEsorTzsre $3 Caas trnia umowy $4 Poutosc Sy y UMOWA O SwIADCZENIE USŁUG KTIO06/004
+  doc_00026.png  imie_nazwisko_zleceniobiorca=Sylwia Kozłowska  → BRAK_W_OCR
+    OCR[300]: zi 1606 2023 pony NP 473433PESEL O4O9on6 2 s $1 Paedot umowy Z $2 Wynagodzene iptrose ga t, so01 Cayo A PUEsorTzsre $3 Caas trnia umowy $4 Poutosc Sy y UMOWA O SwIADCZENIE USŁUG KTIO06/004
+  doc_00027.png  imie_nazwisko=Sylwia Jabłońska  → BRAK_W_OCR
+    OCR[300]: Starostwo Powiatowe w Radomiu Sygn aktiC 5662/2024 Syhia Jabkoska u Zielona 2931 30-001 Glalce Sylaia Jabloska PESEL 99020468s74 Deialając na podstaie at 155 $ 1 Kodeksu postepowania adminstracynego tị Dz U. z 2023 r poz 775 e zm), Sarostwo Powiatowe w Radomku wzywa PaniaPana do zbtenia pisemnych wj
+  doc_00031.png  imie_nazwisko=Natalia Kozłowska  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Warszawa -Mokotów Tomasz Malinowski Sygn. akt Km 97236/2025 Data 14.04 2023 Natalla Koziowska u. Warszawska 105 70-001 Zabrze Na podstawie tytuku wykonawczego komomik sądowy zawiadamia, 2e w sprawie prowadzonej pod sygn. Km 97236/2025 wszczal postępowanie egzekucyjne przecwko
+  doc_00032.png  imie_nazwisko=Mariusz Kowalczyk  → BRAK_W_OCR
+    OCR[300]: Sygn. PT020043 2018 Data wydania 18 02 202 Na podstaie po rozpatzenu wniosku Marlusz Kowaltyk t 104 ustawy z dia 14 carwca 1960 - Modeks postpowania administraopego tị Dr U. z 2023 poz 775 ze m) PESEL 91062963310 NNP. 408 682-10-37 adres ORZEKAM Wolnosci 49, 50-001 Rybnik UZASADNENE Urząd Marszakows
+  doc_00042.png  imie_nazwisko=Sławomir Nowakowski  → BRAK_W_OCR
+    OCR[300]: Urząd Gminy Warszawa Wola Sygn akt C sHSe2023 Slaomir iowakosk Lpoa 71 40-001 Lódt Slaomi okosk, PESEL 611010r9661 Deiat na podilaae at 156 51 Kodksu pospoaia adninatcnego &ị Dz U. z 2023 poz T75 zm), Uzd Gminy Warzaa Wola wywa PariaPana do zbania pisemnych wjainieh w lminie 14 dri od dty dongcan Wa
+  doc_00043.png  autor=Małgorzata Woźniak  → BUG_SILNIKA
+    OCR[300]: Data: 03.02.2023 Sporządziłla: Malgorzata Wożniak Dotyczy: skargi na warunki lokalowe W dniu 03.02.2023 do biura zgłosiła/się nastepująca osoba: Paulina Zając PESEL: 94061117193 Adres: ul. Kolejowa 61/46, 85-001 Katowice Tel.: +48 480 960 883 Rozmowa trwała ok 20 minut. Sprawa zostala zareje strowan
+  doc_00046.png  imie_nazwisko=Zbigniew Kowalski  → BRAK_W_OCR
+    OCR[300]: DAIE OSOBoWE WIOSKoOAWCY lnie i ni Zige Kosk Data urodzeia 3106 1954 PESEL 9111799744 doodu obiege KUK1660 pastport FET225 DANE KOTAKTOWE Ades zaesania Teleon Kakowska 45001Wocda 48 794 99 896 Ades emal igien kogpl DAIE PODATKOWE P el doyay 6742824223 Data Popis zGLOSZENIE DO REJESTRU
+  doc_00051.png  imie_nazwisko=Rafał Jabłoński  → BUG_SILNIKA
+    OCR[300]: Urząd Marszakowski Wojewodztwa Mazowieckiego Sygn. akt IlI K 1266/2019 Rafal Jabioński . Rátana 156 85-001 Lódź Rafal Jabloński, PESEL: 74071014578 Dzialając na podstawie art 1555 1 Kodeksu postępowania administracyjnego (t, Dz U.z 2023 r poz 775 ze zm), Urząd Marszalkowski Województwa Mazowieckiego
+  doc_00058.png  imie_nazwisko_zleceniobiorca=Magdalena Kamińska  → BRAK_W_OCR
+    OCR[300]: zawarta dn ia 02 06 2020 pomiędzy: 1. Jan Lewandowsk zamie szkalymlą . Kosciuszki 96/04, 85-001 Rzeszów NIP: 918-389-10-16 | PESEL: 93092324529 zwanylą dalej Zleceniodawca' 2. Magdalena Kamiiska zamieszkalymią u. Polna 96,41-200 Katowice NIP: 275-364-97-52 zwanylą dalej,Zleceriobiorca $1. Przedmiot 
+  doc_00061.png  imie_nazwisko_zleceniodawca=Agnieszka Nowak  → BRAK_W_OCR
+    OCR[300]: zaara dnia 0404.2020 pomiędzy 1Agniesza Noak zaniesalatymi Kolejowa 65/38, 10-100 Sosnoec NP. 921-761-95-87 | PESEL: O3243008372 zany dale Deceniodawo 2 Kizysno Paatowsk zanieszkaym Sienkieicza 191,41-200 Gdańsk NP. 637-821-25-78 zanyą dale Decenicbiorca $1. Przedmiot urnowy Deceriodawca zleca, a De
+  doc_00061.png  imie_nazwisko_zleceniobiorca=Krzysztof Pawłowski  → BRAK_W_OCR
+    OCR[300]: zaara dnia 0404.2020 pomiędzy 1Agniesza Noak zaniesalatymi Kolejowa 65/38, 10-100 Sosnoec NP. 921-761-95-87 | PESEL: O3243008372 zany dale Deceniodawo 2 Kizysno Paatowsk zanieszkaym Sienkieicza 191,41-200 Gdańsk NP. 637-821-25-78 zanyą dale Decenicbiorca $1. Przedmiot urnowy Deceriodawca zleca, a De
 
 
-[EMAIL POMINIĘTE] 5 encji:
+[EMAIL POMINIĘTE] 3 encji:
 
-  doc_00008.png  email=marcin_dudek@interia.pl  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko Marcin Dudek Data urodzenia 10.01.1982 PESEL 80021975484 N dowodu osobistego HJNB68021 DANE KONTAKTOWE Adres zamieszkania: Lpowa 26, 02-200 Bytom Telefon: +48 723 732 315 Adres e-mait marcin_dudek@interia p DANE PODATKOWE NP Gell dotyczy) 644-567-84-58 Oiadm
-  doc_00014.png  email=annalewandowska@gmail.com  → BRAK_W_OCR
-    OCR[300]: DIE OSOBowE WUOSKoOAWCY Anna Lewdoska 21 02 192 PESEL T0425416 doodu obieg zNRSSOOB4 DAIE KONTAKTOWE Ades zieshaia Teun Jna Pa 1061344100 Osne 48 507 s44 409 Ades emal DANE POOATKOWE NP e dy 697.45862 Podgis WNIOSEK oZMIANĘ DANYCH
-  doc_00031.png  email=elzbietadabrowska@poczta.pl  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY lmięi nark Elbieta Debrowska Data urodzenia 04 10. 1966 PESEL s2011800616 dowodu oscbistego MSST3974s DANE KONTAKTOWE Ades zamieszkaia Telefon Dhga 12/42. 10-100 Lubln +48 730 206 757 Ades emal elzbietadabrowska Gpocta pl DANE POOATKOWE NP (el doyczy 157-102-42-24 Data Podp
-  doc_00044.png  email=joanna.zajac@poczta.pl  → BRAK_W_OCR
-    OCR[300]: DAIE OSOBOWE WUOSKODAWCY Inię i naisk Jona Zec Data urodenia 2507.1986 PESEL se0428032s1 dowod oscbiteg WAL17146 paszport JPS780722 DANE KONTAKTOWE Ades zamiesania Mckiecaa 19, 65001 Csutyn Telelon +8 S36 665 039 Ades emal jpanna zjcpocr p DANE PODATKOWE NP Ge dotycay 6a5 005-1349 Daa Podpis ZGŁOSZE
-  doc_00065.png  email=rafal_kowalski@poczta.pl  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Ratal Kowask Data urodzenia 15.04.1966 PESEL: 0427099 7497 N dowodu osobistego PKNT76981 DANE KONTAKTOWE Adres zamieszkania: d. Warszawska 47, 01-100 Lódź Telefon: +48 508 219 388 Adres e-mail ratal kowalski@poczta pl DANE PODATKOWE NP Gesl dotyczy) 601-834
+  doc_00009.png  email=rafal.szymanski@onet.pl  → BRAK_W_OCR
+    OCR[300]: DAIE OSOeoWE WaoSKOOAWCY Ru Soy PESEL EAZ04 DAIE KORTAKTOWE 8 723 333 Ae m DAIE POOATKOWE 6341r Puis FORMULARz DANYCH OSoBowYCH
+  doc_00014.png  email=sylwiakozlowska@poczta.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Sytwia Kozowska Data urodzenia: 16.05.1952 PESEL: 85040365630 Nr dowodu osobistego BOM611473 DANE KONTAKTOWE Adres zamieszkania .Wiosenna 88, 10-100 Lublin Telefon: +48 577 507 634 Adres e-mail: sylwiakozlowska@ poczta pl DANE PODATKOWE NIP (esli dotyczy): 
+  doc_00046.png  email=zbigniew_kowalski@o2.pl  → BRAK_W_OCR
+    OCR[300]: DAIE OSOBoWE WIOSKoOAWCY lnie i ni Zige Kosk Data urodzeia 3106 1954 PESEL 9111799744 doodu obiege KUK1660 pastport FET225 DANE KOTAKTOWE Ades zaesania Teleon Kakowska 45001Wocda 48 794 99 896 Ades emal igien kogpl DAIE PODATKOWE P el doyay 6742824223 Data Popis zGLOSZENIE DO REJESTRU
 
 
-[ADRES POMINIĘTE] 26 encji:
+[ADRES POMINIĘTE] 10 encji:
 
-  doc_00000.png  adres=pl. Wolności 133, 02-200 Rzeszów  → BRAK_W_OCR
-    OCR[300]: Powiatowy Urząd Pracy w Poznaniu Sygn. akt I| K 7229/2016 Kamil Zając pl. Wolności 133 02-200 Rzeszów Kamil Zajac, PESEL: 92010121420 Działając na podstawie art. 155 § 1 Kodeksu postępowania administracyjnego (tj. Dz. U. z 2023 r. p0z. 775 ze zm.), Powiatowy Urząd Pracy w Poznaniu wzywa Panią/Pana: 
-  doc_00005.png  adres=ul. Mickiewicza 37/2, 80-001 Łódź  → BRAK_W_OCR
-    OCR[300]: Starostwo Powiatowe w Radomiu Sygn. aktI Co 6017I2020 Marta Kowalczyk ul, Mickiewicza 372 80-001 Lódz Marta Kowalczyk, PESEL: 00301522827 Działając nà podstawie art. 155 § 1 Kodeksu postępowania administracyjneg o (tị. Dz. U. z 2023 r. poz. 775 ze zm.), Starostwo Powiatowe w Radomiu wzywa Panią/Pana
-  doc_00008.png  adres=ul. Lipowa 26, 02-200 Bytom  → BRAK_W_OCR
-    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko Marcin Dudek Data urodzenia 10.01.1982 PESEL 80021975484 N dowodu osobistego HJNB68021 DANE KONTAKTOWE Adres zamieszkania: Lpowa 26, 02-200 Bytom Telefon: +48 723 732 315 Adres e-mait marcin_dudek@interia p DANE PODATKOWE NP Gell dotyczy) 644-567-84-58 Oiadm
-  doc_00010.png  adres=ul. Sienkiewicza 11, 50-001 Radom  → BRAK_W_OCR
-    OCR[300]: Starostwo Powiatowe w Radomiu Sygn. akt I Co 9927/2025 Karolina Kowalska ul. Sienkiewicza 11 50-001 Radom Karolina Kowalska, PESEL: 03321628533 Działając napodsta wie art. 155 § 1 Kodeksu postępowania administracyjnego (tj. Dz. U. z 2023 r. p0z. 775 ze zm.), Starostwo Powiatowe w Radomiu wzywa Panią
-  doc_00013.png  adres=ul. Nowa 114/9, 65-001 Rzeszów  → BRAK_W_OCR
-    OCR[300]: Sg KPoos02 apoie PESEL ST6710 NP S0-34sn ORZEKAM uZASADENE pro por Sone POUCZENE rca 4T PUN Urzd Skabowy w Warsze DECYZIAADMINISTRACYJNA wsprae naotenu kary pienne
-  doc_00014.png  adres=al. Jana Pawła II 108/13, 44-100 Olsztyn  → BRAK_W_OCR
-    OCR[300]: DIE OSOBowE WUOSKoOAWCY Anna Lewdoska 21 02 192 PESEL T0425416 doodu obieg zNRSSOOB4 DAIE KONTAKTOWE Ades zieshaia Teun Jna Pa 1061344100 Osne 48 507 s44 409 Ades emal DANE POOATKOWE NP e dy 697.45862 Podgis WNIOSEK oZMIANĘ DANYCH
-  doc_00016.png  adres=al. Niepodległości 113/11, 03-300 Gdańsk  → BRAK_W_OCR
-    OCR[300]: Du 12 2024 Dyczy zgszenia s nstaacg Wotn2004 PESEL GF27E0 Ads pod ym,sxe Ga NOTATKA SsŁuZBOWA
-  doc_00019.png  adres=ul. Kolejowa 186/31, 30-001 Toruń  → BRAK_W_OCR
-    OCR[300]: Urzad Skarbowy Krakow Sroamiescie Sygn at K8118202s aa Adack Koloa 18631 30-001 Ton ala Adamczk PESEL 65062236485 Dei napote at 155$ 1 Kodku pospoaria adagego tj Dz U z 2023 por 75 a zm), Uzt Skartoy KaSicie wys PaiyPara o zania pisenyh wjaie w emiie 14 di od daty Wacie pyta prosimy o kortat 48 500 
-  doc_00026.png  adres=ul. Szkolna 143, 60-001 Lublin  → BRAK_W_OCR
-    OCR[300]: Komomik Sedowy przy SR dla Woctawia-Fabrycznej Marta Kędzierska Sygn. akt Km 92766/2018 Data 22 09 2023 Renata Dạbrowska d Szkolna 143 60-001 Lublin Na podstawie tytu wykonawczego komomik sadowy zawiadamia, 2e w sprawie prowadzonej pod sygn Km 92766/2018 wszcz postpowanie egzekucyjne przeciako dutri
-  doc_00029.png  adres=ul. Różana 129/36, 31-001 Wrocław  → BRAK_W_OCR
-    OCR[300]: Oata 30 01 2025 Sporzadrka Mateusz Kaczk Dotyczy zgloszenia zaginięcia dokumertu tozsamosci Waiu 30 01 2025 do biura zgfonasię nastpujca oscba Agnieska Wecaorek PESEL: 7708265 1038 Ades: Rátana 12906, 31-001 Wiocaa Te 48 489 661 582 Roamowa twala ok 20 minut. Sprawa zostal zarejestrowan whiosku Zlec
-  doc_00030.png  adres=ul. Zielona 179, 10-100 Poznań  → BRAK_W_OCR
-    OCR[300]: Urzad Reguacj Energetyki Sygn at s 9702/2023 Aleksandra Nowakoska Zelona 179 10-100 Pagnan Aleksandra owakowska, PESEL 9905 1634874 Driaając na podstae at 156$1 Kodeksu postepowania adinistracyjnego tị Dz U. z 2023 r poz 775 a zm). Urząd Regacj Energetyi wzya Pani Pana do zotenia pisemych wjasrie te
-  doc_00033.png  adres_zleceniodawca=ul. Leśna 185, 44-100 Bielsko-Biała  → BRAK_W_OCR
-    OCR[300]: h dia 1106200 ponięny 1Digie Ma zemi Lena 185 44100 BaoBa NP S2380r.8 701 PESEL 912166ses 2 dz Kaw zeay Zeona 170 86001 Gdask NP 7347-651 y dDiior $1. Predmiot umowy ceoca eca, Decnira pre do wona $2 Wynagrodzene i pltrose Za wyonaie pzet moy Zenidca gci Za nt paadunk boy Decity BAN PLASs4o15e 789os
-  doc_00033.png  adres_zleceniobiorca=ul. Zielona 170, 85-001 Gdańsk  → BRAK_W_OCR
-    OCR[300]: h dia 1106200 ponięny 1Digie Ma zemi Lena 185 44100 BaoBa NP S2380r.8 701 PESEL 912166ses 2 dz Kaw zeay Zeona 170 86001 Gdask NP 7347-651 y dDiior $1. Predmiot umowy ceoca eca, Decnira pre do wona $2 Wynagrodzene i pltrose Za wyonaie pzet moy Zenidca gci Za nt paadunk boy Decity BAN PLASs4o15e 789os
-  doc_00034.png  adres=ul. Zielona 50, 40-001 Bielsko-Biała  → BRAK_W_OCR
-    OCR[300]: Data 30 09 2021 Sporzadza Tomasz Weczorek Dotyczy skargi na warunki lokalowe Wdriu 30 09 2021 do biura zgloslasię nastepujca oscba Ewa iowakowska PESEL 71091784906 Ades: u Zebna 50, 40001 Belsko-Bala Tel:+48 485 095 008 Roamowa trwala ok 20 minu Sprawazostal zarejpstrowana w systmie ewidencj korespo
-  doc_00037.png  adres=ul. Polna 84, 03-300 Toruń  → BRAK_W_OCR
-    OCR[300]: Urząd Gminy Warszawa-Wola Sygn. akt ll Ns 1666/2025 Aleksandra Pawlowska . Polna 84 03-300 Toruh Aleksandra Pawtowska, PESEL: 79042247599 Dzialając na podstawie art. 155 $1 Kodeksu postępowania administracyjnego tị Dz U. z 2023 poz 775 ze zm), Urząd Gminy Warszawa-Wola wzywa PaniąPana do zb2enia pis
-  doc_00041.png  adres_zleceniodawca=ul. Wolności 97, 90-001 Bytom  → BRAK_W_OCR
-    OCR[300]: a 2201 205 penly Mak Wa NP S-20 o6ST PESEL S0S4OS8 y 2 Mak Deo Deenoa NP T462ss5 $1.Pzediot umoy DcdcaeaDecenira K 10.00 Bya $2 Wynagrodzene i pltrose Z nt poendunk arkoy Decby BAN PRO31s00101 30z2 1672515 T00 $3 Czas trwania umowy Unos e a c ny 12misi $4 Poutol Sony zboi Deceioak UMOWA O SwIADCZENI
-  doc_00041.png  adres_zleceniobiorca=ul. Kwiatowa 160, 01-100 Bydgoszcz  → BRAK_W_OCR
-    OCR[300]: a 2201 205 penly Mak Wa NP S-20 o6ST PESEL S0S4OS8 y 2 Mak Deo Deenoa NP T462ss5 $1.Pzediot umoy DcdcaeaDecenira K 10.00 Bya $2 Wynagrodzene i pltrose Z nt poendunk arkoy Decby BAN PRO31s00101 30z2 1672515 T00 $3 Czas trwania umowy Unos e a c ny 12misi $4 Poutol Sony zboi Deceioak UMOWA O SwIADCZENI
-  doc_00043.png  adres=ul. Kwiatowa 190, 20-100 Bielsko-Biała  → BRAK_W_OCR
-    OCR[300]: Powiatowy Urząd Pracy w Poznaniu Sygn. akt Il K 9804/2024 Robert Nowakowski ul. Kwiatowa 190 20-100 Bielsko-Biała Robert Nowakowski, PESEL: 62011149587 Dzialając na podstawie art. 155$ 1 Kodeksu postępowania administracyjnego (tj Dz U.z 2023 t poz 775 ze zm), Powiatowy Urzad Pracy w Pozaniu wzywa Pa
-  doc_00044.png  adres=ul. Mickiewicza 19, 65-001 Olsztyn  → BRAK_W_OCR
-    OCR[300]: DAIE OSOBOWE WUOSKODAWCY Inię i naisk Jona Zec Data urodenia 2507.1986 PESEL se0428032s1 dowod oscbiteg WAL17146 paszport JPS780722 DANE KONTAKTOWE Ades zamiesania Mckiecaa 19, 65001 Csutyn Telelon +8 S36 665 039 Ades emal jpanna zjcpocr p DANE PODATKOWE NP Ge dotycay 6a5 005-1349 Daa Podpis ZGŁOSZE
-  doc_00052.png  adres_zleceniodawca=ul. Ogrodowa 102/30, 50-001 Rybnik  → BRAK_W_OCR
-    OCR[300]: zasata dnia 06.03 2024 pomięday 1.Zbigniew Wotiak zamieszkatymiy Ogrodowa 102/00, s0001 Rybik NHP 267-12-96- 15 (PESEL S705193 3447 zanyi dale Dleceniodavca 2 Jan Zaj zmiezkatymg Chapina 97, 80-001 Toru NP 496-766-34-69 zwany daej.Dleceniobiorca' $1. Przedmiot umowy $2 Wynagrodzenie i platnosc Zecen
-  doc_00052.png  adres_zleceniobiorca=ul. Chopina 97, 80-001 Toruń  → BRAK_W_OCR
-    OCR[300]: zasata dnia 06.03 2024 pomięday 1.Zbigniew Wotiak zamieszkatymiy Ogrodowa 102/00, s0001 Rybik NHP 267-12-96- 15 (PESEL S705193 3447 zanyi dale Dleceniodavca 2 Jan Zaj zmiezkatymg Chapina 97, 80-001 Toru NP 496-766-34-69 zwany daej.Dleceniobiorca' $1. Przedmiot umowy $2 Wynagrodzenie i platnosc Zecen
-  doc_00059.png  adres=ul. Zielona 200/10, 70-001 Warszawa  → BRAK_W_OCR
-    OCR[300]: Data 23.06 2023 Sporządzila: Bafbara Kozlowska Dotyczy: skargi na warunki lokalowe W dniu 23 06 2023 do biura zgloslasię następująca osoba: Jan Paslowski PESEL: 64 111889349 Adres: . Zelona 200/10, 70-001 Warszawa Tel: +48 665 891 450 Rozmowa trnwala ok 20 mnut. Spraxa zostala zarejestrowana w sysle
-  doc_00060.png  adres=ul. Dębowa 139/9, 00-001 Rzeszów  → BRAK_W_OCR
-    OCR[300]: Dut 3003 2023 Sporzaca Tade owsk Dotyczy zgbszenia aariinstalac Wau 3003 2023 do brzgoslaię naspcaocba tukasz Dprwa PESEL 99121830444 Ades Dbowa 195 00001 Rzeó T 48 733 362 708 Roamowa treaa ok 20 mt Spr 2osta wniosku Tadeusz Jarkowsk NOTATKA SŁUŽBOWA 7 as rboczych oraz in oteia
-  doc_00064.png  adres_zleceniodawca=ul. Kwiatowa 50, 85-001 Kielce  → BRAK_W_OCR
-    OCR[300]: 2907 2023podny NP z6461 PESEL Osa2 Z NP 5730 $1 Poet umowy cca $2 Wynagroene i pros A PSmzzsse $3 Czas trwnia umowy $4 Poutose Sy UMOWAO SwIADCZENIE USŁUG UMW2021n63
-  doc_00064.png  adres_zleceniobiorca=ul. Kwiatowa 35, 30-001 Częstochowa  → BRAK_W_OCR
-    OCR[300]: 2907 2023podny NP z6461 PESEL Osa2 Z NP 5730 $1 Poet umowy cca $2 Wynagroene i pros A PSmzzsse $3 Czas trwnia umowy $4 Poutose Sy UMOWAO SwIADCZENIE USŁUG UMW2021n63
-  doc_00066.png  adres=ul. Kwiatowa 14, 41-200 Kielce  → BRAK_W_OCR
-    OCR[300]: Data 2610 2024 Sporządrla Michal Kravczk Dtyczy: interwencji dotyczącej zadkuzenia czynszowego W dniu 26 10 2024 do bira zgloslasię nastgpjca oscba Renata Zajc PESEL 80033152587 Adres: . Kaiatowa 14,41-200 Kelce Tel: +48 484 980 645 Rozmowa trwala ok 20 minut Sprawa zostaa zarejestrowana w systemie 
+  doc_00001.png  adres_nabywcy=ul. Słoneczna 161, 80-001 Kraków  → BRAK_W_OCR
+    OCR[300]: Data wystawienia: 27.06.2021 Numer klienta: KL-85897 SPRZEDAWCA Firma Logistyczna TRANS Sp. z o.0. Adres: ul. Sienkiewicza 15/8, 45-001 Kato wice NIP: 937-516-78-59 REGON: 361364716 Nr konta: PL3024010135241442799 6521929 NABYWCA Sylwia Lewandowska Adres: ul. Stoneczna 161,80-001 Kraków NIP: 834-430
+  doc_00005.png  adres_nabywcy=ul. Słoneczna 91/19, 85-001 Kraków  → BRAK_W_OCR
+    OCR[300]: D y 190620a SPRZEDANCA NP S640 027 REGON sOGr2 kota Ps003rzsss ABYWCA Mgn Kns Ades NP Snea 9 so01 0 0047300 Ng C vAT 4ne ss Po p Psoosos7ses Temin pd S od dy wy y FAKTURA VAT o560042023
+  doc_00009.png  adres=ul. Wolności 6, 60-001 Toruń  → BRAK_W_OCR
+    OCR[300]: DAIE OSOeoWE WaoSKOOAWCY Ru Soy PESEL EAZ04 DAIE KORTAKTOWE 8 723 333 Ae m DAIE POOATKOWE 6341r Puis FORMULARz DANYCH OSoBowYCH
+  doc_00026.png  adres_zleceniodawca=ul. Długa 61, 90-001 Częstochowa  → BRAK_W_OCR
+    OCR[300]: zi 1606 2023 pony NP 473433PESEL O4O9on6 2 s $1 Paedot umowy Z $2 Wynagodzene iptrose ga t, so01 Cayo A PUEsorTzsre $3 Caas trnia umowy $4 Poutosc Sy y UMOWA O SwIADCZENIE USŁUG KTIO06/004
+  doc_00026.png  adres_zleceniobiorca=ul. Leśna 31/25, 31-001 Poznań  → BRAK_W_OCR
+    OCR[300]: zi 1606 2023 pony NP 473433PESEL O4O9on6 2 s $1 Paedot umowy Z $2 Wynagodzene iptrose ga t, so01 Cayo A PUEsorTzsre $3 Caas trnia umowy $4 Poutosc Sy y UMOWA O SwIADCZENIE USŁUG KTIO06/004
+  doc_00027.png  adres=ul. Zielona 23/31, 30-001 Gliwice  → BRAK_W_OCR
+    OCR[300]: Starostwo Powiatowe w Radomiu Sygn aktiC 5662/2024 Syhia Jabkoska u Zielona 2931 30-001 Glalce Sylaia Jabloska PESEL 99020468s74 Deialając na podstaie at 155 $ 1 Kodeksu postepowania adminstracynego tị Dz U. z 2023 r poz 775 e zm), Sarostwo Powiatowe w Radomku wzywa PaniaPana do zbtenia pisemnych wj
+  doc_00038.png  adres_nabywcy=ul. Wolności 190, 80-001 Lublin  → BRAK_W_OCR
+    OCR[300]: Data wystawienia: 27.04,2021 Numer klienta: KL-24987 SPRZEDAWCA: HandeliUstugi Sp. z o.0. Adres: ul. Mickiewicza 130/39, 85-001 Gdynia NIP: 692-931-45-46 REGON: 551645552 Nr konta: PL51114019872579082176359403 NABYWCA: Mateusz Szymański Adres: ul. Wolnośi 190, 80-001 Lublin NIP: 123-490-04-95 Lp. Na
+  doc_00042.png  adres=ul. Lipowa 71, 40-001 Łódź  → BRAK_W_OCR
+    OCR[300]: Urząd Gminy Warszawa Wola Sygn akt C sHSe2023 Slaomir iowakosk Lpoa 71 40-001 Lódt Slaomi okosk, PESEL 611010r9661 Deiat na podilaae at 156 51 Kodksu pospoaia adninatcnego &ị Dz U. z 2023 poz T75 zm), Uzd Gminy Warzaa Wola wywa PariaPana do zbania pisemnych wjainieh w lminie 14 dri od dty dongcan Wa
+  doc_00046.png  adres=ul. Krakowska 43, 45-001 Wrocław  → BRAK_W_OCR
+    OCR[300]: DAIE OSOBoWE WIOSKoOAWCY lnie i ni Zige Kosk Data urodzeia 3106 1954 PESEL 9111799744 doodu obiege KUK1660 pastport FET225 DANE KOTAKTOWE Ades zaesania Teleon Kakowska 45001Wocda 48 794 99 896 Ades emal igien kogpl DAIE PODATKOWE P el doyay 6742824223 Data Popis zGLOSZENIE DO REJESTRU
+  doc_00061.png  adres_zleceniobiorca=ul. Sienkiewicza 191, 41-200 Gdańsk  → BRAK_W_OCR
+    OCR[300]: zaara dnia 0404.2020 pomiędzy 1Agniesza Noak zaniesalatymi Kolejowa 65/38, 10-100 Sosnoec NP. 921-761-95-87 | PESEL: O3243008372 zany dale Deceniodawo 2 Kizysno Paatowsk zanieszkaym Sienkieicza 191,41-200 Gdańsk NP. 637-821-25-78 zanyą dale Decenicbiorca $1. Przedmiot urnowy Deceriodawca zleca, a De
 
 
 [DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
 Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
 
-  ── images/doc_00008.png  lvl=3  qs=85 ──
+  ── images/doc_00005.png  lvl=2  qs=86 ──
   Brakujące encje:
-    dowod_osobisty = HJN868021
+    nip_sprzedawcy = 506-502-70-27
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 830-004-73-00
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL38150010137384237964639885
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
-  ── images/doc_00013.png  lvl=2  qs=83 ──
+  ── images/doc_00009.png  lvl=2  qs=84 ──
   Brakujące encje:
-    pesel = 51112635710
+    pesel = 01241905608
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-    nip = 970-241-73-08
+    dowod_osobisty = EJL210924
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 195-382-41-07
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
-  ── images/doc_00014.png  lvl=2  qs=78 ──
+  ── images/doc_00019.png  lvl=3  qs=80 ──
   Brakujące encje:
-    pesel = 79042541679
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-    dowod_osobisty = ZWR592084
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-    nip = 697-158-52-94
+    numer_paszportu = FS3778162
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
-  ── images/doc_00016.png  lvl=2  qs=80 ──
+  ── images/doc_00020.png  lvl=3  qs=85 ──
   Brakujące encje:
-    pesel = 67121783607
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00019.png  lvl=2  qs=84 ──
-  Brakujące encje:
-    pesel = 65052238485
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00024.png  lvl=3  qs=86 ──
-  Brakujące encje:
-    nip_sprzedawcy = 463-988-28-15
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00029.png  lvl=3  qs=74 ──
-  Brakujące encje:
-    pesel = 77092651038
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00031.png  lvl=2  qs=86 ──
-  Brakujące encje:
-    dowod_osobisty = MSS739745
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00033.png  lvl=2  qs=82 ──
-  Brakujące encje:
-    iban = PL49114019878690464618334808
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00040.png  lvl=2  qs=85 ──
-  Brakujące encje:
-    dowod_osobisty = BBK095234
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00041.png  lvl=2  qs=85 ──
-  Brakujące encje:
-    iban = PL03150010130221672515827800
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00044.png  lvl=2  qs=83 ──
-  Brakujące encje:
-    pesel = 98042803251
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-    dowod_osobisty = WAL171456
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-    nip = 685-005-13-69
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00060.png  lvl=2  qs=81 ──
-  Brakujące encje:
-    pesel = 99121930444
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00064.png  lvl=2  qs=75 ──
-  Brakujące encje:
-    iban = PL92102028922151427452311593
-    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
-
-  ── images/doc_00065.png  lvl=2  qs=86 ──
-  Brakujące encje:
-    pesel = 04270997497
+    dowod_osobisty = WYE829272
     → ✓ JEST w tekście OCR (bug silnika)
-    OCR fragment: «66↵PESEL:↵0427099 7497↵N dowodu osob»
-    dowod_osobisty = PKN776981
+    OCR fragment: «obistego:↵wYE829272↵DANE KONTAKTOW»
+
+  ── images/doc_00026.png  lvl=2  qs=81 ──
+  Brakujące encje:
+    iban = PL78325000036777972103736599
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00027.png  lvl=3  qs=82 ──
+  Brakujące encje:
+    pesel = 99020468574
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00042.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    pesel = 61101019661
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00046.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    dowod_osobisty = KUK189660
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    numer_paszportu = NF6736225
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00061.png  lvl=3  qs=80 ──
+  Brakujące encje:
+    iban = PL53169010143399766123346788
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00062.png  lvl=3  qs=85 ──
+  Brakujące encje:
+    dowod_osobisty = CWT002411
     → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
 
