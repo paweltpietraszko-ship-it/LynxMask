@@ -1,9 +1,17 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 1.9
+// Wersja: 2.0
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
+//
+// Zmiany v2.0 (20.06):
+//   - OCR_PESEL_SPLIT rozszerzony: akceptuje l/O/I w numerze PESEL + konwertuje przez OCR_NUMERIC_CHAR_MAP
+//     "PESEL: 9l0405 l2367" → "PESEL: 91040512367" (wcześniej: tylko spacje, nie l)
+//   - OCR_IBAN_SPLIT rozszerzony: akceptuje l/O/I w numerze IBAN + konwertuje przez OCR_NUMERIC_CHAR_MAP
+//     "PL89l090l0l474495552 52ll0732" → "PL89109010147449555252110732"
+//   - OCR_DIGIT_IN_CONTEXT (krok 14): litera l/O/I otoczona cyframi → cyfra (safety net)
+//     "48 60l234567" → "48 601234567" (gdy tylko cyfry sąsiadują — bez spacji)
 //
 // Zmiany v1.9 (20.06):
 //   - OCR_IBAN_SPLIT: spacja wstawiona przez OCR w środku numeru IBAN
@@ -231,16 +239,18 @@ object OcrNormalizer {
     )
     private val OCR_NUMERIC_CHAR_MAP = mapOf(
         'T' to '7', 'I' to '1', 'l' to '1',
-        'O' to '0', 'S' to '5', 'B' to '8',
+        'O' to '0', 'o' to '0',  // OCR_ZERO_AS_O może zmienić '0' → 'o' w kontekście l0l
+        'S' to '5', 'B' to '8',
         'G' to '6', 'Z' to '2',
     )
 
     // ----------------------------------------------------------
-    // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL
-    // Przykład: "PESEL: 6802041 8568" → "PESEL: 68020418568"
+    // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL + litery jako cyfry
+    // Przykład: "PESEL: 6802041 8568"  → "PESEL: 68020418568"
+    // Przykład: "PESEL: 9l0405 l2367" → "PESEL: 91040512367"
     // ----------------------------------------------------------
     private val OCR_PESEL_SPLIT = Regex(
-        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([0-9][0-9\s]{10,14}[0-9])"""
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9][TIlOo0-9\s]{10,14}[TIlOo0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -276,15 +286,23 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
-    // OCR_IBAN_SPLIT v1.9: spacja wstawiona przez OCR wewnątrz numeru IBAN
-    // "PL02114019872105222748309 170" → "PL02114019872105222748309170"
-    // Warunek bezpieczeństwa: łączy TYLKO gdy łączna liczba cyfr == 26
+    // OCR_IBAN_SPLIT v2.0: spacja wstawiona przez OCR wewnątrz numeru IBAN + litery jako cyfry
+    // "PL02114019872105222748309 170"       → "PL02114019872105222748309170"
+    // "PL89l090l0l474495552 52ll0732"       → "PL89109010147449555252110732"
+    // Warunek bezpieczeństwa: łączy TYLKO gdy łączna liczba znaków == 26
     // (dokładna długość polskiego IBAN po PL). Chroni przed sklejaniem
     // niezwiązanych liczb zaczynających się od "PL".
     // ----------------------------------------------------------
     private val OCR_IBAN_SPLIT = Regex(
-        """\bPL(\d{2,25})[^\S\n](\d{1,24})\b"""
+        """\bPL([TIlOo0-9]{2,25})[^\S\n]([TIlOo0-9]{1,24})\b"""
     )
+
+    // ----------------------------------------------------------
+    // OCR_DIGIT_IN_CONTEXT: litera l/O/I bezpośrednio między cyframi → cyfra
+    // "9l04" → "9104", "2ll073" → "2110073" (safety net — krok 14)
+    // NIE działa przez spacje: "60l 234" pozostaje — spacja przerywa kontekst
+    // ----------------------------------------------------------
+    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOI]+(?=\d)""")
 
     // ----------------------------------------------------------
     // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
@@ -372,11 +390,12 @@ object OcrNormalizer {
             m.value.substring(0, m.value.length - m.groupValues[1].length) + fixed
         }
 
-        // 10b. OCR: spacja wstawiona przez OCR wewnątrz numeru PESEL
+        // 10b. OCR: spacja wewnątrz numeru PESEL + litery jako cyfry
         text = OCR_PESEL_SPLIT.replace(text) { m ->
-            val fixed = m.groupValues[2].replace(" ", "")
-            if (fixed != m.groupValues[2]) corrections++
-            m.groupValues[1] + fixed
+            val raw = m.groupValues[2]
+            val converted = raw.replace(" ", "").map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (converted != raw) corrections++
+            m.groupValues[1] + converted
         }
 
         // 11. OCR: litery zamienione na cyfry w NIP (z kreskami lub bez)
@@ -406,10 +425,10 @@ object OcrNormalizer {
             fixed
         }
 
-        // 13a. OCR: spacja wstawiona przez OCR w środku IBAN — "PL...9 170" → "PL...9170"
+        // 13a. OCR: spacja w środku IBAN + litery jako cyfry — "PL...9 170" → "PL...9170"
         text = OCR_IBAN_SPLIT.replace(text) { m ->
-            val part1 = m.groupValues[1]
-            val part2 = m.groupValues[2]
+            val part1 = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            val part2 = m.groupValues[2].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (part1.length + part2.length == 26) {
                 corrections++
                 "PL$part1$part2"
@@ -420,6 +439,13 @@ object OcrNormalizer {
         text = OCR_IBAN_DIGITS.replace(text) { m ->
             val fixed = m.groupValues[1].map { if (it == ' ') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
+            fixed
+        }
+
+        // 14. OCR: litera l/O/I bezpośrednio między cyframi → cyfra (safety net)
+        text = OCR_DIGIT_IN_CONTEXT.replace(text) { m ->
+            val fixed = m.value.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.value) corrections++
             fixed
         }
 
