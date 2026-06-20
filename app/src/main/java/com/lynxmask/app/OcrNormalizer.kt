@@ -174,7 +174,7 @@ object OcrNormalizer {
     //   Lookahead wymaga pełnej domeny z kropką — dlatego reguła TLD musi być pierwsza
     // ----------------------------------------------------------
     private val OCR_EMAIL_TLDSPACE = Regex(
-        """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z]{2,4})\b"""
+        """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
     )
     private val OCR_EMAIL_LOCALSPACE = Regex(
         """([a-zA-Z0-9._%+\-]{2,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}\b)"""
