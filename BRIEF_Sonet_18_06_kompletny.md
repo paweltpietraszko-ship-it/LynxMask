@@ -88,7 +88,7 @@ Dataset: `ground_truth_lvl03.json` — **68 dokumentów**, lvl 0–3
 
 ---
 
-## CO ZROBIONE 19.06 ✅
+## CO ZROBIONE 19.06 SESJA PORANNA ✅
 
 1. ✅ **OCR_UL_PREFIX rozszerzony** — obsługuje `UI./uI./ul bez kropki/ulica/ULICA`
    - Warianty: `ul`, `UI`, `uI`, `u1`, `u.`, `ul.`, `UI.` + zero lub więcej spacji + wielka litera
@@ -100,6 +100,50 @@ Dataset: `ground_truth_lvl03.json` — **68 dokumentów**, lvl 0–3
    - BUG-PESEL1 naprawiony
    - 9 testów jednostkowych, 0 FAILED
 3. ℹ️ **Benchmark nadal 74,3%** — reguły działają poprawnie, ale dataset lvl03 nie zawiera wariantów `PESE1`/`PE5EL`/`UI.Nazwa` — nowe reguły nie mają gdzie się zmierzyć
+
+---
+
+## CO ZROBIONE 19.06 SESJA WIECZORNA ✅
+
+Commit: `c1e7932` (ostatni w tej sesji)
+
+1. ✅ **BUG-NIP-SPLIT naprawiony** — OCR_NIP_SPLIT w OcrNormalizer.kt
+   - Wzorzec: `NIP: 740-61 7-82-26` → `NIP: 740-617-82-26` (spacja wewnątrz numeru)
+   - 5 testów jednostkowych, 0 FAILED
+2. ✅ **BUG-PESEL-SPLIT naprawiony** — OCR_PESEL_SPLIT w OcrNormalizer.kt
+   - Wzorzec: `PESEL: 6802041 8568` → `PESEL: 68020418568` (spacja wewnątrz PESEL)
+   - Obsługuje też: PESE1, pesel małe litery, spacje w wielu miejscach
+   - 5 testów jednostkowych, 0 FAILED
+3. ✅ **run_benchmark_fresh.bat** — benchmark z dynamicznie generowanym datastem
+   - Krok 1b/4: `python generator.py --count 68 --output dataset_fresh --max-level 3` (losowy seed)
+   - Push świeżych PNG + ground_truth.json na telefon zamiast stałego `dataset/`
+   - Cel: wykrywać nowe bugi, nie mierzyć tych samych dokumentów w kółko
+   - ⚠️ `dataset_fresh/` w .gitignore — nie commitować PNG
+4. ✅ **OcrLvl1IntegrationTest.kt** — test integracyjny: Tesseract → PseudonymEngine
+   - Wczytuje `ocr_lvl1_doc_00004.txt` (tekst OCR Tesseract z doc_00004.png, lvl=1, qs=96)
+   - **6 testów, 3 PASS / 3 FAIL** (FAIL = oczekiwany, dokumentuje bug)
+
+### Wyniki testu integracyjnego doc_00004.png (lvl=1, qs=96)
+
+tokenMap z silnika:
+```
+NUMER_001 = 6810568585       ← PESEL z 10 cyframi (powinien być PESEL_001)
+NUMER_002 = 873-054-80.39    ← NIP z kropką (powinien być NIP_001)
+NUMER_003 = 48 606 219 727   ← telefon ✓ (bez '+', ale ok)
+NUMER_004 = YIT494289        ← dowód osobisty ✓
+OSOBA_001 = Szymański        ← nazwisko ✓ (mimo braku polskich znaków w OCR)
+ADRES_001 = Szkolna 150, 20-100 Kielce ← adres ✓
+```
+Brakuje: `EMAIL_001` — email w ogóle nie wykryty
+
+| Test | Status | Powód |
+|------|--------|-------|
+| `telefon jest wykrywany` | ✅ PASS | |
+| `dowod osobisty jest wykrywany` | ✅ PASS | |
+| `adres jest wykrywany` | ✅ PASS | |
+| `FAIL email @ → Q` | ❌ FAIL | `lukaszszymanski Qinteria.pl` — brak `@`, OCR zamienił na `Q` |
+| `FAIL NIP kropka` | ❌ FAIL | `873-054-80.39` — ostatni myślnik → `.`; silnik nie rozpoznaje jako NIP |
+| `FAIL PESEL 10 cyfr` | ❌ FAIL | `6810568585` — OCR zgubił cyfrę; silnik nie rozpoznaje jako PESEL |
 
 ---
 
@@ -156,10 +200,13 @@ Sekcje diagnostyczne w bugs.txt:
 
 | Bug | Plik | Opis |
 |---|---|---|
-| ~~**BUG-PESEL1**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_PESEL_WORD` obsługuje wszystkie warianty słowa PESEL |
-| **BUG-NIP-SPLIT** | OcrNormalizer.kt + StructuralEngine.kt | NIP naprawiony częściowo → silnik łapie fragmenty osobno jako dwa NUMER |
-| **BUG-EMAIL-TLD1** | OcrNormalizer.kt | `@wp p1` — TLD `p1` zawiera cyfrę, `OCR_EMAIL_TLDSPACE` szuka tylko liter; fix: dodać cyfry do TLD |
-| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | Email częściowo zamaskowany — wyciek nazwiska+domeny gdy local-part to imię |
+| ~~**BUG-PESEL1**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE — `OCR_PESEL_WORD` |
+| ~~**BUG-NIP-SPLIT**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_NIP_SPLIT` (spacja w środku NIP) |
+| ~~**BUG-PESEL-SPLIT**~~ | OcrNormalizer.kt | ✅ NAPRAWIONE 19.06 — `OCR_PESEL_SPLIT` (spacja w środku PESEL) |
+| **BUG-EMAIL-AT-Q** | OcrNormalizer.kt | `@` zamieniony na `Q` przez OCR → email niewidoczny dla silnika; test: `FAIL email @→Q` w OcrLvl1IntegrationTest |
+| **BUG-NIP-DOT** | OcrNormalizer.kt | Ostatni myślnik NIP zamieniony na `.` (`873-054-80.39`) → NIP wykryty jako NUMER, nie NIP; test: `FAIL NIP kropka` |
+| **BUG-EMAIL-TLD1** | OcrNormalizer.kt:159 | `@wp p1` — TLD `p1` zawiera cyfrę, `OCR_EMAIL_TLDSPACE` szuka tylko liter; fix: `[a-zA-Z0-9]{2,4}` |
+| **BUG-EMAIL-PARTIAL** | StructuralEngine.kt | Email częściowo zamaskowany — wyciek gdy local-part to imię |
 | **BUG-DOWOD** | StructuralEngine.kt | `FOH6 14892` — OCR spacja w środku, wzorzec nie łapie |
 | **BUG-AL-OPEN** | PseudonymEngine.kt | Adresy z "al." — nie dotykać bez planu |
 | **BUG-OUTPUTGUARD-FORMAT** | OutputGuard.kt | Guard szuka OSOBA_ABC_001, silnik generuje OSOBA_001 |
@@ -169,34 +216,42 @@ Sekcje diagnostyczne w bugs.txt:
 
 ## CO ZROBIĆ JAKO PIERWSZE (następna sesja)
 
-1. **BUG-EMAIL-TLD1** — rozszerzyć `OCR_EMAIL_TLDSPACE` o cyfry w TLD
-   - Plik: `OcrNormalizer.kt` linia 159
-   - Obecny: `([a-zA-Z]{2,4})\b` → zmienić na `([a-zA-Z0-9]{2,4})\b`
+Mamy gotowe 3 failujące testy w `OcrLvl1IntegrationTest.kt`. Naprawiać je po kolei:
 
-2. **BUG-NIP-SPLIT** — zbadać w bugs.txt które NIPy są rozbite na tokeny
-   - Sprawdzić trace dla dokumentów z krytycznym brakiem NUMER
+1. **BUG-EMAIL-AT-Q** — `@` → `Q` w OCR
+   - Plik: `OcrNormalizer.kt` — dodać regułę `OCR_EMAIL_AT_Q`
+   - Wzorzec: `(\w[\w.\-]+)\s*Q(\w+\.\w{2,4})` → `$1@$2`
+   - Kontekst: tylko gdy wynik wygląda jak email (domena z TLD)
+   - Test weryfikujący: `FAIL email @ → Q` w `OcrLvl1IntegrationTest.kt` — powinien PASS po naprawie
 
-3. **ADRES recall ~68%** — kolejny duży cel; przejrzeć bugs.txt sekcja ADRES POMINIĘTE
+2. **BUG-NIP-DOT** — ostatni myślnik NIP → kropka
+   - Plik: `OcrNormalizer.kt` — dodać/rozszerzyć regułę po `OCR_NIP_SPLIT`
+   - Wzorzec: `NIP\s*:?\s*\d{3}-\d{3}-\d{2}\.\d{2}` → zamień ostatnią `.` na `-`
+   - Test weryfikujący: `FAIL NIP kropka` w `OcrLvl1IntegrationTest.kt`
 
-4. **Nowy dataset** — wygenerować dokumenty z wariantami OCR które naprawiliśmy (PESE1, PE5EL, UI.Nazwa, NlP, emaile ze spacją) — benchmark mierzy tylko znane dokumenty, nowe reguły nie mają gdzie się zmierzyć
+3. **BUG-EMAIL-TLD1** — `@wp p1` (cyfra w TLD)
+   - Plik: `OcrNormalizer.kt` linia ~159
+   - Zmiana: `([a-zA-Z]{2,4})\b` → `([a-zA-Z0-9]{2,4})\b`
 
-5. **Zdjęcia z aparatu** — zebrać realne artefakty OCR z różnych typów dokumentów → analiza → nowe reguły OcrNormalizera
+4. **ADRES recall ~68%** — kolejny duży cel; przejrzeć `benchmark_results\benchmark_bugs.txt` sekcja ADRES POMINIĘTE
 
-6. **Dataset overfitting** — obecny benchmark nie wykrywa nowych luk, mierzy tylko wcześniej znane przypadki
+5. **Nowy benchmark** — uruchomić `run_benchmark_fresh.bat` po naprawach BUG-EMAIL-AT-Q i BUG-NIP-DOT; reintalacja APK wymagana
 
 ---
 
-## WERSJE PLIKÓW MOBILE (stan 2026-06-18 wieczór)
+## WERSJE PLIKÓW MOBILE (stan 2026-06-19 wieczór)
 
 | Plik | Wersja | Co zmieniono |
 |---|---|---|
-| OcrNormalizer.kt | v1.5 | OCR_EMAIL, OCR_UL_PREFIX, OCR_PESEL/NIP/REGON/IBAN_DIGITS, OCR_NUMERIC_CHAR_MAP |
-| StructuralEngine.kt | v1.9 | bez zmian 18.06 |
-| NameEngine.kt | v1.11+ | bez zmian 18.06 |
+| OcrNormalizer.kt | **v1.6** | +OCR_PESEL_SPLIT, +OCR_NIP_SPLIT (spacje w środku numerów); +OCR_UL_PREFIX rozszerzony; OCR_PESEL_WORD |
+| StructuralEngine.kt | v1.9 | bez zmian |
+| NameEngine.kt | v1.11+ | bez zmian |
 | PseudonymEngine.kt | v2.3+ | DetectionTrace, traceMode |
 | BenchmarkInstrumentedTest.kt | — | lvl03, normalizedText w analyze(), OCR[300] w bugs.txt |
 | run_benchmark.bat | — | /storage/emulated/0/, pull benchmark_trace.txt |
-| TODO_silnik.md | — | aktualizacja 18.06 |
+| run_benchmark_fresh.bat | — | **NOWY** — dynamiczny dataset (losowy seed co run) |
+| OcrLvl1IntegrationTest.kt | — | **NOWY** — 6 testów; 3 PASS, 3 FAIL (EMAIL, NIP, PESEL) |
+| ocr_lvl1_doc_00004.txt | — | **NOWY** — tekst OCR Tesseract doc_00004.png (lvl=1) |
 
 ---
 
@@ -204,3 +259,17 @@ Sekcje diagnostyczne w bugs.txt:
 
 Desktop stabilny. `USE_NEW_PIPELINE=True`, CLR 3.2%, Recall 91.4%.
 Szczegóły w `BRIEF_Sonet_kontynuacja_16_06.md` w katalogu Desktop.
+
+---
+
+## LUKI SILNIKA — priorytety 19.06
+
+Zasada dla wszystkich: nie modyfikuj tekstu źródłowego — normalizuj tylko do lookupu, maskuj oryginalny span.
+
+1. **INICJAŁY** — NameEngine: po wykryciu nazwiska rozszerz span w lewo o wzorzec `[A-Z]\.` — niskie ryzyko FP
+2. **ASCII IMIONA** — NameEngine: `fold()` bez ogonków przy lookup słownikowym — nie modyfikuj tekstu
+3. **CAPS LOCK** — NameEngine: `toLookupForm()` normalizuje tylko do lookupu, maskuje oryginalny span
+4. **WALIDACJA PESEL** — StructuralEngine: po wykryciu 11 cyfr sprawdź cyfrę kontrolną — zmniejszy FP
+5. **KWOTY SŁOWNIE** — StructuralEngine: wymóg kotwicy złotych/zł/groszy — niskie FP
+6. **SKLEJANIE NAZWISK** — NameEngine: left+right w słowniku `surnamesForms` (Kowal+ski)
+7. **IBAN PRZEZ NEWLINE** — OcrNormalizer: PL + cyfry przez newline

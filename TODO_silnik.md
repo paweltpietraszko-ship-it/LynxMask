@@ -70,3 +70,25 @@ Bez tego: "ERROR: JAVA_HOME is not set"
 .\gradlew :app:installDebugAndroidTest
 run_benchmark.bat
 ```
+
+---
+
+## Otwarte bugi OcrNormalizer — z analizy zewnętrznej (19.06)
+
+### OCR_EMAIL_LOCALSPACE — tylko jedna spacja
+- Obecna reguła naprawia tylko jedną spację w local-part emaila
+- "jan adam kowalski@wp.pl" → naprawiane tylko częściowo ("jan_adam kowalski@wp.pl")
+- Rozwiązanie: replace w pętli aż brak zmian, lub wzorzec na wiele segmentów
+
+### IBAN rozbity przez newline
+- Obecna reguła obsługuje spacje w IBAN ale nie przejście do nowej linii
+- Przykład: "PL61 1020 1026\n0000 0422 7020\n1111" nie jest sklejane
+- Rozwiązanie: reguła OCR_IBAN_NEWLINE w OcrNormalizerze — skleja IBAN rozbity przez \n
+
+### Wersja w nagłówku OcrNormalizer.kt nieaktualna
+- Nagłówek mówi v1.3, rzeczywista wersja to v1.6
+- Zaktualizować nagłówek i listę zmian
+
+### KNOWN_CITY_FORMS nie obsługuje miast bez ogonków
+- "Bialystok", "Lodz", "Krakow" nie trafią w listę miast
+- Rozwiązanie: przy sprawdzaniu w KNOWN_CITY_FORMS stosować fold() (usunięcie ogonków) dla kandydata

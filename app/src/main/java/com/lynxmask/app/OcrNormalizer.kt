@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 1.3
+// Wersja: 1.6
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
 //
@@ -20,6 +20,24 @@ package com.lynxmask.app
 //     z zamkniętej listy (~100 form). Nie skleja zwykłych wyrazów.
 //     Pierwsza część musi zaczynać się WIELKĄ literą — OCR rzadko błędnie
 //     kapitalizuje, więc fałszywych pozytywów praktycznie brak.
+//
+// Zmiany v1.4 (18.06):
+//   - OCR_EMAIL_TLDSPACE: "jan@onet pl" → "jan@onet.pl"
+//   - OCR_EMAIL_LOCALSPACE: "jan kowalski@wp.pl" → "jan_kowalski@wp.pl"
+//   - OCR_UL_PREFIX: "u. Nazwa" / "u Nazwa" → "ul. Nazwa"
+//   - OCR_NIP_DIGITS: litery jako cyfry po słowie NIP/NlP/N1P
+//   - OCR_REGON_DIGITS: litery jako cyfry po słowie REGON
+//   - OCR_IBAN_DIGITS: litery jako cyfry po słowie IBAN / Nr konta
+//
+// Zmiany v1.5 (18.06):
+//   - OCR_PESEL_DIGITS: kontekstowa naprawa cyfr po słowie PESEL (T→7, O→0 itd.)
+//
+// Zmiany v1.6 (19.06):
+//   - OCR_PESEL_WORD: zastępuje OCR_PESEL_DIGITS — pełny wzorzec słowa obsługuje
+//     PESE1, PE5EL, P E S E L, PEB3L, pesel małymi literami
+//   - OCR_PESEL_SPLIT: "PESEL: 6802041 8568" → "PESEL: 68020418568"
+//   - OCR_NIP_SPLIT: "NIP: 740-61 7-82-26" → "NIP: 740-617-82-26"
+//   - OCR_UL_PREFIX rozszerzony: UI./uI./u1./ulica/ULICA
 
 data class NormalizationResult(
     val normalizedText: String,
