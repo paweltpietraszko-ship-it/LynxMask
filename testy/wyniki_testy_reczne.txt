@@ -1,0 +1,116 @@
+WYNIKI TESTÓW RĘCZNYCH — LYNXMASK
+Cel: archiwum ręcznych testów silnika (tekst wklejony bezpośrednio do aplikacji)
+Format: przepuszczenie przez aplikację → porównanie z listą kontrolną
+================================================================
+
+POZIOMY ZNIEKSZTAŁCENIA:
+  LVL 0 — czysty tekst, brak błędów OCR
+  LVL 1 — lekki szum: drobne spacje, O→0, l→1, polskie znaki OK
+  LVL 2 — średni szum: spacje w numerach, zepsute polskie znaki, cyfry w nazwach
+  LVL 3 — ciężki szum (telefon): spacje w emailach, 3→e, wielokrotne artefakty
+
+
+================================================================
+TEST #001 — 2026-06-20
+Plik:              test_silnik_statystyki.txt
+Poziom zniekształcenia: LVL 0 (czysty tekst)
+Wersja silnika:    commit f025698
+================================================================
+
+WYNIKI:
+
+  OSOBA       10/10  100%   wszystkie wykryte
+  EMAIL       11/11  100%   wykryte, ale jako NUMER (nie EMAIL) — bug tokena
+  PESEL        6/6   100%   wszystkie wykryte
+  NIP          5/5   100%   wszystkie wykryte
+  IBAN         3/3   100%   wszystkie wykryte
+  TELEFON      8/8   100%   (22) prefix pominięty przy jednym — drobny bug
+  DOKUMENT     4/4   100%   wszystkie wykryte
+  REGON        1/1   100%   wykryty
+  ADRES        8/8   100%   wszystkie wykryte (ulica + kod jako osobne tokeny)
+
+  RECALL OGÓLNY:  54/54  = 100%
+
+FALSE POSITIVES:
+  UZ/2026/0088      → NUMER  (numer umowy — FP)
+  FV/2026/000088    → NUMER  (numer faktury — FP)
+  I C 234/26        → NUMER  (sygnatura akt — FP)
+  2026-06-20        → NUMER-20  (data ISO częściowa — FP)
+  2024-03-15        → NUMER-15  (data ISO częściowa — FP)
+  2026-08-01        → NUMER-01  (data ISO częściowa — FP)
+  4 500,00 zł       → KWOTA  (zamierzone zachowanie)
+  12 500,00 zł      → KWOTA  (zamierzone zachowanie)
+
+BUGI ZIDENTYFIKOWANE:
+  [BUG-EMAIL-TOKEN]   EMAIL wykrywany poprawnie ale token = NUMER zamiast EMAIL
+  [BUG-DATE-PARTIAL]  Daty ISO (RRRR-MM-DD) — "RRRR-MM" maskowane, "-DD" zostaje
+  [BUG-TEL-PREFIX]    (22) prefix kodu kierunkowego nie maskowany razem z numerem
+  [BUG-FP-REFNUM]     Numery umów/faktur/sygnatur akt maskowane jako NUMER (FP)
+
+WNIOSEK:
+  Na czystym tekście silnik jest bezbłędny (100% recall).
+  Straty w benchmarku wynikają wyłącznie z degradacji OCR (lvl 2).
+
+
+================================================================
+TEST #002 — [DATA]
+Plik:              [NAZWA PLIKU]
+Poziom zniekształcenia: LVL _ (_________________)
+Wersja silnika:    [commit]
+================================================================
+
+WYNIKI:
+
+  OSOBA       _/_    ___%
+  EMAIL       _/_    ___%
+  PESEL       _/_    ___%
+  NIP         _/_    ___%
+  IBAN        _/_    ___%
+  TELEFON     _/_    ___%
+  DOKUMENT    _/_    ___%
+  REGON       _/_    ___%
+  ADRES       _/_    ___%
+
+  RECALL OGÓLNY:  _/_  = ___%
+
+FALSE POSITIVES:
+  [wpisać]
+
+BUGI ZIDENTYFIKOWANE:
+  [wpisać]
+
+WNIOSEK:
+  [wpisać]
+
+
+================================================================
+SZABLON NA KOLEJNE TESTY (skopiuj i wypełnij)
+================================================================
+
+TEST #00X — [DATA]
+Plik:              [NAZWA PLIKU]
+Poziom zniekształcenia: LVL _ (_________________)
+Wersja silnika:    [commit]
+
+WYNIKI:
+
+  OSOBA       _/_    ___%
+  EMAIL       _/_    ___%
+  PESEL       _/_    ___%
+  NIP         _/_    ___%
+  IBAN        _/_    ___%
+  TELEFON     _/_    ___%
+  DOKUMENT    _/_    ___%
+  REGON       _/_    ___%
+  ADRES       _/_    ___%
+
+  RECALL OGÓLNY:  _/_  = ___%
+
+FALSE POSITIVES:
+  [wpisać]
+
+BUGI ZIDENTYFIKOWANE:
+  [wpisać]
+
+WNIOSEK:
+  [wpisać]

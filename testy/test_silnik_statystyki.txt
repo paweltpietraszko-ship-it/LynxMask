@@ -1,0 +1,234 @@
+DOKUMENT ZBIORCZY — TEST SILNIKA LYNXMASK
+Cel: ręczne przepuszczenie przez aplikację, porównanie z listą kontrolną
+Data: 2026-06-20
+================================================================
+
+
+================================================================
+SEKCJA A — UMOWA ZLECENIA (osoby, adresy, emaile, numery)
+================================================================
+
+Umowa nr UZ/2026/0088 zawarta dnia 20 czerwca 2026 r. w Warszawie
+pomiędzy:
+
+1. Jan Kowalski, PESEL: 65051012345, NIP: 873-054-80-39,
+   zamieszkały ul. Szkolna 150, 20-100 Kielce,
+   tel.: +48 512 345 678, e-mail: jan.kowalski@wp.pl,
+   nr dowodu osobistego: ABC 123456,
+   zwany dalej Zleceniodawcą,
+
+a
+
+2. Maria Wiśniewska-Nowak, PESEL: 80012312345, NIP: 521-33-15-332,
+   zamieszkała al. Niepodległości 12, 60-001 Poznań,
+   tel.: +48 606 219 727, e-mail: m.wisniewska@kancelaria.com.pl,
+   nr paszportu: AB1234567,
+   zwana dalej Zleceniobiorcą.
+
+Pełnomocnik Zleceniodawcy: Anna Grabowska, adwokat,
+adres kancelarii: ul. Kazimierza Wielkiego 14/3, 50-001 Wrocław,
+e-mail: anna.grabowska@interia.pl, tel.: 81 123-45-67.
+
+Konto bankowe Zleceniobiorcy:
+IBAN: PL 36 1020 2892 0020 0886 2353 5888
+
+§1. Przedmiot umowy
+Zleceniodawca powierza, a Zleceniobiorca przyjmuje do wykonania
+obsługę prawną w zakresie wskazanym w załączniku nr 1.
+
+§2. Wynagrodzenie
+Wynagrodzenie wynosi 4 500,00 zł netto miesięcznie.
+Faktura VAT wystawiana do 5. dnia każdego miesiąca.
+Nr faktury: FV/2026/000088.
+
+§3. Czas trwania
+Umowa obowiązuje od 1 lipca 2026 r. do 30 czerwca 2027 r.
+Wypowiedzenie z zachowaniem 30-dniowego okresu.
+
+Zatwierdzono przez Sąd Rejonowy w Kielcach, sygn. akt I C 234/26.
+Podstawa: art. 734 § 1 Kodeksu cywilnego (Dz.U. 2023 poz. 1360).
+
+
+================================================================
+SEKCJA B — FORMULARZ REJESTRACYJNY (gęste dane osobowe)
+================================================================
+
+DANE WNIOSKODAWCY:
+Imię i nazwisko:     Piotr Zając
+PESEL:               78052356789
+Nr dowodu os.:       DEF 789012
+Data urodzenia:      12.03.1978
+Telefon:             (22) 765-43-21
+E-mail:              piotr.zajac@onet.pl
+Adres zamieszkania:  os. Słoneczne 7/3, 30-001 Kraków
+
+DANE PEŁNOMOCNIKA:
+Imię i nazwisko:     dr hab. Agnieszka Dąbrowska
+PESEL:               90030612345
+NIP:                 9571066250
+Telefon:             +48 730 093 658
+E-mail:              agnieszka.dabrowska123@gmail.com
+Adres:               pl. Wolności 1, 61-738 Poznań
+Nr paszportu:        PA 2345678
+
+DANE FIRMY:
+NIP firmy:           651-554-28-60
+REGON:               012345678
+IBAN firmowy:        PL62102028920020886235358884
+E-mail firmowy:      biuro@firma-consulting.pl
+
+
+================================================================
+SEKCJA C — NOTATKA SŁUŻBOWA (różne konteksty osób)
+================================================================
+
+Data: 15.07.2026 r.
+Sporządziła: Monika Kwiatkowska
+
+Dnia 14.07.2026 do biura zgłosiła się następująca osoba:
+Tomasz Wierzbicki, PESEL: 55041523456, zamieszkały ul. Różana 8,
+85-001 Warszawa, tel.: 606 100 200, e-mail: t.wierzbicki@firma.pl.
+
+Sprawa dotyczyła skargi złożonej przez Łukasza Szymańskiego,
+data urodzenia 12.03.1980, PESEL: 01271391176,
+zam. ul. Lipowa 22, 41-200 Bytom, e-mail: l.szymanski@prawnik.pl.
+
+Sprawę przekazano do rozpatrzenia przez BARTOSZA LEWANDOWSKIEGO,
+adres e-mail: bartosz.lewandowski@prawnik.pl, tel.: 12 456-78-90.
+
+Nr konta do zwrotu: PL 61 1090 1014 0000 0712 1981 2874.
+Wartość roszczenia: 12 500,00 zł. Termin: 2026-08-01.
+
+Podpisano: Józef Malinowski, NIP: 723-18-05-612
+e-mail: j.malinowski@urzad.gov.pl, tel.: +48 881 234 567.
+
+Strona www urzędu: www.urzad-gmina.pl (nie maskować).
+Adres e-mail informacyjny: info@gov.pl (nie maskować — ogólny).
+
+
+================================================================
+SEKCJA D — PUŁAPKI: NIE POWINNO BYĆ ZAMASKOWANE
+================================================================
+
+Daty (nie maskować):
+  15 marca 2024, 2024-03-15, 12.06.2026, 1 lipca 2026 r.
+
+Kwoty (nie maskować):
+  4 500,00 zł, 12 500,00 zł, 99,99 EUR, 8 500,00 PLN
+
+Przepisy (nie maskować):
+  art. 734 § 1 Kodeksu cywilnego
+  Dz.U. 2023 poz. 1360
+  § 1, § 2, § 3
+
+Nazwy instytucji (nie maskować):
+  Sąd Rejonowy w Kielcach
+  Urząd Skarbowy Kraków-Śródmieście
+  ZUS, NFZ, RODO
+
+Numery referencyjne (nie maskować):
+  UZ/2026/0088, FV/2026/000088, sygn. akt I C 234/26
+
+Rok i numery porządkowe (nie maskować):
+  30-dniowy, nr 1, art. 1, § 5
+
+Skróty (nie maskować):
+  Sp. z o.o., e-mail: (samo słowo), ul., al., os., pl.
+
+
+================================================================
+LISTA KONTROLNA — MOJA STATYSTYKA OCZEKIWANA
+================================================================
+
+Łącznie encji do zamaskowania: 54
+
+--- OSOBA (10) ---
+ 1. Jan Kowalski                       → OSOBA_xxx
+ 2. Maria Wiśniewska-Nowak             → OSOBA_xxx
+ 3. Anna Grabowska                     → OSOBA_xxx
+ 4. Piotr Zając                        → OSOBA_xxx
+ 5. Agnieszka Dąbrowska               → OSOBA_xxx
+ 6. Monika Kwiatkowska                 → OSOBA_xxx
+ 7. Tomasz Wierzbicki                  → OSOBA_xxx
+ 8. Łukasz Szymański                   → OSOBA_xxx
+ 9. BARTOSZ LEWANDOWSKI                → OSOBA_xxx
+10. Józef Malinowski                   → OSOBA_xxx
+
+--- EMAIL (11) ---
+ 1. jan.kowalski@wp.pl                 → EMAIL_xxx
+ 2. m.wisniewska@kancelaria.com.pl     → EMAIL_xxx
+ 3. anna.grabowska@interia.pl          → EMAIL_xxx
+ 4. piotr.zajac@onet.pl               → EMAIL_xxx
+ 5. agnieszka.dabrowska123@gmail.com   → EMAIL_xxx
+ 6. biuro@firma-consulting.pl          → EMAIL_xxx
+ 7. t.wierzbicki@firma.pl             → EMAIL_xxx
+ 8. l.szymanski@prawnik.pl            → EMAIL_xxx
+ 9. bartosz.lewandowski@prawnik.pl     → EMAIL_xxx
+10. j.malinowski@urzad.gov.pl         → EMAIL_xxx
+11. info@gov.pl                        → EMAIL_xxx  ← może NIE (ogólny)
+
+--- PESEL (8) ---
+ 1. 65051012345                        → NUMER_xxx
+ 2. 80012312345                        → NUMER_xxx
+ 3. 78052356789                        → NUMER_xxx
+ 4. 90030612345                        → NUMER_xxx
+ 5. 55041523456                        → NUMER_xxx
+ 6. 01271391176                        → NUMER_xxx
+ 7. 12.03.1978  (data ur.)             → może NUMER_xxx
+ 8. 12.03.1980  (data ur.)             → może NUMER_xxx
+
+--- NIP (5) ---
+ 1. 873-054-80-39                      → NUMER_xxx
+ 2. 521-33-15-332                      → NUMER_xxx
+ 3. 9571066250                         → NUMER_xxx
+ 4. 651-554-28-60                      → NUMER_xxx
+ 5. 723-18-05-612                      → NUMER_xxx
+
+--- IBAN (3) ---
+ 1. PL 36 1020 2892 0020 0886 2353 5888  → NUMER_xxx
+ 2. PL62102028920020886235358884         → NUMER_xxx
+ 3. PL 61 1090 1014 0000 0712 1981 2874  → NUMER_xxx
+
+--- TELEFON (8) ---
+ 1. +48 512 345 678                    → NUMER_xxx
+ 2. +48 606 219 727                    → NUMER_xxx
+ 3. 81 123-45-67                       → NUMER_xxx
+ 4. (22) 765-43-21                     → NUMER_xxx
+ 5. +48 730 093 658                    → NUMER_xxx
+ 6. 606 100 200                        → NUMER_xxx
+ 7. 12 456-78-90                       → NUMER_xxx
+ 8. +48 881 234 567                    → NUMER_xxx
+
+--- DOKUMENT TOŻSAMOŚCI (4) ---
+ 1. ABC 123456   (dowód)               → NUMER_xxx
+ 2. DEF 789012   (dowód)               → NUMER_xxx
+ 3. AB1234567    (paszport)            → NUMER_xxx
+ 4. PA 2345678   (paszport)            → NUMER_xxx
+
+--- REGON (1) ---
+ 1. 012345678                          → NUMER_xxx
+
+--- ADRES (8) ---
+ 1. ul. Szkolna 150, 20-100 Kielce         → ADRES_xxx / ADRES_xxx
+ 2. al. Niepodległości 12, 60-001 Poznań   → ADRES_xxx / ADRES_xxx
+ 3. ul. Kazimierza Wielkiego 14/3, 50-001 Wrocław → ADRES_xxx / ADRES_xxx
+ 4. os. Słoneczne 7/3, 30-001 Kraków       → ADRES_xxx / ADRES_xxx
+ 5. pl. Wolności 1, 61-738 Poznań          → ADRES_xxx / ADRES_xxx
+ 6. ul. Różana 8, 85-001 Warszawa          → ADRES_xxx / ADRES_xxx
+ 7. ul. Lipowa 22, 41-200 Bytom            → ADRES_xxx / ADRES_xxx
+ 8. ul. Szkolna 150 (ponownie — sekcja D)  → ADRES_xxx (może pominięty — UserDict)
+
+
+================================================================
+JAK ZGŁOSIĆ WYNIKI
+================================================================
+
+Dla każdej sekcji podaj:
+  WYKRYTE: ile z listy zostało zamaskowane
+  POMINIĘTE: które konkretnie nie zostały zamaskowane
+  FALSE POSITIVE: co zostało zamaskowane a nie powinno
+
+Przykład:
+  OSOBA: 9/10 wykryte, pominięty: "Józef Malinowski"
+  EMAIL: 10/11 wykryte, pominięty: "info@gov.pl" (OK — ogólny)
+  itd.

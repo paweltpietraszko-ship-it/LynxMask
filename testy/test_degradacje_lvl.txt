@@ -1,0 +1,89 @@
+DOKUMENT TESTOWY — POZIOMY ZNIEKSZTAŁCEŃ OCR
+Cel: sprawdzenie silnika na tej samej treści w 4 wariantach degradacji
+Encje: te same w każdej sekcji — widać dokładnie gdzie silnik zaczyna tracić
+================================================================
+
+LISTA ENCJI (ground truth — te same dla wszystkich lvl):
+  OSOBA:    Krzysztof Nowicki, Beata Kamińska
+  PESEL:    91040512367, 74081934521
+  NIP:      512-34-56-789, 678-901-23-45
+  IBAN:     PL89109010147449555252110732
+  TELEFON:  +48 601 234 567, (32) 456-78-90
+  EMAIL:    krzysztof.nowicki@firma.pl, b.kaminska@onet.pl
+  ADRES:    ul. Lipowa 22, 41-200 Bytom
+  DOWÓD:    EFG 456789
+
+================================================================
+SEKCJA 1 — LVL 0 (czysty tekst, zero błędów)
+================================================================
+
+Zleceniodawca: Krzysztof Nowicki, PESEL: 91040512367, NIP: 512-34-56-789,
+zamieszkały ul. Lipowa 22, 41-200 Bytom, tel.: +48 601 234 567,
+e-mail: krzysztof.nowicki@firma.pl, dowód osobisty: EFG 456789.
+
+Zleceniobiorca: Beata Kamińska, PESEL: 74081934521, NIP: 678-901-23-45,
+tel.: (32) 456-78-90, e-mail: b.kaminska@onet.pl.
+
+Konto: IBAN: PL89109010147449555252110732.
+
+
+================================================================
+SEKCJA 2 — LVL 1 (lekki szum: O↔0, l↔1, spacje w numerach)
+================================================================
+
+Zleceniodawca: Krzysztof N0wicki, PESEL: 910 40512367, NIP: 512-34-56-789,
+zamieszkały ul. Lip0wa 22, 41-200 Bytom, tel.: +48 601 234 567,
+e-mail: krzysztof.nowicki@firma.pl, dowód osobisty: EFG 456789.
+
+Zleceniobiorca: Beata Kaminska, PESEL: 7408 1934521, NIP: 678-901-23-45,
+tel.: (32) 456-78-90, e-mail: b.kaminska@onet.pl.
+
+Konto: IBAN: PL89 1090 1014 7449 5552 5211 0732.
+
+
+================================================================
+SEKCJA 3 — LVL 2 (średni szum: zepsute polskie znaki, cyfry w nazwach, spacje w emailach)
+================================================================
+
+Zleceniodawca: Krzyszt0f N0wlckl, PESEL: 9104 05 12367, NIP: 512-3456-789,
+zamieszkaly ul. Llpowa 22, 41-200 Byt0m, tel.: +48 601234 567,
+e-mail: krzysztof. nowicki@firma.pl, dowod osobisty: EFG 456789.
+
+Zleceniobiorca: B3ata Kamlnska, PESEL: 748 01934521, NIP: 678-901-23-45,
+tel.: (32) 456 78 90, e-mail: b. kaminska@onet.pl.
+
+Konto: IBAN: PL89 10901014 74495552 52110732.
+
+
+================================================================
+SEKCJA 4 — LVL 3 (ciężki szum: wiele artefaktów, bełkot fragmentów)
+================================================================
+
+Zleceniodawca: Krzy5zt0f N0w1ck1, PESEL: 9l0405 l2367, NIP: 5l2-34-56-789,
+zamieszkaly u. Llp0wa 22, 4l-200 Byt0m, tel: 48 60l 234 567,
+e-mail: krzyszt0f. n0wicki@flrma.pl, dow0d 0sobisty: EFG 456789.
+
+Zleceniobiorca: Be4ta Kamlnska, PE5EL: 7408l934 521, NlP: 678-90l-23-45,
+tel: (32) 456-78 90, e-mall: b .kamlnska@0net.pl.
+
+Kont0: IBAN: PL89l090l0l474495552 52ll0732.
+
+
+================================================================
+LISTA KONTROLNA — OCZEKIWANE WYNIKI PER POZIOM
+================================================================
+
+             LVL 0   LVL 1   LVL 2   LVL 3
+  OSOBA        2       2       ?       ?
+  PESEL        2       2       ?       ?
+  NIP          2       2       ?       ?
+  IBAN         1       1       ?       ?
+  TELEFON      2       2       ?       ?
+  EMAIL        2       2       ?       ?
+  ADRES        1+1     1+1     ?       ?
+  DOKUMENT     1       1       ?       ?
+
+  RAZEM        13      13      ?       ?
+
+Wpisz wyniki w wyniki_testy_reczne.txt jako TEST #002, #003, #004, #005.
+Każdy lvl to osobny test — widać gdzie silnik zaczyna się gubić.
