@@ -204,6 +204,23 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // (po ur w środku słowa nie ma \b bo następny znak też jest \w)
     TOKEN_NUMER to Regex("""(?i)\bdat[aą]\s+ur(?:odzen[ií][^\s:–\-\d]{0,2})?\b\.?[^\S\n]*[:–\-]?\n?[^\S\n]*\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}\b"""),
 
+    // Data polska DD.MM.YYYY — S-DATE-PL (strukturalna, różne separatory, bez kontekstu)
+    // Separatory: . , / - ; rok ograniczony do 19xx/20xx (blokuje FP: art. 10.12.98 → rok 1998 ✓, ale 10.12.34 bez 19/20 → skip)
+    // Dzień 01–31, miesiąc 01–12 — walidacja zakresu bez sprawdzania kombinacji (luty bez 29/30/31)
+    TOKEN_NUMER to Regex("""\b(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-](?:19|20)\d{2}\b"""),
+
+    // Data z kontekstem DATA/DNIA — S-DATE-CTX (kontekstowa, rok 2 lub 4 cyfry)
+    // Fallback po S-DATE-PL: obsługuje daty ze skróconym rokiem ("Dnia 10.12.26")
+    // i formaty niestandardowe. S-DATE-PL przychwyci rok 4-cyfrowy wcześniej.
+    // Maskuje cały fragment łącznie z "Dnia"/"Data:".
+    TOKEN_NUMER to Regex("""(?i)\b(?:dat[aą]|dnia|dniu)\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-]\d{2,4}\b"""),
+
+    // Data ISO YYYY-MM-DD (strukturalna) — S-DATE-ISO / BUG-DATE-PARTIAL
+    // Wzorzec strukturalny (format-only), nie wymaga kontekstu.
+    // Umieszczony PRZED blokiem "numer z kontekstem" żeby całość daty była matchowana zanim
+    // inne reguły złapią sam rok/miesiąc i zostawią fragment "-DD".
+    TOKEN_NUMER to Regex("""\b(?:19|20)\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])\b"""),
+
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)
     // Nie matchuje samego "DO" (przyimek) — wymaga dow+[oó]+d
@@ -478,8 +495,10 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
 internal val PESEL_PATTERN_STRINGS: Set<String> = setOf(
     """(?<!\d)\d{11}(?!\d)""",
     """\b\d{6} \d{5}\b""",
-    """(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d""",
-    // CATCHALL — bez wpisu S5 był by maskował niepoprawne PESELe gdy żaden wzorzec PESEL nie passował
+    // Wzorzec kontekstowy pe[s5][e3]l celowo POMINIĘTY:
+    // słowo "PESEL:" jest wystarczającym dowodem → maskuj bez sprawdzania sumy.
+    // OCR może pomylić jedną cyfrę → suma błędna → S5 blokowałby prawidłowe PESELe.
+    // CATCHALL — bez wpisu S5 maskowałby \d{8,} bez walidacji sumy
     """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
 )
 

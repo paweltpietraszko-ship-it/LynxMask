@@ -155,12 +155,14 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "44051401458")
     }
 
-    @Test fun `s5 niepoprawny PESEL nie jest maskowany`() {
-        // PESEL 44051401459 — ostatnia cyfra zmieniona z 8 na 9 → błędna suma kontrolna
-        val r = pseudonymize("PESEL: 44051401459")
-        assertFalse("Niepoprawny PESEL nie powinien być zamaskowany",
+    @Test fun `s5 niepoprawny PESEL bez kontekstu nie jest maskowany`() {
+        // Goły 11-cyfrowy bez słowa "PESEL:" → S5 sprawdza sumę → błędna → nie maskuje.
+        // S5 ma sens tylko dla gołych cyfr (bez kontekstu nie wiemy czy to PESEL).
+        // Gdy tekst zawiera "PESEL:" → maskuj bezwarunkowo (kontekst > suma kontrolna).
+        val r = pseudonymize("Numer referencyjny: 44051401459")
+        assertFalse("Goły numer z błędną sumą PESEL nie powinien być zamaskowany",
             r.pseudonymizedText.contains("NUMER_"))
-        assertTrue("Tekst z błędnym PESEL powinien pozostać w wyjściu",
+        assertTrue("Goły numer z błędną sumą powinien pozostać w wyjściu",
             r.pseudonymizedText.contains("44051401459"))
     }
 
@@ -191,12 +193,30 @@ class PseudonymEngineTest {
     }
 
     @Test fun `s5 regresja PESEL kontekstowy nie blokowany przez checksum`() {
-        // Wzorzec kontekstowy PESEL (z keywordem) zawiera litery → filtr checksumu go pomija
-        // Checksum NIE jest walidowany dla wzorca kontekstowego (ma litery w matchu)
-        // Testujemy że PESEL z keywordem ze skróconymi cyframi (OCR drop) nadal jest maskowany
+        // Wzorzec kontekstowy (słowo "pesel") NIE jest w PESEL_PATTERN_STRINGS —
+        // kontekst słowny jest wystarczającym dowodem, nie sprawdzamy sumy.
         val r = pseudonymize("PESEL: 6505111234")  // 10 cyfr — BUG-PESEL-10 fix
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "6505111234")
+    }
+
+    @Test fun `s5 regresja PESEL kontekstowy z bledna suma OCR jest maskowany`() {
+        // OCR może pomylić jedną cyfrę → suma błędna → ale "PESEL:" w tekście = pewny kontekst.
+        // Przed naprawą: wzorzec kontekstowy był w PESEL_PATTERN_STRINGS → S5 blokował → RED.
+        val peselBlednaSum = "44051401448"  // prawidłowy to 44051401458 (cyfra 5→4, OCR error)
+        val r = pseudonymize("PESEL: $peselBlednaSum")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, peselBlednaSum)
+    }
+
+    @Test fun `s5 goly PESEL z bledna suma nie jest maskowany`() {
+        // Goły 11-cyfrowy bez kontekstu słownego → S5 sprawdza sumę → jeśli błędna → nie maskuje.
+        val peselBlednaSum = "44051401448"  // cyfra 5→4 = błędna suma
+        val r = pseudonymize("Numer: $peselBlednaSum")
+        assertFalse("Goły PESEL z błędną sumą nie powinien być zamaskowany",
+            r.pseudonymizedText.contains("NUMER_"))
+        assertTrue("Goły PESEL z błędną sumą powinien pozostać w wyjściu",
+            r.pseudonymizedText.contains(peselBlednaSum))
     }
 
     @Test fun `s5 regresja telefon z prefiksem 48 plus nie jest blokowany przez checksum`() {
