@@ -1,6 +1,6 @@
 # MASTER — LynxMask Mobile
 
-**Wersja:** 1.1 (21.06.2026 wieczór, po sesjach silnika: S5, S8, OcrNormalizer v2.1)
+**Wersja:** 1.2 (21.06.2026 noc, po sesji: P0 Codex, S5 regres PESEL, audyt agenta)
 **Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
 **Data konsolidacji:** 20.06.2026
 **Źródła:** BRIEF\_Sonet\_18\_06\_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO\_silnik.md (20.06, OCR + silnik), TODO\_LynxMask\_mobile\_12\_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA\_ARCHITEKTURY\_mobile\_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
@@ -615,10 +615,10 @@ Niezależny audyt kodu przez Codex (read-only, po commicie). Znaleziska podzielo
 
 | Bug | Plik / linia | Opis | Status |
 |---|---|---|---|
-| BUG-KEEP-HIDDEN | NameEngine.kt:667, PseudonymResultPanel.kt:508 | „Zostaw ukryte" ustawia tylko status UI (KEEP\_HIDDEN), nie tworzy tokenu ani nie podmienia tekstu. Flaga zostaje „obsłużona", eksport odblokowuje się, ale oryginalna treść idzie w output | 🔲 |
-| BUG-REMEMBER-MASK | PseudonymResultPanel.kt:1096, PseudonymEngine.kt:183 | „Zamaskuj i zapamiętaj na przyszłość" zapisuje do UserDictionary i oznacza KEEP\_HIDDEN, ale NIE maskuje bieżącego dokumentu. Zmiana dotyczy tylko kolejnych dokumentów | 🔲 |
-| BUG-RED-COPY | PseudonymResultPanel.kt:274, 1310 | RED Guard hit blokuje wysyłkę (`canSend`) ale nie blokuje „Kopiuj dokument" (`canAct`). Przy obsłużonych flagach + aktywnym RED można skopiować tekst z PESEL/NIP | 🔲 |
-| BUG-MANUAL-SAVE | PseudonymResultPanel.kt:126, ShareTargetActivity.kt:328 | Ręczne maski działają w lokalnym `outputText` w UI. Zapis sesji używa pierwotnego `result.pseudonymizedText`. Biblioteka może pokazać wersję bez ręcznych masek użytkownika | 🔲 |
+| BUG-KEEP-HIDDEN | NameEngine.kt:667, PseudonymResultPanel.kt:508 | „Zostaw ukryte" ustawia tylko status UI (KEEP\_HIDDEN), nie tworzy tokenu ani nie podmienia tekstu. Flaga zostaje „obsłużona", eksport odblokowuje się, ale oryginalna treść idzie w output | ✅ 21.06 db23850 |
+| BUG-REMEMBER-MASK | PseudonymResultPanel.kt:1096, PseudonymEngine.kt:183 | „Zamaskuj i zapamiętaj na przyszłość" zapisuje do UserDictionary i oznacza KEEP\_HIDDEN, ale NIE maskuje bieżącego dokumentu. Zmiana dotyczy tylko kolejnych dokumentów | ✅ 21.06 db23850 |
+| BUG-RED-COPY | PseudonymResultPanel.kt:274, 1310 | RED Guard hit blokuje wysyłkę (`canSend`) ale nie blokuje „Kopiuj dokument" (`canAct`). Przy obsłużonych flagach + aktywnym RED można skopiować tekst z PESEL/NIP | ✅ 21.06 db23850 |
+| BUG-MANUAL-SAVE | PseudonymResultPanel.kt:126, ShareTargetActivity.kt:328 | Ręczne maski działają w lokalnym `outputText` w UI. Zapis sesji używa pierwotnego `result.pseudonymizedText`. Biblioteka może pokazać wersję bez ręcznych masek użytkownika | ✅ 21.06 db23850 |
 
 ### P1 — STRUKTURALNE: luki zakresu (naprawić przed publicznym release)
 
@@ -639,10 +639,14 @@ Niezależny audyt kodu przez Codex (read-only, po commicie). Znaleziska podzielo
 | BUG-DELETE-DICT | SessionStore.kt:414, MainActivity.kt:342 | „Usuń wszystkie dane" czyści tylko tabele SQLCipher. Nie czyści UserDictionary ani GuardAllowlist — mogą zawierać PII | 🔲 |
 | BUG-EXPORT-DEPSEUDO | DepseudonymizationScreen.kt:303 | Depseudonimizowany tekst może być wyeksportowany do publicznego Downloads bez ostrzeżenia | 🔲 |
 
-### Naprawione przy audycie (21.06)
+### Naprawione przy audycie i w sesji 21.06 noc
 
 - ✅ 4 testy JVM z `println`-PASS zamiast asercji: `NIP rozne formaty`, `IBAN pelny zakres formatow`, `IBAN rozne formaty`, `testWyciekiV2` — commit 33eea12
 - ✅ BUG-05 FP (PLN 1234 / POLSKA-1234-5678) udokumentowany jako osobny test `BUG05 znane FP tablice i identyfikatory`
+- ✅ P0: BUG-KEEP-HIDDEN, BUG-REMEMBER-MASK, BUG-RED-COPY, BUG-MANUAL-SAVE — commit db23850
+- ✅ S5 regres PESEL: wzorzec kontekstowy `pe[s5][e3]l` usunięty z `PESEL_PATTERN_STRINGS` — commit cb27dc0. OCR error w jednej cyfrze PESELu nie blokuje już maskowania gdy tekst zawiera „PESEL:". Goły `\d{11}` bez kontekstu nadal sprawdza sumę.
+- ✅ S8 wzorce dat (S-DATE-PL, S-DATE-CTX, S-DATE-ISO) — commitowane razem z S5 regres fix
+- ✅ Benchmark: dataset\_staly/fresh rozdzielone na osobne pliki bat — commit dd612fc
 
 ---
 
@@ -661,4 +665,39 @@ Użytkownik może potem edytować/usuwać wpisy jak zwykły słownik. Seed to st
 Plik `edge_cases_do_slownika.txt` w katalogu głównym projektu — zbieramy encje których silnik nie obsługuje, Paweł maskuje ręcznie przez UI.
 
 **Do zaimplementowania kiedy:** po zakończeniu pracy nad silnikiem, przed pierwszym publicznym release.
+
+---
+
+## 23. AUDYT AGENTA — ZNALEZISKA (21.06.2026)
+
+Niezależny audyt kodu przez agenta Claude Code (read-only, 50 tool uses). Pełny raport w `AgentAudit.txt`. Znaleziska NOWE — nieobecne w Codex.txt. Mapa architektury zaktualizowana do stanu 21.06 (`MAPA_ARCHITEKTURY_LynxMask_mobile_v2.md`).
+
+| ID | Priorytet | Plik | Opis | Status |
+|---|---|---|---|---|
+| AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | 🔲 |
+| AUDIT-02 | ŚREDNIE | GuardAllowlist.kt:86 | `_loaded = true` ustawiane nawet po błędzie ładowania — cicha utrata allowlist bez retry. Log.w bez DEBUG guard wyrzuca wartość słownika do Logcat | 🔲 |
+| AUDIT-03 | ŚREDNIE | StructuralEngine.kt | CATCHALL w `PESEL_PATTERN_STRINGS` i `NIP_PATTERN_STRINGS` → S5 sprawdza sumę dla WSZYSTKICH \d{8,}, nie tylko PESEL/NIP. FN ryzyko. Częściowo naprawione przez S5 regres fix (cb27dc0) | 🔲 |
+| AUDIT-04 | NISKIE | StructuralEngine.kt | Zduplikowane wzorce IBAN (PL IBAN i IBAN kontekstowy pojawiają się podwójnie ~linie 303-312 i ~338-340) | 🔲 |
+| AUDIT-05 | NISKIE | PseudonymEngine.kt:203-204 | `Log.d` z liczbami wzorców bez warunku `BuildConfig.DEBUG` — w odróżnieniu od reszty projektu | 🔲 |
+| AUDIT-06 | NISKIE | DebugLogBuffer | `clearOnExit()` nie jest podpięty do żadnej metody cyklu życia (MainActivity / ShareTargetActivity) | 🔲 |
+| AUDIT-07 | NISKIE | SessionStore.kt | `save()` z pustym maskedText używa `INSERT OR REPLACE` bez kolumny `masked_text_enc` — może nadpisać wcześniej zaszyfrowany tekst dla tego samego sessionId | 🔲 |
+| AUDIT-08 | INFO | ShareTargetActivity.kt | Niezgodność wersji: nagłówek mówi v2.3, mapa miała v2.6 | ✅ naprawione w mapie |
+
+Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REMEMBER-MASK, BUG-RED-COPY, BUG-MANUAL-SAVE, BUG-AL-OPEN, LoginScreen SHA-256.
+
+---
+
+## 24. AUDYT BIBLIOTEKI — SESJA UL (do zrobienia)
+
+**Zgłoszono:** 21.06.2026 wieczór, Paweł.
+
+Biblioteka dokumentów ma kilka bugów odkrytych przy ręcznym testowaniu. Odkładamy jako oddzielny modal — **sesja UL (UI Library)**.
+
+Znane problemy (wstępna lista):
+- **BUG-LIB-EDIT**: „Edytuj dokument" w menu biblioteki nie działa (kliknięcie → brak akcji / crash)
+- Więcej bugów niezidentyfikowanych — Paweł odkrył przy nawigacji
+
+**Zakres sesji UL:** pełny audyt biblioteki — wejście, lista dokumentów, menu po kliknięciu, edycja, usuwanie, eksport. Pliki główne: `SessionStore.kt`, widok biblioteki w `MainActivity.kt` lub osobny composable.
+
+**Priorytet:** po zamknięciu P1 bugów z sekcji 22 (BUG-FLAG-LIMIT, BUG-SCAN-P1).
 
