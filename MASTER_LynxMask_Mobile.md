@@ -61,7 +61,7 @@ Po diagnozie wydajesz pojedynczą zmianę. Po każdej zmianie: test (`.\\\\gradl
 |Pomiar|Wynik|Co realnie mówi|
 |-|-|-|
 |Czysty dokument, ręcznie przez apkę, LVL0–1|100% maskowania|silnik na czystym tekście działa; mówi o przypadkach, które przetestowano|
-|Benchmark z OCR, LVL03, 68 dok.|ogólny 74,3%|OSOBA 81,5%, EMAIL 83,3% (real ≈100%, błąd pomiaru), ADRES 87,8% (sufit OCR), NUMER \~73%, FP 91|
+|Benchmark stały (dataset\_fresh, fixed), 68 dok. — 2026-06-21\_1956|**RECALL 78,9% / PRECISION 68,2% / F1 73,2%**|Lvl0 95,2%, Lvl1 92,9%, Lvl2 42,0% (sufit OCR), Lvl3 82,7%. FP 157. To BASELINE stały — porównywać z tym.|
 |Zachowanie na NIEZNANYM dokumencie (dok. #101)|**NIEZBADANE**|ani testy ręczne, ani benchmark tego nie pokazują — patrz sekcja 7|
 
 **Wariancja benchmarku:** świeży dataset = inne dokumenty co run, recall waha się ±5%. To nie regresja. Regresja = ten sam dataset gorszy wynik.
@@ -77,7 +77,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |-|-|-|-|-|
 |S1|CAPS LOCK w nazwiskach|NameEngine|KOWALSKI JAN, PIETRASZKO PAWEL niewykrywane. toLookupForm() → lookup, bramka tylko gdy trafia w słownik (eliminuje UMOWA/RODO/REGON)|✅ 21.06|
 |S2|ASCII imiona|NameEngine|Stanislaw, Lukasz niewykrywane — słownik ma tylko formy z ogonkami. fold() przy starcie, foldedNames map|✅ 21.06|
-|S3|Inicjały przy nazwiskach|NameEngine|K. Kowalski → maskować całość. INITIALS\_RE, rozszerz span w lewo. Niskie ryzyko FP (tylko przy potwierdzonym nazwisku)|🔲|
+|S3|Inicjały przy nazwiskach|NameEngine|K. Kowalski → maskować całość. INITIALS\_RE, rozszerz span w lewo. Niskie ryzyko FP (tylko przy potwierdzonym nazwisku)|✅ 21.06 (NameEngine v1.12)|
 |S4|Kwoty słownie|StructuralEngine|„dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy|🔲|
 |S5|Walidacja sumy kontrolnej PESEL (RESEARCH-1)|StructuralEngine|PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność \~100%|✅ 21.06|
 |S6|Sklejanie nazwisk|NameEngine|„Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms|🔲|
@@ -251,7 +251,7 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 
 |Bug|Plik|Opis|Status|
 |-|-|-|-|
-|BUG-SERIA-DOWOD-CYFRA|OcrNormalizer|OCR zamienia literę Z na cyfrę 2 w serii dowodu: `2TS935950` zamiast `ZTS935950`. Krok 11d nie obejmuje (odwrotna konwersja: cyfra→litera). Wymaga osobnego wzorca kontekstowego OCR\_SERIA\_DOWOD lub rozszerzenia krok 11d.|🔲 do zbadania|
+|~~BUG-SERIA-DOWOD-CYFRA~~|~~OcrNormalizer~~|~~OCR zamienia literę Z na cyfrę 2 w serii dowodu: `2TS935950` zamiast `ZTS935950`.~~|✅ 21.06 (OcrNormalizer v2.2 — OCR\_SERIES\_CHAR\_MAP)|
 |FP-FRAGMENTY-OCR|NameEngine|fragmenty słów / złamane linie jako OSOBA („nicznie", „mail\\njoanna"). Propozycja: OSOBA musi zawierać tylko litery, bez cyfr/znaków spec.|🔲 niski|
 |BUG-PESEL-OCR-SILNIK|StructuralEngine|doc\_00006: PESEL w OCR ale niezamaskowany, \\b\\d{11}\\b nie złapał (prawd. błąd OCR w cyfrach). Wymaga tekstu OCR do diagnozy|🔲 do zbadania|
 |BUG-28|NameEngine|lazy NAME\_FORWARD/BACKWARD/HONORIFIC\_REGEX kompilowany z fallback 200 imion PRZED LookupTables.init()|🔲 po OCR|
