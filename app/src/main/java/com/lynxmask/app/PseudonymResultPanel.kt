@@ -113,7 +113,7 @@ fun PseudonymResultPanel(
     onDebugLog: (() -> Unit)? = null,
     // Analogiczne do pola "Opis dokumentu" na desktopie.
     // Null = nie pokazuj pola (tryb gdzie opis nie jest potrzebny).
-    onSaveDescription: ((String) -> Unit)? = null
+    onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null
 ) {
     val flagDecisions = remember(result.flags) {
         mutableStateMapOf<String, EntityDecision>().also { map ->
@@ -285,7 +285,7 @@ fun PseudonymResultPanel(
         // Widoczne tylko gdy ShareTargetActivity przekazuje onSaveDescription.
         if (onSaveDescription != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            DescriptionSection(onSave = onSaveDescription)
+            DescriptionSection(onSave = { desc -> onSaveDescription(outputText, desc) })
         }
     }
 
@@ -300,6 +300,10 @@ fun PseudonymResultPanel(
             onAddToAllowlist = if (onAddToAllowlist != null) { value ->
                 onAddToAllowlist(value, "OSOBA")
             } else null,
+            onMaskFragment = { fragment, type ->
+                val token = nextToken(type)
+                manualMasks = manualMasks + (token to fragment)
+            },
             onDismiss = { showEncjeDialog = false }
         )
     }
@@ -381,6 +385,7 @@ private fun EncjeDialog(
     onRevealedTokensChange: (Set<String>) -> Unit,
     onAddToDict: ((String, String) -> Unit)?,
     onAddToAllowlist: ((String) -> Unit)? = null,
+    onMaskFragment: (fragment: String, type: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Stan decyzji encji lokalny dla dialogu
@@ -506,6 +511,7 @@ private fun EncjeDialog(
                         EntityDecisionFullScreen(
                             flag = flag,
                             onKeepHidden = {
+                                onMaskFragment(flag.fragment, "OSOBA")
                                 flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
                                 entityDialogFor = null
                             },
@@ -519,8 +525,9 @@ private fun EncjeDialog(
                                 flagDecisions[flag.fragment] = EntityDecision.REVEALED
                                 entityDialogFor = null
                             },
-                            onAddToDict = if (onAddToDict != null) ({ type ->
+                            onAddToDict = if (onAddToDict != null) ({ type: String ->
                                 onAddToDict(flag.fragment, type)
+                                onMaskFragment(flag.fragment, type)
                                 flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
                                 entityDialogFor = null
                             }) else null,
@@ -1310,7 +1317,7 @@ private fun ActionSection(
         OutlinedButton(
             onClick = onCopy,
             modifier = Modifier.fillMaxWidth(),
-            enabled = canAct,
+            enabled = canSend,
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(if (copied) "\u2713 Skopiowano" else "Kopiuj dokument")

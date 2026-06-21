@@ -325,15 +325,15 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         GuardAllowlist.add(context, value, ruleType)
                         DebugLogBuffer.log("GuardAllowlist", "Nie maskuj: '$value' ($ruleType) — łącznie ${GuardAllowlist.entries.size}")
                     },
-                    onSaveDescription = { description ->
-                        val maskedText = s.result.pseudonymizedText
+                    onSaveDescription = { maskedText, description ->
+                        val cleanText = maskedText
                             .removePrefix("SESJA_${s.result.sessionId}\n")
                         SessionStore.save(
                             context      = context,
                             sesjaId      = s.result.sessionId,
                             tokenMapJson = s.result.tokenMapJson(),
                             tokenCount   = s.result.tokenMap.size,
-                            maskedText   = maskedText
+                            maskedText   = cleanText
                         )
                         if (description.isNotBlank()) {
                             SessionStore.saveResponse(context, s.result.sessionId, description)
