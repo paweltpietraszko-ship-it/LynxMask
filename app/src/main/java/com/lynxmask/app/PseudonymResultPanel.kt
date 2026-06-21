@@ -297,6 +297,9 @@ fun PseudonymResultPanel(
             revealedTokens = revealedTokens,
             onRevealedTokensChange = { revealedTokens = it },
             onAddToDict = onAddToDict,
+            onAddToAllowlist = if (onAddToAllowlist != null) { value ->
+                onAddToAllowlist(value, "OSOBA")
+            } else null,
             onDismiss = { showEncjeDialog = false }
         )
     }
@@ -377,6 +380,7 @@ private fun EncjeDialog(
     revealedTokens: Set<String>,
     onRevealedTokensChange: (Set<String>) -> Unit,
     onAddToDict: ((String, String) -> Unit)?,
+    onAddToAllowlist: ((String) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     // Stan decyzji encji lokalny dla dialogu
@@ -517,6 +521,11 @@ private fun EncjeDialog(
                             },
                             onAddToDict = if (onAddToDict != null) ({ type ->
                                 onAddToDict(flag.fragment, type)
+                                flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
+                                entityDialogFor = null
+                            }) else null,
+                            onAddToAllowlist = if (onAddToAllowlist != null) ({
+                                onAddToAllowlist(flag.fragment)
                                 flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
                                 entityDialogFor = null
                             }) else null,
@@ -998,6 +1007,7 @@ private fun EntityDecisionFullScreen(
     onKeepHidden: () -> Unit,
     onReveal: () -> Unit,
     onAddToDict: ((String) -> Unit)?,
+    onAddToAllowlist: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     var selectedType by remember { mutableStateOf(TOKEN_OSOBA) }
@@ -1113,6 +1123,27 @@ private fun EntityDecisionFullScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("📚  Zamaskuj i zapamiętaj na przyszłość", fontSize = 15.sp)
+            }
+        }
+
+        if (onAddToAllowlist != null) {
+            HorizontalDivider(color = LynxColors.Blue.copy(alpha = 0.15f))
+
+            Text(
+                "To nie są dane osobowe:",
+                style = MaterialTheme.typography.labelMedium,
+                color = LynxColors.TextSecondary
+            )
+
+            TextButton(
+                onClick = onAddToAllowlist,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "✗  Nie maskuj — to śmieci, zapamiętaj",
+                    fontSize = 15.sp,
+                    color = LynxColors.TextMuted
+                )
             }
         }
 

@@ -41,11 +41,29 @@ class OcrNormalizerDigitContextTest {
     }
 
     @Test
-    fun `OCR_DIGIT_IN_CONTEXT nie skleja przez spacje`() {
-        // "60l 234" — spacja między 'l' a '2' → lookahead (?=\d) nie pasuje przez spację
+    fun `OCR_DIGIT_IN_CONTEXT naprawia l przez spacje gdy po spacji cyfra`() {
+        // v2.1: 'l' po cyfrze + spacja + cyfra → naprawia (kontekst liczby z grupami)
+        // "60l 234 567" → "601 234 567" (np. numer telefonu rozbity przez OCR)
         val result = OcrNormalizer.normalize("tel: 60l 234 567")
-        assertFalse("'l' ze spacją po prawej nie powinno być konwertowane",
+        assertTrue("'l' przed spacją+cyfrą powinno być konwertowane",
             result.normalizedText.contains("601 234"))
+    }
+
+    @Test
+    fun `OCR_DIGIT_IN_CONTEXT nie zmienia gdy po spacji litera`() {
+        // "3l abc" — po spacji litera, nie cyfra → bez zmian
+        val result = OcrNormalizer.normalize("poz. 3l abc")
+        assertFalse("'l' przed spacją+literą nie powinno być konwertowane",
+            result.normalizedText.contains("31 abc"))
+    }
+
+    @Test
+    fun `OCR_DIGIT_IN_CONTEXT naprawia O w grupie IBAN przed spacja`() {
+        // "325O 0003" → "3250 0003" — 'O' na końcu grupy cyfr IBAN (v2.1)
+        val input = "Nr konta: PL03 325O 0003 6637 2867 44O1 4154"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue("'O' na końcu grupy IBAN powinno być '0'",
+            result.normalizedText.contains("3250 0003"))
     }
 
     // ── OCR_PESEL_SPLIT v2.0 — l/O + spacja ────────────────────────────────────

@@ -274,7 +274,7 @@ object PseudonymEngine {
         }
 
         // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
-        detectAlgorithmicFlags(text, flags)
+        detectAlgorithmicFlags(text, flags, guardAllowlist)
 
         // --- Warstwa 6: Output Guard ---
         val allGuardHits = runOutputGuard(text, tokenMap)

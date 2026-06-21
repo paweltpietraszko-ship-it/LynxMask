@@ -631,7 +631,11 @@ internal fun applyContextualBlacklist(
 // ============================================================
 // Warstwa 5 — Detekcja algorytmiczna (TYLKO FLAGI)
 // ============================================================
-internal fun detectAlgorithmicFlags(text: String, flags: MutableList<PseudonymFlag>) {
+internal fun detectAlgorithmicFlags(
+    text: String,
+    flags: MutableList<PseudonymFlag>,
+    guardAllowlist: List<Pair<String, String>> = emptyList()
+) {
     val sentences = text.split(Regex("""[.!?\n]\s*"""))
     val rawFlags = mutableListOf<PseudonymFlag>()
     val seenFragments = mutableSetOf<String>()
@@ -712,8 +716,12 @@ internal fun detectAlgorithmicFlags(text: String, flags: MutableList<PseudonymFl
         }
     }
 
-    val prioritized = rawFlags.sortedWith(
-        compareBy({ it.isContextual }, { rawFlags.indexOf(it) })
-    )
+    val prioritized = rawFlags
+        .filter { flag ->
+            guardAllowlist.none { (value, ruleType) ->
+                ruleType == "OSOBA" && flag.fragment.equals(value, ignoreCase = true)
+            }
+        }
+        .sortedWith(compareBy({ it.isContextual }, { rawFlags.indexOf(it) }))
     flags.addAll(prioritized.take(5))
 }

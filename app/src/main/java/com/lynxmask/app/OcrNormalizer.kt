@@ -298,11 +298,12 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
-    // OCR_DIGIT_IN_CONTEXT: litera l/O/I bezpośrednio między cyframi → cyfra
-    // "9l04" → "9104", "2ll073" → "2110073" (safety net — krok 14)
-    // NIE działa przez spacje: "60l 234" pozostaje — spacja przerywa kontekst
+    // OCR_DIGIT_IN_CONTEXT: litera l/O/I po cyfrze, przed cyfrą lub spacją+cyfrą → cyfra
+    // "9l04"    → "9104"   (bez spacji)
+    // "325O 0003" → "3250 0003" (O na końcu grupy IBAN przed spacją — v2.1)
+    // NIE przekracza newline: [^\S\n]* zatrzymuje się na końcu linii
     // ----------------------------------------------------------
-    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOI]+(?=\d)""")
+    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOI]+(?=[^\S\n]*\d)""")
 
     // ----------------------------------------------------------
     // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
