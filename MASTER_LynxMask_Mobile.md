@@ -1,6 +1,6 @@
 # MASTER — LynxMask Mobile
 
-**Wersja:** 1.0 (20.06.2026, po scaleniu sesji porannej i popołudniowej)
+**Wersja:** 1.1 (21.06.2026 wieczór, po sesjach silnika: S5, S8, OcrNormalizer v2.1)
 **Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
 **Data konsolidacji:** 20.06.2026
 **Źródła:** BRIEF\_Sonet\_18\_06\_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO\_silnik.md (20.06, OCR + silnik), TODO\_LynxMask\_mobile\_12\_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA\_ARCHITEKTURY\_mobile\_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
@@ -75,16 +75,16 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 
 |#|Zadanie|Plik|Opis|Status|
 |-|-|-|-|-|
-|S1|CAPS LOCK w nazwiskach|NameEngine|KOWALSKI JAN, PIETRASZKO PAWEL niewykrywane. toLookupForm() → lookup, bramka tylko gdy trafia w słownik (eliminuje UMOWA/RODO/REGON)|🔲|
-|S2|ASCII imiona|NameEngine|Stanislaw, Lukasz niewykrywane — słownik ma tylko formy z ogonkami. fold() przy starcie, foldedNames map|🔲|
+|S1|CAPS LOCK w nazwiskach|NameEngine|KOWALSKI JAN, PIETRASZKO PAWEL niewykrywane. toLookupForm() → lookup, bramka tylko gdy trafia w słownik (eliminuje UMOWA/RODO/REGON)|✅ 21.06|
+|S2|ASCII imiona|NameEngine|Stanislaw, Lukasz niewykrywane — słownik ma tylko formy z ogonkami. fold() przy starcie, foldedNames map|✅ 21.06|
 |S3|Inicjały przy nazwiskach|NameEngine|K. Kowalski → maskować całość. INITIALS\_RE, rozszerz span w lewo. Niskie ryzyko FP (tylko przy potwierdzonym nazwisku)|🔲|
 |S4|Kwoty słownie|StructuralEngine|„dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy|🔲|
-|S5|Walidacja sumy kontrolnej PESEL (RESEARCH-1)|StructuralEngine|PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność \~100%|🔲|
+|S5|Walidacja sumy kontrolnej PESEL (RESEARCH-1)|StructuralEngine|PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność \~100%|✅ 21.06|
 |S6|Sklejanie nazwisk|NameEngine|„Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms|🔲|
 |S7|BUG-EMAIL-TOKEN|StructuralEngine|EMAIL wykrywany jako NUMER zamiast EMAIL|🔲|
-|S8|BUG-DATE-PARTIAL|StructuralEngine|2026-06-20 → maskuje rok-miesiąc, zostaje „-20"|🔲|
-|S9|BUG-FP-REFNUM|StructuralEngine|UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive)|🔲|
-|S10|BUG-TEL-PREFIX|StructuralEngine|(22) 765-43-21 → prefiks (22) pomijany|🔲|
+|S8|BUG-DATE-PARTIAL|StructuralEngine|2026-06-20 → maskuje rok-miesiąc, zostaje „-20"|✅ 21.06|
+|~~S9~~|~~BUG-FP-REFNUM~~|~~StructuralEngine~~|~~UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive)~~|✅ zamknięty — >80% dopasowań to prawdziwe PII, FP kosmetyczne (encje i tak zakryte)|
+|~~S10~~|~~BUG-TEL-PREFIX~~|~~StructuralEngine~~|~~(22) 765-43-21 → prefiks (22) pomijany~~|✅ 21.06|
 |S11|Email z imieniem w local-part|StructuralEngine + NameEngine|„email: joanna.grabowska@interia.pl" → imię maskowane jako OSOBA, wzorzec kontekstowy „e-mail:" wchodzi w konflikt z NameEngine. Zbadać kolejność|🔲|
 
 \---
@@ -96,8 +96,8 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |N1|BUG-EMAIL-TLD1|@wp p1 — TLD z cyfrą. Fix: `(\\\[a-zA-Z]{2,4})\\\\b` → `(\\\[a-zA-Z0-9]{2,4})\\\\b` (linia 159)|✅ 19.06|
 |N2|BUG-NIP-SPLIT|NIP naprawiony tylko do połowy, silnik łapie fragmenty jako dwa NUMER. Zbadać który fragment nie jest naprawiany|🔲|
 |N3|OCR\_EMAIL\_LOCALSPACE wiele spacji|naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów|🔲|
-|N4|IBAN przez newline|„PL61 1020...\\n0000..." nie sklejany. Reguła OCR\_IBAN\_NEWLINE|🔲|
-|N5|KNOWN\_CITY\_FORMS bez ogonków|Bialystok, Lodz, Krakow — stosować fold() dla kandydata|🔲|
+|N4|IBAN przez newline|„PL61 1020...\\n0000..." nie sklejany. Reguła OCR\_IBAN\_NEWLINE|✅ 21.06 (v2.3)|
+|N5|KNOWN\_CITY\_FORMS bez ogonków|Bialystok, Lodz, Krakow — stosować fold() dla kandydata|✅ 21.06 (v2.4)|
 |N6|De-leet imion/nazwisk|✅ 21.06 — własna impl. w OcrNormalizer krok 15 (bez zewnętrznych bibliotek)|✅|
 |N7|Nagłówek wersji nieaktualny|nagłówek mówi v1.3, realnie v1.6. Zaktualizować|✅ 20.06 (v2.0)|
 
@@ -184,6 +184,27 @@ Dwie rzeczy realnie testują dok. #101:
 
 \---
 
+## 10a\. NAPRAWIONE W SESJI 21.06 WIECZÓR (informacyjnie)
+
+**OcrNormalizer v2.1** (krok 14 + krok 11d):
+- Krok 14 `OCR_DIGIT_IN_CONTEXT` rozszerzony o lowercase `o` → `[lOIo]`. Naprawia `o` między cyframi (np. `71o1` → `7101`).
+- Krok 11d `OCR_DOWOD_DIGITS` (nowy) — poprawia S→5, O→0, I→1, B→8, G→6, Z→2 w cyfrowej części numeru dowodu osobistego **po słowie kluczowym** (dowód/d.o.). Bez słowa kluczowego nie działa.
+
+**StructuralEngine v2.2** (S8 / BUG-DATE-PARTIAL):
+- `S-DATE-ISO` — data ISO `YYYY-MM-DD` (strukturalna, bez kontekstu, rocznik 19xx/20xx).
+- `S-DATE-PL` — data polska `DD.MM.YYYY` z separatorami `.`, `,`, `/`, `-` (strukturalna, bez kontekstu).
+- `S-DATE-CTX` — data z kontekstem DATA/DNIA, rok 2 lub 4 cyfry.
+
+**Testy:** 340 testów, 0 FAILED (po aktualizacji 3 testów które dokumentowały stare zachowanie + 11 nowych).
+
+**Benchmark (fresh, 2026-06-21 18:47):** Recall 78,9%, 18 krytycznych braków — wszystkie BRAK\_W\_OCR (sufit OCR Lvl 2). Żaden nie jest bugiem silnika.
+
+**Nowy znaleziony przypadek (nienawrawiony):** OCR doc\_00020 widzi `2TS935950` zamiast `ZTS935950` — cyfra `2` w miejscu litery `Z` w serii dowodu osobistego (lvl=1, qs=99). Krok 11d nie pomaga (odwrotna sytuacja: cyfra zamiast litery, nie litera zamiast cyfry). Kandydat do krok 11d v2 lub osobnego wzorca OCR\_SERIA\_DOWOD.
+
+**Seed dictionary — koncepcja (21.06):** edge\_cases\_do\_slownika.txt w katalogu głównym — plik na encje trudne do opisania regułą (np. daty odwrócone). Po zakończeniu pracy nad silnikiem: wgrać jako seed\_dictionary.json do assets APK, załadować przy pierwszym uruchomieniu przez SharedPreferences("seed\_loaded").
+
+---
+
 ## 10\. NAPRAWIONE W SESJACH 17–18.06 (informacyjnie)
 
 NameEngine: LOOKUP-FIX TITLE\_PATTERN, surnamesForms do pozytywnej detekcji (to była realna przyczyna niskiego OSOBA), HONORIFIC\_NAME\_ONLY, namesForms standalone, zdrobnienia 174→197 imion, kolejność bloków wg specyficzności.
@@ -220,7 +241,7 @@ Po każdej zmianie silnika: test DOCX na telefonie (silnik w izolacji) PRZED ben
 
 ## 12\. WERSJE PLIKÓW — DO WERYFIKACJI
 
-Najnowsze udokumentowane: OcrNormalizer v2.0, NameEngine v1.10, StructuralEngine v1.7, OutputGuard v2.0. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
+Najnowsze udokumentowane: OcrNormalizer v2.1, NameEngine v1.10, StructuralEngine v2.2, OutputGuard v2.0. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
 
 \---
 
@@ -230,6 +251,7 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 
 |Bug|Plik|Opis|Status|
 |-|-|-|-|
+|BUG-SERIA-DOWOD-CYFRA|OcrNormalizer|OCR zamienia literę Z na cyfrę 2 w serii dowodu: `2TS935950` zamiast `ZTS935950`. Krok 11d nie obejmuje (odwrotna konwersja: cyfra→litera). Wymaga osobnego wzorca kontekstowego OCR\_SERIA\_DOWOD lub rozszerzenia krok 11d.|🔲 do zbadania|
 |FP-FRAGMENTY-OCR|NameEngine|fragmenty słów / złamane linie jako OSOBA („nicznie", „mail\\njoanna"). Propozycja: OSOBA musi zawierać tylko litery, bez cyfr/znaków spec.|🔲 niski|
 |BUG-PESEL-OCR-SILNIK|StructuralEngine|doc\_00006: PESEL w OCR ale niezamaskowany, \\b\\d{11}\\b nie złapał (prawd. błąd OCR w cyfrach). Wymaga tekstu OCR do diagnozy|🔲 do zbadania|
 |BUG-28|NameEngine|lazy NAME\_FORWARD/BACKWARD/HONORIFIC\_REGEX kompilowany z fallback 200 imion PRZED LookupTables.init()|🔲 po OCR|
@@ -302,8 +324,9 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 3. **YELLOW hity** — jedna lista łącząca Guard YELLOW + NameEngine flags (klasa B). Użytkownik nie widzi źródła — to jeden strumień alertów. Każda pozycja: **„Maskuj"** (automatyczne, typ z kontekstu labelu, bez dialogu) + **„Nie maskuj"** (do GuardAllowlist, hit znika). Kolejność: najpierw Guard YELLOW, potem NameEngine flags.
 4. ~~**Formularz maskowania wbudowany inline**~~ — przeniesiony do modalu „Podgląd tekstu" (decyzja 21.06). Osobny przycisk „Dodaj" / ManualDialog do usunięcia.
 5. **Kopiuj dokument**
-6. **Wyślij do Claude** ❌ NIEZAIMPLEMENTOWANE
-7. **Opis dokumentu** — pole tekstowe, opcjonalne
+6. **Dodaj do biblioteki** — aktywny tak samo jak "Kopiuj dokument" (odblokowuje się po obsłużeniu wszystkich RED hitów). Funkcjonalność już istnieje podpięta pod `onSaveDescription` (ShareTargetActivity → SessionStore.save), ale schowana w polu opisu — tu dostaje własny widoczny przycisk.
+7. **Wyślij do Claude** ❌ NIEZAIMPLEMENTOWANE
+8. **Opis dokumentu** — pole tekstowe, opcjonalne
 
 **Mapowanie labelu Guard YELLOW → typ tokenu przy automatycznym maskowaniu:**
 
@@ -540,4 +563,63 @@ ZAMKNIĘTY — 10-cyfrowy PESEL z OCR jest maskowany przez wzorzec kontekstowy.
 **Stan testów: 277 testów, 0 FAILED, 1 @Ignore.**
 
 **Następny krok:** test ręczny dokumentu na urządzeniu, potem Sonet (mechanizm odkrywania tokenu).
+
+---
+
+### SESJA 21.06 (3) — ZROBIONE
+
+**S1/S2 CAPS LOCK + ASCII imiona (commit w sesji 21.06):** NameEngineCapsAsciiTest — +7 testów, 0 FAILED. S1 i S2 zamknięte.
+
+**S5 — walidacja sumy kontrolnej PESEL/NIP (commit 302022c):**
+
+Zaimplementowane w `StructuralEngine.kt` (v2.0) + `PseudonymEngine.kt`:
+- `isValidPesel()`: wagi [1,3,7,9,1,3,7,9,1,3], mod 10. Blokada telefonu z prefiksem 48 (`!digits.startsWith("48")`).
+- `isValidNip()`: wagi [6,5,7,2,3,4,5,6,7], mod 11. Jeśli suma==10 → NIP nieważny.
+- S5 stosowany przez `PESEL_PATTERN_STRINGS` / `NIP_PATTERN_STRINGS` (porównanie `pattern.pattern in set`).
+- CATCHALL `\b(?!(?:19|20)\d{2}\b)\d{8,}\b` dodany do obu zbiorów — bez tego 8+ cyfrowe ciągi omijały S5.
+- Naprawa OcrDegradationTest (4× invalid PESEL/NIP → valid), PseudonymEngineTest (3× invalid PESEL, 1× NIP format bez separatorów), engine_golden_text.txt.
+
+**Stan testów po S5: 317 testów, 0 FAILED, 1 skipped.**
+
+**Benchmark stały (2026-06-21 14:32) — po S5:**
+
+| Metryka | Baseline v1.9b | Po S5 | Δ |
+|---|---|---|---|
+| Recall | 76,5% | **75,8%** | -0,7pp |
+| Precision | 72,1% | 72,9% | +0,8pp |
+| F1 | 74,3% | 74,3% | 0 |
+| NUMER recall | 77,6% | **76,5%** | -1,1pp |
+| Krytyczne braki | 22 | **25** | +3 |
+| Lvl 0 | 97,2% | 97,2% | 0 |
+| Lvl 1 | 97,3% | 96,4% | -0,9pp |
+| Lvl 2 | 29,3% | **27,3%** | -2pp |
+| Lvl 3 | — | 78,3% | |
+
+Regresja -0,7pp = **3 S5 false negatywy** — PESEL/NIP poprawne matematycznie, ale OCR na Lvl 2 przekręcił jedną cyfrę → suma kontrolna nie przechodzi → S5 słusznie blokuje. Akceptowalny koszt: silnik nie maskuje już losowych ciągów bez poprawnej sumy kontrolnej.
+
+**Decyzja właściciela — Lvl 2 odrzucony:**
+
+Lvl 2 (noise+blur, qs 76–87) to sufit OCR bez preprocessingu obrazu. Naprawa wymaga pipeline'u przed ML Kit (grayscale → binaryzacja adaptacyjna → upscale). Koszt wdrożenia > korzyść w obecnej fazie. **Lvl 2 = ślepa uliczka. Nie walczyć. Skupiamy się na Lvl 0/1/3.**
+
+Bez Lvl 2: NUMER recall na dobrych obrazach ~93%.
+
+**Następny krok: BUG-DATE-PARTIAL lub BUG-FP-REFNUM** — patrz sekcja 2 i otwarte bugi silnika.
+
+---
+
+## Seed słownik — koncepcja (21.06.2026)
+
+**Problem:** APK ze sklepu startuje z pustym UserDictionary, mimo że wiadomo że pewne encje silnik strukturalny nie obsłuży (edge cases OCR, rzadkie formaty).
+
+**Docelowe rozwiązanie:**
+`seed_dictionary.json` w `assets/` — ładowany jednorazowo przy pierwszym uruchomieniu:
+```
+SharedPreferences("seed_loaded") == false → UserDictionary.importFromJson(seed) → seed_loaded = true
+```
+Użytkownik może potem edytować/usuwać wpisy jak zwykły słownik. Seed to startowy punkt, nie lockin.
+
+**Na dziś (przed implementacją seed mechanizmu):**
+Plik `edge_cases_do_slownika.txt` w katalogu głównym projektu — zbieramy encje których silnik nie obsługuje, Paweł maskuje ręcznie przez UI.
+
+**Do zaimplementowania kiedy:** po zakończeniu pracy nad silnikiem, przed pierwszym publicznym release.
 
