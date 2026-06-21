@@ -29,10 +29,13 @@ echo [3/4] Uruchamianie benchmarku (czekaj ~30 sekund)...
 adb shell am instrument -w -r -e class com.lynxmask.app.BenchmarkInstrumentedTest com.lynxmask.app.test/androidx.test.runner.AndroidJUnitRunner
 
 echo [4/4] Pobieranie wynikow...
-if not exist benchmark_results mkdir benchmark_results
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_report.txt benchmark_results\benchmark_report.txt
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_bugs.txt benchmark_results\benchmark_bugs.txt
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_trace.txt benchmark_results\
+for /f "tokens=2 delims==" %%a in ('wmic os get localdatetime /format:list') do set DT=%%a
+set TIMESTAMP=%DT:~0,4%-%DT:~4,2%-%DT:~6,2%_%DT:~8,2%%DT:~10,2%
+set OUTDIR=benchmark_results\fresh\%TIMESTAMP%
+mkdir %OUTDIR%
+adb pull /storage/emulated/0/Documents/LynxMask/benchmark_report.txt %OUTDIR%\benchmark_report.txt
+adb pull /storage/emulated/0/Documents/LynxMask/benchmark_bugs.txt %OUTDIR%\benchmark_bugs.txt
+adb pull /storage/emulated/0/Documents/LynxMask/benchmark_trace.txt %OUTDIR%\
 
-echo === Gotowe. Wyniki w benchmark_results\ ===
+echo === Gotowe. Wyniki w %OUTDIR%\ ===
 pause

@@ -266,6 +266,15 @@ def _run_text_engine(text: str) -> list[dict[str, str]]:
 def _norm(v: str) -> str:
     return v.replace(" ", "").replace("-", "").lower()
 
+# Usuwa prefiks klucza takie jak "PESEL: ", "NIP: " itp. z tokenu silnika.
+# Silnik kontekstowy maskuje całe dopasowanie (np. "PESEL: 860202037006"),
+# a benchmark porównuje tylko wartości liczbowe z ground truth.
+_LABEL_PREFIX_RE = re.compile(r'^[A-Za-z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ ]{2,15}[:\s\-–]{1,3}')
+
+def _norm_strip_label(v: str) -> str:
+    """Normalizuje token po usunięciu ewentualnego prefiksu kluczowego."""
+    return _norm(_LABEL_PREFIX_RE.sub('', v.strip()))
+
 def _fuzzy_match_numeric(a: str, b: str) -> bool:
     if len(a) < 9 or len(b) < 9:
         return False
@@ -286,6 +295,27 @@ def analyze(
     resp: dict[str, Any],
 ) -> dict[str, Any]:
 
+    if resp.get("bench_skipped"):
+        return {
+            "file":          gt["file"],
+            "doc_type":      gt.get("doc_type", "?"),
+            "quality_score": gt.get("quality_score", -1),
+            "deg_level":     gt.get("degradation_level", -1),
+            "ocr_text_len":  0,
+            "ocr_conf":      resp.get("ocr_conf"),
+            "ocr_chars":     resp.get("ocr_chars", 0),
+            "bench_error":   None,
+            "bench_skipped": True,
+            "tokens_found":  [],
+            "false_positives": [],
+            "entities":      [],
+            "summary": {
+                "total_entities": 0, "detected": 0, "missed": 0,
+                "critical_missed": 0, "false_positives": 0,
+                "recall": None, "precision": None, "f1": None,
+            },
+        }
+
     result: dict[str, Any] = {
         "file":          gt["file"],
         "doc_type":      gt.get("doc_type", "?"),
@@ -302,7 +332,10 @@ def analyze(
 
     gt_entities: dict[str, Any] = gt.get("entities", {})
     gt_norms    = [_norm(str(v)) for v in gt_entities.values()]
-    orig_norms  = [_norm(str(t.get("original", ""))) for t in resp.get("tokens", [])]
+    tokens      = resp.get("tokens", [])
+    orig_norms  = [_norm(str(t.get("original", ""))) for t in tokens]
+    # Wersje bez prefiksu kontekstowego ("PESEL: 860202..." → "860202...")
+    orig_norms_stripped = [_norm_strip_label(str(t.get("original", ""))) for t in tokens]
 
     total = detected = critical_missed = 0
     for key, val in gt_entities.items():
@@ -311,7 +344,7 @@ def analyze(
         found   = False
 
         if not resp.get("bench_error"):
-            for on in orig_norms:
+            for on in orig_norms + orig_norms_stripped:
                 if val_n == on:
                     found = True; break
                 if len(val_n) >= 6 and (val_n in on or on in val_n):
@@ -344,12 +377,14 @@ def analyze(
 
     false_positives: list[dict] = []
     for tok in resp.get("tokens", []):
-        orig   = str(tok.get("original", ""))
-        orig_n = _norm(orig)
+        orig        = str(tok.get("original", ""))
+        orig_n      = _norm(orig)
+        orig_n_bare = _norm_strip_label(orig)  # bez prefiksu "PESEL: " itp.
         if not orig_n or len(orig_n) < 2:
             continue
         matched = any(
-            orig_n == gn or (len(orig_n) >= 6 and (orig_n in gn or gn in orig_n))
+            (orig_n == gn or (len(orig_n) >= 6 and (orig_n in gn or gn in orig_n)) or
+             orig_n_bare == gn or (len(orig_n_bare) >= 6 and (orig_n_bare in gn or gn in orig_n_bare)))
             for gn in gt_norms
         )
         if not matched:
@@ -464,19 +499,26 @@ def run_benchmark(
             result = analyze(gt_entry, resp)
             batch_results.append(result)
 
-            s      = result["summary"]
-            rec    = f"{s['recall']*100:.0f}%"    if s["recall"]    is not None else " N/A"
-            prec   = f"{s['precision']*100:.0f}%" if s["precision"] is not None else " N/A"
-            fp_str = f" FP:{s['false_positives']}"     if s["false_positives"] > 0 else ""
-            crit   = f" ⚠CRIT:{s['critical_missed']}"  if s["critical_missed"]  else ""
-            err    = f" ERR:{result['bench_error']}"    if result["bench_error"] else ""
-            conf_s = (f" conf={result['ocr_conf']:.0f}%"
-                      if result["ocr_conf"] is not None
-                      else f" qs={result['quality_score']}")
+            if result.get("bench_skipped"):
+                conf_s = (f"conf={result['ocr_conf']*100:.0f}%"
+                          if result["ocr_conf"] else "conf=N/A")
+                print(f"  [{i:3d}] {img_path.name:<20} {result['doc_type']:<22} "
+                      f"lvl={result['deg_level']} [SITO] odrzucony"
+                      f" ({conf_s}, chars={result['ocr_chars']})")
+            else:
+                s      = result["summary"]
+                rec    = f"{s['recall']*100:.0f}%"    if s["recall"]    is not None else " N/A"
+                prec   = f"{s['precision']*100:.0f}%" if s["precision"] is not None else " N/A"
+                fp_str = f" FP:{s['false_positives']}"     if s["false_positives"] > 0 else ""
+                crit   = f" ⚠CRIT:{s['critical_missed']}"  if s["critical_missed"]  else ""
+                err    = f" ERR:{result['bench_error']}"    if result["bench_error"] else ""
+                conf_s = (f" conf={result['ocr_conf']:.0f}%"
+                          if result["ocr_conf"] is not None
+                          else f" qs={result['quality_score']}")
 
-            print(f"  [{i:3d}] {img_path.name:<20} {result['doc_type']:<22} "
-                  f"lvl={result['deg_level']}{conf_s:<12} "
-                  f"R={rec} P={prec}{fp_str}{crit}{err}")
+                print(f"  [{i:3d}] {img_path.name:<20} {result['doc_type']:<22} "
+                      f"lvl={result['deg_level']}{conf_s:<12} "
+                      f"R={rec} P={prec}{fp_str}{crit}{err}")
 
         all_results.extend(batch_results)
         _save_partial(all_results, run_dir, batch_no + 1)
@@ -496,29 +538,36 @@ def run_benchmark(
 def _print_batch_summary(results: list[dict], batch_no: int) -> None:
     if not results:
         return
-    total_ent  = sum(r["summary"]["total_entities"]  for r in results)
-    total_det  = sum(r["summary"]["detected"]        for r in results)
-    total_fp   = sum(r["summary"]["false_positives"] for r in results)
-    total_crit = sum(r["summary"]["critical_missed"] for r in results)
-    errors     = sum(1 for r in results if r["bench_error"])
+    active  = [r for r in results if not r.get("bench_skipped")]
+    skipped = len(results) - len(active)
+    total_ent  = sum(r["summary"]["total_entities"]  for r in active)
+    total_det  = sum(r["summary"]["detected"]        for r in active)
+    total_fp   = sum(r["summary"]["false_positives"] for r in active)
+    total_crit = sum(r["summary"]["critical_missed"] for r in active)
+    errors     = sum(1 for r in active if r["bench_error"])
     recall     = total_det / total_ent if total_ent > 0 else 0
     precision  = total_det / (total_det + total_fp) if (total_det + total_fp) > 0 else 0
+    skip_s     = f"  sito={skipped}" if skipped else ""
     print(f"\n  ── Paczka {batch_no} ──  "
           f"recall={recall*100:.1f}%  precision={precision*100:.1f}%  "
-          f"FP={total_fp}  crit_miss={total_crit}  err={errors}\n")
+          f"FP={total_fp}  crit_miss={total_crit}  err={errors}{skip_s}\n")
 
 
 def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> None:
     with open(run_dir / "report.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
+    skipped_results = [r for r in results if r.get("bench_skipped")]
+    active_results  = [r for r in results if not r.get("bench_skipped")]
+
     total_docs = len(results)
-    total_ent  = sum(r["summary"]["total_entities"]  for r in results)
-    total_det  = sum(r["summary"]["detected"]        for r in results)
+    skipped_count = len(skipped_results)
+    total_ent  = sum(r["summary"]["total_entities"]  for r in active_results)
+    total_det  = sum(r["summary"]["detected"]        for r in active_results)
     total_miss = total_ent - total_det
-    total_crit = sum(r["summary"]["critical_missed"] for r in results)
-    total_fp   = sum(r["summary"]["false_positives"] for r in results)
-    errors     = [r for r in results if r["bench_error"]]
+    total_crit = sum(r["summary"]["critical_missed"] for r in active_results)
+    total_fp   = sum(r["summary"]["false_positives"] for r in active_results)
+    errors     = [r for r in active_results if r["bench_error"]]
     recall_all = total_det / total_ent if total_ent > 0 else 0
     tp_fp      = total_det + total_fp
     prec_all   = total_det / tp_fp if tp_fp > 0 else 0
@@ -527,7 +576,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
     ts         = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     per_type: dict[str, dict[str, int]] = {}
-    for r in results:
+    for r in active_results:
         for e in r["entities"]:
             et = e["expected_type"]
             per_type.setdefault(et, {"detected": 0, "total": 0, "fp": 0})
@@ -540,7 +589,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
             per_type[et]["fp"] += 1
 
     per_level: dict[int, dict[str, int]] = {}
-    for r in results:
+    for r in active_results:
         lv = r["deg_level"]
         per_level.setdefault(lv, {"detected": 0, "total": 0, "docs": 0})
         per_level[lv]["docs"]     += 1
@@ -554,7 +603,9 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
         f"Tryb:  {mode}",
         "═" * 60, "",
         "OGÓLNE",
-        f"  Dokumentów:                    {total_docs}",
+        f"  Dokumentów łącznie:            {total_docs}",
+        f"  Odrzuconych przez sito OCR:    {skipped_count}",
+        f"  Przetworzonych przez silnik:   {len(active_results)}",
         f"  Encji w ground truth:          {total_ent}",
         f"  Wykrytych i zamaskowanych:     {total_det}",
         f"  Pominiętych (false neg):       {total_miss}",
@@ -589,9 +640,9 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
         L.append(f"  Lvl {lv} {lvl_labels.get(lv,'')} [{bar}] {rc*100:5.1f}%  "
                  f"docs={c['docs']} ent={c['total']}")
 
-    # Korelacja quality_score vs recall
+    # Korelacja quality_score vs recall (tylko aktywne — skipped nie mają recall)
     pairs = [(r["quality_score"], r["summary"]["recall"])
-             for r in results if r["summary"]["recall"] is not None]
+             for r in active_results if r["summary"]["recall"] is not None]
     if pairs:
         L += ["", "KORELACJA quality_score (syntetyczny) vs recall end-to-end"]
         buckets: dict[str, list[float]] = {}
@@ -610,7 +661,14 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
     B = [f"BUGS / ANOMALIE — {ts}", f"Tryb: {mode}. Do przekazania instancji naprawczej.",
          "═" * 60, ""]
 
-    crit_cases = [(r, e) for r in results for e in r["entities"]
+    if skipped_results:
+        B += [f"[SITO] {skipped_count} dokumentów odrzuconych przez sito jakości OCR", ""]
+        for r in skipped_results:
+            conf_s = f"conf={r['ocr_conf']*100:.0f}%" if r["ocr_conf"] else "conf=N/A"
+            B.append(f"  {r['file']}  lvl={r['deg_level']}  {conf_s}  chars={r.get('ocr_chars',0)}")
+        B.append("")
+
+    crit_cases = [(r, e) for r in active_results for e in r["entities"]
                   if not e["detected"] and e["critical"]]
     if crit_cases:
         B += [f"[KRYTYCZNE] Pominięte encje wysokiego ryzyka: {len(crit_cases)}", ""]
@@ -624,7 +682,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
 
     if total_fp > 0:
         B += [f"[FALSE POSITIVES] Zamaskowano {total_fp} encji spoza ground truth", ""]
-        worst = sorted(results, key=lambda r: r["summary"]["false_positives"], reverse=True)[:10]
+        worst = sorted(active_results, key=lambda r: r["summary"]["false_positives"], reverse=True)[:10]
         for r in worst:
             fp_count = r["summary"]["false_positives"]
             if fp_count == 0: break
@@ -649,7 +707,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
         B.append("")
 
     type_mismatches = [
-        (r, e) for r in results for e in r["entities"]
+        (r, e) for r in active_results for e in r["entities"]
         if e.get("type_mismatch")
     ]
     if type_mismatches:
@@ -659,7 +717,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
             B.append(f"  {r['file']}  {e['key']}={e['value'][:30]}  oczekiwano={e['expected_type']}")
         B.append("")
 
-    if not (crit_cases or low_recall or errors or type_mismatches):
+    if not (skipped_results or crit_cases or low_recall or errors or type_mismatches):
         B.append("Brak krytycznych anomalii. Recall ogólny OK.")
 
     with open(run_dir / "bugs.txt", "w", encoding="utf-8") as f:
@@ -668,6 +726,7 @@ def build_report(results: list[dict[str, Any]], run_dir: Path, mode: str) -> Non
     print(f"\n{'═'*60}")
     print(f"BENCHMARK ZAKOŃCZONY — {ts}")
     print(f"  Tryb:            {mode}")
+    print(f"  Dokumentów:      {total_docs}  (sito odrzuciło: {skipped_count})")
     print(f"  Recall:          {recall_all*100:.1f}%")
     print(f"  Precision:       {prec_all*100:.1f}%")
     print(f"  F1:              {f1_all*100:.1f}%")
