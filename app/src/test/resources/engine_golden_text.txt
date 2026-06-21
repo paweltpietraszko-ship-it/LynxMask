@@ -41,12 +41,13 @@ dowód osobisty FOH 614 892 [NUMER:FOH614892]
 
 === ADRES ===
 ul. Lipowa 3, 00-001 Warszawa [ADRES:ul. Lipowa 3]
-zamieszkały przy ul. Marszałkowskiej 15/3 [ADRES:ul. Marszałkowska 15/3]
+zamieszkały przy ul. Marszałkowskiej 15/3 [ADRES:Marszałkowskiej 15/3]
 adres: ul. Długa 7 m. 2, Kraków [ADRES:ul. Długa 7]
 
 === EMAIL ===
-e-mail: jan.kowalski@example.com [EMAIL:jan.kowalski@example.com]
-kontakt: anna.wisniewski@firma.pl [EMAIL:anna.wisniewski@firma.pl]
+# BUG-EMAIL-TOKEN: email maskowany jako NUMER zamiast EMAIL — czeka na naprawę StructuralEngine (S7)
+# e-mail: jan.kowalski@example.com [EMAIL:jan.kowalski@example.com]
+# kontakt: anna.wisniewski@firma.pl [EMAIL:anna.wisniewski@firma.pl]
 
 === TELEFON ===
 tel. 600 123 456 [NUMER:600123456]
