@@ -98,7 +98,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |N3|OCR\_EMAIL\_LOCALSPACE wiele spacji|naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów|🔲|
 |N4|IBAN przez newline|„PL61 1020...\\n0000..." nie sklejany. Reguła OCR\_IBAN\_NEWLINE|🔲|
 |N5|KNOWN\_CITY\_FORMS bez ogonków|Bialystok, Lodz, Krakow — stosować fold() dla kandydata|🔲|
-|N6|De-leet imion/nazwisk (RESEARCH-2)|3→e,4→a,5→s,0→o,1→i tylko dla tokenów z wielkiej litery. Jaro-Winkler. **Decyzja: dodać zależność string-similarity-kotlin czy własna implementacja**|🔲|
+|N6|De-leet imion/nazwisk|✅ 21.06 — własna impl. w OcrNormalizer krok 15 (bez zewnętrznych bibliotek)|✅|
 |N7|Nagłówek wersji nieaktualny|nagłówek mówi v1.3, realnie v1.6. Zaktualizować|✅ 20.06 (v2.0)|
 
 \---
@@ -474,5 +474,9 @@ ZAMKNIĘTY — 10-cyfrowy PESEL z OCR jest maskowany przez wzorzec kontekstowy.
 
 **Stan testów końcowy sesji 21.06: 266 testów, 4 FAILED — wyłącznie OcrDegradationTest (de-leet + tel OCR), czeka na RESEARCH-2.**
 
-**Następny krok:** decyzja RESEARCH-2 (biblioteka string-similarity-kotlin vs własna impl.) → potem N6 de-leet → @Ignore na 4× OcrDegradationTest odpada. Potem Krok 2.
+**N6 de-leet (commit dc6c86f):** ZAMKNIĘTY. OcrNormalizer krok 15 — własna implementacja (4→a, 3→e, 5→s, 0→o, 1→i), weryfikacja przez LookupTables. Decyzja: bez zewnętrznej biblioteki.
+
+**Stan testów końcowy: 266 testów, 0 FAILED, 1 @Ignore** (BUG-TEL-PREFIX — telefon bez + nie trafia do tokenMap, tylko do OutputGuard; czeka na S10).
+
+**Następny krok: Krok 2** — mechanizm odkrywania tokenu + BUG-DICT engine + GuardAllowlist. Czeka na decyzję Pawła: osobny przycisk „to nie PII, zapamiętaj" czy wystarczy samo „ignoruj" przy YELLOW hicie (sekcja 19).
 
