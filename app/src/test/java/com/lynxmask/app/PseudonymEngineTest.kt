@@ -208,6 +208,30 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_NUMER)
     }
 
+    // S10 — kierunkowy w nawiasach
+    @Test fun `s10 telefon z kierunkowym w nawiasach ze spacją jest maskowany`() {
+        val r = pseudonymize("Tel. biurowy: (22) 765-43-21")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "765-43-21")
+    }
+
+    @Test fun `s10 telefon z kierunkowym w nawiasach bez spacji jest maskowany`() {
+        val r = pseudonymize("Zadzwoń: (12)345-67-89")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "345-67-89")
+    }
+
+    @Test fun `s10 telefon z kierunkowym w nawiasach ze spacjami jest maskowany`() {
+        val r = pseudonymize("Fax: (81) 123 45 67")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "123 45 67")
+    }
+
+    @Test fun `s10 nawiasy z tekstem nie sa maskowane`() {
+        val r = pseudonymize("Podstawa prawna (art. 22) ustawy")
+        assertNotInOutput(r, TOKEN_NUMER)
+    }
+
     @Test fun `IBAN pelny zakres formatow`() {
         val cases = listOf(
             "PL04325000035633956078831852" to true,

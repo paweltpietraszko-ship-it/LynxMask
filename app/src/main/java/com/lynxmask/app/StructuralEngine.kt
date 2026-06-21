@@ -329,6 +329,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b(?:\+?48[-\s]?)?\d{3}[-\s]?\d{3}[-\s]?\d{3}\b"""),  // PL komórkowy/miejski 9 cyfr
     // Telefon stacjonarny z kierunkowym: "81 123-45-67", "12 345 67 89" — dodany v1.1
     TOKEN_NUMER to Regex("""\b\d{2}[\s\-]\d{3}[\s\-]?\d{2}[\s\-]?\d{2}\b"""),
+    // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89" — dodany v2.1
+    TOKEN_NUMER to Regex("""\(\d{2}\)[^\S\n]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b"""),
     TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{3,15}"""),      // Międzynarodowy
 
     // --- Kwoty z walutami (format PL i EU) ---
