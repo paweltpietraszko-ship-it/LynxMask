@@ -291,27 +291,30 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 
 ## 17\. POTOK UI-2 — UKŁAD EKRANU WYNIKOWEGO (PseudonymResultPanel.kt)
 
-Uzgodniony z właścicielem (sesja 17.06, BRIEF\_Sonet\_kontynuacja\_17\_06). Powód przebudowy: stary układ otwierał ManualDialog jako osobne okno (skakanie między dwoma ekranami), a pole „wklej / Tekst do maskowania" zajmowało miejsce i nic nie robiło. Nowy układ maskuje wbudowanie i odzyskuje to miejsce.
+**Rewizja 21.06** — układ przeprojektowany na podstawie analizy sesji 21.06. Stary układ miał Guard hity i NameEngine flags w dwóch rozdzielonych miejscach (nielogiczne z perspektywy użytkownika). Odkrycie pojedynczej encji przeniesione do „Podgląd tekstu". EncjeDialog usunięty z głównego ekranu.
 
-**Kolejność od góry:**
+**Kolejność od góry (ekran scrollowalny):**
 
-1. **Baner RED** — znika automatycznie gdy wszystkie RED hity obsłużone.
-2. **RED hity** — klikalne, każdy znika po zamaskowaniu.
-3. **YELLOW hity** — klikalne, znikają po zamaskowaniu lub „ignoruj".
-4. **Przycisk „Podgląd tekstu"** → modal z pełnym tekstem po maskowaniu. ✅ ZROBIONE
-5. **Wbudowany formularz maskowania** — przeniesiony z ManualDialog BEZ osobnego okna: pole tekstowe + chipy typów + „Maskuj". ❌ NIEZROBIONE — to jest sedno potoku.
-6. **„👁 ukrytych"** + przyciski akcji.
-7. **„Wyślij"** zablokowany gdy są aktywne RED hity. ✅ ZROBIONE
+1. **RED hity** — Guard RED, lista klikalna. Każdy hit: przycisk „Maskuj" → automatyczne maskowanie w miejscu, hit znika. Baner RED znika gdy lista pusta.
+2. **Przycisk „Podgląd tekstu"** → modal z zamaskowanym tekstem. Każdy token (OSOBA\_001, NUMER\_001 itd.) klikalny — klik odkrywa **pojedynczą encję** w miejscu (nie cały dokument). Depseudonimizator całości jest w Bibliotece.
+3. **YELLOW hity** — jedna lista łącząca Guard YELLOW + NameEngine flags (klasa B). Użytkownik nie widzi źródła — to jeden strumień alertów. Każda pozycja: **„Maskuj"** (automatyczne, typ z kontekstu labelu, bez dialogu) + **„Nie maskuj"** (do GuardAllowlist, hit znika). Kolejność: najpierw Guard YELLOW, potem NameEngine flags.
+4. **Formularz maskowania** — wbudowany inline, bez osobnego okna. Pole tekstowe + chipy typów + „Maskuj". Zastępuje dotychczasowy przycisk „Dodaj" prowadzący do ManualDialog. ❌ NIEZROBIONE
+5. **Kopiuj dokument**
+6. **Wyślij do Claude** ❌ NIEZAIMPLEMENTOWANE
+7. **Opis dokumentu** — pole tekstowe, opcjonalne
 
-**Bugi powiązane z UI-2 (status do weryfikacji — z sesji 17.06):**
+**Mapowanie labelu Guard YELLOW → typ tokenu przy automatycznym maskowaniu:**
 
-|Bug|Opis|Status|
-|-|-|-|
-|Baner RED nie znika|nie znika po obsłużeniu wszystkich RED — powinien zniknąć gdy lista RED pusta|🔲|
-|YELLOW hit nie znika|po zamaskowaniu hit zostaje na ekranie — GuardHitsSection nie wie że manualMasks się zmieniło|🔲|
-|Wklejenie do pola maskowania nic nie robi|zaznaczony niezamaskowany numer wklejony w pole „Tekst do maskowania" nie maskuje|🔲|
-|BUG-UI-TOKEN-SKLEJANIE|token przylega do sąsiedniego słowa bez spacji (FIRMA\_001Firma:) — występuje też na Desktop|🔲 weryfikacja|
-|~~Names guard flaguje własne tokeny~~|Token exclusion w OutputGuard v2.0 naprawiony — regex `\\\\b(?:OSOBA\|ADRES\|NUMER\|...)\\\_\\\\d{3}\\\\b` zastąpił martwy `\\\\b\\\[A-Z]{2,}\\\_\\\[A-Z]{3}\\\_\\\\d{3}\\\\b`. „Niezidentyfikowana nazwa własna" to osobny mechanizm NameEngine.kt:691 (PseudonymFlag, nie GuardHit) — ma własny TOKEN\_RE.|✅ 20.06|
+| Label Guard | Typ tokenu |
+|---|---|
+| SYGNATURA | NUMER |
+| LICZBA | NUMER |
+| URODZENIE | NUMER |
+| EMAIL\_FRAGMENT | NUMER |
+| MIEJSCE\_UR | ADRES |
+| NameEngine flag | OSOBA |
+
+**Usunięte z głównego ekranu:** `👁 X ukrytych` / EncjeDialog — odkrycie encji przeniesione do „Podgląd tekstu" (opcja A, decyzja właściciela 21.06).
 
 **Reguła OutputGuard RED/YELLOW (uzgodniona z właścicielem):**
 
