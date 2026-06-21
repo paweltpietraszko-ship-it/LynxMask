@@ -1,0 +1,127 @@
+PLIK TESTOWY — test ręczny 21.06.2026
+Cel: weryfikacja silnika + Guard na 4 poziomach degradacji OCR.
+Każdy blok to inny dokument i inny typ danych.
+Wkleić cały plik do aplikacji przez Share.
+
+========================================================
+LVL 0 — CZYSTE SKANOWANIE
+Dokument: Pismo ZUS
+Sprawdza: podstawowe encje + YELLOW URODZENIE + YELLOW MIEJSCE_UR
+========================================================
+
+Zakład Ubezpieczeń Społecznych, Oddział w Krakowie
+ul. Piastowska 14, 31-406 Kraków
+
+Dotyczy: Jana Kowalskiego, PESEL: 85071792056
+Adres zameldowania: ul. Słowackiego 27/4, 10-001 Olsztyn
+Dowód osobisty: EXK248391
+E-mail: jan.kowalski.1985@gmail.com
+
+Ur. 08.07.1985 r. w Krakowie.
+
+Pan Jan Kowalski, działając na podstawie art. 83 ust. 1 pkt 3 ustawy
+z dnia 13 października 1998 r. o systemie ubezpieczeń społecznych,
+składa wniosek o przeliczenie emerytury.
+
+Numer sprawy: nr 1204/EI/2024
+Poprzednia decyzja: poz. 4/2022
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE YELLOW] ur. 08.07.1985 → URODZENIE
+[SPODZIEWANE YELLOW] ur. w Krakowie → MIEJSCE_UR
+[SPODZIEWANE YELLOW] nr 1204/EI/2024 → SYGNATURA (wzorzec ma "1204" i "2024" ale "EI" pośrodku — czy regex złapie "1204"?)
+[SPODZIEWANE YELLOW] poz. 4/2022 → SYGNATURA (kotwica "poz")
+[NIE POWINIEN ZŁAPAĆ] art. 83 ust. 1 pkt 3 → brak kotwicy i brak "/"
+[NIE POWINIEN ZŁAPAĆ] str. 1/3 — paginacja na dole: str. 1/3
+
+========================================================
+LVL 1 — LEKKI SZUM OCR
+Dokument: Umowa najmu
+Sprawdza: PESEL z błędem spacji + telefon bez +48 + sygnatura umowy
+========================================================
+
+UMOWA NAJMU LOKALU MIESZKALNEGO
+zawarta dnia 05.03.2024 w Warszawie
+
+Wynajmujący: Tomasz Wierzbicki, NIP: 812-345-67-89
+Nr rachunku: PL58 2401 0135 5827 4738 5577 1767
+
+Najemca: Katarzyna Malinowska
+PESEL: 92 0915 12416
+Adres: al. Niepodległości 44/12, 02-200 Warszawa
+Tel.: 601 234 567
+
+§ 1. Wynajmujący oddaje w najem lokal przy ul. Lipowej 3/8, 00-001 Warszawa.
+§ 4. Czynsz: 2 400,00 PLN miesięcznie.
+§ 7. Umowa zawarta na czas określony 12 miesięcy.
+
+Sygnatura umowy: nr 15/N/2024
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE RED] PESEL: 92 0915 12416 → PESEL_SPACE (czy OcrNormalizer sklei przed silnikiem? Jeśli tak — silnik maskuje, Guard nie strzela RED)
+[SPODZIEWANE RED] 601 234 567 → TELEFON_PELNY (9 cyfr z separatorem, bez +48)
+[SPODZIEWANE YELLOW] nr 15/N/2024 → SYGNATURA? (wzorzec `\d{1,6}[/\-]\d{1,6}` szuka cyfr — "15" jest przed "/N", "N" to litera, więc regex NIE złapie "15/N". Ale "N/2024" → N nie jest cyfrą. FN Guarda!)
+[SPODZIEWANE RED] NIP i IBAN → silnik powinien zamaskować przed Guardem
+
+========================================================
+LVL 2 — SILNA DEGRADACJA OCR
+Dokument: Wezwanie komornicze (mocny szum, rozsypane litery)
+Sprawdza: de-leet w imieniu + IBAN z I/O zamiast cyfr + sygnatura akt
+========================================================
+
+Km 0m k Sạdowy pr Wroclaw-Sr 3 Kr0p0wack
+D 15062024 wzywa P4nina Agat3 K0walczyk
+PESEL 77I1281 4755 do wys tep0wania
+w spraw e nr KM 8923/2023
+
+Ni n. kont a kom: PL03 325O 0003 6637 2867 44O1 4154
+Dluzn: P4na Agat3 K0walczyk ul Kopernik 19 00001 Rad
+
+Wierz: Sp. z o.o. ZUS-Warsz NIP 525OO5885O
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE] P4nina Agat3 K0walczyk → de-leet → "Paulina Agate Kowalczyk" → NameEngine wykryje OSOBA?
+[SPODZIEWANE RED] PESEL 77I1281 4755 → cyfry z I (leet) — OcrNormalizer powinien naprawić I→1, spacje skleić → 77112814755 → silnik maskuje; jeśli nie → Guard PESEL_SPACE?
+[SPODZIEWANE RED/GUARD] PL03 325O 0003 6637 2867 44O1 4154 → IBAN z "O" zamiast "0" — Guard regex `[A-Z0-9]` akceptuje O jako literę → Guard RED złapie mimo błędu OCR? Silnik OcrNormalizer OCR_IBAN_SPLIT powinien naprawić O→0 → silnik maskuje
+[SPODZIEWANE YELLOW] nr KM 8923/2023 → SYGNATURA (kotwica "nr", wzorzec "8923/2023")
+[PUŁAPKA FP] 325O → O to litera, nie cyfra — Guard traktuje jako część IBAN? Sprawdź
+
+========================================================
+LVL 3 — ZDJĘCIE TELEFONEM (dobra jakość, ale specyficzne artefakty)
+Dokument: Faktura VAT
+Sprawdza: NIP bez myślników + nr faktury + pułapka FP §/ust.
+========================================================
+
+FAKTURA VAT nr FV/06/2024/0089
+Data wystawienia: 21.06.2024
+Termin płatności: 05.07.2024
+
+Sprzedawca:
+Przedsiębiorstwo Usług Technicznych "ALTEX" Sp. z o.o.
+NIP: 7192505885
+Nr konta: PL03 3250 0003 6637 2867 4401 4154
+
+Nabywca:
+Michał Pawłowski
+PESEL: 85 0717 92056
+ul. Norwida 112, 85-001 Katowice
+Tel.: +48 576 025 704
+nr polisy: 89765432
+
+Pozycja 1: Usługa konsultacyjna — 1 250,00 PLN netto
+Stawka VAT: 23% (§ 43 ust. 1/2 Ustawy o VAT — pułapka FP)
+Kwota VAT: 287,50 PLN
+RAZEM brutto: 1 537,50 PLN
+
+Podstawa prawna: art. 106e ust. 1 ustawy z dnia 11 marca 2004 r.
+Nr zamówienia: zam. 2024/11/0089
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE RED] NIP: 7192505885 → Guard RED NIP (10 cyfr bez separatorów — regex `\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}` złapie?)
+[SPODZIEWANE RED] PESEL: 85 0717 92056 → PESEL_SPACE
+[SPODZIEWANE RED] +48 576 025 704 → TELEFON_PELNY
+[SPODZIEWANE YELLOW] nr FV/06/2024/0089 → SYGNATURA? (w łańcuchu "FV/06/2024/0089" → "06/2024" pasuje do `\d{1,6}[/\-]\d{1,6}`, kotwica "nr" w oknie)
+[SPODZIEWANE YELLOW] nr polisy: 89765432 → LICZBA (8 cyfr, kotwica "nr")
+[SPODZIEWANE YELLOW] zam. 2024/11/0089 → SYGNATURA? ("2024/11" pasuje, ale kotwica "zam." → czy "nr zamówienia" w oknie 35 znaków zawiera "nr"? Tak!)
+[NIE POWINIEN ZŁAPAĆ FP] § 43 ust. 1/2 → "1/2" pasuje do wzorca, ale kotwica "ust." nie jest w CTX_SYGN → GUARD NIE ZŁAPIE → OK!
+[NIE POWINIEN ZŁAPAĆ FP] art. 106e ust. 1 → brak "/" → NIE złapie
