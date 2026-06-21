@@ -93,6 +93,7 @@ object PseudonymEngine {
     fun pseudonymize(
         rawText: String,
         userDictionary: List<Pair<String, String>> = emptyList(),
+        guardAllowlist: List<Pair<String, String>> = emptyList(),
         mlKitConfidence: Float? = null,
         profileType: String = "general",  // z onboardingu
         traceMode: Boolean = false
@@ -276,7 +277,14 @@ object PseudonymEngine {
         detectAlgorithmicFlags(text, flags)
 
         // --- Warstwa 6: Output Guard ---
-        val guardHits = runOutputGuard(text, tokenMap)
+        val allGuardHits = runOutputGuard(text, tokenMap)
+        val guardHits = if (guardAllowlist.isEmpty()) allGuardHits else {
+            allGuardHits.filter { hit ->
+                guardAllowlist.none { (value, ruleType) ->
+                    hit.matchedText.equals(value, ignoreCase = true) && hit.label == ruleType
+                }
+            }
+        }
         val guardWarnings = guardHits.map { "${it.level} ${it.label}: ${it.matchedText}" }
         val riskScore = calculateRiskScore(tokenMap, guardWarnings)
 

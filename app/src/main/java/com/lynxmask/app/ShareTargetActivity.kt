@@ -129,10 +129,11 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     // ASYNC-FIX v2.2: scope do uruchomienia pseudonymize() poza wątkiem głównym
     val scope = rememberCoroutineScope()
 
-    // Słownik użytkownika — ładowany raz, dostępny we wszystkich ścieżkach pseudonimizacji
+    // Słowniki — ładowane raz, dostępne we wszystkich ścieżkach pseudonimizacji
     // BUG-DICT-ACTIVITY FIX v2.8: nie cachuj przez remember — entries czytane świeżo przy każdym pseudonymize.
     // remember zamiast LaunchedEffect: synchroniczne wykonanie gwarantuje załadowanie przed przetwarzaniem intentu.
-    remember { UserDictionary.load(context) }  // tylko inicjalizacja, wynik porzucony
+    remember { UserDictionary.load(context) }   // tylko inicjalizacja, wynik porzucony
+    remember { GuardAllowlist.load(context) }   // tylko inicjalizacja, wynik porzucony
 
     var docScanUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var docScanError by remember { mutableStateOf(false) }
@@ -184,7 +185,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
                 }
                 val (rawText, isOcr) = _extracted
-                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries) { state = it }
+                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
                 return@LaunchedEffect
             }
 
@@ -210,7 +211,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             }
             withContext(Dispatchers.IO) {
                 val (rawText, isOcr) = extractRawText(intent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
-                finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries) { state = it }
+                finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd: ${e.message}", e)
@@ -233,7 +234,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
             }
             val (rawText, isOcr) = _extracted
-            finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries) { state = it }
+            finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries) { state = it }
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd odczytu pliku: ${e.message}")
         }
@@ -284,7 +285,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         progressLabel = "Pseudonimizuję..."
                         state = ShareScreenState.Loading
                         scope.launch(Dispatchers.Default) {
-                            val result = PseudonymEngine.pseudonymize(correctedText, userDictionary = UserDictionary.entries)
+                            val result = PseudonymEngine.pseudonymize(correctedText, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries)
                             DebugLogBuffer.log("Review", "Pseudonimizacja po korekcie: ${correctedText.length} znaków")
                             // LOG-FIX v2.3: pełny raport OCR (Raw + Normalizacja + Tokeny + Flagi)
                             // Poprzednio tylko logPseudonymResult() — brak sekcji [1][2] RAW OCR
@@ -319,6 +320,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     onAddToDict = { word, type ->
                         UserDictionary.add(context, word, type)
                         DebugLogBuffer.log("UserDict", "Zapamiętano: '$word' jako $type — łącznie ${UserDictionary.entries.size}")
+                    },
+                    onAddToAllowlist = { value, ruleType ->
+                        GuardAllowlist.add(context, value, ruleType)
+                        DebugLogBuffer.log("GuardAllowlist", "Nie maskuj: '$value' ($ruleType) — łącznie ${GuardAllowlist.entries.size}")
                     },
                     onSaveDescription = { description ->
                         val maskedText = s.result.pseudonymizedText
@@ -415,6 +420,7 @@ private suspend fun finishWithText(
     intent: Intent,
     goToReview: Boolean = false,
     userDictionary: List<Pair<String, String>> = emptyList(),
+    guardAllowlist: List<Pair<String, String>> = emptyList(),
     setState: (ShareScreenState) -> Unit
 ) {
     if (rawText.isBlank()) {
@@ -431,7 +437,7 @@ private suspend fun finishWithText(
         setState(ShareScreenState.Review(rawText))
         return
     }
-    val result = PseudonymEngine.pseudonymize(rawText, userDictionary = userDictionary)
+    val result = PseudonymEngine.pseudonymize(rawText, userDictionary = userDictionary, guardAllowlist = guardAllowlist)
     // LOG-FIX v2.3: pełny raport OCR zamiast samego logPseudonymResult
     DebugLogBuffer.logOcrAnalysis(rawText, result)
     setState(ShareScreenState.Scanned(result = result))

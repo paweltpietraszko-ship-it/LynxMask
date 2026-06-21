@@ -108,6 +108,7 @@ fun PseudonymResultPanel(
     onCopy: (String) -> Unit,
     onForward: ((String) -> Unit)? = null,
     onAddToDict: ((String, String) -> Unit)? = null,
+    onAddToAllowlist: ((String, String) -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
     onDebugLog: (() -> Unit)? = null,
     // Analogiczne do pola "Opis dokumentu" na desktopie.
@@ -156,10 +157,13 @@ fun PseudonymResultPanel(
         derivedStateOf { flagDecisions.values.none { it == EntityDecision.PENDING } }
     }
 
-    val activeGuardHits by remember(manualMasks, result) {
+    var dismissedHits by remember { mutableStateOf(setOf<String>()) }
+
+    val activeGuardHits by remember(manualMasks, dismissedHits, result) {
         derivedStateOf {
             result.guardHits.filter { hit ->
-                !manualMasks.values.any { it == hit.matchedText }
+                !manualMasks.values.any { it == hit.matchedText } &&
+                hit.matchedText !in dismissedHits
             }
         }
     }
@@ -198,10 +202,14 @@ fun PseudonymResultPanel(
             Spacer(modifier = Modifier.height(8.dp))
             GuardHitsSection(
                 guardHits = activeGuardHits,
-                onHitClick = { matchedText ->
+                onMask = { matchedText ->
                     selectedText = matchedText
                     showManualDialog = true
-                }
+                },
+                onAllowlist = if (onAddToAllowlist != null) { hit ->
+                    dismissedHits = dismissedHits + hit.matchedText
+                    onAddToAllowlist(hit.matchedText, hit.label)
+                } else null
             )
         }
 
@@ -635,7 +643,11 @@ private fun ManualDialog(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun GuardHitsSection(guardHits: List<GuardHit>, onHitClick: (String) -> Unit) {
+private fun GuardHitsSection(
+    guardHits: List<GuardHit>,
+    onMask: (String) -> Unit,
+    onAllowlist: ((GuardHit) -> Unit)?
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -643,31 +655,40 @@ private fun GuardHitsSection(guardHits: List<GuardHit>, onHitClick: (String) -> 
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             guardHits.forEach { hit ->
-                val color = if (hit.level == "RED") LynxColors.Red else LynxColors.Amber
-                val line  = if (hit.level == "RED") "⚠ WYCIEK: ${hit.label} — ${hit.matchedText}"
-                            else "${hit.label} — ${hit.matchedText}"
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onHitClick(hit.matchedText) }
-                        .padding(vertical = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                val isRed = hit.level == "RED"
+                val color = if (isRed) LynxColors.Red else LynxColors.Amber
+                val prefix = if (isRed) "⚠ WYCIEK: " else ""
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = line,
+                        text = "$prefix${hit.label} — ${hit.matchedText}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = color,
-                        modifier = Modifier.weight(1f)
+                        color = color
                     )
-                    Text(
-                        text = "✏",
-                        fontSize = 11.sp,
-                        color = color.copy(alpha = 0.6f)
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { onMask(hit.matchedText) },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Text("Maskuj", fontSize = 11.sp, color = color)
+                        }
+                        if (!isRed && onAllowlist != null) {
+                            TextButton(
+                                onClick = { onAllowlist(hit) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text("Nie maskuj", fontSize = 11.sp, color = LynxColors.TextMuted)
+                            }
+                        }
+                    }
+                }
+                if (hit != guardHits.last()) {
+                    HorizontalDivider(color = color.copy(alpha = 0.12f))
                 }
             }
         }
