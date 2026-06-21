@@ -13,14 +13,15 @@ adb shell rm -rf /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/
 adb shell monkey -p com.lynxmask.app -c android.intent.category.LAUNCHER 1
 timeout /t 2 /nobreak >nul
 
-echo [2/4] Przepychanie datasetu (dataset_fresh)...
-if not exist dataset_fresh\ground_truth.json (
-    echo BLAD: Brak dataset_fresh\ground_truth.json — najpierw uruchom run_benchmark_fresh.bat
+echo [2/4] Przepychanie datasetu stalego (dataset_staly)...
+if not exist dataset_staly\ground_truth.json (
+    echo BLAD: Brak dataset_staly\ground_truth.json
+    echo Jednorazowa inicjacja: xcopy dataset_fresh dataset_staly /E /I
     pause
     exit /b 1
 )
-adb push dataset_fresh\ground_truth.json /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json
-adb push dataset_fresh\images /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/images
+adb push dataset_staly\ground_truth.json /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json
+adb push dataset_staly\images /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/images
 
 echo [3/4] Uruchamianie benchmarku (czekaj ~30 sekund)...
 adb shell am instrument -w -r -e class com.lynxmask.app.BenchmarkInstrumentedTest com.lynxmask.app.test/androidx.test.runner.AndroidJUnitRunner

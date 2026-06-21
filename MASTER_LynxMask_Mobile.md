@@ -607,6 +607,45 @@ Bez Lvl 2: NUMER recall na dobrych obrazach ~93%.
 
 ---
 
+## 22. AUDYT CODEX — ZNALEZISKA (21.06.2026)
+
+Niezależny audyt kodu przez Codex (read-only, po commicie). Znaleziska podzielone na pilne i niepilne.
+
+### P0 — PILNE: realne wycieki PII, naprawić przed release
+
+| Bug | Plik / linia | Opis | Status |
+|---|---|---|---|
+| BUG-KEEP-HIDDEN | NameEngine.kt:667, PseudonymResultPanel.kt:508 | „Zostaw ukryte" ustawia tylko status UI (KEEP\_HIDDEN), nie tworzy tokenu ani nie podmienia tekstu. Flaga zostaje „obsłużona", eksport odblokowuje się, ale oryginalna treść idzie w output | 🔲 |
+| BUG-REMEMBER-MASK | PseudonymResultPanel.kt:1096, PseudonymEngine.kt:183 | „Zamaskuj i zapamiętaj na przyszłość" zapisuje do UserDictionary i oznacza KEEP\_HIDDEN, ale NIE maskuje bieżącego dokumentu. Zmiana dotyczy tylko kolejnych dokumentów | 🔲 |
+| BUG-RED-COPY | PseudonymResultPanel.kt:274, 1310 | RED Guard hit blokuje wysyłkę (`canSend`) ale nie blokuje „Kopiuj dokument" (`canAct`). Przy obsłużonych flagach + aktywnym RED można skopiować tekst z PESEL/NIP | 🔲 |
+| BUG-MANUAL-SAVE | PseudonymResultPanel.kt:126, ShareTargetActivity.kt:328 | Ręczne maski działają w lokalnym `outputText` w UI. Zapis sesji używa pierwotnego `result.pseudonymizedText`. Biblioteka może pokazać wersję bez ręcznych masek użytkownika | 🔲 |
+
+### P1 — STRUKTURALNE: luki zakresu (naprawić przed publicznym release)
+
+| Bug | Plik / linia | Opis | Status |
+|---|---|---|---|
+| BUG-FLAG-LIMIT | NameEngine.kt:754 | Max 5 flag algorytmicznych — 6+ nieznanych encji nie trafia do UI. Po obsłużeniu pierwszych pięciu `allFlagsHandled` odblokowuje eksport | 🔲 |
+| BUG-SCAN-P1 | ShareTargetActivity.kt:91 | Skan wielostronicowy OCR-uje tylko stronę 1. PII na stronie 2+ niewidoczne, UI nie ostrzega | 🔲 |
+| BUG-PDF-LIMIT | ShareTargetActivity.kt:587 | PDF >10 stron przetwarzany częściowo. Info dopisywane do tekstu, ale eksport nie jest blokowany | 🔲 |
+| BUG-DOCX-PARTIAL | ShareTargetActivity.kt:518 | DOCX: tylko `word/document.xml`. PII w nagłówkach, stopkach, komentarzach, `docProps` nie analizowane | 🔲 |
+
+### NIEPILNE: logi i diagnostyka
+
+| Bug | Plik / linia | Opis | Status |
+|---|---|---|---|
+| BUG-LOG-DICT | UserDictionary.kt:125, GuardAllowlist.kt:86 | `Log.d`/`Log.w` bez warunku `BuildConfig.DEBUG` — wartości słownika (imiona, numery) lecą do Logcat zawsze, nie tylko w debug | 🔲 |
+| BUG-LOG-OCR | ShareTargetActivity.kt:435, DebugLogBuffer.kt:75 | Pierwsze 300 znaków surowego OCR zapisywane do RAM i Logcat. Zawiera wszystkie dane osobowe z dokumentu | 🔲 |
+| BUG-BENCH-PUBLIC | BenchmarkService.kt:57, BenchmarkInstrumentedTest.kt:157 | Benchmark zapisuje pełny OCR i tokeny do `getExternalFilesDir` i `/storage/emulated/0/Documents/LynxMask` — publiczny katalog, nieszyfrowany | 🔲 |
+| BUG-DELETE-DICT | SessionStore.kt:414, MainActivity.kt:342 | „Usuń wszystkie dane" czyści tylko tabele SQLCipher. Nie czyści UserDictionary ani GuardAllowlist — mogą zawierać PII | 🔲 |
+| BUG-EXPORT-DEPSEUDO | DepseudonymizationScreen.kt:303 | Depseudonimizowany tekst może być wyeksportowany do publicznego Downloads bez ostrzeżenia | 🔲 |
+
+### Naprawione przy audycie (21.06)
+
+- ✅ 4 testy JVM z `println`-PASS zamiast asercji: `NIP rozne formaty`, `IBAN pelny zakres formatow`, `IBAN rozne formaty`, `testWyciekiV2` — commit 33eea12
+- ✅ BUG-05 FP (PLN 1234 / POLSKA-1234-5678) udokumentowany jako osobny test `BUG05 znane FP tablice i identyfikatory`
+
+---
+
 ## Seed słownik — koncepcja (21.06.2026)
 
 **Problem:** APK ze sklepu startuje z pustym UserDictionary, mimo że wiadomo że pewne encje silnik strukturalny nie obsłuży (edge cases OCR, rzadkie formaty).

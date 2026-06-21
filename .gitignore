@@ -1,5 +1,7 @@
 # Generowane datasety — nie commitować
 dataset_fresh/
+dataset_staly/
+dataset_fresh_run/
 dataset_test/
 dataset_B/
 dataset_C/
