@@ -39,13 +39,13 @@ class PseudonymEngineTest {
     // =========================================================================
 
     @Test fun `PESEL 11 cyfr jest maskowany`() {
-        val r = pseudonymize("PESEL: 65051112345")
+        val r = pseudonymize("PESEL: 65051112340")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "65051112345")
+        assertNotInOutput(r, "65051112340")
     }
 
     @Test fun `PESEL ze spacja OCR jest maskowany`() {
-        val r = pseudonymize("PESEL: 650511 12345")
+        val r = pseudonymize("PESEL: 650511 12340")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "650511")
     }
@@ -54,6 +54,22 @@ class PseudonymEngineTest {
         val r = pseudonymize("PESEL: 650511123")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "650511123")
+    }
+
+    @Test fun `BUG-PESEL-10 PESEL z brakujaca cyfra OCR kontekstowy jest maskowany`() {
+        // BUG-PESEL-10: OCR gubi 1 cyfrę z 11-cyfrowego PESEL → 10 cyfr
+        // Wzorzec kontekstowy (z keywordem "pesel") rozszerzony na min 5 cyfr
+        // Wzorzec strukturalny \d{11} nadal wymaga 11 cyfr
+        val r = pseudonymize("PESEL: 6505111234")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "6505111234")
+    }
+
+    @Test fun `BUG-PESEL-10 regresja PESEL 11 cyfr nadal maskowany`() {
+        // Regresja: zmiana wzorca kontekstowego nie może zepsuć pełnego PESEL
+        val r = pseudonymize("PESEL: 44051401458")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "44051401458")
     }
 
     @Test fun `PESEL 6 cyfr OCR data urodzenia nie moze wyciec`() {
@@ -73,19 +89,22 @@ class PseudonymEngineTest {
     // =========================================================================
 
     @Test fun `NIP format 3-3-2-2 jest maskowany`() {
-        val r = pseudonymize("NIP: 521-334-15-33")
+        // S5: użyto NIP z poprawną sumą kontrolną (521-334-00-01, cyfry: 5213340001)
+        val r = pseudonymize("NIP: 521-334-00-01")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "521-334-15-33")
+        assertNotInOutput(r, "521-334-00-01")
     }
 
     @Test fun `NIP format 3-2-2-3 jest maskowany`() {
-        val r = pseudonymize("NIP: 521-33-15-332")
+        // S5: użyto NIP z poprawną sumą kontrolną (521-10-00-005, cyfry: 5211000005)
+        val r = pseudonymize("NIP: 521-10-00-005")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "521-33-15-332")
+        assertNotInOutput(r, "521-10-00-005")
     }
 
     @Test fun `NIP bez myslnikow jest maskowany`() {
-        val r = pseudonymize("NIP 5213341533")
+        // S5: użyto NIP z poprawną sumą kontrolną (5213340001)
+        val r = pseudonymize("NIP 5213340001")
         assertTokenExists(r, TOKEN_NUMER)
     }
 
@@ -105,17 +124,88 @@ class PseudonymEngineTest {
     }
 
     @Test fun `NIP rozne formaty sa maskowane`() {
+        // S5: wszystkie NIPy mają poprawne sumy kontrolne
         val cases = listOf(
-            "NIP: 415-112-22-69",
-            "NIP 142-199-06-38",
-            "NIP: 4151122269",
-            "nip_sprzedawcy: 451-052-35-26"
+            "NIP: 415-112-22-69",       // 4151122269 — valid ✓
+            "NIP 142-199-06-38",        // 1421990638 — valid ✓
+            "NIP: 4151122269",          // valid ✓
+            "nip_sprzedawcy: 451-052-35-26"  // 4510523526 — valid ✓
         )
         for (text in cases) {
             val r = pseudonymize(text)
             val masked = r.pseudonymizedText.contains("NUMER_")
             println("${if (masked) "PASS" else "FAIL"} | $text → ${r.pseudonymizedText}")
         }
+    }
+
+    // =========================================================================
+    // S5 — Walidacja sum kontrolnych PESEL i NIP
+    // =========================================================================
+
+    @Test fun `s5 poprawny PESEL jest maskowany`() {
+        // PESEL 44051401458 — suma kontrolna poprawna (wagi: 1,3,7,9,1,3,7,9,1,3)
+        // suma = (4*1+4*3+0*7+5*9+1*1+4*3+0*7+1*9+4*1+5*3)%10 = 2, kontrolna = (10-2)%10 = 8 = d10
+        val r = pseudonymize("PESEL: 44051401458")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "44051401458")
+    }
+
+    @Test fun `s5 niepoprawny PESEL nie jest maskowany`() {
+        // PESEL 44051401459 — ostatnia cyfra zmieniona z 8 na 9 → błędna suma kontrolna
+        val r = pseudonymize("PESEL: 44051401459")
+        assertFalse("Niepoprawny PESEL nie powinien być zamaskowany",
+            r.pseudonymizedText.contains("NUMER_"))
+        assertTrue("Tekst z błędnym PESEL powinien pozostać w wyjściu",
+            r.pseudonymizedText.contains("44051401459"))
+    }
+
+    @Test fun `s5 poprawny NIP jest maskowany`() {
+        // NIP 526-000-13-29 (cyfry: 5260001329) — suma kontrolna poprawna
+        // suma = (5*6+2*5+6*7+0*2+0*3+0*4+1*5+3*6+2*7)%11 = 9 = d9
+        val r = pseudonymize("NIP: 526-000-13-29")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "526-000-13-29")
+    }
+
+    @Test fun `s5 niepoprawny NIP nie jest maskowany`() {
+        // NIP 5260001320 — ostatnia cyfra 0 zamiast 9 → zła suma kontrolna
+        // Brak separatorów: unika wzorca IP \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} (kropki)
+        // i wzorca numer wewnętrzny \d{3}[\s\-]\d{2}[\s\-]\d{2} (myślniki/spacje)
+        // NIP 3-3-2-2 bez separatorów pasuje do (?<!\d)\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}(?!\d)
+        val r = pseudonymize("NIP: 5260001320")
+        assertFalse("Niepoprawny NIP nie powinien być zamaskowany",
+            r.pseudonymizedText.contains("NUMER_"))
+        assertTrue("Tekst z błędnym NIP powinien pozostać w wyjściu",
+            r.pseudonymizedText.contains("5260001320"))
+    }
+
+    @Test fun `s5 poprawny NIP bez myslnikow jest maskowany`() {
+        val r = pseudonymize("NIP 5260001329")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "5260001329")
+    }
+
+    @Test fun `s5 regresja PESEL kontekstowy nie blokowany przez checksum`() {
+        // Wzorzec kontekstowy PESEL (z keywordem) zawiera litery → filtr checksumu go pomija
+        // Checksum NIE jest walidowany dla wzorca kontekstowego (ma litery w matchu)
+        // Testujemy że PESEL z keywordem ze skróconymi cyframi (OCR drop) nadal jest maskowany
+        val r = pseudonymize("PESEL: 6505111234")  // 10 cyfr — BUG-PESEL-10 fix
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "6505111234")
+    }
+
+    @Test fun `s5 regresja telefon z prefiksem 48 plus nie jest blokowany przez checksum`() {
+        // "+48 521 334 153" — "+" wyklucza onlyDigitsAndSeparators → brak checksum → maskowany
+        val r = pseudonymize("Tel: +48 521 334 153")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `s5 regresja telefon z prefiksem 48 bez plusa nie jest blokowany przez checksum`() {
+        // "48 571 488 856" — 11 cyfr bez "+", starts with "48" → wykluczony z PESEL check → maskowany
+        // BUG: bez wykluczenia "48" cyfry "48571488856" trafiają do isValidPesel() → fail (miesiąc=57)
+        // → telefon NIE jest maskowany. 28 takich telefonów było w benchmark_trace.
+        val r = pseudonymize("Tel: 48 571 488 856")
+        assertTokenExists(r, TOKEN_NUMER)
     }
 
     @Test fun `IBAN pelny zakres formatow`() {
@@ -382,12 +472,12 @@ class PseudonymEngineTest {
     // =========================================================================
 
     @Test fun `OutputGuard wykrywa niezamaskowany PESEL`() {
-        val warnings = runOutputGuard("Dane: 65051112345", emptyMap())
+        val warnings = runOutputGuard("Dane: 65051112340", emptyMap())
         assertTrue("Guard powinien ostrzec o PESEL", warnings.isNotEmpty())
     }
 
     @Test fun `OutputGuard nie alarmuje dla tokenow`() {
-        val tokenMap = mapOf("OSOBA_001" to "Jan Kowalski", "NUMER_001" to "65051112345")
+        val tokenMap = mapOf("OSOBA_001" to "Jan Kowalski", "NUMER_001" to "65051112340")
         val warnings = runOutputGuard("Pacjent OSOBA_001 NUMER_001", tokenMap)
         assertTrue("Tokeny nie powinny alarmować OutputGuard",
             warnings.none { it.label == "PESEL" })
@@ -514,17 +604,17 @@ class PseudonymEngineTest {
     @Test fun `pelny dokument medyczny — kluczowe encje zamaskowane`() {
         val dokument = """
             Centrum Medyczne MedHelp Sp.Z o.o., ul. Lipowej 14,
-            NIP: 521-334-15-33, REGON: 123456789.
+            NIP: 526-000-13-29, REGON: 123456789.
             Zaświadcza lek. Jan Kowalski.
-            Pacjent: Anna Nowak, PESEL: 65051112345.
+            Pacjent: Anna Nowak, PESEL: 65051112340.
             Kontakt: anna@medhelp.pl, tel. 501-234-567.
             Konto: PL61109010140000071219812874
         """.trimIndent()
 
         val r = pseudonymize(dokument)
 
-        assertNotInOutput(r, "65051112345")
-        assertNotInOutput(r, "521-334-15-33")
+        assertNotInOutput(r, "65051112340")
+        assertNotInOutput(r, "526-000-13-29")
         assertNotInOutput(r, "PL61")
         assertNotInOutput(r, "anna@medhelp.pl")
         assertTrue("Daty mogą pozostać", r.pseudonymizedText.contains("2024") ||
@@ -636,38 +726,41 @@ class PseudonymEngineTest {
     // =========================================================================
 
     @Test fun `PESEL OCR format co-2 cyfry jest maskowany`() {
-        // Format "65 05 11 12345" — OCR wstawia spację co 2 cyfry
-        val r = pseudonymize("Urodzony, PESEL: 65 05 11 12345, zam. Poznań")
+        // Format "65 05 11 12340" — OCR wstawia spację co 2 cyfry
+        val r = pseudonymize("Urodzony, PESEL: 65 05 11 12340, zam. Poznań")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "65 05 11")
     }
 
     @Test fun `PESEL OCR format 2-4-5 jest maskowany`() {
-        // Format "65 0511 12345" — OCR wstawia spację po 2 i po 6 cyfrach
-        val r = pseudonymize("nr PESEL 65 0511 12345 wydany")
+        // Format "65 0511 12340" — OCR wstawia spację po 2 i po 6 cyfrach
+        // PESEL 65051112340: suma=110, 110%10=0, kontrolna=0, d10=0 ✓
+        val r = pseudonymize("nr PESEL 65 0511 12340 wydany")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "65 0511 12345")
+        assertNotInOutput(r, "65 0511 12340")
     }
 
     @Test fun `PESEL OCR format 4-2-5 jest maskowany`() {
-        // "6505 11 12345" — format 4-2-5, z kontekstem słownym
-        val r = pseudonymize("PESEL: 6505 11 12345 wydany")
+        // "6505 11 12340" — format 4-2-5, z kontekstem słownym
+        // PESEL 65051112340: suma=110, 110%10=0, kontrolna=0, d10=0 ✓
+        val r = pseudonymize("PESEL: 6505 11 12340 wydany")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "6505 11 12345")
+        assertNotInOutput(r, "6505 11 12340")
     }
 
     @Test fun `PESEL OCR z dodatkowym slowem miedzy kontekstem a cyframi`() {
-        // "PESEL pacjenta: 6505 11 12345" — jedno słowo między PESEL a cyframi
-        val r = pseudonymize("Pesel pacjenta: 6505 11 12345.")
+        // "Pesel pacjenta: 6505 11 12340" — jedno słowo między PESEL a cyframi
+        // PESEL 65051112340: suma=110, 110%10=0, kontrolna=(10-0)%10=0, d10=0 ✓
+        val r = pseudonymize("Pesel pacjenta: 6505 11 12340.")
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "6505 11 12345")
+        assertNotInOutput(r, "6505 11 12340")
     }
 
     @Test fun `PESEL OCR format co-2 i istniejacy 6-5 oba dzialaja`() {
-        // Regresja: nowe wzorce nie mogą zepsuć istniejącego formatu "650511 12345"
-        val r1 = pseudonymize("PESEL: 650511 12345")
+        // Regresja: nowe wzorce nie mogą zepsuć istniejącego formatu "650511 12340"
+        val r1 = pseudonymize("PESEL: 650511 12340")
         assertTokenExists(r1, TOKEN_NUMER)
-        val r2 = pseudonymize("PESEL: 65 05 11 12345")
+        val r2 = pseudonymize("PESEL: 65 05 11 12340")
         assertTokenExists(r2, TOKEN_NUMER)
     }
 
@@ -711,7 +804,7 @@ class PseudonymEngineTest {
 
     @Test fun `skrot Sp przed forma prawna nie jest OSOBA`() {
         // "Sp" jako skrót "Spółka" przed formą prawną
-        val r = pseudonymize("Firma: Kowalski Handel Sp. z o.o. NIP: 521-334-15-33")
+        val r = pseudonymize("Firma: Kowalski Handel Sp. z o.o. NIP: 526-000-13-29")
         assertFalse("'Sp' (2 znaki) nie powinno być tokenem OSOBA",
             r.tokenMap.entries.any { (k, v) ->
                 k.startsWith(TOKEN_OSOBA) && v.equals("sp", ignoreCase = true)
@@ -730,11 +823,11 @@ class PseudonymEngineTest {
     @Test fun `dokument z zamieszkania i NIP - NIP zamaskowany zamieszkania nie`() {
         // Scenariusz z dokumentu prawnego — test integracyjny dla obu zmian
         val r = pseudonymize(
-            "Adres zamieszkania: ul. Lipowa 3, Poznań. NIP: 521-334-15-33."
+            "Adres zamieszkania: ul. Lipowa 3, Poznań. NIP: 526-000-13-29."
         )
         // NIP musi być zamaskowany
         assertTokenExists(r, TOKEN_NUMER)
-        assertNotInOutput(r, "521-334-15-33")
+        assertNotInOutput(r, "526-000-13-29")
         // "zamieszkania" nie może być tokenem OSOBA
         assertFalse("'zamieszkania' nie powinno być OSOBA",
             r.tokenMap.values.any { it.equals("zamieszkania", ignoreCase = true) })
@@ -742,12 +835,12 @@ class PseudonymEngineTest {
 
     @Test fun `PESEL OCR i NIP w jednym dokumencie oba zamaskowane`() {
         // Test integracyjny — benchmark pokazał że krytyczne braki są na 1 z 3-4 dok.
-        val r = pseudonymize("PESEL: 65 05 11 12345. NIP: 521-334-15-33.")
+        val r = pseudonymize("PESEL: 65 05 11 12340. NIP: 526-000-13-29.")
         val numerTokens = r.tokenMap.entries.filter { it.key.startsWith(TOKEN_NUMER) }
         assertTrue("Powinny być co najmniej 2 tokeny NUMER (PESEL OCR + NIP)",
             numerTokens.size >= 2)
-        assertNotInOutput(r, "65 05 11 12345")
-        assertNotInOutput(r, "521-334-15-33")
+        assertNotInOutput(r, "65 05 11 12340")
+        assertNotInOutput(r, "526-000-13-29")
     }
 
     // =========================================================================

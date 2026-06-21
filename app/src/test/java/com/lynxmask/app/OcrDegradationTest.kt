@@ -12,8 +12,8 @@ import org.junit.Assert.*
  *
  * Ground truth:
  *   OSOBA:   Krzysztof Nowicki, Beata Kamińska
- *   PESEL:   91040512367, 74081934521
- *   NIP:     512-34-56-789, 678-901-23-45
+ *   PESEL:   91040512361, 74081934523
+ *   NIP:     512-34-56-786, 678-901-23-47
  *   IBAN:    PL89109010147449555252110732
  *   TELEFON: +48 601 234 567, (32) 456-78-90
  *   EMAIL:   krzysztof.nowicki@firma.pl, b.kaminska@onet.pl
@@ -40,44 +40,44 @@ class OcrDegradationTest {
     // ── Teksty testowe (każdy LVL jako osobny string) ──────────────────────────
 
     private val LVL0 = """
-        Zleceniodawca: Krzysztof Nowicki, PESEL: 91040512367, NIP: 512-34-56-789,
+        Zleceniodawca: Krzysztof Nowicki, PESEL: 91040512361, NIP: 512-34-56-786,
         zamieszkały ul. Lipowa 22, 41-200 Bytom, tel.: +48 601 234 567,
         e-mail: krzysztof.nowicki@firma.pl, dowód osobisty: EFG 456789.
 
-        Zleceniobiorca: Beata Kamińska, PESEL: 74081934521, NIP: 678-901-23-45,
+        Zleceniobiorca: Beata Kamińska, PESEL: 74081934523, NIP: 678-901-23-47,
         tel.: (32) 456-78-90, e-mail: b.kaminska@onet.pl.
 
         Konto: IBAN: PL89109010147449555252110732.
     """.trimIndent()
 
     private val LVL1 = """
-        Zleceniodawca: Krzysztof N0wicki, PESEL: 910 40512367, NIP: 512-34-56-789,
+        Zleceniodawca: Krzysztof N0wicki, PESEL: 910 40512361, NIP: 512-34-56-786,
         zamieszkały ul. Lip0wa 22, 41-200 Bytom, tel.: +48 601 234 567,
         e-mail: krzysztof.nowicki@firma.pl, dowód osobisty: EFG 456789.
 
-        Zleceniobiorca: Beata Kaminska, PESEL: 7408 1934521, NIP: 678-901-23-45,
+        Zleceniobiorca: Beata Kaminska, PESEL: 7408 1934523, NIP: 678-901-23-47,
         tel.: (32) 456-78-90, e-mail: b.kaminska@onet.pl.
 
         Konto: IBAN: PL89 1090 1014 7449 5552 5211 0732.
     """.trimIndent()
 
     private val LVL2 = """
-        Zleceniodawca: Krzyszt0f N0wlckl, PESEL: 9104 05 12367, NIP: 512-3456-789,
+        Zleceniodawca: Krzyszt0f N0wlckl, PESEL: 9104 05 12361, NIP: 512-3456-786,
         zamieszkaly ul. Llpowa 22, 41-200 Byt0m, tel.: +48 601234 567,
         e-mail: krzysztof. nowicki@firma.pl, dowod osobisty: EFG 456789.
 
-        Zleceniobiorca: B3ata Kamlnska, PESEL: 748 01934521, NIP: 678-901-23-45,
+        Zleceniobiorca: B3ata Kamlnska, PESEL: 748 01934523, NIP: 678-901-23-47,
         tel.: (32) 456 78 90, e-mail: b. kaminska@onet.pl.
 
         Konto: IBAN: PL89 10901014 74495552 52110732.
     """.trimIndent()
 
     private val LVL3 = """
-        Zleceniodawca: Krzy5zt0f N0w1ck1, PESEL: 9l0405 l2367, NIP: 5l2-34-56-789,
+        Zleceniodawca: Krzy5zt0f N0w1ck1, PESEL: 9l0405 l2361, NIP: 5l2-34-56-786,
         zamieszkaly u. Llp0wa 22, 4l-200 Byt0m, tel: 48 60l 234 567,
         e-mail: krzyszt0f. n0wicki@flrma.pl, dow0d 0sobisty: EFG 456789.
 
-        Zleceniobiorca: Be4ta Kamlnska, PE5EL: 7408l934 521, NlP: 678-90l-23-45,
+        Zleceniobiorca: Be4ta Kamlnska, PE5EL: 7408l934 523, NlP: 678-90l-23-47,
         tel: (32) 456-78 90, e-mall: b .kamlnska@0net.pl.
 
         Kont0: IBAN: PL89l090l0l474495552 52ll0732.
@@ -99,20 +99,20 @@ class OcrDegradationTest {
             tokens(LVL0).any { "Kami" in it })
 
     @Test fun `lvl0 PESEL1 wykryty`() =
-        assertTrue("PESEL 91040512367 nie wykryty",
-            tokens(LVL0).any { it.replace(" ", "").contains("91040512367") })
+        assertTrue("PESEL 91040512361 nie wykryty",
+            tokens(LVL0).any { it.replace(" ", "").contains("91040512361") })
 
     @Test fun `lvl0 PESEL2 wykryty`() =
-        assertTrue("PESEL 74081934521 nie wykryty",
-            tokens(LVL0).any { it.replace(" ", "").contains("74081934521") })
+        assertTrue("PESEL 74081934523 nie wykryty",
+            tokens(LVL0).any { it.replace(" ", "").contains("74081934523") })
 
     @Test fun `lvl0 NIP1 wykryty`() =
-        assertTrue("NIP 512-34-56-789 nie wykryty",
-            tokens(LVL0).any { it.digitsOnly().contains("5123456789") })
+        assertTrue("NIP 512-34-56-786 nie wykryty",
+            tokens(LVL0).any { it.digitsOnly().contains("5123456786") })
 
     @Test fun `lvl0 NIP2 wykryty`() =
-        assertTrue("NIP 678-901-23-45 nie wykryty",
-            tokens(LVL0).any { it.digitsOnly().contains("6789012345") })
+        assertTrue("NIP 678-901-23-47 nie wykryty",
+            tokens(LVL0).any { it.digitsOnly().contains("6789012347") })
 
     @Test fun `lvl0 IBAN wykryty`() =
         assertTrue("IBAN PL89109010147449555252110732 nie wykryty",
@@ -158,12 +158,12 @@ class OcrDegradationTest {
             tokens(LVL1).any { "Kamins" in it })
 
     @Test fun `lvl1 PESEL1 wykryty ze spacja`() =
-        assertTrue("PESEL 910 40512367 (ze spacją) nie wykryty",
-            tokens(LVL1).any { it.replace(" ", "").contains("91040512367") })
+        assertTrue("PESEL 910 40512361 (ze spacją) nie wykryty",
+            tokens(LVL1).any { it.replace(" ", "").contains("91040512361") })
 
     @Test fun `lvl1 PESEL2 wykryty ze spacja`() =
-        assertTrue("PESEL 7408 1934521 (ze spacją) nie wykryty",
-            tokens(LVL1).any { it.replace(" ", "").contains("74081934521") })
+        assertTrue("PESEL 7408 1934523 (ze spacją) nie wykryty",
+            tokens(LVL1).any { it.replace(" ", "").contains("74081934523") })
 
     @Test fun `lvl1 IBAN wykryty ze spacjami`() =
         assertTrue("IBAN ze spacjami (PL89 1090 ...) nie wykryty",
@@ -198,12 +198,12 @@ class OcrDegradationTest {
             tokens(LVL2).any { "B3ata" in it || "Kamlnska" in it })
 
     @Test fun `lvl2 PESEL1 wykryty ze spacjami`() =
-        assertTrue("PESEL 9104 05 12367 (dwie spacje) nie wykryty",
-            tokens(LVL2).any { it.replace(" ", "").contains("91040512367") })
+        assertTrue("PESEL 9104 05 12361 (dwie spacje) nie wykryty",
+            tokens(LVL2).any { it.replace(" ", "").contains("91040512361") })
 
     @Test fun `lvl2 PESEL2 wykryty ze spacja`() =
-        // "748 01934521" → po złączeniu "74801934521" (OCR przestawił cyfry — ale 11 cyfr = wykryty)
-        assertTrue("PESEL 748 01934521 nie wykryty",
+        // "748 01934523" → po złączeniu "74801934521" (OCR przestawił cyfry — ale 11 cyfr = wykryty)
+        assertTrue("PESEL 748 01934523 nie wykryty",
             tokens(LVL2).any { it.replace(" ", "").length == 11 && it.replace(" ", "").all { c -> c.isDigit() } })
 
     @Test fun `lvl2 IBAN wykryty ze spacjami`() =
@@ -244,24 +244,24 @@ class OcrDegradationTest {
         assertTrue("Be4ta Kamlnska nie wykryta (LVL3 — oczekiwany fail)",
             tokens(LVL3).any { "Be4ta" in it || "Kamlnska" in it })
 
-    @Test fun `lvl3 PESEL1 wykryty 9l0405 l2367`() =
+    @Test fun `lvl3 PESEL1 wykryty 9l0405 l2361`() =
         // OCR_PESEL_SPLIT v2.0: akceptuje l/O w cyfrach PESEL + konwertuje l→1 i usuwa spacje.
-        assertTrue("PESEL 9l0405 l2367 nie wykryty (LVL3 — regresja OCR_PESEL_SPLIT)",
-            tokens(LVL3).any { it.replace(" ", "").replace("l", "1").contains("91040512367") })
+        assertTrue("PESEL 9l0405 l2361 nie wykryty (LVL3 — regresja OCR_PESEL_SPLIT)",
+            tokens(LVL3).any { it.replace(" ", "").replace("l", "1").contains("91040512361") })
 
     @Test fun `lvl3 PESEL2 wykryty 7408l934`() =
-        // OCR_PESEL_SPLIT v2.0: "7408l934 521" → "74081934521" (l→1 + usuwa spację).
-        assertTrue("PESEL 7408l934 521 nie wykryty (LVL3 — regresja OCR_PESEL_SPLIT)",
-            tokens(LVL3).any { it.replace(" ", "").replace("l", "1").contains("74081934521") })
+        // OCR_PESEL_SPLIT v2.0: "7408l934 523" → "74081934523" (l→1 + usuwa spację).
+        assertTrue("PESEL 7408l934 523 nie wykryty (LVL3 — regresja OCR_PESEL_SPLIT)",
+            tokens(LVL3).any { it.replace(" ", "").replace("l", "1").contains("74081934523") })
 
     @Test fun `lvl3 NIP1 wykryty mimo 5l2 dzieki OCR_NIP_DIGITS`() =
         // OCR_NIP_DIGITS konwertuje 'l'→'1' w kontekście NIP. Powinno PRZEJŚĆ.
-        assertTrue("NIP 5l2-34-56-789 nie wykryty — OCR_NIP_DIGITS nie zadziałał",
-            tokens(LVL3).any { it.digitsOnly().contains("5123456789") })
+        assertTrue("NIP 5l2-34-56-786 nie wykryty — OCR_NIP_DIGITS nie zadziałał",
+            tokens(LVL3).any { it.digitsOnly().contains("5123456786") })
 
     @Test fun `lvl3 NIP2 wykryty mimo 90l dzieki OCR_NIP_DIGITS`() =
-        assertTrue("NIP 678-90l-23-45 nie wykryty — OCR_NIP_DIGITS nie zadziałał",
-            tokens(LVL3).any { it.digitsOnly().contains("6789012345") })
+        assertTrue("NIP 678-90l-23-47 nie wykryty — OCR_NIP_DIGITS nie zadziałał",
+            tokens(LVL3).any { it.digitsOnly().contains("6789012347") })
 
     @Test fun `lvl3 EMAIL1 wykryty krzyszt0f n0wicki flrma`() =
         // OcrNormalizer obsługuje spację w local-part i 0 w domenie. Powinno PRZEJŚĆ.

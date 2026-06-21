@@ -1,7 +1,19 @@
 package com.lynxmask.app
 
 // StructuralEngine.kt — Wzorce regex warstwy strukturalnej
-// Wersja: 1.9
+// Wersja: 2.0
+//
+// Zmiany v2.0 (sesja 21.06 — S5 + BUG-PESEL-10 + BUG-FP-REFNUM):
+//   - S5: Dodano isValidPesel() i isValidNip() — walidacja sum kontrolnych.
+//     Filtr wbudowany w Warstwę 2 PseudonymEngine.kt dla wzorców PESEL i NIP.
+//     Niepoprawna suma kontrolna → token nie jest przypisywany.
+//     Uwaga: istniejące testy NIP używały NIPów z błędną sumą — zaktualizowane.
+//   - BUG-PESEL-10: Rozszerzono wzorzec kontekstowy PESEL (z keywordem "pesel")
+//     na minimum 5 cyfr (\d[\d \t\-]{3,16}\d zamiast {4,16}).
+//     Wzorzec strukturalny \d{11} pozostaje bez zmian (ryzyko FP bez pełnego checksumu).
+//   - BUG-FP-REFNUM: Wzorzec alfanumerycznych ID pozostawiony bez zmian.
+//     Analiza benchmark_trace.txt: >80% dopasowań to prawdziwe PII
+//     (numery faktur FV-*, umów KT/*, KL-*, VAT/*). Próg 50% FP nie osiągnięty.
 //
 // Zmiany v1.9b (sesja 21.06 — kontekstowe wzorce identyfikatorów):
 //   - BLOK-0c: 4 nowe wzorce kontekstowe (format-agnostic, słowo kluczowe → numer):
@@ -118,6 +130,41 @@ package com.lynxmask.app
 //     Pełna eliminacja wymagałaby słowa kontekstowego (Opcja B) — następny potok.
 
 // ============================================================
+// S5 — Walidacja sum kontrolnych PESEL i NIP
+// Obie funkcje przyjmują wyłącznie cyfry (bez separatorów).
+// ============================================================
+
+/**
+ * Sprawdza sumę kontrolną PESEL (11 cyfr).
+ * Wagi: 1,3,7,9,1,3,7,9,1,3 dla cyfr d0–d9; d10 = cyfra kontrolna.
+ * Kontrolna = (10 - (suma % 10)) % 10.
+ */
+internal fun isValidPesel(digits: String): Boolean {
+    if (digits.length != 11) return false
+    val wagi = intArrayOf(1, 3, 7, 9, 1, 3, 7, 9, 1, 3)
+    val suma = digits.take(10).mapIndexed { i, c ->
+        c.digitToIntOrNull()?.times(wagi[i]) ?: return false
+    }.sum() % 10
+    val kontrolna = (10 - suma) % 10
+    return digits[10].digitToIntOrNull() == kontrolna
+}
+
+/**
+ * Sprawdza sumę kontrolną NIP (10 cyfr, bez separatorów).
+ * Wagi: 6,5,7,2,3,4,5,6,7 dla cyfr d0–d8; d9 = cyfra kontrolna.
+ * Jeśli suma % 11 == 10 → NIP strukturalnie nieprawidłowy.
+ */
+internal fun isValidNip(digits: String): Boolean {
+    if (digits.length != 10) return false
+    val wagi = intArrayOf(6, 5, 7, 2, 3, 4, 5, 6, 7)
+    val suma = digits.take(9).mapIndexed { i, c ->
+        c.digitToIntOrNull()?.times(wagi[i]) ?: return false
+    }.sum() % 11
+    if (suma == 10) return false
+    return digits[9].digitToIntOrNull() == suma
+}
+
+// ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
 // ============================================================
@@ -142,8 +189,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // pe[s5][e3]l — obsługuje OCR: E→3 ("PES3L" ✓), S→5 ("PE5EL" ✓)
     // (?:[^\S\n]+\w+)? — opcjonalne jedno słowo między PESEL a cyframi:
     //   "PESEL: 6505..." ✓, "PESEL pacjenta: 6505..." ✓, "PESEL nr 6505..." ✓
-    // \d[\d \t\-]{4,16}\d — minimum 6 cyfr (kontekst PESEL eliminuje FP; 6 cyfr = data ur.)
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{4,16}\d"""),
+    // \d[\d \t\-]{3,16}\d — minimum 5 cyfr (BUG-PESEL-10: OCR może zgubić 1 cyfrę;
+    //   kontekst słowny "pesel" eliminuje FP przy tak krótkim ciągu cyfr)
+    //   Poprzednio {4,16} = min 6 cyfr; teraz {3,16} = min 5 cyfr.
+    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
@@ -413,4 +462,26 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Poprzednio: "00/100 złotych" (grosze w kwocie słownej) → fałszywy TOKEN_ADRES.
     // (?!/[\d]) wyklucza daty złożone: 30/05/2026 (po 05 następuje /2026)
     TOKEN_ADRES to Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?(?!/[\d])\b"""),
+)
+
+// ============================================================
+// S5 — Zestawy pattern stringów PESEL i NIP do walidacji checksumów
+// Używane w PseudonymEngine.kt przez regex.pattern in PESEL_PATTERN_STRINGS.
+// Kotlin Regex nie ma equals() opartego na treści — porównujemy po .pattern (String).
+// Wzorce muszą być identyczne ze stringami użytymi w STRUCTURAL_PATTERNS powyżej.
+// ============================================================
+internal val PESEL_PATTERN_STRINGS: Set<String> = setOf(
+    """(?<!\d)\d{11}(?!\d)""",
+    """\b\d{6} \d{5}\b""",
+    """(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d""",
+    // CATCHALL — bez wpisu S5 był by maskował niepoprawne PESELe gdy żaden wzorzec PESEL nie passował
+    """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
+)
+
+internal val NIP_PATTERN_STRINGS: Set<String> = setOf(
+    """(?<!\d)\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}(?!\d)""",
+    """\b\d{3}[-\s]?\d{2}[-\s]?\d{2}[-\s]?\d{3}\b""",
+    """\bPL\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b""",
+    // CATCHALL — bez wpisu S5 był by maskował niepoprawne NIPy o długości 10 cyfr
+    """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
 )

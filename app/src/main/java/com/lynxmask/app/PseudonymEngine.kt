@@ -205,8 +205,31 @@ object PseudonymEngine {
         for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
             text = pattern.replace(text) { matchResult ->
                 val match = matchResult.value
-                if (TOKEN_RE.containsMatchIn(match)) match
-                else assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
+                if (TOKEN_RE.containsMatchIn(match)) return@replace match
+
+                // S5 — walidacja sumy kontrolnej PESEL i NIP
+                // Walidację stosujemy TYLKO do wzorców PESEL i NIP (lookup po pattern string),
+                // żeby nie blokować telefonów, IBAN, sygnatur ani innych wzorców.
+                //
+                // PESEL_PATTERN_STRINGS / NIP_PATTERN_STRINGS: zbiory pattern stringów wzorców
+                // z STRUCTURAL_PATTERNS, które produkują PESEL lub NIP — zdefiniowane w StructuralEngine.kt.
+                //
+                // Logika dla PESEL:
+                //   • digits.length == 11 → pełny PESEL → sprawdź sumę kontrolną
+                //   • digits.length < 11  → OCR zgubił cyfrę → maskuj bez sprawdzania (nie ma sumy)
+                //   • digits.startsWith("48") → PL prefiks tel. 48XXX... → pomiń (nie PESEL)
+                //
+                // Logika dla NIP:
+                //   • digits.length == 10 → sprawdź sumę kontrolną NIP
+                val digits = match.filter { it.isDigit() }
+                if (pattern.pattern in PESEL_PATTERN_STRINGS && !digits.startsWith("48")) {
+                    if (digits.length == 11 && !isValidPesel(digits)) return@replace match
+                }
+                if (pattern.pattern in NIP_PATTERN_STRINGS) {
+                    if (digits.length == 10 && !isValidNip(digits)) return@replace match
+                }
+
+                assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
             }
         }
 
