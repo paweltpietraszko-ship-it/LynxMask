@@ -97,6 +97,12 @@ Te rzeczy NIE mogą być zmieniane jednostronnie przez instancję mobile ani des
 2. **Samouczenie — mechanizm odkrywania tokenu.** Użytkownik koryguje błędne maskowanie → zapis do słownika profilu → następny dokument silnik już wie. Bez tego samouczenie nie działa. Desktop: BUG-10 (401 przy zapisie) + BUG-PROFIL-PIPELINE (pipeline_new.py nie dostaje anon_map z profilu biura). Mobile: BUG-DICT engine + BUG-GUARD. **Musi działać po OBU stronach, zanim samouczenie ma sens.**
 3. **Sync słownika .lynxdict** (desktop→mobile, JSON addytywny). Trigger: po 10 nowych ręcznie oznaczonych encjach. Mobile blokuje na BUG-DICT engine.
 4. **Taksonomia 9 typów** — Mobile Potok 7 zbliży się do desktopowej. Po nim rozważyć ponowną synchronizację TOKEN_RE.
+5. **Architektura słowników — wzorzec z Mobile, Desktop przejmuje (21.06.2026).** Mobile zaimplementowało dwa osobne słowniki z gotowym API. Desktop NIE wymyśla własnego rozwiązania — przejmuje ten sam wzorzec:
+   - **UserDictionary (słownik A):** wartości które silnik MA maskować. Klucz: `(wartość, typ_tokenu)`. Wpisy permanentne.
+   - **GuardAllowlist (słownik B):** wartości które Guard MA pomijać po decyzji użytkownika "to nie PII". Klucz: `(wartość, ruleType)`. Wpisy permanentne.
+   - **UX przy YELLOW hicie Guard:** dwa przyciski — "Maskuj" (→ UserDictionary) i "Nie maskuj" (→ GuardAllowlist). Brak opcji jednorazowego ignorowania.
+   - **Ekran zarządzania słownikami:** modal z dwiema zakładkami, lista wpisów + usuń. **Układ UI musi być identyczny z Mobile** — Paweł chce spójnego UX między platformami. Implementować gdy Mobile skończy ekran zarządzania (sekcja 15 MASTER Mobile).
+   - **Format wymiany .lynxdict:** prosty JSON, proste typy. Szyfrowanie-at-rest po każdej stronie osobno (nie mieszać z formatem wymiany).
 
 ---
 
