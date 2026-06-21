@@ -835,6 +835,94 @@ class PseudonymEngineTest {
         }
     }
 
+    // =========================================================================
+    // v1.9 — SYGNATURA-FIX, DATA-UR-FIX, DOWOD-FIX, SYG-ADM-FIX
+    // =========================================================================
+
+    @Test fun `v19 sygnatura I Co z malym o jest maskowana`() {
+        // SYGNATURA-FIX: [A-Z]{1,3} → [A-Z][a-zA-Z]{0,2}
+        // "I Co 6219/2024" — "Co" było odrzucane (o = lowercase)
+        val r = pseudonymize("Sygn. akt I Co 6219/2024 — sprawa cywilna.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "I Co 6219/2024")
+    }
+
+    @Test fun `v19 sygnatura I Ns z malym s jest maskowana`() {
+        val r = pseudonymize("Sprawa I Ns 4712/2022.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "I Ns 4712/2022")
+    }
+
+    @Test fun `v19 sygnatura komornicza Km jest maskowana`() {
+        // "Km" ma małe m — poprzednio pominięte
+        val r = pseudonymize("Sygn. akt Km 27146/2024.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "Km 27146/2024")
+    }
+
+    @Test fun `v19 sygnatura II C uppercase nadal maskowana`() {
+        // Regresja: uppercase "C" musi nadal działać po refaktorze
+        val r = pseudonymize("Sygn. akt II C 1234/2023.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "II C 1234/2023")
+    }
+
+    @Test fun `v19 data urodzenia kontekst DD-MM-YYYY jest maskowana`() {
+        // DATA-UR-FIX: brak wzorca na datę urodzenia → dodany kontekst dat[aą] ur...
+        val r = pseudonymize("Data urodzenia: 21.05.1979")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "21.05.1979")
+    }
+
+    @Test fun `v19 data urodzenia OCR literowka uri jest maskowana`() {
+        // doc_00009: OCR produkuje "Data urodzenía" (í zamiast i)
+        val r = pseudonymize("Data urodzenía: 17.09.1985")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "17.09.1985")
+    }
+
+    @Test fun `v19 data urodzenia ze spacją na nowej linii jest maskowana`() {
+        // Wzorzec dopuszcza newline między etykietą a wartością
+        val r = pseudonymize("Data urodzenia:\n26.12.1988")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "26.12.1988")
+    }
+
+    @Test fun `v19 data urodzenia skrot ur jest maskowana`() {
+        val r = pseudonymize("data ur. 04.09.1976")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "04.09.1976")
+    }
+
+    @Test fun `v19 dowod osobisty OCR spacja po 2 cyfrach jest maskowany`() {
+        // DOWOD-FIX: AWY57 1380 (spacja po 2 cyfrach) — doc_00033 lvl3
+        // Stary wzorzec \d{3}[^\S\n]?\d{3} nie pasował (57 != 3 cyfry)
+        val r = pseudonymize("Nr dowodu osobistego: AWY57 1380")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "AWY57 1380")
+    }
+
+    @Test fun `v19 dowod osobisty kontekst newline jest maskowany`() {
+        // DOWOD-CTX-FIX: separator dopuszcza newline po dwukropku
+        val r = pseudonymize("Nr dowodu osobistego:\nABC123456")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "ABC123456")
+    }
+
+    @Test fun `v19 sygnatura administracyjna ze spacja zamiast kropki jest maskowana`() {
+        // SYG-ADM-FIX: "PT 075012 2018" — OCR zamienia . na spację
+        val r = pseudonymize("Decyzja PT 075012 2018 z dnia...")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "075012 2018")
+    }
+
+    @Test fun `v19 sygnatura administracyjna standardowa z kropka nadal maskowana`() {
+        // Regresja: PT.075012.2018 musi nadal działać po zmianie [.\s]
+        val r = pseudonymize("Decyzja nr PT.075012.2018 z dnia 01.01.2018")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "PT.075012.2018")
+    }
+
     // DIAGNOSTYKA TYMCZASOWA — usunąć po analizie
     @Test fun `diagnostyka_faile`() {
         val cases = listOf(

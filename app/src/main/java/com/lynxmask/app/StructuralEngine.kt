@@ -1,7 +1,26 @@
 package com.lynxmask.app
 
 // StructuralEngine.kt — Wzorce regex warstwy strukturalnej
-// Wersja: 1.8
+// Wersja: 1.9
+//
+// Zmiany v1.9 (sesja 21.06 — NUMER recall):
+//   - SYGNATURA-FIX: sygnatura sądowa/komornicza — [A-Z]{1,3} → [A-Z][a-zA-Z]{0,2}.
+//     Poprzednio: "I Co 3704/2018" ("Co"), "I Ns 6475/2022" ("Ns"), "Km 4917/2018" ("Km")
+//     były pominięte, bo [A-Z]{1,3} nie pasuje do małych liter w kodach wydziałów.
+//     Teraz: pierwszy znak musi być uppercase, następne 0–2 znaki mogą być dowolnej
+//     wielkości. Pokrywa też Km bez prefiksu rzymskiego.
+//   - DATA-UR-FIX: dodano wzorzec kontekstowy "data urodzenia: DD.MM.YYYY".
+//     doc_00009: OCR "Data urodzenía: 17.09.1985" — encja JEST w tekście, ale silnik
+//     nie miał żadnego wzorca na datę urodzenia. Wzorzec obsługuje: dat[aą] ur(odzenia)?
+//     + DD.MM.YYYY (lub / lub -). Dopuszcza OCR akcent na "í".
+//   - DOWOD-FIX: wzorzec strukturalny dowodu — \d{3}[^\S\n]?\d{3} → \d{2,3}[^\S\n]?\d{3,4}.
+//     doc_00033: OCR "AWY57 1380" (spacja po 2 cyfrach zamiast 3) → poprzedni wzorzec
+//     nie pasował bo oczekiwał dokładnie 3 cyfry w pierwszej grupie.
+//   - DOWOD-CTX-FIX: separator w wzorcu kontekstowym dowodu — dodano \n? po [:–\-]?.
+//     OCR "Nr dowodu osobistego:\nAWY57 1380" — keyword i numer w różnych liniach OCR.
+//   - SYG-ADM-FIX: sygnatura administracyjna — \b[A-Z]{2}\.\d{6}\.\d{4}\b →
+//     \b[A-Z]{2,3}[.\s]\d{6}[.\s]\d{4}\b. Obsługuje separator jako kropkę LUB spację
+//     (OCR zamienia PT.075012.2018 → PT 075012 2018).
 //
 // Zmiany v1.8 (sesja benchmark):
 //   - IBAN-FIX: dodano dwa wzorce IBAN:
@@ -112,12 +131,24 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // \d[\d \t\-]{4,16}\d — minimum 6 cyfr (kontekst PESEL eliminuje FP; 6 cyfr = data ur.)
     TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{4,16}\d"""),
 
+    // Data urodzenia z kontekstem
+    // dat[aą] ur(odzenia)? — obsługuje warianty:
+    //   "data urodzenia: 21.05.1979"  ← pełne słowo
+    //   "data ur. 21.05.1979"         ← skrót z kropką (\.? po \b)
+    //   "Data urodzenía: 17.09.1985"  ← OCR í zamiast i ([ií] w klasie)
+    //   "Data urodzenia:\n21.05.1979" ← newline po dwukropku (\n? w separatorze)
+    // \b po ur(odzeni...)? blokuje "data urzędu" — 'z' po \b nie jest word boundary
+    // (po ur w środku słowa nie ma \b bo następny znak też jest \w)
+    TOKEN_NUMER to Regex("""(?i)\bdat[aą]\s+ur(?:odzen[ií][^\s:–\-\d]{0,2})?\b\.?[^\S\n]*[:–\-]?\n?[^\S\n]*\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}\b"""),
+
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)
     // Nie matchuje samego "DO" (przyimek) — wymaga dow+[oó]+d
     // d\.?[^\S\n]*o\. — skrót "D.O." / "D. O." / "d.o."
     // Format numeru: 2–3 litery + 5–11 znaków + ostatnia cyfra
-    TOKEN_NUMER to Regex("""(?i)(?:dow[oó]d\b(?:[^\S\n]+os\w{0,7})?|d\.?[^\S\n]*o\.)[^\S\n]*[:–\-]?[^\S\n]*[A-Z]{2,3}[\w \t\-]{5,11}\d"""),
+    // DOWOD-CTX-FIX v1.9: dodano \n? po [:–\-]? — OCR może mieć newline między
+    // "Nr dowodu osobistego:" a samym numerem (np. w formularzu z polem na osobnej linii)
+    TOKEN_NUMER to Regex("""(?i)(?:dow[oó]d\b(?:[^\S\n]+os\w{0,7})?|d\.?[^\S\n]*o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Z]{2,3}[\w \t\-]{5,11}\d"""),
 
     // Paszport z kontekstem
     // paszport\w{0,2} — "paszport", "paszportu", "paszportem"
@@ -222,8 +253,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // --- Dokumenty tożsamości ---
     // REVERT (?i): case-insensitive zjadał 3-literowe imiona (Jan, Piotr) + cyfry jako dowód.
     // Wzorzec celowo case-sensitive — seria dowodu to zawsze uppercase w oryginalnym dokumencie.
-    // FOH614892 z OCR lvl3 pozostaje nierozwiązany (BUG-DOWOD odłożony).
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{3}[^\S\n]?\d{3}\b"""),  // Dowód osobisty PL
+    // DOWOD-FIX v1.9: \d{3}[^\S\n]?\d{3} → \d{2,3}[^\S\n]?\d{3,4}.
+    // OCR lvl3 (doc_00033) produkuje "AWY57 1380" — spacja po 2 cyfrach zamiast 3.
+    // Nowy wzorzec: 2-3 cyfry + opcjonalna spacja + 3-4 cyfry = razem 5-7 cyfr (oczekiwane 6).
+    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"
@@ -268,7 +301,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     ),
 
     // --- Sygnatura administracyjna (np. PT.070433.2020, OW.085394.2025) ---
-    TOKEN_NUMER to Regex("""\b[A-Z]{2}\.\d{6}\.\d{4}\b"""),
+    // SYG-ADM-FIX v1.9: [A-Z]{2}\.\d{6}\.\d{4} → [A-Z]{2,3}[.\s]\d{6}[.\s]\d{4}.
+    // OCR (doc_00023 lvl0): "PT.075012.2018" → "PT 075012 2018" (OCR zamienia . na spację).
+    // [.\s] w klasie znaku: . jest dosłownym znakiem (nie metaznakiem wewnątrz []).
+    // {2,3}: obsługuje też 3-literowe prefixsy (np. "IW.", "SA.").
+    TOKEN_NUMER to Regex("""\b[A-Z]{2,3}[.\s]\d{6}[.\s]\d{4}\b"""),
 
     // --- Numer wewnętrzny 3-2-2 ---
     TOKEN_NUMER to Regex("""\b\d{3}[\s\-]\d{2}[\s\-]\d{2}\b"""),
@@ -278,7 +315,14 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // SYG-FIX v1.2: usunięto (?i) — z IGNORE_CASE polskie "i","v","l" (spójniki)
     // pasowały do [IVXLCDM]+ jako cyfry rzymskie → false positive "i C 456/26"
     // Sygnatury w dokumentach PL są zawsze wielką literą — case sensitivity poprawna
-    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?[A-Z]{1,3}\s+\d{1,6}/\d{2,4}\b"""),
+    // SYGNATURA-FIX v1.9: [A-Z]{1,3} → [A-Z][a-zA-Z]{0,2}.
+    // Kody wydziałów sądowych mają mieszaną wielkość: "Co" (cywilne odwoławcze), "Ns"
+    // (niesporne), "Ka" (karne apelacyjne). Poprzednio: "I Co 3704/2018" pominięte
+    // bo [A-Z]{1,3} odrzuca 'o' i 's'. Obejmuje teraz też "Km" (sygnatura komornicza)
+    // bez prefiksu cyfr rzymskich.
+    // Zabezpieczenie przed FP: wymaga uppercase pierwszej litery, tj. "do 5/2020"
+    // (przyimek) nie pasuje bo 'd' jest małe.
+    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
 
     // --- CATCHALL: ciągi cyfr 8+ (przepisany z negatywnym lookahead) ---
     // TODO-7 (sesja 10): Daty NIE mają osobnej jawnej reguły ochrony — są chronione
