@@ -109,8 +109,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // pe[s5][e3]l — obsługuje OCR: E→3 ("PES3L" ✓), S→5 ("PE5EL" ✓)
     // (?:[^\S\n]+\w+)? — opcjonalne jedno słowo między PESEL a cyframi:
     //   "PESEL: 6505..." ✓, "PESEL pacjenta: 6505..." ✓, "PESEL nr 6505..." ✓
-    // \d[\d \t\-]{8,16}\d — cyfry z opcjonalnymi separatorami OCR
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{8,16}\d"""),
+    // \d[\d \t\-]{4,16}\d — minimum 6 cyfr (kontekst PESEL eliminuje FP; 6 cyfr = data ur.)
+    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{4,16}\d"""),
 
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)

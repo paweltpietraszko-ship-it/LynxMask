@@ -49,6 +49,18 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "650511")
     }
 
+    @Test fun `PESEL 9 cyfr OCR zgubil 2 cyfry jest maskowany`() {
+        val r = pseudonymize("PESEL: 650511123")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "650511123")
+    }
+
+    @Test fun `PESEL 6 cyfr OCR data urodzenia nie moze wyciec`() {
+        val r = pseudonymize("PESEL: 650511")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "650511")
+    }
+
     @Test fun `data roczna 2024 nie jest maskowana jako PESEL`() {
         val r = pseudonymize("Umowa z dnia 2024-01-15")
         assertTrue("Rok 2024 powinien pozostać w tekście",
@@ -173,6 +185,12 @@ class PseudonymEngineTest {
         val r = pseudonymize("KRS 0000123456")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "0000123456")
+    }
+
+    @Test fun `KRS 8 cyfr OCR zgubil 2 cyfry jest maskowany`() {
+        val r = pseudonymize("KRS 00001234")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "00001234")
     }
 
     @Test fun `REGON 9-cyfrowy jest maskowany`() {
@@ -748,6 +766,12 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "ABC 123 456")
     }
 
+    @Test fun `dowod osobisty OCR zgubil 2 cyfry jest maskowany`() {
+        val r = pseudonymize("Dowód osobisty: ABC1234")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "ABC1234")
+    }
+
     @Test fun `paszport z kontekstem jest maskowany`() {
         val r = pseudonymize("Paszport: AB1234567 ważny do 2030")
         assertTokenExists(r, TOKEN_NUMER)
@@ -758,6 +782,12 @@ class PseudonymEngineTest {
         val r = pseudonymize("Nr paszportu AB 123 4567")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "AB 123 4567")
+    }
+
+    @Test fun `paszport OCR zgubil 2 cyfry jest maskowany`() {
+        val r = pseudonymize("Paszport: AB12345")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "AB12345")
     }
 
     @Test fun `seria i numer dokumentu jest maskowana`() {
