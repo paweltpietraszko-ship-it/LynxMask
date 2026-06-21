@@ -31,6 +31,7 @@ class PseudonymEngineTest {
     @After
     fun teardown() {
         LookupTables.resetForTesting()
+        resetRegexCache()
     }
 
     // =========================================================================

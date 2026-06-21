@@ -368,35 +368,46 @@ private fun buildNamePattern(): String =
     else
         POLISH_FIRST_NAMES.joinToString("|") { Regex.escape(it) + "[a-ząćęłńóśźż]{0,5}" }
 
-private val NAME_FORWARD_REGEX: Regex by lazy {
-    Regex(
+// S1/S2-TESTABILITY-FIX: Regex zależne od LookupTables.namesForms używają backing var
+// zamiast `by lazy`. `by lazy` inicjuje się raz — przy zmianie słownika między testami
+// stary pattern zostaje. Getter odbudowuje regex tylko gdy backing var jest null;
+// resetRegexCache() zeruje go (wywoływane z teardown testów).
+private var _nameForwardRegex: Regex? = null
+private val NAME_FORWARD_REGEX: Regex
+    get() = _nameForwardRegex ?: Regex(
         """\b(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)\b""",
         RegexOption.IGNORE_CASE
-    )
-}
+    ).also { _nameForwardRegex = it }
 
-private val NAME_BACKWARD_REGEX: Regex by lazy {
-    Regex(
+private var _nameBackwardRegex: Regex? = null
+private val NAME_BACKWARD_REGEX: Regex
+    get() = _nameBackwardRegex ?: Regex(
         """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)(?:[^\S\n]*,?\s+)\b(${buildNamePattern()})\b""",
         RegexOption.IGNORE_CASE
-    )
-}
+    ).also { _nameBackwardRegex = it }
 
-private val HONORIFIC_REGEX: Regex by lazy {
-    Regex(
+private var _honorificRegex: Regex? = null
+private val HONORIFIC_REGEX: Regex
+    get() = _honorificRegex ?: Regex(
         """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)""",
         RegexOption.IGNORE_CASE
-    )
-}
+    ).also { _honorificRegex = it }
 
 // HONORIFIC_NAME_ONLY_REGEX: Pan/Pani + samo imię — bez wymaganego nazwiska.
 // Negative lookahead zapobiega podwójnemu matchowaniu gdy po imieniu jest nazwisko
 // (tym zajmuje się HONORIFIC_REGEX powyżej).
-private val HONORIFIC_NAME_ONLY_REGEX: Regex by lazy {
-    Regex(
+private var _honorificNameOnlyRegex: Regex? = null
+private val HONORIFIC_NAME_ONLY_REGEX: Regex
+    get() = _honorificNameOnlyRegex ?: Regex(
         """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})(?![^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż])""",
         RegexOption.IGNORE_CASE
-    )
+    ).also { _honorificNameOnlyRegex = it }
+
+internal fun resetRegexCache() {
+    _nameForwardRegex = null
+    _nameBackwardRegex = null
+    _honorificRegex = null
+    _honorificNameOnlyRegex = null
 }
 
 // REGEX-FIX v1.5: [^\S\n] zamiast \s w treści nazwy — poprzednia wersja

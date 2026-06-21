@@ -158,6 +158,9 @@ object LookupTables {
     private fun stripDiacritics(s: String): String =
         java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
             .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+            // Ł/ł ma kreską (stroke, U+0141/U+0142) — nie jest combining mark,
+            // NFD jej nie rozkłada. Ręczna konwersja żeby "łukasz" → "lukasz".
+            .replace('ł', 'l').replace('Ł', 'L')
 
     private fun loadFormsFromAsset(context: Context, filename: String): Set<String> {
         return try {
