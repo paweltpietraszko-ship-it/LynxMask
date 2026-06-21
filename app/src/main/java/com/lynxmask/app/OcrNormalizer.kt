@@ -305,6 +305,30 @@ object OcrNormalizer {
     private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOI]+(?=\d)""")
 
     // ----------------------------------------------------------
+    // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
+    // literą — tylko gdy wynik trafia w słownik imion lub nazwisk.
+    // "Be4ta" → "Beata", "Krzy5zt0f" → "Krzysztof", "N0w1ck1" → "Nowicki"
+    // Mapa: 4→a, 3→e, 5→s, 0→o, 1→i (tylko cyfry mylone z literami w nazwach)
+    // ----------------------------------------------------------
+    private val LEET_MAP = mapOf('4' to 'a', '3' to 'e', '5' to 's', '0' to 'o', '1' to 'i')
+    private val LEET_CANDIDATE_RE = Regex("""[A-ZĄĆĘŁŃÓŚŹŻ][a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9]{2,}""")
+
+    private fun deLeet(text: String): String {
+        if (!LookupTables.initialized) return text
+        return LEET_CANDIDATE_RE.replace(text) { match ->
+            val token = match.value
+            if (token.none { it.isDigit() }) return@replace token
+            val converted = token.map { c -> LEET_MAP[c] ?: c }.joinToString("")
+            val lower = converted.lowercase()
+            if (LookupTables.namesForms.contains(lower) || LookupTables.surnamesForms.contains(lower)) {
+                converted
+            } else {
+                token
+            }
+        }
+    }
+
+    // ----------------------------------------------------------
     // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
     // ----------------------------------------------------------
     private val OCR_IBAN_DIGITS = Regex(
@@ -448,6 +472,11 @@ object OcrNormalizer {
             if (fixed != m.value) corrections++
             fixed
         }
+
+        // 15. De-leet: cyfry jako litery w tokenach zaczynających się wielką literą
+        val beforeDeLeet = text
+        text = deLeet(text)
+        if (text != beforeDeLeet) corrections++
 
         return NormalizationResult(text, corrections)
     }

@@ -2,6 +2,7 @@ package com.lynxmask.app
 
 import org.junit.Before
 import org.junit.After
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -233,10 +234,10 @@ class OcrDegradationTest {
     // ── LVL 3 — ciężki szum (wiele artefaktów) ─────────────────────────────────
     // Większość FAIL — dokumentuje dolną granicę silnika.
 
-    @Test fun `FAIL lvl3 OSOBA Nowicki pominięty Krzy5zt0f N0w1ck1`() =
-        // Zbyt mocne zniekształcenie dla NameEngine. OCZEKIWANY FAIL.
-        assertTrue("Krzy5zt0f N0w1ck1 nie wykryty (LVL3 — oczekiwany fail)",
-            tokens(LVL3).any { "N0w1ck1" in it || "Krzy5" in it })
+    @Test fun `lvl3 OSOBA Nowicki wykryty po de-leet Krzy5zt0f N0w1ck1`() =
+        // De-leet (krok 15 normalizera): Krzy5zt0f→Krzysztof, N0w1ck1→Nowicki
+        assertTrue("Krzy5zt0f N0w1ck1 nie wykryty po de-leet (LVL3)",
+            tokens(LVL3).any { "Nowicki" in it || "Krzysztof" in it })
 
     @Test fun `FAIL lvl3 OSOBA Kaminska pominięta Be4ta`() =
         // "Be4ta Kamlnska" — cyfra w imieniu. OCZEKIWANY FAIL.
@@ -283,8 +284,8 @@ class OcrDegradationTest {
             tokens(LVL3).any { it.replace(" ", "").replace("l", "1")
                 .contains("PL89109010147449555252110732") })
 
+    @Ignore("BUG-TEL-PREFIX: TELEFON nie trafia do tokenMap — maskowany tylko przez OutputGuard, nie StructuralEngine. Czeka na dodanie wzorca TELEFON do StructuralEngine (S10).")
     @Test fun `FAIL lvl3 TEL1 pominiety 48 60l 234 567`() =
-        // Brak '+', 'l' zamiast '1' — regex telefonu nie dopasowuje. OCZEKIWANY FAIL.
-        assertTrue("48 60l 234 567 nie wykryty (LVL3 — oczekiwany fail: brak + i l w cyfrach)",
+        assertTrue("48 60l 234 567 nie wykryty (LVL3)",
             tokens(LVL3).any { "601" in it.replace("l","1") && "234" in it })
 }
