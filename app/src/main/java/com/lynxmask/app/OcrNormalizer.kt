@@ -1,9 +1,20 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 2.0
+// Wersja: 2.2
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
+//
+// Zmiany v2.2 (21.06):
+//   - OCR_DOWOD_DIGITS rozszerzony o naprawę SERII dokumentu (odwrotna sytuacja niż krok 11d v2.1):
+//     cyfra w pozycji litery serii → litera (OCR_SERIES_CHAR_MAP: 2→Z, 0→O, 1→I, 8→B, 5→S, 6→G, 7→T)
+//     "dowód: 2TS935950" → "dowód: ZTS935950" (doc_00020: Z→2 w serii)
+//
+// Zmiany v2.1 (21.06):
+//   - OCR_DIGIT_IN_CONTEXT (krok 14) rozszerzony o lowercase 'o': [lOI] → [lOIo]
+//     "71o1" → "7101", "965690-71o1" → "965690-7101" (małe 'o' między cyframi)
+//   - OCR_DOWOD_DIGITS (krok 11d, nowy): S→5, O→0, I→1, B→8, G→6, Z→2 w cyfrowej części
+//     numeru dowodu osobistego PO słowie kluczowym (dowód/d.o.). Bez kontekstu nie działa.
 //
 // Zmiany v2.0 (20.06):
 //   - OCR_PESEL_SPLIT rozszerzony: akceptuje l/O/I w numerze PESEL + konwertuje przez OCR_NUMERIC_CHAR_MAP
@@ -244,6 +255,12 @@ object OcrNormalizer {
         'G' to '6', 'Z' to '2',
     )
 
+    // Odwrotność OCR_NUMERIC_CHAR_MAP — cyfra jako litera w serii dowodu (pozycja zawsze liter)
+    private val OCR_SERIES_CHAR_MAP = mapOf(
+        '2' to 'Z', '1' to 'I', '0' to 'O',
+        '8' to 'B', '5' to 'S', '6' to 'G', '7' to 'T'
+    )
+
     // ----------------------------------------------------------
     // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL + litery jako cyfry
     // Przykład: "PESEL: 6802041 8568"  → "PESEL: 68020418568"
@@ -279,6 +296,18 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_DOWOD_DIGITS: litery jako cyfry w numerze dowodu osobistego po słowie kluczowym
+    // Słowa kluczowe: "dowód/dowod/dow." + "os." + dwukropek/separator
+    // Format PL: 3 litery (seria) + 6 cyfr — OCR często myli S→5, O→0, I→1 w cyfrach
+    // Naprawia cyfry w części numerycznej (po serii liter), nie w samej serii
+    // Przykład: "Nr dowodu: CAN6O1202" → "CAN601202"
+    //           "dowód: AHB S45316"    → "AHB 545316" (S→5)
+    // ----------------------------------------------------------
+    private val OCR_DOWOD_DIGITS = Regex(
+        """(?i)(?:dow[oó]d\b(?:[^\S\n]+os\w{0,7})?|d\.?o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*([A-Z0-9]{2,3})[^\S\n]?([TIlOSBGZ0-9]{2,3}[^\S\n]?[TIlOSBGZ0-9]{3,4})"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
     // ----------------------------------------------------------
     private val OCR_REGON_DIGITS = Regex(
@@ -303,7 +332,7 @@ object OcrNormalizer {
     // "325O 0003" → "3250 0003" (O na końcu grupy IBAN przed spacją — v2.1)
     // NIE przekracza newline: [^\S\n]* zatrzymuje się na końcu linii
     // ----------------------------------------------------------
-    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOI]+(?=[^\S\n]*\d)""")
+    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOIo]+(?=[^\S\n]*\d)""")
 
     // ----------------------------------------------------------
     // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
@@ -441,6 +470,21 @@ object OcrNormalizer {
         text = OCR_NIP_DOT.replace(text) { m ->
             corrections++
             "${m.groupValues[1]}-${m.groupValues[2]}"
+        }
+
+        // 11d. OCR: cyfry jako litery w serii dowodu + litery jako cyfry w numerze (po słowie kluczowym)
+        text = OCR_DOWOD_DIGITS.replace(text) { m ->
+            val rawSeria = m.groupValues[1]
+            val rawNum = m.groupValues[2]
+            val fixedSeria = rawSeria.map { OCR_SERIES_CHAR_MAP[it] ?: it }.joinToString("")
+            val fixedNum = rawNum.map { if (it.isWhitespace()) it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixedSeria != rawSeria || fixedNum != rawNum) corrections++
+            val base = m.range.first
+            val s1 = m.groups[1]!!.range.first - base
+            val e1 = m.groups[1]!!.range.last - base + 1
+            val s2 = m.groups[2]!!.range.first - base
+            val e2 = m.groups[2]!!.range.last - base + 1
+            m.value.substring(0, s1) + fixedSeria + m.value.substring(e1, s2) + fixedNum + m.value.substring(e2)
         }
 
         // 12. OCR: litery zamienione na cyfry w REGON (9 lub 14 cyfr)
