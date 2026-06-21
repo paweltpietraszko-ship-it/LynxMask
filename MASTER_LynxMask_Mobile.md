@@ -446,3 +446,29 @@ OcrLvl1IntegrationTest (BUG-PESEL-10, czeka na S5) i OcrDegradationTest 4x (N6 d
 RESEARCH-2, sekcja 8). (Krok 2, sekcja 21): mechanizm odkrywania tokenu + BUG-DICT engine + GuardAllowlist. Czeka na
 potwierdzenie właściciela co do przycisku „to nie PII" vs samo „ignoruj" (sekcja 19).
 
+---
+
+### SESJA 21.06 — ZROBIONE
+
+**Audyt katalogu głównego (commit 5e110c5):** usunięto 8 briefów/raportów, 12 katalogów datasetów,
+2 duże logi (12 MB), 2 kopie Kotlin w roota. Zasada: nie tworzyć briefów w katalogu — nowe problemy
+do TODO_silnik.md, stan projektu do MASTER.
+
+**StructuralEngine — wzorzec kontekstowy PESEL (commit d8d7df3):** minimum cyfr po słowie "PESEL:"
+obniżone z 10 do 6 (`{8,16}` → `{4,16}`). Powód: 6 cyfr = data urodzenia = wyciek mimo skróconego
+PESELa przez OCR. Przy kontekście słownym ryzyko FP = 0. +5 testów (PESEL 6/9 cyfr, dowód -2 cyfry,
+paszport -2 cyfry, KRS 8 cyfr) — pozostałe encje obsługiwane przez istniejące wzorce.
+
+**OcrLvl1IntegrationTest (commit 902ff72):** naprawiona błędna asercja `startsWith("PESEL")` →
+`startsWith("NUMER")` (taksonomia używa NUMER dla wszystkich numerów strukturalnych). BUG-PESEL-10
+ZAMKNIĘTY — 10-cyfrowy PESEL z OCR jest maskowany przez wzorzec kontekstowy.
+
+**Stan testów po sesji 21.06: 266 testów, 5 FAILED (pre-existing):**
+
+| FAIL | Powód | Co zrobić |
+|---|---|---|
+| `EngineGoldenTest` | golden file nieaktualny | zaktualizować plik expected |
+| 4× `OcrDegradationTest` | de-leet (Be4ta, Krzy5zt0f) + tel OCR | @Ignore + "czeka na N6 RESEARCH-2" |
+
+**Następny krok:** EngineGoldenTest (golden file) + @Ignore na 4× OcrDegradationTest → potem Krok 2.
+
