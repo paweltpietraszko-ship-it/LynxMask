@@ -162,4 +162,30 @@ class OcrNormalizerDigitContextTest {
         assertTrue("Jednoliniowy IBAN ze spacją nadal naprawiany przez IBAN_SPLIT",
             result.normalizedText.contains("PL02114019872105222748309170"))
     }
+
+    // ── OCR_CITY_MIDSPACE v2.4 — fold() bez ogonków (N5) ───────────────────────
+
+    @Test
+    fun `OCR_CITY_MIDSPACE skleja Bialystok bez ogonkow`() {
+        // OCR daje "Bialy stok" (bez ł) — fold("bialystok") ∈ KNOWN_CITY_FORMS_FOLDED
+        val result = OcrNormalizer.normalize("adres: Bialy stok 15-001")
+        assertTrue("'Bialy stok' powinno być sklejone do 'Bialystok'",
+            result.normalizedText.contains("Bialystok"))
+    }
+
+    @Test
+    fun `OCR_CITY_MIDSPACE skleja Krakow bez ogonkow`() {
+        // OCR daje "Kra kow" (bez ó) — fold("krakow") ∈ KNOWN_CITY_FORMS_FOLDED
+        val result = OcrNormalizer.normalize("miasto: Kra kow, 30-001")
+        assertTrue("'Kra kow' powinno być sklejone do 'Krakow'",
+            result.normalizedText.contains("Krakow"))
+    }
+
+    @Test
+    fun `OCR_CITY_MIDSPACE z ogonkami nadal dziala`() {
+        // Nie regres — istniejące "Wars zawa" nadal działa
+        val result = OcrNormalizer.normalize("Wars zawa centrum")
+        assertTrue("'Wars zawa' nadal powinno być sklejone do 'Warszawa'",
+            result.normalizedText.contains("Warszawa"))
+    }
 }

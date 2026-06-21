@@ -5,6 +5,11 @@ package com.lynxmask.app
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
 //
+// Zmiany v2.4 (21.06):
+//   - N5: OCR_CITY_MIDSPACE — fold() dla kandydata bez ogonków
+//     "Bialy stok" → "Bialystok" (OCR bez ł) teraz rozpoznawany przez KNOWN_CITY_FORMS_FOLDED
+//     fold() stosowany tylko do porównania; sklejony wynik zachowuje oryginalną formę OCR
+//
 // Zmiany v2.3 (21.06):
 //   - OCR_IBAN_NEWLINE (krok 13aa): IBAN rozłożony przez newline → sklejenie
 //     "PL89 1090 1014 7449\n5552 5211 0732" → "PL89109010147449555252110732"
@@ -189,6 +194,14 @@ object OcrNormalizer {
         // Zielona Góra — jednoczłonowe odmiany (Góra osobno za krótka, Zielona za ogólna)
         // obsługiwane przez WHITE_LIST_CITIES w NameEngine; tu pomijamy
     ).map { it.lowercase() }.toHashSet()
+
+    private fun foldPolish(s: String): String = s
+        .replace('ą', 'a').replace('ć', 'c').replace('ę', 'e')
+        .replace('ł', 'l').replace('ń', 'n').replace('ó', 'o')
+        .replace('ś', 's').replace('ź', 'z').replace('ż', 'z')
+
+    private val KNOWN_CITY_FORMS_FOLDED: Set<String> =
+        KNOWN_CITY_FORMS.map { foldPolish(it) }.toHashSet()
 
     private val OCR_CITY_MIDSPACE = Regex(
         """([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,10})[^\S\n]+([a-ząćęłńóśźż]{2,8})"""
@@ -418,7 +431,8 @@ object OcrNormalizer {
         // 6. OCR-spacja w nazwie miasta — sprawdza zamkniętą listę
         text = OCR_CITY_MIDSPACE.replace(text) { m ->
             val candidate = m.groupValues[1] + m.groupValues[2]
-            if (KNOWN_CITY_FORMS.contains(candidate.lowercase())) {
+            val lower = candidate.lowercase()
+            if (KNOWN_CITY_FORMS.contains(lower) || KNOWN_CITY_FORMS_FOLDED.contains(foldPolish(lower))) {
                 corrections++
                 candidate
             } else {
