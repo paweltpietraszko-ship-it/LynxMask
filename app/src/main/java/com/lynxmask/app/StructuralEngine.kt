@@ -332,6 +332,9 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89" — dodany v2.1
     TOKEN_NUMER to Regex("""\(\d{2}\)[^\S\n]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b"""),
     TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{3,15}"""),      // Międzynarodowy
+    // Kontekstowy — po "tel."/"telefon:"/"fax:" — łapie 7-cyfrowe lokalne i niestandardowe formaty
+    // Fallback po wzorcach strukturalnych: TOKEN_RE wyklucza podwójne maskowanie
+    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|fax|faks)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\(\)]{5,20}\d\b"""),
 
     // --- Kwoty z walutami (format PL i EU) ---
     // (?!00\s) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię

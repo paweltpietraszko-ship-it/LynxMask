@@ -208,6 +208,37 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_NUMER)
     }
 
+    // S10b — kontekstowy: po "tel."/"telefon:"/"fax:" maskuj numer
+    @Test fun `s10b telefon lokalny 7 cyfr po tel jest maskowany`() {
+        val r = pseudonymize("Tel.: 765-43-21")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "765-43-21")
+    }
+
+    @Test fun `s10b telefon lokalny ze spacjami po Telefon jest maskowany`() {
+        val r = pseudonymize("Telefon: 765 43 21")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "765 43 21")
+    }
+
+    @Test fun `s10b fax z numerem jest maskowany`() {
+        val r = pseudonymize("Fax: 22 765-43-21")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "765-43-21")
+    }
+
+    @Test fun `s10b tel z dodatkowym slowem jest maskowany`() {
+        val r = pseudonymize("tel. biurowy: 765-43-21")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "765-43-21")
+    }
+
+    @Test fun `s10b zbyt krotki numer po tel nie jest maskowany`() {
+        // 3 cyfry — za krótkie, żeby być telefonem
+        val r = pseudonymize("tel. 994")
+        assertNotInOutput(r, TOKEN_NUMER)
+    }
+
     // S10 — kierunkowy w nawiasach
     @Test fun `s10 telefon z kierunkowym w nawiasach ze spacją jest maskowany`() {
         val r = pseudonymize("Tel. biurowy: (22) 765-43-21")
