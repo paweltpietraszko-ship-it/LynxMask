@@ -270,6 +270,7 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 * **Potok 9 — eksport `.lynx` przez WiFi/LAN.** Brak briefu, wymaga decyzji o architekturze. Brak terminu.
 * **BUG-PIPELINE-DUPLICATE** — pseudonymize+save+audit zdublowane w dwóch ścieżkach ShareTargetActivity. Nieaktywny, do obserwacji.
 * **AUD-M04 — isMinifyEnabled=false** — brak obfuskacji w release. Wymaga reguł ProGuard (SQLCipher+Compose). Osobna sesja po stabilizacji silnika.
+* **Zarządzanie słownikami przez użytkownika (21.06)** — wpisy w GuardAllowlist i UserDictionary są permanentne, więc błędny wpis (np. przez przypadek "ignoruj" na prawdziwym PESELu) jest trwałym problemem. Potrzebny ekran edycji słowników: podgląd wpisów + usuwanie. GuardAllowlist prosta lista (wartość + typ + data), UserDictionary bardziej złożony (zmiana wpisu wpływa na istniejące dokumenty w bibliotece). Decyzja UX: osobna zakładka czy ustawienia/profil? Nie implementować przed Krokiem 2.
 
 \---
 
