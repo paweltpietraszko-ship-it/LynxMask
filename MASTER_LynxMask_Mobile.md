@@ -356,7 +356,11 @@ Powód rozdzielenia: rozszerzenie zasady z sekcji 18 na poziom danych — scalen
 
 Zdecydowane: dopasowanie jako para (wartość, typ\_reguły) nie goła wartość — niskoentropijne wartości mają ryzyko kolizji z cudzym prawdziwym PII. Magazyn: reużyć szyfrowanie z UserDictionary v1.3.
 
-Otwarte — czeka na właściciela: czy YELLOW „ignoruj" wystarcza do zapisu w GuardAllowlist, czy potrzebny osobny przycisk „to nie PII, zapamiętaj" (rekomendacja: osobny przycisk)? TTL / przegląd wpisów?
+**ZAMKNIĘTE 21.06 — decyzja właściciela:** przy każdym YELLOW hicie Guard pokazuje dwa przyciski, nie trzy. Brak "ignoruj" — każda akcja jest świadoma i trwała:
+- **"Maskuj"** → para (wartość, typ\_reguły) trafia do UserDictionary (słownik A) — silnik zamaskuje automatycznie następnym razem.
+- **"Nie maskuj"** → para (wartość, typ\_reguły) trafia do GuardAllowlist (słownik B) — Guard nie flaguje następnym razem.
+
+TTL / przegląd wpisów → odłożone do sekcji 15 (zarządzanie słownikami przez użytkownika).
 
 Powiązany detal silnika (wdrażany 20.06): blok „samo nazwisko z surnamesForms" w NameEngine — niski priorytet, po warstwach adresowych i firmowych, z bramką TOKEN\_RE.containsMatchIn + OSOBA\_DENYLIST.
 
