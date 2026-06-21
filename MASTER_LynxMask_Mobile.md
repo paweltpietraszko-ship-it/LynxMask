@@ -327,6 +327,18 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 
 **Uwaga o platformach:** UI-2 istnieje też po stronie Desktop (Pseudonimizuj.tsx / PseudonymResultPanel) z tym samym konceptem układu — to potok bliźniaczy, nie ten sam plik. Trzymać spójność wyglądu między platformami; kod osobny.
 
+**Refaktor PseudonymResultPanel.kt — decyzja 21.06: NIE TERAZ.**
+Plik ma 1326 linii i działa. Refaktor przed UI-2 = podwójna robota, bo UI-2 i tak przepisze połowę. Podzielić naturalnie przy implementacji UI-2 na: `TextPreviewModal.kt`, `AlertListSection.kt`. Do tego czasu nie ruszać struktury.
+
+**Znane zagrożenia w pliku — mieć na uwadze przy każdej zmianie przed UI-2:**
+
+| Zagrożenie | Gdzie | Objaw |
+|---|---|---|
+| `displayText` vs `outputText` pomylone | linie ~126–146 | Użytkownik dostaje `SESJA_XXXXXX` w wysyłanym tekście — cichy wyciek metadanych, nie crash |
+| `canSend` odblokowany za wcześnie | zależy od `activeGuardHits` → `dismissedHits` + `manualMasks` | Jeśli derivedStateOf nie odświeży się po akcji Maskuj, RED hit zostaje w liście ale `canSend` już true — użytkownik wysyła mimo aktywnego RED |
+| `nextToken()` — brak izolacji | lokalna funkcja w composable, liczy z `result.tokenMap + manualMasks` | Dwa ręczne maski w jednej sesji mogą dostać ten sam numer tokenu jeśli któryś warunek policzy źle. Niesprawdzalne testem jednostkowym |
+| Osierocone stany po UI-2 | `flagDecisions`, `revealedTokens`, `entityDialogFor` (z EncjeDialog) | Jeśli EncjeDialog usunięty bez czyszczenia stanów, Compose trzyma martwy stan — nie crashuje, ale memory leak i nieprzewidywalne odświeżenia |
+
 \---
 
 ## 18\. ZASADY NIENARUSZALNE / MINY (nie cofać bez wyraźnego uzasadnienia)
