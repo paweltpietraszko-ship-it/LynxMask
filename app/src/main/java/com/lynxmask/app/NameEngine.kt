@@ -1,7 +1,12 @@
 package com.lynxmask.app
 
 // NameEngine.kt — Słowniki, białe listy, detekcja nazw własnych
-// Wersja: 1.11
+// Wersja: 1.12
+//
+// Zmiany v1.12 (S3 — inicjały przy nazwiskach):
+//   - INITIALS_REGEX: "K. Kowalski" → maskuje całość jako OSOBA
+//     Warunek: nazwisko MUSI być w surnamesForms (zerowy FP przy nieznanym nazwisku)
+//     Uruchamiany przed "Samo nazwisko z surnamesForms" — zapobiega podwójnemu tokenizowaniu
 //
 // Zmiany v1.11 (OSOBA_DENYLIST — redukcja FP z logów benchmarku):
 //   - OSOBA_DENYLIST: deny-lista przed każdym assignToken(..., TOKEN_OSOBA).
@@ -410,6 +415,12 @@ internal fun resetRegexCache() {
     _honorificNameOnlyRegex = null
 }
 
+// S3 — Inicjał + Nazwisko: "K. Kowalski" → OSOBA zamiast samego "Kowalski"
+// Pojedynczy inicjał (wielka litera + kropka) + nazwisko ze słownika
+private val INITIALS_REGEX = Regex(
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ]\.)[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{3,})\b"""
+)
+
 // REGEX-FIX v1.5: [^\S\n] zamiast \s w treści nazwy — poprzednia wersja
 // mogła zszywać koniec jednego akapitu z formą prawną z następnego
 private val FIRMA_LEGAL_REGEX = Regex(
@@ -593,6 +604,19 @@ internal fun applyContextualBlacklist(
             !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
         if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
         "${match.groupValues[1]} ${assignToken(namePart, TOKEN_OSOBA)}"
+    }
+
+    // 3a — Inicjał + Nazwisko (S3): "K. Kowalski" → OSOBA (całość w jednym tokenie)
+    // Uruchamiany PRZED "Samo nazwisko" — blokuje podwójne tokenizowanie
+    if (LookupTables.initialized && LookupTables.surnamesForms.isNotEmpty()) {
+        result = INITIALS_REGEX.replace(result) { match ->
+            if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+            val surname = match.groupValues[2]
+            if (!LookupTables.surnamesForms.contains(surname.lowercase())) return@replace match.value
+            if (isOnWhiteList(surname)) return@replace match.value
+            if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
+            assignToken(match.value, TOKEN_OSOBA)
+        }
     }
 
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
