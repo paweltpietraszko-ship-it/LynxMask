@@ -470,5 +470,9 @@ ZAMKNIĘTY — 10-cyfrowy PESEL z OCR jest maskowany przez wzorzec kontekstowy.
 | `EngineGoldenTest` | golden file nieaktualny | zaktualizować plik expected |
 | 4× `OcrDegradationTest` | de-leet (Be4ta, Krzy5zt0f) + tel OCR | @Ignore + "czeka na N6 RESEARCH-2" |
 
-**Następny krok:** EngineGoldenTest (golden file) + @Ignore na 4× OcrDegradationTest → potem Krok 2.
+**EngineGoldenTest (commit 49b1969):** ZAMKNIĘTY. ADRES tag poprawiony (odmiana), EMAIL x2 zakomentowane (BUG-EMAIL-TOKEN/S7). 41/41 PASS.
+
+**Stan testów końcowy sesji 21.06: 266 testów, 4 FAILED — wyłącznie OcrDegradationTest (de-leet + tel OCR), czeka na RESEARCH-2.**
+
+**Następny krok:** decyzja RESEARCH-2 (biblioteka string-similarity-kotlin vs własna impl.) → potem N6 de-leet → @Ignore na 4× OcrDegradationTest odpada. Potem Krok 2.
 
