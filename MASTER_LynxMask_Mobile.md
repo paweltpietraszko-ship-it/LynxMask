@@ -296,9 +296,11 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 **Kolejność od góry (ekran scrollowalny):**
 
 1. **RED hity** — Guard RED, lista klikalna. Każdy hit: przycisk „Maskuj" → automatyczne maskowanie w miejscu, hit znika. Baner RED znika gdy lista pusta.
-2. **Przycisk „Podgląd tekstu"** → modal z zamaskowanym tekstem. Każdy token (OSOBA\_001, NUMER\_001 itd.) klikalny — klik odkrywa **pojedynczą encję** w miejscu (nie cały dokument). Depseudonimizator całości jest w Bibliotece.
+2. **Przycisk „Podgląd tekstu"** → modal (scrollowalny, powiększona czcionka — obecna za mała). Dwie funkcje w jednym miejscu:
+   - **Odkrycie encji** — klik na token (OSOBA\_001, NUMER\_001 itd.) odkrywa pojedynczą encję w miejscu. Depseudonimizator całości jest w Bibliotece.
+   - **Ręczne maskowanie** — użytkownik zaznacza dowolny fragment tekstu który pipeline pominął → zaznaczony tekst automatycznie pojawia się wypełniony w formularzu maskowania w dolnej części modalu → użytkownik wybiera typ (OSOBA / NUMER / ADRES / FIRMA / KWOTA) i klika „Maskuj". Bez osobnego dialogu, bez ręcznego przepisywania.
 3. **YELLOW hity** — jedna lista łącząca Guard YELLOW + NameEngine flags (klasa B). Użytkownik nie widzi źródła — to jeden strumień alertów. Każda pozycja: **„Maskuj"** (automatyczne, typ z kontekstu labelu, bez dialogu) + **„Nie maskuj"** (do GuardAllowlist, hit znika). Kolejność: najpierw Guard YELLOW, potem NameEngine flags.
-4. **Formularz maskowania** — wbudowany inline, bez osobnego okna. Pole tekstowe + chipy typów + „Maskuj". Zastępuje dotychczasowy przycisk „Dodaj" prowadzący do ManualDialog. ❌ NIEZROBIONE
+4. ~~**Formularz maskowania wbudowany inline**~~ — przeniesiony do modalu „Podgląd tekstu" (decyzja 21.06). Osobny przycisk „Dodaj" / ManualDialog do usunięcia.
 5. **Kopiuj dokument**
 6. **Wyślij do Claude** ❌ NIEZAIMPLEMENTOWANE
 7. **Opis dokumentu** — pole tekstowe, opcjonalne
