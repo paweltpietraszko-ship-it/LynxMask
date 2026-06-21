@@ -3,6 +3,20 @@ package com.lynxmask.app
 // StructuralEngine.kt — Wzorce regex warstwy strukturalnej
 // Wersja: 1.9
 //
+// Zmiany v1.9b (sesja 21.06 — kontekstowe wzorce identyfikatorów):
+//   - BLOK-0c: 4 nowe wzorce kontekstowe (format-agnostic, słowo kluczowe → numer):
+//       • sygnatura: "sygn. akt I Co 3704/2018", "sygn. akt Km 808382024"
+//         Nie wylicza kodów wydziałów — reaguje na etykietę "sygn." / "sygnatura akt".
+//         Działa dla: akt, komornicze (Km), administracyjne, notarialne, urzędy.
+//       • numer umowy: "nr umowy UMW/2022/966", "nr umowy U-00615/2024"
+//         Format po słowie kluczowym: dowolny alfanumeryczny z ukośnikami.
+//       • numer faktury: "nr faktury FV-01079/04/2024", "faktura nr 4704/12/2020"
+//       • numer kw: "nr KW PO1P/00424625/8", "księgi wieczystej nr M/00787548/4"
+//     Uzasadnienie: doraźne patche strukturalne (regex na format) nie skalują się —
+//     każde pole ma dziesiątki formatów, każdy urząd/sąd inaczej je zapisuje.
+//     Podejście kontekstowe (jedno słowo kluczowe → format-agnostic capture) jest
+//     odporne na OCR i pokrywa wszystkie instytucje bez listy kodów.
+//
 // Zmiany v1.9 (sesja 21.06 — NUMER recall):
 //   - SYGNATURA-FIX: sygnatura sądowa/komornicza — [A-Z]{1,3} → [A-Z][a-zA-Z]{0,2}.
 //     Poprzednio: "I Co 3704/2018" ("Co"), "I Ns 6475/2022" ("Ns"), "Km 4917/2018" ("Km")
@@ -184,6 +198,31 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Łapie: "seria i numer dokumentu: ABC123456", "seria i nr: AB1234567"
     // Może też złapać numer faktury/zamówienia — to celowe (dane wrażliwe w kontekście)
     TOKEN_NUMER to Regex("""(?i)\bseria[^\S\n]+i[^\S\n]+(?:numer|nr)\b[^\S\n]*[:–\-]?[^\S\n]*[A-Z]{1,3}[\w \t\-]{4,18}[A-Z0-9\d]"""),
+
+    // ============================================================
+    // Blok 0c — Kontekstowe wzorce identyfikatorów dokumentowych
+    // Zasada: słowo kluczowe → cokolwiek za nim wygląda jak numer.
+    // OCR-tolerant i format-agnostic: nie wyliczamy formatów numerów,
+    // tylko reagujemy na etykiety (sygnatura, nr umowy, nr faktury, nr kw).
+    // ============================================================
+
+    // Sygnatura akt/komornicza z kontekstem "sygn." / "sygnatura akt"
+    // Łapie: I Co 3704/2018, Km 4917/2018, Km 808382024 (OCR bez ukośnika)
+    // Format po słowie kluczowym: 1-3 grupy liter + cyfry (z opcjonalnymi ukośnikami)
+    TOKEN_NUMER to Regex("""(?i)\bsygn(?:atura)?\.?(?:[^\S\n]+akt)?\b[^\S\n]*[:–\-]?[^\S\n]*(?:[A-Za-z]{1,4}[^\S\n]+){1,3}\d[\d/\-]{1,20}\b"""),
+
+    // Numer umowy z kontekstem "nr umowy" / "numer umowy"
+    // Łapie: UMW/2022/966, U-00615/2024, KT/0001/2022
+    // \n? dopuszcza newline między etykietą a numerem (OCR: label + enter + wartość)
+    TOKEN_NUMER to Regex("""(?i)\b(?:nr|numer)\.?[^\S\n]+umow[ya]\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,22}\b"""),
+
+    // Numer faktury z kontekstem "nr faktury" / "numer faktury" / "faktura nr"
+    // Łapie: FV-01079/04/2024, 4704/12/2020, FV/2022/12
+    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+faktur[ay]|faktura[^\S\n]+(?:nr|numer))\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{2,22}\b"""),
+
+    // Numer KW (księgi wieczystej) z kontekstem
+    // Łapie: PO1P/00424625/8, M/00787548/4
+    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+kw|ksi[eę]g[ia][^\S\n]+wieczyst\w{0,3}(?:[^\S\n]+(?:nr|numer))?)\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,20}\b"""),
 
     // ============================================================
     // Warstwa 2 — Regex strukturalne

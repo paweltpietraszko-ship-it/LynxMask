@@ -923,6 +923,66 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "PT.075012.2018")
     }
 
+    // =========================================================================
+    // v1.9b — Blok 0c: kontekstowe wzorce identyfikatorów dokumentowych
+    // =========================================================================
+
+    @Test fun `v19b sygnatura akt I Co z kontekstem sygn jest maskowana`() {
+        val r = pseudonymize("sygn. akt I Co 3704/2018, z dnia 01.01.2018")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "I Co 3704/2018")
+    }
+
+    @Test fun `v19b sygnatura komornicza Km z kontekstem sygn jest maskowana`() {
+        val r = pseudonymize("sygn. akt Km 4917/2018")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "Km 4917/2018")
+    }
+
+    @Test fun `v19b sygnatura OCR bez ukosnika z kontekstem sygn jest maskowana`() {
+        // OCR usuwa ukośnik: "Km 80838/2024" → "Km 808382024"
+        val r = pseudonymize("Sygn akt Km 808382024")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "808382024")
+    }
+
+    @Test fun `v19b numer umowy UMW z kontekstem nr umowy jest maskowany`() {
+        val r = pseudonymize("numer umowy: UMW/2022/966")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "UMW/2022/966")
+    }
+
+    @Test fun `v19b numer umowy U- z kontekstem nr umowy jest maskowany`() {
+        val r = pseudonymize("nr umowy U-00615/2024")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "U-00615/2024")
+    }
+
+    @Test fun `v19b numer faktury FV z kontekstem nr faktury jest maskowany`() {
+        val r = pseudonymize("nr faktury: FV-01079/04/2024")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "FV-01079/04/2024")
+    }
+
+    @Test fun `v19b numer faktury cyfrowy z kontekstem faktura nr jest maskowany`() {
+        val r = pseudonymize("Faktura nr 4704/12/2020")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "4704/12/2020")
+    }
+
+    @Test fun `v19b numer kw z kontekstem nr kw jest maskowany`() {
+        val r = pseudonymize("nr KW: PO1P/00424625/8")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "PO1P/00424625/8")
+    }
+
+    @Test fun `v19b sygnatura sygn na nowej linii jest maskowana`() {
+        // Typowy OCR: "sygn. akt" i numer w tej samej linii — szybki sanity check
+        val r = pseudonymize("Sygn. akt II K 789/2023.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "II K 789/2023")
+    }
+
     // DIAGNOSTYKA TYMCZASOWA — usunąć po analizie
     @Test fun `diagnostyka_faile`() {
         val cases = listOf(
