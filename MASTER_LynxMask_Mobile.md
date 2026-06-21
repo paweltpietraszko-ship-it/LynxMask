@@ -270,7 +270,11 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 * **Potok 9 — eksport `.lynx` przez WiFi/LAN.** Brak briefu, wymaga decyzji o architekturze. Brak terminu.
 * **BUG-PIPELINE-DUPLICATE** — pseudonymize+save+audit zdublowane w dwóch ścieżkach ShareTargetActivity. Nieaktywny, do obserwacji.
 * **AUD-M04 — isMinifyEnabled=false** — brak obfuskacji w release. Wymaga reguł ProGuard (SQLCipher+Compose). Osobna sesja po stabilizacji silnika.
-* **Zarządzanie słownikami przez użytkownika (21.06)** — wpisy w GuardAllowlist i UserDictionary są permanentne, więc błędny wpis (np. przez przypadek "ignoruj" na prawdziwym PESELu) jest trwałym problemem. Potrzebny ekran edycji słowników: podgląd wpisów + usuwanie. GuardAllowlist prosta lista (wartość + typ + data), UserDictionary bardziej złożony (zmiana wpisu wpływa na istniejące dokumenty w bibliotece). Decyzja UX: osobna zakładka czy ustawienia/profil? Nie implementować przed Krokiem 2.
+* **Zarządzanie słownikami przez użytkownika (21.06)** 🔲 — wpisy w GuardAllowlist i UserDictionary są permanentne, więc błędny wpis (np. przez przypadek "ignoruj" na prawdziwym PESELu) jest trwałym problemem.
+  * **Co jest zrobione:** API kompletne — `add`, `contains`, `remove`, `getAll`, `load` w obu słownikach. Dane szyfrowane (EncryptedFile/AES-256-GCM). Wpisy dodawane przez "Maskuj" (→ UserDictionary) i "Nie maskuj" (→ GuardAllowlist).
+  * **Czego brakuje:** brak przycisku "Słowniki" w UI i brak ekranu/modalu do ich przeglądania i usuwania wpisów. Użytkownik nie może zobaczyć co jest w słowniku ani cofnąć błędnego wpisu.
+  * **Zakres do implementacji:** ekran z dwiema zakładkami (UserDictionary / GuardAllowlist), lista wpisów z przyciskiem usuń przy każdym, bez edycji (zmiana = usuń + dodaj ponownie). Decyzja UX otwarta: osobna zakładka w nawigacji czy w Ustawieniach/Profilu?
+  * **Zależność:** UserDictionary — zmiana wpisu wpływa na istniejące dokumenty w bibliotece (token nie zostanie odnaleziony przy depseudonimizacji). GuardAllowlist — prosta lista, usunięcie bez efektów ubocznych.
 
 \---
 
