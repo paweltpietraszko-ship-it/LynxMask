@@ -487,3 +487,36 @@ ZAMKNIĘTY — 10-cyfrowy PESEL z OCR jest maskowany przez wzorzec kontekstowy.
 
 **Następny krok: Krok 2** — mechanizm odkrywania tokenu + BUG-DICT engine + GuardAllowlist. Czeka na decyzję Pawła: osobny przycisk „to nie PII, zapamiętaj" czy wystarczy samo „ignoruj" przy YELLOW hicie (sekcja 19).
 
+---
+
+### SESJA 21.06 (2) — ZROBIONE
+
+**GuardAllowlist v1 (commit 00e1ecd):** nowy plik `GuardAllowlist.kt` — singleton analogiczny do UserDictionary, klucz (wartość, ruleType). Problem w testach: Kotlin wstawia null-check przed ciałem funkcji dla parametrów non-nullable — NPE wylatywało przed `_entries.add()`. Rozwiązanie: `addDirect`/`removeDirect` (internal, bez Contextu) obok istniejącego `resetForTesting`. 11 testów, 0 FAILED.
+
+**Martwy kod (commit 410bcd5):** `CompactTextPreviewCard` usunięta z `PseudonymResultPanel.kt` (130 linii, nigdy niewywoływana, duplikat wbudowanego dialogu). Plik: 1438 → 1305 linii.
+
+**Krok 2 zamknięty (commit 2a45a6a):** GuardAllowlist podłączona do potoku OCR:
+- `PseudonymEngine.pseudonymize()` — nowy parametr `guardAllowlist`, filtruje `guardHits` przed zwrotem
+- `ShareTargetActivity` — ładuje `GuardAllowlist.load(context)`, przekazuje `GuardAllowlist.entries` do `pseudonymize()` i obsługuje `onAddToAllowlist`
+- `PseudonymResultPanel` — nowy parametr `onAddToAllowlist`, stan `dismissedHits`, `GuardHitsSection` przerobiony: YELLOW hit → "Maskuj" + "Nie maskuj", RED → tylko "Maskuj"
+
+**Benchmark 21.06 (07:42):** 68 dok., fresh dataset.
+
+| Metryka | 20.06 | 21.06 | Δ |
+|---|---|---|---|
+| Recall | 74,3% | **81,3%** | +7pp |
+| Precision | 74,0% | 73,0% | -1pp |
+| F1 | — | 76,9% | |
+| Krytyczne braki | 15 | **7** | -8 |
+| ADRES recall | 76,0% | 90,4% | +14pp |
+| EMAIL recall | 75,0% | 90,0% | +15pp |
+| OSOBA recall | 82,1% | 90,9% | +9pp |
+| NUMER recall | 71,4% | 75,2% | +4pp |
+| Lvl 2 recall | 41,1% | **66,7%** | +26pp |
+
+**Wszystkie 7 krytycznych braków = BRAK_W_OCR (sufit OCR na Lvl 2, qs=80-85). Silnik nie ma żadnego własnego błędu krytycznego.**
+
+**Stan testów: 277 testów, 0 FAILED, 1 @Ignore.**
+
+**Następny krok:** test ręczny dokumentu na urządzeniu, potem Sonet (mechanizm odkrywania tokenu).
+
