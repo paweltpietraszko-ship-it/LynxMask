@@ -1,9 +1,14 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 2.2
+// Wersja: 2.3
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
+//
+// Zmiany v2.3 (21.06):
+//   - OCR_IBAN_NEWLINE (krok 13aa): IBAN rozłożony przez newline → sklejenie
+//     "PL89 1090 1014 7449\n5552 5211 0732" → "PL89109010147449555252110732"
+//     Warunek: łączna liczba cyfr == 26 (analogicznie do OCR_IBAN_SPLIT)
 //
 // Zmiany v2.2 (21.06):
 //   - OCR_DOWOD_DIGITS rozszerzony o naprawę SERII dokumentu (odwrotna sytuacja niż krok 11d v2.1):
@@ -315,6 +320,15 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_IBAN_NEWLINE v2.3: IBAN rozłożony przez newline
+    // "PL89 1090 1014 7449\n5552 5211 0732" → "PL89109010147449555252110732"
+    // Warunek bezpieczeństwa: łączna liczba cyfr po PL == 26 (analogicznie do IBAN_SPLIT)
+    // ----------------------------------------------------------
+    private val OCR_IBAN_NEWLINE = Regex(
+        """\bPL([TIlOo0-9 ]{2,30})\n([TIlOo0-9 ]{2,25})\b"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_IBAN_SPLIT v2.0: spacja wstawiona przez OCR wewnątrz numeru IBAN + litery jako cyfry
     // "PL02114019872105222748309 170"       → "PL02114019872105222748309170"
     // "PL89l090l0l474495552 52ll0732"       → "PL89109010147449555252110732"
@@ -492,6 +506,18 @@ object OcrNormalizer {
             val fixed = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
             fixed
+        }
+
+        // 13aa. OCR: IBAN rozłożony przez newline — skleja gdy łączna liczba cyfr == 26
+        text = OCR_IBAN_NEWLINE.replace(text) { m ->
+            val part1 = m.groupValues[1].replace(" ", "")
+                .map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            val part2 = m.groupValues[2].replace(" ", "")
+                .map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (part1.length + part2.length == 26) {
+                corrections++
+                "PL$part1$part2"
+            } else m.value
         }
 
         // 13a. OCR: spacja w środku IBAN + litery jako cyfry — "PL...9 170" → "PL...9170"

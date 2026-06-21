@@ -33,6 +33,21 @@ class OcrNormalizerDigitContextTest {
     }
 
     @Test
+    fun `OCR_DIGIT_IN_CONTEXT male o miedzy cyframi NIP`() {
+        // "965690-71o1" → "965690-7101" — małe 'o' w NIP pomijane przez [lOI], bug krok 14
+        val result = OcrNormalizer.normalize("NIP 965690-71o1")
+        assertTrue("małe 'o' między cyframi powinno być '0'",
+            result.normalizedText.contains("965690-7101"))
+    }
+
+    @Test
+    fun `OCR_DIGIT_IN_CONTEXT male o miedzy cyframi ogolnie`() {
+        val result = OcrNormalizer.normalize("numer 4o8")
+        assertTrue("małe 'o' między cyframi powinno być '0'",
+            result.normalizedText.contains("408"))
+    }
+
+    @Test
     fun `OCR_DIGIT_IN_CONTEXT nie zmienia l w srodku slowa`() {
         // 'l' w słowie "Kowalski" — nie otoczone cyframi → bez zmian
         val result = OcrNormalizer.normalize("Kowalski")
@@ -118,5 +133,33 @@ class OcrNormalizerDigitContextTest {
         val result = OcrNormalizer.normalize(input)
         assertFalse("Krótki numer z literami nie powinien być sklejony",
             result.normalizedText.contains("PL89109052110"))
+    }
+
+    // ── OCR_IBAN_NEWLINE v2.3 — IBAN przez newline ──────────────────────────────
+
+    @Test
+    fun `OCR_IBAN_NEWLINE skleja IBAN przez newline`() {
+        // 14 cyfr w pierwszej linii + 12 cyfr w drugiej = 26 łącznie
+        val input = "Nr konta: PL89 1090 1014 7449\n5552 5211 0732"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue("IBAN przez newline powinien być sklejony",
+            result.normalizedText.contains("PL89109010147449555252110732"))
+    }
+
+    @Test
+    fun `OCR_IBAN_NEWLINE nie skleja gdy suma cyfr nie wynosi 26`() {
+        val input = "PL89 1090\n52 11"
+        val result = OcrNormalizer.normalize(input)
+        assertFalse("Krótki IBAN przez newline nie powinien być sklejony",
+            result.normalizedText.contains("PL89109052"))
+    }
+
+    @Test
+    fun `OCR_IBAN_NEWLINE nie ingeruje w IBAN jednolinijkowy`() {
+        // Istniejący OCR_IBAN_SPLIT obsługuje jednoliniowy — NEWLINE nie może go zepsuć
+        val input = "PL02114019872105222748309 170"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue("Jednoliniowy IBAN ze spacją nadal naprawiany przez IBAN_SPLIT",
+            result.normalizedText.contains("PL02114019872105222748309170"))
     }
 }
