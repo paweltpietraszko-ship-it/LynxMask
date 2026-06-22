@@ -246,7 +246,7 @@ private fun HubScreen(
             OutlinedTextField(
                 value         = pastedText,
                 onValueChange = { pastedText = it },
-                modifier      = Modifier.fillMaxWidth().heightIn(min = LynxSpacing.TouchTarget),
+                modifier      = Modifier.fillMaxWidth().heightIn(min = LynxSpacing.TouchTarget, max = 120.dp),
                 placeholder   = {
                     Text("Wklej tekst...", color = LynxColors.TextDim, fontSize = 14.sp)
                 },
