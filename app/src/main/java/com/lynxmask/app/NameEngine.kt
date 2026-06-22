@@ -758,5 +758,5 @@ internal fun detectAlgorithmicFlags(
             }
         }
         .sortedWith(compareBy({ it.isContextual }, { rawFlags.indexOf(it) }))
-    flags.addAll(prioritized.take(5))
+    flags.addAll(prioritized)
 }
