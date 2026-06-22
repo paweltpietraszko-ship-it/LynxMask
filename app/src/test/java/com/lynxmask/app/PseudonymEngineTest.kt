@@ -431,13 +431,13 @@ class PseudonymEngineTest {
 
     @Test fun `email jest maskowany`() {
         val r = pseudonymize("Kontakt: jan.kowalski@firma.pl")
-        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_EMAIL)
         assertNotInOutput(r, "jan.kowalski@firma.pl")
     }
 
     @Test fun `email z poddomainem jest maskowany`() {
         val r = pseudonymize("Wyślij na adres: jan@biuro.kancelaria.pl")
-        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_EMAIL)
         assertNotInOutput(r, "jan@biuro")
     }
 
