@@ -1276,4 +1276,23 @@ class PseudonymEngineTest {
             println("  $token = $original")
         }
     }
+
+    // =========================================================================
+    // S7 — EMAIL jako EMAIL (nie NUMER)
+    // =========================================================================
+
+    @Test fun `S7 email strukturalny dostaje token EMAIL nie NUMER`() {
+        val r = pseudonymize("kontakt: jan.kowalski@example.com")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "jan.kowalski@example.com")
+        assert(r.tokenMap.none { (k, _) -> k.startsWith("NUMER") && r.tokenMap[k]?.contains("@") == true }) {
+            "Email nie powinien być tokenizowany jako NUMER"
+        }
+    }
+
+    @Test fun `S7 email z prefiksem e-mail dostaje token EMAIL`() {
+        val r = pseudonymize("e-mail: anna.wisniewski@firma.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "anna.wisniewski@firma.pl")
+    }
 }

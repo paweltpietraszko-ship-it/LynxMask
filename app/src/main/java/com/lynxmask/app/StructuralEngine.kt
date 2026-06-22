@@ -172,9 +172,9 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 
     // --- Email --- (przeniesiony na pozycję 0 — musi być przed CATCHALL \d{9} i VAT EU [A-Z]{2}\d{8,12})
     // Wzorzec strukturalny — wymaga @
-    TOKEN_NUMER to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b"""),
+    TOKEN_EMAIL to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b"""),
     // Wzorzec z kontekstem "e-mail:" / "email:" — OCR-tolerant, łapie gdy @ zgubiony
-    TOKEN_NUMER to Regex("""(?i)\be[- ]?mail\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z]{2,}\b"""),
+    TOKEN_EMAIL to Regex("""(?i)\be[- ]?mail\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z]{2,}\b"""),
 
     // ============================================================
     // Blok 0 — Kontekstowe wzorce dokumentów tożsamości i uprawnień

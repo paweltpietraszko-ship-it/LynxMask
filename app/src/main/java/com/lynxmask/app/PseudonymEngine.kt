@@ -37,6 +37,7 @@ package com.lynxmask.app
 internal const val TOKEN_FIRMA = "FIRMA"
 internal const val TOKEN_OSOBA = "OSOBA"
 internal const val TOKEN_NUMER = "NUMER"
+internal const val TOKEN_EMAIL = "EMAIL"
 internal const val TOKEN_KWOTA = "KWOTA"
 internal const val TOKEN_ADRES = "ADRES"
 
@@ -77,7 +78,7 @@ data class DetectionTrace(
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
 // ============================================================
-internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|KWOTA|ADRES)_(\d{3})\b""")
+internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})\b""")
 
 // ============================================================
 // Normalizacja canonical — z Triangulum [V4-2]
@@ -182,7 +183,7 @@ object PseudonymEngine {
 
         // --- Warstwa 1: Słownik użytkownika ---
         // Defensywna walidacja typu — zabezpiecza przed błędnym typem z ManualTokenSection
-        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_KWOTA, TOKEN_ADRES)
+        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_EMAIL, TOKEN_KWOTA, TOKEN_ADRES)
         for ((dictValue, tokenType) in userDictionary) {
             if (dictValue.isBlank()) continue
             val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
