@@ -18,7 +18,14 @@ import morfologik.stemming.polish.PolishStemmer
 
 object MorfologikHelper {
 
-    private val stemmer by lazy { PolishStemmer() }
+    private val stemmer by lazy {
+        val s = PolishStemmer()
+        // Weryfikacja czy słownik załadował — testowe słowo jednoznacznie adj
+        val testTags = s.lookup("rejonowy").map { it.tag.toString() }
+        android.util.Log.i("MorfologikHelper",
+            "Słownik załadowany. rejonowy→tags=$testTags (oczekiwane: [adj:...])")
+        s
+    }
 
     // Zwraca wszystkie tagi POS dla słowa (lowercase). Pusta lista = słowo nieznane słownikowi.
     fun tags(word: String): List<String> =

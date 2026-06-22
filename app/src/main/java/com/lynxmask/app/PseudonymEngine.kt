@@ -227,7 +227,14 @@ object PseudonymEngine {
                     if (digits.length == 11 && !isValidPesel(digits)) return@replace match
                 }
                 if (pattern.pattern in NIP_PATTERN_STRINGS) {
-                    if (digits.length == 10 && !isValidNip(digits)) return@replace match
+                    if (digits.length == 10 && !isValidNip(digits)) {
+                        // Wyjątek: kontekst "NIP" tuż przed liczbą — maskuj mimo błędnej sumy.
+                        // Zły checksum może wynikać z błędu OCR (jedna cyfra zmieniona).
+                        // Jeśli dokument wprost pisze "NIP 1234567890", to jest to NIP.
+                        val before = text.substring(maxOf(0, matchResult.range.first - 15), matchResult.range.first)
+                        val hasNipContext = before.contains(Regex("""(?i)\bNIP\W*$"""))
+                        if (!hasNipContext) return@replace match
+                    }
                 }
 
                 assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)

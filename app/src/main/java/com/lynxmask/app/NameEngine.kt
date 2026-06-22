@@ -182,7 +182,13 @@ private val WHITE_LIST_INSTITUTIONS_PREFIX: Set<String> = setOf(
     // Zamiast pełnych form, które pomijają formy żeńskie i odmianę.
     "narodow", "państwow", "publiczn", "miejsk",
     "gminn", "powiatow", "wojewódz", "centraln", "główn", "generaln",
-    "okręgow", "rejonow", "samorządow", "skarbow"
+    "okręgow", "rejonow", "samorządow", "skarbow",
+    // Jednostki organizacyjne — formy fleksyjne przez prefix:
+    // "wydziału/wydziałem/wydziałów" → "wydział"
+    // "zarządu/zarządzie/zarządem" → "zarząd"
+    // "spółki/spółką/spółkę" → "spółk"
+    // "oddziału/oddziałem/oddziałów" → "oddział"
+    "wydział", "zarząd", "spółk", "oddział"
 ).map { it.lowercase() }.toHashSet()
 
 // Słowa niejednoznaczne — "centrum" może być prywatną firmą (Centrum Doradztwa Pawlak)
@@ -676,6 +682,20 @@ internal fun applyContextualBlacklist(
 // ============================================================
 // Warstwa 5 — Detekcja algorytmiczna (TYLKO FLAGI)
 // ============================================================
+// TOKEN_RE (\b) nie wykrywa tokenów przyklejonych do słów: "PanOSOBA_002"
+// (Pan=\w, O=\w → brak boundary) lub "OSOBA_021OSOBA_011" (1=\w, O=\w → brak boundary).
+// TOKEN_LOOSE_RE bez \b naprawia oba przypadki — używany tylko wewnątrz FLAGS.
+private val TOKEN_LOOSE_RE = Regex("""(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}""")
+
+// Artefakt sklejenia OCR: wielka litera w środku słowa po małej lub cyfrze.
+// "URZĘDOWEUrząd" (E→U), "KrakowieWydział" (e→W), "ObywatelskichKraków" (h→K).
+private fun hasMidUpperCase(word: String): Boolean {
+    for (i in 1 until word.length) {
+        if (word[i].isUpperCase() && (word[i - 1].isLowerCase() || word[i - 1].isDigit())) return true
+    }
+    return false
+}
+
 internal fun detectAlgorithmicFlags(
     text: String,
     flags: MutableList<PseudonymFlag>,
@@ -691,8 +711,11 @@ internal fun detectAlgorithmicFlags(
         for (i in words.indices) {
             val word = words[i]
 
-            if (TOKEN_RE.containsMatchIn(word)) continue
+            // TOKEN_LOOSE_RE bez \b — wykrywa tokeny sklejone z innymi słowami
+            if (TOKEN_LOOSE_RE.containsMatchIn(word)) continue
             if (!word[0].isUpperCase()) continue
+            // Wielka litera w środku słowa po małej/cyfrze = sklejenie OCR ("URZĘDOWEUrząd")
+            if (hasMidUpperCase(word)) continue
             if (isOnWhiteList(word)) continue
             if (i == 0) continue
             if (word.length < 2) continue
@@ -703,14 +726,15 @@ internal fun detectAlgorithmicFlags(
 
             if (i + 1 < words.size) {
                 val nextWord = words[i + 1]
-                // FLAGS-FIX-ADJ v1.9: isAdjective() istniała w Warstwie 3 ale
-                // nie była wywoływana tutaj. "Mieszkaniowej" (przymiotnik kończący
-                // się na -iej) flagowane jako "Możliwe nazwisko" gdy poprzedzało
-                // czasownik. Fix: pomiń przymiotniki.
-                if (VERB_ENDINGS.matches(nextWord) && !isAdjective(word)) {
-                    if (seenFragments.add(word.lowercase())) {
+                // cleanWord używany zamiast word — przecinek/kropka na końcu psuje isAdjective().
+                // Flaguj tylko gdy Morfologik ZNA słowo lub jest w surnamesForms —
+                // blokuje anglicyzmy i artefakty OCR ("Guard", "Manager" itp.).
+                val knownWord = MorfologikHelper.tags(cleanWord).isNotEmpty() ||
+                    (LookupTables.initialized && LookupTables.surnamesForms.contains(cleanWord.lowercase()))
+                if (VERB_ENDINGS.matches(nextWord) && !isAdjective(cleanWord) && knownWord) {
+                    if (seenFragments.add(cleanWord.lowercase())) {
                         rawFlags.add(PseudonymFlag(
-                            fragment = word,
+                            fragment = cleanWord,
                             reason = "Możliwe nazwisko — sprawdź czy chcesz zamaskować"
                         ))
                     }
@@ -719,19 +743,22 @@ internal fun detectAlgorithmicFlags(
 
             if (i + 1 < words.size) {
                 val nextWord = words[i + 1]
-                val nextIsValid = nextWord.length >= 2 &&
+                val cleanNextWord = nextWord.trimEnd('.', ',', ';', ':', ')')
+                val nextIsValid = cleanNextWord.length >= 2 &&
                     nextWord[0].isUpperCase() &&
                     !nextWord.all { c -> c.isUpperCase() || !c.isLetter() } &&
-                    !TOKEN_RE.containsMatchIn(nextWord) &&
+                    // TOKEN_LOOSE_RE bez \b wykrywa "PanOSOBA_002" (boundary letter→letter brak)
+                    !TOKEN_LOOSE_RE.containsMatchIn(nextWord) &&
+                    // Sklejenie OCR w nextWord ("ObywatelskichKraków")
+                    !hasMidUpperCase(cleanNextWord) &&
                     !isOnWhiteList(nextWord) &&
-                    // FLAGS-FIX-PAIR v1.9: sprawdź parę razem — "zielonej górze"
-                    // jest w WHITE_LIST_CITIES jako wielosłowowy wpis, ale
-                    // sprawdzanie tylko nextWord osobno go nie znajdywało.
-                    !isOnWhiteList("$word $nextWord") &&
-                    // FLAGS-FIX-ADJ v1.9: przymiotnik jako pierwsze słowo pary
-                    // ("Społecznej Komisji") nie tworzy nazwy własnej.
-                    !isAdjective(word) &&
-                    !POLISH_FIRST_NAMES.contains(word.lowercase())
+                    !isOnWhiteList("$cleanWord $cleanNextWord") &&
+                    // Stanowisko jako pierwsze słowo pary → FUNCTION_TITLES ścieżka obsługuje osobno
+                    !FUNCTION_TITLES.contains(cleanWord.lowercase()) &&
+                    // Oczyść z interpunkcji przed isAdjective — "Społecznych," psuje lookup.
+                    !isAdjective(cleanWord) &&
+                    !isAdjective(cleanNextWord) &&
+                    !POLISH_FIRST_NAMES.contains(cleanWord.lowercase())
                 if (nextIsValid) {
                     val fragment = "$word $nextWord"
                     if (seenFragments.add(fragment.lowercase())) {
@@ -744,9 +771,13 @@ internal fun detectAlgorithmicFlags(
             }
 
             if (FUNCTION_TITLES.contains(word.lowercase())) {
-                val context = words.drop(i + 1).take(3)
-                    .filter { !TOKEN_RE.containsMatchIn(it) }
-                    .joinToString(" ")
+                // TOKEN_LOOSE_RE + trimEnd + whitelist — eliminuje "Naczelnik Wydziału,"
+                // (Wydziału jest instytucjonalne, TOKEN_LOOSE_RE lapie sklejone tokeny)
+                val contextWords = words.drop(i + 1).take(3)
+                    .filter { !TOKEN_LOOSE_RE.containsMatchIn(it) }
+                    .map { it.trimEnd('.', ',', ';', ':', ')') }
+                    .filter { w -> w.length >= 2 && !isOnWhiteList(w) }
+                val context = contextWords.joinToString(" ")
                 if (context.isNotEmpty() && !context.any { it.isDigit() }) {
                     val fragment = "$word $context".trim()
                     if (seenFragments.add(fragment.lowercase())) {
