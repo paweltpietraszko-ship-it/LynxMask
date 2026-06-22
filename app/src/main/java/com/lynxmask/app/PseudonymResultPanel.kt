@@ -164,7 +164,7 @@ fun PseudonymResultPanel(
             result.guardHits.filter { hit ->
                 !manualMasks.values.any { it == hit.matchedText } &&
                 hit.matchedText !in dismissedHits
-            }
+            }.distinctBy { it.label to it.matchedText }
         }
     }
 

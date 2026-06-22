@@ -177,9 +177,12 @@ private val WHITE_LIST_INSTITUTIONS_PREFIX: Set<String> = setOf(
     // FLAGS-FIX-KOMISJA v1.9: "komisj" pokrywa komisja/komisji/komisją/komisje/
     // komisjach/komisjom — wszystkie formy fleksyjne przez prefix startsWith.
     "komisj",
-    "narodowy", "państwowy", "publiczny", "miejski",
-    "gminny", "powiatowy", "wojewódzki", "centralny", "główny", "generalny",
-    "okręgowy", "rejonowy", "samorządowy"
+    // Stemy przymiotnikowe — pokrywają formy m/ż/n i odmianę przez przypadki.
+    // "miejski/miejska/miejskie/miejskiego/miejskiej" → stem "miejsk".
+    // Zamiast pełnych form, które pomijają formy żeńskie i odmianę.
+    "narodow", "państwow", "publiczn", "miejsk",
+    "gminn", "powiatow", "wojewódz", "centraln", "główn", "generaln",
+    "okręgow", "rejonow", "samorządow", "skarbow"
 ).map { it.lowercase() }.toHashSet()
 
 // Słowa niejednoznaczne — "centrum" może być prywatną firmą (Centrum Doradztwa Pawlak)
@@ -280,7 +283,8 @@ private val OSOBA_DENYLIST: Set<String> = setOf(
     "wydział", "wydziału", "wydzialu", "wydziatu",
     "informacji", "informacj", "uzyskanych",
     "niejszej", "nin", "icznie",
-    "sąd", "sądu", "rejonowy", "okręgowy",
+    "sąd", "sądu", "rejonowy", "rejonowa", "okręgowy", "okręgowa", "skarbowy", "skarbowa",
+    "sędzia", "sędziego", "sędzi",
     "urząd", "urzędu", "gminy", "gmina",
     "ulica", "ulicy", "adres", "adresu",
     "imię", "nazwisko", "pesel", "numer",
@@ -340,25 +344,29 @@ private val VERB_ENDINGS = Regex(
 
 // ============================================================
 // Przymiotniki wykluczone jako nazwiska
-// "Kazimierza Wielkiego" — "Wielkiego" kończy się na -iego → nie jest nazwiskiem
-// BUG-2 FIX: Sprawdzamy czy słowo jest w surnamesForms — jeśli tak,
-// to jest odmienione nazwisko ("Kowalskiego"), nie przymiotnik ("Wielkiego")
+// Warstwa 1: MorfologikHelper.isAdjective() — pyta słownik morfologiczny (PoliMorf).
+//   Zwraca true tylko gdy WSZYSTKIE tagi słowa to adj:* → zero false positives.
+//   Prawdziwe nazwiska (Borowy, Nowakowa) są w słowniku jako subst lub adj+subst →
+//   mixed tags → false → nie są blokowane.
+// Warstwa 2: TITLE_ADJECTIVE_ENDINGS regex — fallback dla słów nieznanych Morfologikowi
+//   (OCR-garbled: "Rejonow", "Skarbow") lub neologizmów.
 // ============================================================
 private val TITLE_ADJECTIVE_ENDINGS = Regex(
-    """(?i)(?:owego|owej|owym|iego|iej|iem|owych|czny|czna|czne|cznego|cznej|wny|wna|wne|wnego|wnej)\b"""
+    """(?i)(?:owego|owej|owym|owych|iego|iej|iem|owy|owa|owe|ową|czny|czna|czne|cznego|cznej|wny|wna|wne|wnego|wnej)\b"""
 )
 
-// Helper — zwraca true jeśli słowo WYGLĄDA jak przymiotnik ALE nie jest
-// w słowniku nazwisk (czyli faktycznie jest przymiotnikiem, nie odmienionem nazwiskiem)
 private fun isAdjective(word: String): Boolean {
-    if (!TITLE_ADJECTIVE_ENDINGS.containsMatchIn(word)) return false
+    // surnamesForms ZAWSZE przed Morfologikiem — "Kowalski" jest przymiotnikiem
+    // dzierżawczym w słowniku morfologicznym, ale nazwiskiem w surnamesForms.
     if (LookupTables.initialized && LookupTables.surnamesForms.isNotEmpty()) {
         val w = word.lowercase()
         if (LookupTables.surnamesForms.contains(w)) return false
-        // startsWith: "kowalskiego".startsWith("kowalski") → odmiana nazwiska, nie przymiotnik
         if (LookupTables.surnamesForms.any { it.length >= 5 && w.startsWith(it) }) return false
     }
-    return true
+    // Warstwa 1: Morfologik — definitywny przymiotnik (nie-nazwisko)
+    if (MorfologikHelper.isAdjective(word)) return true
+    // Warstwa 2: regex fallback dla słów spoza słownika (OCR-garbled, neologizmy)
+    return TITLE_ADJECTIVE_ENDINGS.containsMatchIn(word)
 }
 
 // ============================================================
@@ -602,6 +610,7 @@ internal fun applyContextualBlacklist(
         val namePart = match.groupValues[2]
         if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
             !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
+        if (isAdjective(namePart)) return@replace match.value
         if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
         "${match.groupValues[1]} ${assignToken(namePart, TOKEN_OSOBA)}"
     }
@@ -637,6 +646,7 @@ internal fun applyContextualBlacklist(
             val word = match.groupValues[1]
             if (!LookupTables.namesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
+            if (isAdjective(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
