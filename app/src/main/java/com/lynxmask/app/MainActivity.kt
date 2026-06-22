@@ -256,15 +256,14 @@ private fun HubScreen(
                     unfocusedBorderColor = LynxColors.Border
                 )
             )
-            if (pastedText.isNotBlank()) {
-                Button(
-                    onClick  = { onTextSubmit(pastedText) },
-                    modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                    shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                    colors   = ButtonDefaults.buttonColors(containerColor = LynxColors.Blue)
-                ) {
-                    Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                }
+            Button(
+                onClick  = { onTextSubmit(pastedText) },
+                enabled  = pastedText.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
+                shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
+                colors   = ButtonDefaults.buttonColors(containerColor = LynxColors.Blue)
+            ) {
+                Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             }
         }
 
