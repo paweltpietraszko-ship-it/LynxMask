@@ -42,8 +42,10 @@ import com.lynxmask.app.ui.theme.LynxMaskTheme
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
@@ -55,11 +57,15 @@ class MainActivity : ComponentActivity() {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
-        LookupTables.initialize(this)
-        SessionStore.init(this)
-        // Tworzy folder dla benchmarka — bez tego ADB nie może wgrać plików testowych
-        getExternalFilesDir("bench")?.mkdirs()
-        setContent { LynxMaskTheme { AppNavigation() } }
+        // [BUG-SS-3 fix] init() wykonuje I/O (Keystore + SQLite + ALTER TABLE) — musi być poza Main thread
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                LookupTables.initialize(this@MainActivity)
+                SessionStore.init(this@MainActivity)
+            }
+            getExternalFilesDir("bench")?.mkdirs()
+            setContent { LynxMaskTheme { AppNavigation() } }
+        }
     }
 }
 

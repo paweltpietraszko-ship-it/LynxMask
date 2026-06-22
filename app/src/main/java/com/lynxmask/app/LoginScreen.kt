@@ -77,6 +77,7 @@ import javax.crypto.spec.PBEKeySpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 
@@ -397,15 +398,23 @@ fun LoginScreen(
                             title = { Text("Resetuj has\u0142o?") },
                             text  = {
                                 Text(
-                                    "Usuni\u0119cie has\u0142a nie kasuje danych sesji ani dokument\u00f3w. " +
-                                    "Przy nast\u0119pnym uruchomieniu b\u0119dziesz m\u00f3g\u0142 ustawi\u0107 nowe.",
+                                    "Resetowanie has\u0142a trwale kasuje wszystkie sesje, dokumenty i s\u0142owniki. " +
+                                    "Operacja jest nieodwracalna.",
                                     fontSize = 13.sp, lineHeight = 19.sp
                                 )
                             },
                             confirmButton = {
                                 TextButton(onClick = {
-                                    context.getSharedPreferences("lynxmask_login", Context.MODE_PRIVATE)
-                                        .edit().clear().apply()
+                                    // [luka reset has\u0142a fix] kasujemy dane przed usuni\u0119ciem has\u0142a \u2014
+                                    // bez tego osoba z fizycznym dost\u0119pem do urz\u0105dzenia resetuje has\u0142o
+                                    // i dostaje pe\u0142ny dost\u0119p do zaszyfrowanych sesji przez nowe has\u0142o
+                                    scope.launch(Dispatchers.IO) {
+                                        SessionStore.deleteAllData(context)
+                                        UserDictionary.clear(context)
+                                        GuardAllowlist.clear(context)
+                                        context.getSharedPreferences("lynxmask_login", Context.MODE_PRIVATE)
+                                            .edit().clear().apply()
+                                    }
                                     showResetDialog = false
                                 }) {
                                     Text("Resetuj", color = LynxColors.Red, fontWeight = FontWeight.Bold)
