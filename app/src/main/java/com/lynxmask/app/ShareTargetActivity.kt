@@ -557,11 +557,14 @@ private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context):
                 BitmapFactory.decodeStream(it)
             } ?: return@withContext ""
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-            recognizer.close()
-            bitmap.recycle()
-            DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków")
-            result.text
+            try {
+                val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+                DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków")
+                result.text
+            } finally {
+                recognizer.close()
+                bitmap.recycle()
+            }
         } catch (e: Exception) {
             DebugLogBuffer.log("OCR", "BŁĄD: ${e.message}")
             ""
@@ -597,13 +600,16 @@ private suspend fun ocrFromPdfUri(
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 page.close()
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-                val ocr = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-                recognizer.close()
-                if (ocr.text.isNotBlank()) {
-                    sb.append("── Strona ${i + 1} ──\n${ocr.text}\n\n")
-                    DebugLogBuffer.log("OCR", "Strona ${i + 1}: ${ocr.text.length} znaków")
+                try {
+                    val ocr = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+                    if (ocr.text.isNotBlank()) {
+                        sb.append("── Strona ${i + 1} ──\n${ocr.text}\n\n")
+                        DebugLogBuffer.log("OCR", "Strona ${i + 1}: ${ocr.text.length} znaków")
+                    }
+                } finally {
+                    recognizer.close()
+                    bitmap.recycle()
                 }
-                bitmap.recycle()
             }
             if (renderer.pageCount > MAX_PDF_PAGES)
                 sb.append("\n[LynxMask: ${renderer.pageCount} stron, przeskanowano $MAX_PDF_PAGES]")
