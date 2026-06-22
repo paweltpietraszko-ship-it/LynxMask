@@ -50,4 +50,12 @@ class OcrNormalizerNipSplitTest {
         println("PO:    ${result.normalizedText}")
         assertEquals("nie powinno zmieniac poza kontekstem NIP", input, result.normalizedText)
     }
+
+    @Test
+    fun `naprawa NIP z newline w srodku segmentu`() {
+        val input = "NIP: 740-617\n82-26"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue("newline w NIP nie usuniety", result.normalizedText.contains("740-61782-26") || result.normalizedText.contains("740-617-82-26"))
+        assertFalse("newline w srodku NIP powinien byc usuniety", result.normalizedText.contains("740-617\n82-26"))
+    }
 }

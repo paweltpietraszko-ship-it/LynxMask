@@ -489,7 +489,7 @@ object OcrNormalizer {
 
         // 11b. OCR: spacja wstawiona przez OCR wewnątrz NIP
         text = OCR_NIP_SPLIT.replace(text) { m ->
-            val fixed = m.groupValues[2].replace(" ", "")
+            val fixed = m.groupValues[2].replace(Regex("""\s"""), "")
             if (fixed != m.groupValues[2]) corrections++
             m.groupValues[1] + fixed
         }
