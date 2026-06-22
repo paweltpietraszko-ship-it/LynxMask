@@ -39,10 +39,10 @@ object MorfologikHelper {
     }
 
     // true gdy słowo definitywnie NIE może być osobą — wszystkie tagi należą do klas nieosobowych.
-    // Zastępuje OSOBA_DENYLIST dla słów znanych słownikowi.
-    // Klasy nieosobowe: przymiotnik, przysłówek, spójnik, przyimek, czasownik, liczebnik,
-    //                   wykrzyknik, partykuła, zaimek, forma bezosobowa.
-    fun isDefinitelyNotPerson(word: String): Boolean {
+    // personAllowlist chroni znane imiona/nazwiska które Morfologik taguje jako subst
+    // (np. "Kowalski" → subst:sg:nom:m1, ale jest nazwiskiem).
+    fun isDefinitelyNotPerson(word: String, personAllowlist: Set<String> = emptySet()): Boolean {
+        if (word.lowercase() in personAllowlist) return false
         val t = tags(word)
         if (t.isEmpty()) return false
         return t.all { tag ->
@@ -57,7 +57,19 @@ object MorfologikHelper {
             tag.startsWith("ppron") ||
             tag.startsWith("siebie") ||
             tag.startsWith("qub") ||
-            tag.startsWith("ger")   // rzeczownik odsłowny — nie jest osobą
+            tag.startsWith("ger") ||
+            tag.startsWith("subst")  // rzeczownik pospolity — nie jest osobą
         }
+    }
+
+    // true gdy słowo może być częścią imienia lub nazwiska — jest w podanych słownikach.
+    fun isLikelyPersonNamePart(
+        word: String,
+        namesForms: Set<String>,
+        surnamesForms: Set<String>,
+        firstNamesFallback: Set<String>
+    ): Boolean {
+        val w = word.lowercase()
+        return w in namesForms || w in surnamesForms || w in firstNamesFallback
     }
 }

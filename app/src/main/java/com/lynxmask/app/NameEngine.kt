@@ -696,6 +696,27 @@ private fun hasMidUpperCase(word: String): Boolean {
     return false
 }
 
+private val HONORIFICS: Set<String> = setOf(
+    "pan", "pani", "pana", "panu", "panie", "panem", "panią", "panię", "panowie"
+)
+
+private fun personNameAllowlist(): Set<String> =
+    if (LookupTables.initialized)
+        LookupTables.namesForms + LookupTables.surnamesForms + POLISH_FIRST_NAMES
+    else
+        POLISH_FIRST_NAMES
+
+private fun isPersonNamePart(word: String): Boolean =
+    MorfologikHelper.isLikelyPersonNamePart(
+        word,
+        namesForms = if (LookupTables.initialized) LookupTables.namesForms else emptySet(),
+        surnamesForms = if (LookupTables.initialized) LookupTables.surnamesForms else emptySet(),
+        firstNamesFallback = POLISH_FIRST_NAMES
+    )
+
+private fun isDefinitelyNotPersonWord(word: String): Boolean =
+    !isPersonNamePart(word) && MorfologikHelper.isDefinitelyNotPerson(word, personNameAllowlist())
+
 internal fun detectAlgorithmicFlags(
     text: String,
     flags: MutableList<PseudonymFlag>,
@@ -729,9 +750,13 @@ internal fun detectAlgorithmicFlags(
                 // cleanWord używany zamiast word — przecinek/kropka na końcu psuje isAdjective().
                 // Flaguj tylko gdy Morfologik ZNA słowo lub jest w surnamesForms —
                 // blokuje anglicyzmy i artefakty OCR ("Guard", "Manager" itp.).
-                val knownWord = MorfologikHelper.tags(cleanWord).isNotEmpty() ||
-                    (LookupTables.initialized && LookupTables.surnamesForms.contains(cleanWord.lowercase()))
-                if (VERB_ENDINGS.matches(nextWord) && !isAdjective(cleanWord) && knownWord) {
+                val isLikelySurname = LookupTables.initialized &&
+                    LookupTables.surnamesForms.contains(cleanWord.lowercase())
+                if (VERB_ENDINGS.matches(nextWord) &&
+                    !isAdjective(cleanWord) &&
+                    !isDefinitelyNotPersonWord(cleanWord) &&
+                    isLikelySurname
+                ) {
                     if (seenFragments.add(cleanWord.lowercase())) {
                         rawFlags.add(PseudonymFlag(
                             fragment = cleanWord,
@@ -758,7 +783,10 @@ internal fun detectAlgorithmicFlags(
                     // Oczyść z interpunkcji przed isAdjective — "Społecznych," psuje lookup.
                     !isAdjective(cleanWord) &&
                     !isAdjective(cleanNextWord) &&
-                    !POLISH_FIRST_NAMES.contains(cleanWord.lowercase())
+                    // Pozytywny dowód: co najmniej jedno słowo musi być imieniem lub nazwiskiem.
+                    // Bez tego każda para słów z dużej litery (Funduszu Zdrowia, Custom Pak) staje się flagą.
+                    (isPersonNamePart(cleanWord) || isPersonNamePart(cleanNextWord)) &&
+                    !(isDefinitelyNotPersonWord(cleanWord) && isDefinitelyNotPersonWord(cleanNextWord))
                 if (nextIsValid) {
                     val fragment = "$word $nextWord"
                     if (seenFragments.add(fragment.lowercase())) {
@@ -776,7 +804,13 @@ internal fun detectAlgorithmicFlags(
                 val contextWords = words.drop(i + 1).take(3)
                     .filter { !TOKEN_LOOSE_RE.containsMatchIn(it) }
                     .map { it.trimEnd('.', ',', ';', ':', ')') }
-                    .filter { w -> w.length >= 2 && !isOnWhiteList(w) }
+                    .filter { w ->
+                        w.length >= 2 &&
+                        !isOnWhiteList(w) &&
+                        !hasMidUpperCase(w) &&
+                        w.lowercase() !in HONORIFICS &&
+                        isPersonNamePart(w)
+                    }
                 val context = contextWords.joinToString(" ")
                 if (context.isNotEmpty() && !context.any { it.isDigit() }) {
                     val fragment = "$word $context".trim()

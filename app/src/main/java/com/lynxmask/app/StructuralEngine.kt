@@ -194,6 +194,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     //   Poprzednio {4,16} = min 6 cyfr; teraz {3,16} = min 5 cyfr.
     TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
 
+    // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
+    // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
+    // Wzorzec NIE jest w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
+    TOKEN_NUMER to Regex("""(?i)\bNIP\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
+
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
     //   "data urodzenia: 21.05.1979"  ← pełne słowo
@@ -506,6 +511,9 @@ internal val NIP_PATTERN_STRINGS: Set<String> = setOf(
     """(?<!\d)\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}(?!\d)""",
     """\b\d{3}[-\s]?\d{2}[-\s]?\d{2}[-\s]?\d{3}\b""",
     """\bPL\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b""",
-    // CATCHALL — bez wpisu S5 był by maskował niepoprawne NIPy o długości 10 cyfr
+    // Wzorzec kontekstowy NIP (z keywordem "NIP") celowo POMINIĘTY:
+    // słowo "NIP" jest wystarczającym dowodem → maskuj bez sprawdzania sumy.
+    // OCR może pomylić jedną cyfrę → suma błędna → S5 blokowałby prawidłowe NIPy.
+    // CATCHALL — bez wpisu S5 maskowałby niepoprawne NIPy o długości 10 cyfr
     """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
 )

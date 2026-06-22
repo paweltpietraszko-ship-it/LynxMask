@@ -174,16 +174,23 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "526-000-13-29")
     }
 
-    @Test fun `s5 niepoprawny NIP nie jest maskowany`() {
-        // NIP 5260001320 — ostatnia cyfra 0 zamiast 9 → zła suma kontrolna
-        // Brak separatorów: unika wzorca IP \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} (kropki)
-        // i wzorca numer wewnętrzny \d{3}[\s\-]\d{2}[\s\-]\d{2} (myślniki/spacje)
-        // NIP 3-3-2-2 bez separatorów pasuje do (?<!\d)\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}(?!\d)
-        val r = pseudonymize("NIP: 5260001320")
-        assertFalse("Niepoprawny NIP nie powinien być zamaskowany",
+    @Test fun `s5 niepoprawny NIP bez kontekstu nie jest maskowany`() {
+        // NIP 5260001320 — ostatnia cyfra 0 zamiast 9 → zła suma kontrolna.
+        // Bez słowa kluczowego "NIP" → wzorzec strukturalny + S5 → odrzucony.
+        // (Z keywordem "NIP:" wzorzec kontekstowy maskuje bez S5 — jak PESEL z "PESEL:".)
+        val r = pseudonymize("Numer konta: 5260001320 przelew")
+        assertFalse("Niepoprawny NIP bez kontekstu nie powinien być zamaskowany",
             r.pseudonymizedText.contains("NUMER_"))
         assertTrue("Tekst z błędnym NIP powinien pozostać w wyjściu",
             r.pseudonymizedText.contains("5260001320"))
+    }
+
+    @Test fun `s5 NIP z keywordem maskowany mimo bledu OCR w sumie kontrolnej`() {
+        // NIP z błędną sumą — ale słowo "NIP:" poprzedza → wzorzec kontekstowy.
+        // Analogia do PESEL z "PESEL:" — keyword wystarczającym dowodem, S5 nie stosowane.
+        val r = pseudonymize("NIP: 5260001320")
+        assertTrue("NIP z keywordem powinien być zamaskowany mimo błędnej sumy (OCR)",
+            r.pseudonymizedText.contains("NUMER_"))
     }
 
     @Test fun `s5 poprawny NIP bez myslnikow jest maskowany`() {
@@ -872,6 +879,77 @@ class PseudonymEngineTest {
             r.flags.any { flag ->
                 flag.fragment.contains("Społecznej", ignoreCase = true) ||
                 flag.fragment.contains("Komisji", ignoreCase = true)
+            }
+        )
+    }
+
+    // =========================================================================
+    // Warstwa 5 — detectAlgorithmicFlags: FP systemowe (ścieżki A/B/C)
+    // Te testy MUSZĄ FAILOWAĆ przed fixem — potwierdzają że bug istnieje.
+    // Fix: pozytywny dowód (isPersonNamePart) + blokada subst + HONORIFICS.
+    // =========================================================================
+
+    @Test fun `BUG-FLAGS Funduszu Zdrowia to dwa rzeczowniki pospolite nie para nazwisk`() {
+        // Ścieżka B — para słów bez pozytywnego dowodu że to osoba.
+        // "Funduszu" i "Zdrowia" są subst w Morfologiku, żaden nie jest w surnamesForms.
+        val r = pseudonymize("Umowa z Funduszu Zdrowia obejmuje koszty leczenia.")
+        assertFalse(
+            "'Funduszu Zdrowia' to para rzeczowników pospolitych — nie powinna być flagą",
+            r.flags.any { flag ->
+                flag.fragment.contains("Funduszu", ignoreCase = true) ||
+                flag.fragment.contains("Zdrowia", ignoreCase = true)
+            }
+        )
+    }
+
+    @Test fun `BUG-FLAGS Custom Pak to anglicyzm i artefakt OCR nie para nazwisk`() {
+        // Ścieżka B — "Custom" nieznany Morfologikowi (anglicyzm), "Pak" artefakt OCR.
+        // Żaden nie jest w surnamesForms ani POLISH_FIRST_NAMES.
+        val r = pseudonymize("Zakupiono oprogramowanie Custom Pak od dostawcy.")
+        assertFalse(
+            "'Custom Pak' to anglicyzm i artefakt OCR — nie powinno być flagą",
+            r.flags.any { flag ->
+                flag.fragment.contains("Custom", ignoreCase = true)
+            }
+        )
+    }
+
+    @Test fun `BUG-FLAGS Naczelnik Pan to stanowisko z honoryfikiem nie flaga`() {
+        // Ścieżka C — "naczelnik" ∈ FUNCTION_TITLES, "Pan" to honoryfik (nie imię ani nazwisko).
+        // Kontekst po stanowisku nie zawiera żadnego imienia/nazwiska.
+        val r = pseudonymize("Pismo przesłał Naczelnik Pan do jednostki nadrzędnej.")
+        assertFalse(
+            "'Naczelnik Pan' — 'Pan' to honoryfik, nie imię ani nazwisko",
+            r.flags.any { flag ->
+                flag.fragment.startsWith("Naczelnik") && flag.fragment.contains("Pan")
+            }
+        )
+    }
+
+    @Test fun `BUG-FLAGS Sedzia SR caloSci to stanowisko z artefaktem OCR nie flaga`() {
+        // Ścieżka C — "sędzia" ∈ FUNCTION_TITLES, "SR" i "całoŚci" to artefakty OCR.
+        // "całoŚci" ma wielką literę w środku po małej (Ś po o) — artefakt sklejenia.
+        // Kontekst nie zawiera imienia/nazwiska — nie powinna być flagą.
+        val r = pseudonymize("Orzeczenie wydał Sędzia SR całoŚci w imieniu sądu rejonowego.")
+        assertFalse(
+            "'Sędzia SR całoŚci' — artefakty OCR w kontekście, brak imienia/nazwiska",
+            r.flags.any { flag ->
+                flag.fragment.startsWith("Sędzia") &&
+                (flag.fragment.contains("SR") || flag.fragment.contains("całoŚci", ignoreCase = true))
+            }
+        )
+    }
+
+    @Test fun `BUG-FLAGS URZEDOWEUrzad Miasta to sklejony token OCR nie flaga`() {
+        // Ścieżka B — "URZĘDOWEUrząd" to OCR-sklejony token (all-caps prefix + słowo).
+        // hasMidUpperCase nie łapie (E→U to uppercase→uppercase, nie lowercase→uppercase).
+        // Żadne ze słów nie jest w surnamesForms — para nie powinna być flagą.
+        val r = pseudonymize("Dokument wystawił URZĘDOWEUrząd Miasta na wniosek strony.")
+        assertFalse(
+            "'URZĘDOWEUrząd Miasta' to sklejony token OCR — nie powinno być flagą",
+            r.flags.any { flag ->
+                flag.fragment.contains("Urząd", ignoreCase = true) &&
+                flag.fragment.contains("Miasta", ignoreCase = true)
             }
         )
     }
