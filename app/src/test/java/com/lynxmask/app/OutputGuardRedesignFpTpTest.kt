@@ -21,52 +21,52 @@ class OutputGuardRedesignFpTpTest {
     private fun hasLabel(hits: List<GuardHit>, label: String) = hits.any { it.label == label }
 
     // ════════════════════════════════════════════════════════════════════════
-    // RED: PESEL_SPACE
+    // YELLOW: PESEL / PESEL_SPACE (przeniesione z RED — S5 już odrzucił błędną sumę)
     // ════════════════════════════════════════════════════════════════════════
 
     @Test fun peselSpaceSplit6plus5Flagged() {
         // klasyczny podział OCR po 6 cyfrach
-        assertTrue(hasLabel(red(guard("PESEL: 850315 12345")), "PESEL_SPACE"))
+        assertTrue(hasLabel(yellow(guard("PESEL: 850315 12345")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceSplit3Flagged() {
         // podział po 3 cyfrach — rzadszy artefakt OCR
-        assertTrue(hasLabel(red(guard("Nr: 850 31512345")), "PESEL_SPACE"))
+        assertTrue(hasLabel(yellow(guard("Nr: 850 31512345")), "PESEL_SPACE"))
     }
 
     @Test fun peselDashSplitFlagged() {
         // myślnik jako separator OCR — dowolna pozycja podziału
-        assertTrue(hasLabel(red(guard("PESEL: 850315-12345")), "PESEL_SPACE"))
+        assertTrue(hasLabel(yellow(guard("PESEL: 850315-12345")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceFP_phoneNineDigits() {
         // 512 345 678 — tylko 9 cyfr (telefon), za mało na PESEL (11)
         assertFalse("9 cyfr to za mało na PESEL_SPACE",
-            hasLabel(red(guard("Tel: 512 345 678")), "PESEL_SPACE"))
+            hasLabel(yellow(guard("Tel: 512 345 678")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceFP_amountWithThousandSeparator() {
         // "3 500,00 PLN" — przecinek przerywa ciąg cyfr po 4 cyfrach
         assertFalse("3 500,00 ma tylko 4 cyfry przed przecinkiem",
-            hasLabel(red(guard("Wynagrodzenie: 3 500,00 PLN brutto")), "PESEL_SPACE"))
+            hasLabel(yellow(guard("Wynagrodzenie: 3 500,00 PLN brutto")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceFP_zipCodeWithDash() {
         // "60-001" — 5 cyfr z myślnikiem, za mało na PESEL
         assertFalse("60-001 to kod pocztowy, nie PESEL",
-            hasLabel(red(guard("ul. Lipowa 14/3, 60-001 Poznan")), "PESEL_SPACE"))
+            hasLabel(yellow(guard("ul. Lipowa 14/3, 60-001 Poznan")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceFP_contractRef() {
         // numer umowy — żaden podciąg nie ma 11 cyfr
         assertFalse("UMW/2025/852 nie zawiera 11-cyfrowej sekwencji",
-            hasLabel(red(guard("Umowa nr UMW/2025/852 z dnia 01.03.2026")), "PESEL_SPACE"))
+            hasLabel(yellow(guard("Umowa nr UMW/2025/852 z dnia 01.03.2026")), "PESEL_SPACE"))
     }
 
     @Test fun peselSpaceFP_dateRange() {
         // zakres dat — cyfry przedzielone kropkami, nie spacjami/myślnikami
         assertFalse("01.01.2026-31.03.2026: kropka nie jest separatorem PESEL_SPACE",
-            hasLabel(red(guard("Składki za 01.01.2026-31.03.2026")), "PESEL_SPACE"))
+            hasLabel(yellow(guard("Składki za 01.01.2026-31.03.2026")), "PESEL_SPACE"))
     }
 
     // ════════════════════════════════════════════════════════════════════════

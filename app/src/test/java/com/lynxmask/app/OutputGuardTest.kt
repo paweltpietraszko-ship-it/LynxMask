@@ -9,11 +9,11 @@ class OutputGuardTest {
         runOutputGuard(text, emptyMap())
 
     @Test
-    fun peselFlaggedAsRed() {
+    fun peselFlaggedAsYellow() {
         val hits = guard("PESEL: 90010112345")
         val hit = hits.find { it.label == "PESEL" }
         assertNotNull("PESEL powinien być wykryty", hit)
-        assertEquals("RED", hit!!.level)
+        assertEquals("YELLOW", hit!!.level)
     }
 
     @Test

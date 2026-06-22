@@ -54,10 +54,6 @@ internal fun runOutputGuard(
 
     // ── RED — każde dopasowanie to wyciek ────────────────────────────────────
     val redPatterns = listOf(
-        // 11 cyfr z rzędu — standardowy PESEL
-        "PESEL"         to Regex("""\b\d{11}\b"""),
-        // 11 cyfr z dowolnym separatorem (spacja/myślnik) między każdą parą — artefakt OCR
-        "PESEL_SPACE"   to Regex("""\b(?:\d[ \-]?){10}\d\b"""),
         "NIP"           to Regex("""\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b"""),
         "IBAN"          to Regex("""\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}\b"""),
         "EMAIL"         to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z][a-zA-Z0-9\-]*\.[a-zA-Z]{2,}\b"""),
@@ -90,6 +86,10 @@ internal fun runOutputGuard(
 
     // ── YELLOW bezwarunkowe (kontekst wbudowany w regex) ─────────────────────
     val yellowPatterns = listOf(
+        // PESEL — silnik z S5 waliduje sumę kontrolną; co zostaje w tekście to albo błędna suma
+        // albo nieznany format. Nie blokujemy eksportu RED-em — użytkownik decyduje.
+        "PESEL"          to Regex("""\b\d{11}\b"""),
+        "PESEL_SPACE"    to Regex("""\b(?:\d[ \-]?){10}\d\b"""),
         // Data urodzenia po słowie kluczowym ur./urodzony/urodzona
         "URODZENIE"      to Regex("""(?i)\bur(?:odzony|odzona|odzeni|\.)\s+\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}\b"""),
         // Miejscowość urodzenia po ur./urodzony w
