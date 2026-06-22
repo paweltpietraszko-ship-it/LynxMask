@@ -209,10 +209,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 }
                 return@LaunchedEffect
             }
-            withContext(Dispatchers.IO) {
-                val (rawText, isOcr) = extractRawText(intent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
-                finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
+            val (rawText, isOcr) = withContext(Dispatchers.IO) {
+                extractRawText(intent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
             }
+            finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd: ${e.message}", e)
             DebugLogBuffer.log("ShareTarget", "EXCEPTION: ${e.javaClass.simpleName}: ${e.message}")
@@ -437,7 +437,9 @@ private suspend fun finishWithText(
         setState(ShareScreenState.Review(rawText))
         return
     }
-    val result = PseudonymEngine.pseudonymize(rawText, userDictionary = userDictionary, guardAllowlist = guardAllowlist)
+    val result = withContext(Dispatchers.Default) {
+        PseudonymEngine.pseudonymize(rawText, userDictionary = userDictionary, guardAllowlist = guardAllowlist)
+    }
     // LOG-FIX v2.3: pełny raport OCR zamiast samego logPseudonymResult
     DebugLogBuffer.logOcrAnalysis(rawText, result)
     setState(ShareScreenState.Scanned(result = result))
