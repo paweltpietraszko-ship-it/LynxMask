@@ -490,5 +490,5 @@ private fun SecurityModal(onDismiss: () -> Unit) {
 
 @Composable
 fun MainScreen(onFileClick: () -> Unit) {
-    HubScreen(onFileClick = onFileClick, onDepseudoClick = {})
+    HubScreen(onFileClick = onFileClick, onDepseudoClick = {}, onTextSubmit = {})
 }
