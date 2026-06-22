@@ -126,6 +126,15 @@ private fun MainTabNav() {
                         selectedSessionId    = null
                         selectedDepseudoMode = DepseudoMode.AI_RESPONSE
                         appScreen = AppScreen.DEPSEUDO
+                    },
+                    onTextSubmit = { text ->
+                        context.startActivity(
+                            Intent(context, ShareTargetActivity::class.java).apply {
+                                action = Intent.ACTION_SEND
+                                type   = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, text)
+                            }
+                        )
                     }
                 )
             }
@@ -162,7 +171,8 @@ private fun MainTabNav() {
 @Composable
 private fun HubScreen(
     onFileClick: () -> Unit,
-    onDepseudoClick: () -> Unit
+    onDepseudoClick: () -> Unit,
+    onTextSubmit: (String) -> Unit
 ) {
     var pastedText by remember { mutableStateOf("") }
 
@@ -246,6 +256,16 @@ private fun HubScreen(
                     unfocusedBorderColor = LynxColors.Border
                 )
             )
+            if (pastedText.isNotBlank()) {
+                Button(
+                    onClick  = { onTextSubmit(pastedText) },
+                    modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
+                    shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
+                    colors   = ButtonDefaults.buttonColors(containerColor = LynxColors.Blue)
+                ) {
+                    Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
+            }
         }
 
         Spacer(Modifier.weight(1f))
