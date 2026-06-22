@@ -496,6 +496,21 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
 // Używane w PseudonymEngine.kt przez regex.pattern in PESEL_PATTERN_STRINGS.
 // Kotlin Regex nie ma equals() opartego na treści — porównujemy po .pattern (String).
 // Wzorce muszą być identyczne ze stringami użytymi w STRUCTURAL_PATTERNS powyżej.
+//
+// ⚠️  ZASADA NIENARUSZALNA — S5 bypass przez wzorzec kontekstowy:
+//
+//   Wzorce KONTEKSTOWE (z keywordem "PESEL/NIP") CELOWO POMINIĘTE w *_PATTERN_STRINGS.
+//   Efekt: gdy keyword jest w tekście → silnik maskuje BEZ sprawdzania sumy kontrolnej.
+//   Powód: OCR może przekręcić jedną cyfrę → błędna suma → prawidłowy PESEL/NIP utracony.
+//
+//   NIE dodawaj wzorca kontekstowego do *_PATTERN_STRINGS — zepsuje to masowanie
+//   prawidłowych dokumentów z OCR-artefaktem. Ta pułapka była naprawiana kilkukrotnie.
+//
+//   Wzorce kontekstowe w STRUCTURAL_PATTERNS (nie w *_PATTERN_STRINGS):
+//     PESEL: pe[s5][e3]l + cyfry  →  brak w PESEL_PATTERN_STRINGS ← CELOWE
+//     NIP:   NIP + cyfry          →  brak w NIP_PATTERN_STRINGS   ← CELOWE
+//
+//   Wzorce strukturalne (GOŁA liczba, bez keywordu) → S5 obowiązkowe.
 // ============================================================
 internal val PESEL_PATTERN_STRINGS: Set<String> = setOf(
     """(?<!\d)\d{11}(?!\d)""",
