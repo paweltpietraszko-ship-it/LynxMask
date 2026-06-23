@@ -358,6 +358,15 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_PASZPORT_DIGITS: litery jako cyfry w numerze paszportu po słowie kluczowym
+    // Format PL: 2 litery (seria, nie naprawiaj) + 7 cyfr (napraw artefakty OCR)
+    // Przykład: "paszport: AB I234567" → "paszport: AB 1234567"
+    // ----------------------------------------------------------
+    private val OCR_PASZPORT_DIGITS = Regex(
+        """(?i)\bpaszport\w{0,2}\b[^\S\n]*[:–\-]?\n?[^\S\n]*([A-Z]{2})[^\S\n]?([TIlOSBGZ0-9]{7,9})"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
     // ----------------------------------------------------------
     private val OCR_REGON_DIGITS = Regex(
@@ -583,6 +592,14 @@ object OcrNormalizer {
             val s2 = m.groups[2]!!.range.first - base
             val e2 = m.groups[2]!!.range.last - base + 1
             m.value.substring(0, s1) + fixedSeria + m.value.substring(e1, s2) + fixedNum + m.value.substring(e2)
+        }
+
+        // 11d2. OCR: litery jako cyfry w numerze paszportu (seria intaktna, cyfry naprawiane)
+        text = OCR_PASZPORT_DIGITS.replace(text) { m ->
+            val raw = m.groupValues[2]
+            val fixed = raw.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != raw) corrections++
+            m.value.replace(raw, fixed)
         }
 
         // 12. OCR: litery zamienione na cyfry w REGON (9 lub 14 cyfr)
