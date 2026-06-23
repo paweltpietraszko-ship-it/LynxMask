@@ -408,14 +408,18 @@ fun LoginScreen(
                                     // [luka reset has\u0142a fix] kasujemy dane przed usuni\u0119ciem has\u0142a \u2014
                                     // bez tego osoba z fizycznym dost\u0119pem do urz\u0105dzenia resetuje has\u0142o
                                     // i dostaje pe\u0142ny dost\u0119p do zaszyfrowanych sesji przez nowe has\u0142o
-                                    scope.launch(Dispatchers.IO) {
-                                        SessionStore.deleteAllData(context)
-                                        UserDictionary.clear(context)
-                                        GuardAllowlist.clear(context)
-                                        context.getSharedPreferences("lynxmask_login", Context.MODE_PRIVATE)
-                                            .edit().clear().apply()
+                                    scope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            SessionStore.deleteAllData(context)
+                                            UserDictionary.clear(context)
+                                            GuardAllowlist.clear(context)
+                                            context.getSharedPreferences("lynxmask_login", Context.MODE_PRIVATE)
+                                                .edit().clear().apply()
+                                        }
+                                        // Po skasowaniu danych wróć do trybu "Ustaw hasło"
+                                        migrationNeeded = true
+                                        showResetDialog = false
                                     }
-                                    showResetDialog = false
                                 }) {
                                     Text("Resetuj", color = LynxColors.Red, fontWeight = FontWeight.Bold)
                                 }

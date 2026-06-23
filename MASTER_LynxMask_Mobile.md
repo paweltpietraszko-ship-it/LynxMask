@@ -112,12 +112,12 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |assessQuality shouldReject dla confidence<0.5 + obsługa odrzucenia w UI + override|OcrNormalizer + UI|🔲|
 |Luka reset hasła — „Zapomniałem hasła" daje dostęp bez uwierzytelnienia|LoginScreen.kt|🔲|
 |BUG-SS-1 INSERT OR REPLACE nadpisuje NULLami|SessionStore.kt|🔲|
-|BUG-SS-3 init() na Main thread — ANR|SessionStore.kt|🔲|
+|BUG-SS-3 init() na Main thread — ANR|SessionStore.kt|✅ naprawione — lifecycleScope + Dispatchers.IO (komentarz w kodzie), potwierdzone 23.06|
 |AUD-M05 silent failure AES-GCM/SQLCipher|SessionStore.kt|🔲|
 |AUD-M06 security-crypto 1.1.0-alpha06 → 1.0.0|build.gradle.kts|🔲|
-|BUG-16 „Zamaskuj i zapamiętaj" hardcoded OSOBA — selektor typu|PseudonymResultPanel.kt|🔲|
-|BUG-17 ManualTokenSection brak TOKEN\_KWOTA|PseudonymResultPanel.kt|🔲|
-|BUG-DESCRIPTION-01 pole „Opis dokumentu" bez zapisu|PseudonymResultPanel.kt|🔲|
+|BUG-16 „Zamaskuj i zapamiętaj" hardcoded OSOBA — selektor typu|PseudonymResultPanel.kt|✅ naprawione — agent potwierdził 21.06|
+|BUG-17 ManualTokenSection brak TOKEN\_KWOTA|PseudonymResultPanel.kt|✅ naprawione — agent potwierdził 21.06|
+|BUG-DESCRIPTION-01 pole „Opis dokumentu" bez zapisu — **diagnoza (audit 21.06):** `saveResponse()` zamiast `updateDescription()` w ShareTargetActivity.kt:339 — opis trafia jako fałszywa odpowiedź AI, nie jako nazwa sesji|ShareTargetActivity.kt:339|🔲|
 |BUG-20 camera required="true" po usunięciu kamery|AndroidManifest.xml|🔲 sprawdzić|
 |Testy JUnit 6.2: SessionStore (load/save/list/delete/deleteAll/TTL), Deanonymizer (detectSessionId/restore)|—|🔲|
 
@@ -149,7 +149,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |BUG-AL-OPEN|PseudonymEngine.kt|adresy „al." niemaskowane — wielokrotne nieudane próby. **NIE dotykać bez nowej strategii**|❄️ zamrożony|
 |BUG-GUARD|OutputGuard.kt|Guard nie zna tokenMap sesji — przepuszcza PII|🔲 potok OCR|
 |BUG-DICT (engine)|PseudonymEngine.kt|silnik nie konsultuje UserDictionary przed maskowaniem|🔲 potok OCR|
-|BUG-MOBILE-TEXTINPUT|ShareTargetActivity|pole „wklej tekst" nie uruchamia pseudonimizacji|🔲 osobna sesja|
+|BUG-MOBILE-TEXTINPUT|ShareTargetActivity|pole „wklej tekst" nie uruchamia pseudonimizacji|✅ 22.06 (ab7e705)|
 |TOKEN\_RE przed Potokiem 7|NameEngine.kt|format z sufiksem zepsuje TOKEN\_RE — naprawić PRZED Potokiem 7|🔲 zależne od decyzji 8|
 
 \---
@@ -241,7 +241,7 @@ Po każdej zmianie silnika: test DOCX na telefonie (silnik w izolacji) PRZED ben
 
 ## 12\. WERSJE PLIKÓW — DO WERYFIKACJI
 
-Najnowsze udokumentowane: OcrNormalizer v2.1, NameEngine v1.10, StructuralEngine v2.2, OutputGuard v2.0. Mapa 09.06 jest za tym (v1.3/v1.7/v1.4). **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
+Najnowsze udokumentowane (22.06 sesja 2): OcrNormalizer v2.4, NameEngine v1.13, StructuralEngine v2.1, MorfologikHelper v1.1, OutputGuard v2.0. **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
 
 \---
 
@@ -282,7 +282,7 @@ Nie kwalifikują się do „szybkich napraw" — wymagają diagnozy lub mają st
 |BUG-LOG-DBL podwójna normalizacja w logOcrAnalysis()|DebugLogBuffer.kt|🔲 6.2 opcjonalnie|
 |clearOnExit — metoda istnieje, niepodpięta w MainActivity.onStop()|DebugLogBuffer.kt|🔲 6.2|
 |BUG-21 ClipboardCheckActivity/TileService — weryfikacja po załadowaniu manifestu|AndroidManifest.xml|🔲 TBD|
-|BUG-13 wyciek TextRecognizer przy wyjątku — brak try-finally wokół recognizer.close()|ShareTargetActivity.kt|🔲 TBD nieprzypisany|
+|BUG-13 wyciek TextRecognizer przy wyjątku — brak try-finally wokół recognizer.close()|ShareTargetActivity.kt|✅ naprawione — try-finally istnieje w kodzie (obraz + PDF), potwierdzone 23.06|
 |BUG-18 „Pomiń" tylko na pierwszej karcie — może być by design|OnboardingScreen.kt|🔲 TBD|
 
 \---
@@ -689,15 +689,39 @@ Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REME
 
 ## 24. AUDYT BIBLIOTEKI — SESJA UL (do zrobienia)
 
-**Zgłoszono:** 21.06.2026 wieczór, Paweł.
-
-Biblioteka dokumentów ma kilka bugów odkrytych przy ręcznym testowaniu. Odkładamy jako oddzielny modal — **sesja UL (UI Library)**.
-
-Znane problemy (wstępna lista):
-- **BUG-LIB-EDIT**: „Edytuj dokument" w menu biblioteki nie działa (kliknięcie → brak akcji / crash)
-- Więcej bugów niezidentyfikowanych — Paweł odkrył przy nawigacji
-
-**Zakres sesji UL:** pełny audyt biblioteki — wejście, lista dokumentów, menu po kliknięciu, edycja, usuwanie, eksport. Pliki główne: `SessionStore.kt`, widok biblioteki w `MainActivity.kt` lub osobny composable.
+**Zgłoszono:** 21.06.2026 wieczór, Paweł. **Audyt agenta: 21.06 (AuditLibrary.txt).**
 
 **Priorytet:** po zamknięciu P1 bugów z sekcji 22 (BUG-FLAG-LIMIT, BUG-SCAN-P1).
+
+### Bugi sesji UL — kolejność naprawy
+
+| Bug | Priorytet | Plik | Opis | Status |
+|---|---|---|---|---|
+| BUG-DESCRIPTION-01 | KRYTYCZNY | ShareTargetActivity.kt:339 | `saveResponse()` zamiast `updateDescription()` — opis trafia jako fałszywa odpowiedź AI, nie jako nazwa dokumentu. Fix: zamienić wywołanie na `SessionStore.updateDescription(context, s.result.sessionId, description)` | 🔲 |
+| BUG-LIB-EDIT | KRYTYCZNY | LibraryScreen.kt:349 | „Edytuj dokument" ma pustą lambdę (TODO). Wymaga: (1) callback `onEdit` w SessionDetailScreen, (2) propagacja przez LibraryScreen do MainActivity. Najprostsza impl: alias DepseudoMode.SOURCE\_DOCUMENT | 🔲 |
+| BUG-LIB-5 | WAŻNY | LibraryScreen.kt:56 | `LaunchedEffect(Unit)` odpala się tylko raz — lista sesji nie odświeża się po powrocie z DepseudonymizationScreen. Fix: zmienić klucz na `refreshKey: Long` przekazywany z MainActivity, inkrementowany przy powrocie z DEPSEUDO | 🔲 |
+| BUG-LIB-3 | MAŁY | LibraryScreen.kt:71 | `selectedSession!!.sesjaId` w closure — NPE przy race condition. Fix: `val sesId = selectedSession?.sesjaId ?: return@SessionDetailScreen` | 🔲 |
+| BUG-SS-3 | DŁUG TECH | MainActivity.kt:59 | `SessionStore.init()` na Main thread — ryzyko ANR. Fix: `lifecycleScope.launch(Dispatchers.IO)` | ✅ naprawione 23.06 |
+| AUD-M05 | DŁUG TECH | SessionStore.kt | Silent failure AES-GCM/SQLCipher — `save()`/`loadTokenMap()`/`loadMaskedText()` łapią wyjątek i zwracają null bez widocznego błędu dla użytkownika. Scenariusz: Keystore niedostępny po backupie/resecie → dane przepadają cicho. Naprawa wymaga decyzji UX: co pokazać gdy baza nie działa (Snackbar? ekran błędu?) | 🔲 |
+| BUG-LIB-6 | MAŁY | DepseudonymizationScreen.kt:334 | „Pobierz plik" używa `File()` w Downloads — nie działa na Android 11+ (Scoped Storage). Fix: MediaStore ContentValues API | 🔲 |
+
+---
+
+## 25. SESJA 22.06 (2) — ZROBIONE
+
+**FLAGS — naprawa systemowa (commit 1dc75d3):** `detectAlgorithmicFlags` przepisany z logiki „blokuj wyjątki" na „wymagaj pozytywnego dowodu".
+
+- **Ścieżka B (pary):** para flagowana TYLKO gdy `isPersonNamePart()` zwraca true dla co najmniej jednego słowa — słowo musi być w `surnamesForms`, `namesForms` lub `POLISH_FIRST_NAMES`. „Funduszu Zdrowia", „Custom Pak" nigdy nie trafią do słownika → nigdy nie flagowane, bez dopisywania wyjątków.
+- **Ścieżka A (słowo przed czasownikiem):** wymóg `isLikelySurname` (surnamesForms) zamiast luźnego „Morfologik zna słowo" — blokuje rzeczowniki pospolite jak „Funduszu".
+- **Ścieżka C (stanowiska):** nowy filtr `HONORIFICS` (pan/pani/pana...) + wymóg `isPersonNamePart()` w contextWords — „Naczelnik Pan", „Sędzia SR całoŚci" nie flagowane.
+- **MorfologikHelper v1.1:** `subst` dodane do `isDefinitelyNotPerson()` (rzeczownik pospolity ≠ osoba) + `personAllowlist` chroni znane nazwiska. Nowa `isLikelyPersonNamePart()`.
+- Diagnoza wykonana przez Cursor (`FLAGS_diagnosis.md`). 5 nowych testów BUG-FLAGS. 10 dokumentów ręcznych — 0 alertów FLAGS.
+
+**NIP context pattern (commit 1dc75d3):** wzorzec `(?i)\bNIP\b...\d{3}[-\s.]?...\d{2}\b` w `STRUCTURAL_PATTERNS`, celowo pominięty w `NIP_PATTERN_STRINGS` (S5 nie stosowane gdy keyword obecny) — analogia do PESEL. Naprawia NIPy z OCR-błędem jednej cyfry gdy „NIP" jest w tekście dokumentu.
+
+**Ostrzeżenie S5 (commit 850174d):** komentarz ⚠️ w `StructuralEngine.kt` przy `*_PATTERN_STRINGS` wyjaśniający zasadę bypass. Zapobiega powtarzaniu błędu w kolejnych sesjach.
+
+**Stan testów: 153 testów, 0 FAILED.**
+
+**Następna sesja: UL (biblioteka dokumentów, sekcja 24).**
 
