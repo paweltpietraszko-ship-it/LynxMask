@@ -63,6 +63,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxMaskTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -137,7 +139,10 @@ private fun startDocumentScanner(
 
 private sealed class ShareScreenState {
     object Loading : ShareScreenState()
-    data class Review(val rawText: String) : ShareScreenState()   // v2.1: przed pseudonimizacją
+    data class Review(
+        val rawText: String,
+        val ocrConfidence: Float? = null  // null = brak OCR lub model nie zwrócił confidence
+    ) : ShareScreenState()
     data class Scanned(val result: PseudonymResult) : ShareScreenState()
     data class Error(val message: String) : ShareScreenState()
 }
@@ -262,8 +267,8 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             val _extracted = withContext(Dispatchers.IO) {
                 extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
             }
-            val (rawText, isOcr) = _extracted
-            finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries) { state = it }
+            val (rawText, isOcr, ocrConf) = _extracted
+            finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd odczytu pliku: ${e.message}")
         }
@@ -274,14 +279,18 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
         val uris = docScanUris ?: return@LaunchedEffect
         try {
             progressLabel = "Rozpoznaję tekst ze skanu..."
-            val rawText = withContext(Dispatchers.IO) {
+            val pages = withContext(Dispatchers.IO) {
                 uris.mapIndexed { i, uri ->
-                    val text = ocrFromImageUri(uri, context)
-                    if (uris.size > 1) "── Strona ${i + 1} ──\n$text\n\n" else text
-                }.joinToString("")
+                    val (text, conf) = ocrFromImageUri(uri, context)
+                    val pageText = if (uris.size > 1) "── Strona ${i + 1} ──\n$text\n\n" else text
+                    pageText to conf
+                }
             }
-            DebugLogBuffer.log("DocScanner", "OCR: ${rawText.length} znaków (${uris.size} stron)")
-            state = ShareScreenState.Review(rawText)
+            val rawText = pages.joinToString("") { it.first }
+            val avgConf = pages.mapNotNull { it.second }.takeIf { it.isNotEmpty() }
+                ?.average()?.toFloat()
+            DebugLogBuffer.log("DocScanner", "OCR: ${rawText.length} znaków (${uris.size} stron), conf=${avgConf?.let { "%.0f%%".format(it * 100) } ?: "N/A"}")
+            state = ShareScreenState.Review(rawText, ocrConfidence = avgConf)
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd OCR: ${e.message}")
         }
@@ -295,10 +304,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             val uri: android.net.Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 intent.getParcelableExtra(Intent.EXTRA_STREAM, android.net.Uri::class.java)
             else @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM)
-            val rawText = withContext(Dispatchers.IO) {
-                if (uri != null) ocrFromImageUri(uri, context) else ""
+            val (rawText, ocrConf) = withContext(Dispatchers.IO) {
+                if (uri != null) ocrFromImageUri(uri, context) else "" to null
             }
-            state = ShareScreenState.Review(rawText)
+            state = ShareScreenState.Review(rawText, ocrConfidence = ocrConf)
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd OCR: ${e.message}")
         }
@@ -314,15 +323,19 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             is ShareScreenState.Review ->
                 ShareReviewContent(
                     rawText = s.rawText,
+                    ocrConfidence = s.ocrConfidence,
                     onConfirm = { correctedText ->
                         // ASYNC-FIX v2.2: pseudonymize() na Dispatchers.Default
                         progressLabel = "Pseudonimizuję..."
                         state = ShareScreenState.Loading
                         scope.launch(Dispatchers.Default) {
-                            val result = PseudonymEngine.pseudonymize(correctedText, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries)
+                            val result = PseudonymEngine.pseudonymize(
+                                correctedText,
+                                userDictionary   = UserDictionary.entries,
+                                guardAllowlist   = GuardAllowlist.entries,
+                                mlKitConfidence  = s.ocrConfidence
+                            )
                             DebugLogBuffer.log("Review", "Pseudonimizacja po korekcie: ${correctedText.length} znaków")
-                            // LOG-FIX v2.3: pełny raport OCR (Raw + Normalizacja + Tokeny + Flagi)
-                            // Poprzednio tylko logPseudonymResult() — brak sekcji [1][2] RAW OCR
                             DebugLogBuffer.logOcrAnalysis(correctedText, result)
                             withContext(Dispatchers.Main) {
                                 state = ShareScreenState.Scanned(result = result)
@@ -404,6 +417,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
 @Composable
 private fun ShareReviewContent(
     rawText: String,
+    ocrConfidence: Float? = null,
     onConfirm: (String) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -411,6 +425,41 @@ private fun ShareReviewContent(
     val scrollState = rememberScrollState()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+
+        // Banner jakości OCR — widoczny tylko gdy ML Kit zwrócił confidence
+        if (ocrConfidence != null) {
+            val pct = (ocrConfidence * 100).toInt()
+            val isLow = ocrConfidence < 0.5f
+            val cardColor = if (isLow) LynxColors.Red else LynxColors.Amber
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = cardColor.copy(alpha = 0.12f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(if (isLow) "✕" else "⚠", fontSize = 14.sp, color = cardColor)
+                    Column {
+                        Text(
+                            if (isLow) "Słaba jakość skanu ($pct%) — możliwe błędy rozpoznawania"
+                            else       "Niska jakość skanu ($pct%) — sprawdź tekst dokładnie",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = cardColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (isLow) Text(
+                            "Rozważ nowe zdjęcie. Możesz też poprawić tekst ręcznie poniżej.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = cardColor.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Text(
             "Sprawdź tekst przed pseudonimizacją",
@@ -468,6 +517,7 @@ private suspend fun finishWithText(
     goToReview: Boolean = false,
     userDictionary: List<Pair<String, String>> = emptyList(),
     guardAllowlist: List<Pair<String, String>> = emptyList(),
+    mlKitConfidence: Float? = null,
     setState: (ShareScreenState) -> Unit
 ) {
     if (rawText.isBlank()) {
@@ -481,27 +531,31 @@ private suspend fun finishWithText(
     DebugLogBuffer.log("ShareTarget", "Tekst wyodrębniony: ${rawText.length} znaków")
     DebugLogBuffer.log("ShareTarget", rawText.take(300).replace("\n", "↵"))
     if (goToReview) {
-        setState(ShareScreenState.Review(rawText))
+        setState(ShareScreenState.Review(rawText, ocrConfidence = mlKitConfidence))
         return
     }
     val result = withContext(Dispatchers.Default) {
-        PseudonymEngine.pseudonymize(rawText, userDictionary = userDictionary, guardAllowlist = guardAllowlist)
+        PseudonymEngine.pseudonymize(rawText,
+            userDictionary  = userDictionary,
+            guardAllowlist  = guardAllowlist,
+            mlKitConfidence = mlKitConfidence
+        )
     }
-    // LOG-FIX v2.3: pełny raport OCR zamiast samego logPseudonymResult
     DebugLogBuffer.logOcrAnalysis(rawText, result)
     setState(ShareScreenState.Scanned(result = result))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ekstrakcja tekstu — zwraca Pair<String, Boolean>
+// Ekstrakcja tekstu — zwraca Triple<String, Boolean, Float?>
 // Boolean = true → pokaż Review (ścieżka OCR/DOCX)
+// Float?  = mlKitConfidence (null dla ścieżek bez OCR)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private suspend fun extractRawText(
     intent: Intent,
     context: android.content.Context,
     onProgress: (String) -> Unit
-): Pair<String, Boolean> {
+): Triple<String, Boolean, Float?> {
     val mimeType = intent.type ?: ""
 
     val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -523,35 +577,37 @@ private suspend fun extractRawText(
 
     return when {
         isDocx -> {
-            if (uri == null) return "" to false
+            if (uri == null) return Triple("", false, null)
             onProgress("Czytam umowę DOCX...")
-            extractTextFromDocx(uri, context) to true
+            Triple(extractTextFromDocx(uri, context), true, null)
         }
         mimeType == "text/plain" -> {
             onProgress("Odczytuję tekst...")
-            // TXT-FIX v2.2: plik .txt z URI — czytaj przez stream
             val text = if (uri != null) {
                 context.contentResolver.openInputStream(uri)
                     ?.bufferedReader()?.readText() ?: ""
             } else {
                 intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
             }
-            text to true
+            Triple(text, true, null)
         }
         mimeType == "application/pdf" -> {
-            if (uri == null) return "" to false
+            if (uri == null) return Triple("", false, null)
             onProgress("Otwieram PDF...")
-            ocrFromPdfUri(uri, context, onProgress) to true
+            val (text, conf) = ocrFromPdfUri(uri, context, onProgress)
+            Triple(text, true, conf)
         }
         mimeType.startsWith("image/") -> {
-            if (uri == null) return "" to false
+            if (uri == null) return Triple("", false, null)
             onProgress("Rozpoznaję tekst z obrazu...")
-            ocrFromImageUri(uri, context) to true
+            val (text, conf) = ocrFromImageUri(uri, context)
+            Triple(text, true, conf)
         }
         else -> {
             DebugLogBuffer.log("ShareTarget", "Nieznany typ — próba DOCX jako fallback")
-            if (uri != null) extractTextFromDocx(uri, context) to false
-            else (intent.getStringExtra(Intent.EXTRA_TEXT) ?: "") to false
+            val text = if (uri != null) extractTextFromDocx(uri, context)
+                       else (intent.getStringExtra(Intent.EXTRA_TEXT) ?: "")
+            Triple(text, false, null)
         }
     }
 }
@@ -599,27 +655,28 @@ private suspend fun extractTextFromDocx(uri: Uri, context: android.content.Conte
     }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OCR z obrazka — BEZ ZMIAN
+// OCR z obrazka — zwraca Pair<tekst, confidence?>
 // ─────────────────────────────────────────────────────────────────────────────
 
-private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context): String =
+private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context): Pair<String, Float?> =
     withContext(Dispatchers.IO) {
         try {
             val bitmap: Bitmap = context.contentResolver.openInputStream(uri)?.use {
                 BitmapFactory.decodeStream(it)
-            } ?: return@withContext ""
+            } ?: return@withContext "" to null
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
             try {
                 val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-                DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków")
-                result.text
+                val conf = calcOcrConfidence(result).takeIf { it > 0f }
+                DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków, conf=${conf?.let { "%.0f%%".format(it * 100) } ?: "N/A"}")
+                result.text to conf
             } finally {
                 recognizer.close()
                 bitmap.recycle()
             }
         } catch (e: Exception) {
             DebugLogBuffer.log("OCR", "BŁĄD: ${e.message}")
-            ""
+            "" to null
         }
     }
 
@@ -630,12 +687,14 @@ private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context):
 private const val MAX_PDF_PAGES = 20
 private const val PDF_RENDER_SCALE = 2
 
+// zwraca Pair<tekst, średnie confidence?> — confidence uśrednione ze stron z tekstem
 private suspend fun ocrFromPdfUri(
     uri: Uri,
     context: android.content.Context,
     onProgress: (String) -> Unit
-): String = withContext(Dispatchers.IO) {
+): Pair<String, Float?> = withContext(Dispatchers.IO) {
     val sb = StringBuilder()
+    val pageConfs = mutableListOf<Float>()
     try {
         context.contentResolver.openFileDescriptor(uri, "r")?.use { descriptor ->
             val renderer = PdfRenderer(descriptor)
@@ -656,7 +715,9 @@ private suspend fun ocrFromPdfUri(
                     val ocr = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
                     if (ocr.text.isNotBlank()) {
                         sb.append("── Strona ${i + 1} ──\n${ocr.text}\n\n")
-                        DebugLogBuffer.log("OCR", "Strona ${i + 1}: ${ocr.text.length} znaków")
+                        val pageConf = calcOcrConfidence(ocr)
+                        if (pageConf > 0f) pageConfs.add(pageConf)
+                        DebugLogBuffer.log("OCR", "Strona ${i + 1}: ${ocr.text.length} znaków, conf=${if (pageConf > 0f) "%.0f%%".format(pageConf * 100) else "N/A"}")
                     }
                 } finally {
                     recognizer.close()
@@ -670,7 +731,8 @@ private suspend fun ocrFromPdfUri(
     } catch (e: Exception) {
         DebugLogBuffer.log("OCR", "BŁĄD PDF: ${e.message}")
     }
-    sb.toString()
+    val avgConf = pageConfs.takeIf { it.isNotEmpty() }?.average()?.toFloat()
+    sb.toString() to avgConf
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
