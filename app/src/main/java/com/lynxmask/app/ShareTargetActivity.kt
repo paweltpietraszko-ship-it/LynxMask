@@ -222,8 +222,8 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 val _extracted = withContext(Dispatchers.IO) {
                     extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
                 }
-                val (rawText, isOcr) = _extracted
-                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
+                val (rawText, isOcr, ocrConf) = _extracted
+                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
                 return@LaunchedEffect
             }
 
@@ -263,10 +263,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                 return@LaunchedEffect
             }
-            val (rawText, isOcr) = withContext(Dispatchers.IO) {
+            val (rawText, isOcr, ocrConf) = withContext(Dispatchers.IO) {
                 extractRawText(intent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
             }
-            finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries) { state = it }
+            finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd: ${e.message}", e)
             DebugLogBuffer.log("ShareTarget", "EXCEPTION: ${e.javaClass.simpleName}: ${e.message}")
