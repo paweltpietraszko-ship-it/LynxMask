@@ -147,6 +147,22 @@ class OutputGuardRedesignFpTpTest {
             hasLabel(yellow(guard("Na podstawie art. 734/1 KC strony ustalają.")), "SYGNATURA"))
     }
 
+    @Test fun sygnaturaFP_artykulKC_z_kotwica_sygn() {
+        // v2.1: nawet przy kotwicy sygn/akt — 734/1 to artykuł KC, nie sygnatura sądowa
+        assertFalse("734/1 to artykuł, nie sygnatura",
+            hasLabel(yellow(guard("Sygn. akt na podstawie art. 734/1 KC.")), "SYGNATURA"))
+    }
+
+    @Test fun sygnaturaFP_paragraf34_z_kotwica_poz() {
+        // v2.1: 3/4 w ustępie regulaminu — za krótkie grupy cyfr
+        assertFalse("3/4 to paragraf, nie sygnatura",
+            hasLabel(yellow(guard("Na mocy § 5 ust. 3/4 regulaminu, poz. 12.")), "SYGNATURA"))
+    }
+
+    @Test fun sygnaturaSadowa_z_rokiem_zostajeYELLOW() {
+        assertTrue(hasLabel(yellow(guard("Sygn. akt 123/2024 — sprawa cywilna.")), "SYGNATURA"))
+    }
+
     @Test fun sygnaturaFP_dateRangeFixed() {
         // hit #4 z diagnostyki (POPRZEDNI FP): "2026-31" w zakresie dat
         // "Składki za" nie jest słowem kontekstowym → teraz nie strzela

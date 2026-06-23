@@ -8,6 +8,8 @@ package com.lynxmask.app
 //
 // v2.0: Nowe wzorce RED: PESEL_SPACE, TELEFON_PELNY (szerszy — kropka, 0048, nawiasy).
 //       YELLOW SYGNATURA i LICZBA zawężone kotwicą słowną (okno 35 znaków przed hitem).
+// v2.1: SYGNATURA — wzorzec liczby wymaga >=2 cyfr przed separatorem i (4-cyfrowy rok
+//       lub >=2 cyfry po); eliminuje FP art. 734/1 i ust. 3/4 przy zachowanej kotwicy.
 //       Nowe YELLOW: URODZENIE, MIEJSCE_UR, EMAIL_FRAGMENT.
 //       Usunięte: REGON, PL_PREFIX (silnik maskuje), TELEFON (superseded przez TELEFON_PELNY RED).
 //       Naprawiony token exclusion regex — aktualny format TYPE_NNN.
@@ -72,7 +74,7 @@ internal fun runOutputGuard(
 
     // SYGNATURA: wymaga kontekstu nr/numer/sygn/akt/sprawa/repertorium/poz w pobliżu
     val CTX_SYGN = Regex("""(?i)\b(?:nr|numer|sygn(?:atura)?|akt[auy]?|spraw[ayi]|repertorium|poz)\b""")
-    Regex("""\b\d{1,6}[/\-]\d{1,6}\b""").findAll(text).forEach { m ->
+    Regex("""\b\d{2,6}[/\-](?:\d{4}|\d{2,6})\b""").findAll(text).forEach { m ->
         if (CTX_SYGN.containsMatchIn(before(m.range.first)))
             hits += hit("SYGNATURA", "YELLOW", m)
     }
