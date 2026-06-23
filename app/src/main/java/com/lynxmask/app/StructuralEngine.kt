@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // StructuralEngine.kt — Wzorce regex warstwy strukturalnej
-// Wersja: 2.2
+// Wersja: 2.3
 //
 // Zmiany v2.2 (sesja 23.06 — BUG-NIP-CTX-3223):
 //   - Dodano drugi wzorzec kontekstowy NIP dla formatu 3-2-2-3 (XXX-XX-XX-XXX).
@@ -459,7 +459,31 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Jeśli kiedykolwiek zmienisz tę regułę lub CATCHALL, dodaj testy dla wszystkich
     // formatów dat (patrz PseudonymEngineTest.kt TODO-7).
     // Nie łapie: lat 1900-2099, wartości z jednostkami, pozycji < 8 cyfr
-    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)\d{8,}\b""")
+    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""),
+
+    // --- S4: Kwoty słowne ---
+    //
+    // Wzorzec A — kontekst finansowy (wysoka precyzja):
+    // Słowo kluczowe (kwota/suma/wynagrodzenie...) + słowa + kotwica walutowa.
+    // Pokrywa: "kwota pięćset złotych", "wynagrodzenie w wysokości tysiąc zł".
+    TOKEN_KWOTA to Regex(
+        """(?i)\b(?:kwot\p{L}{0,5}|kwoci\p{L}{0,3}|sum[aęąy]\p{L}{0,3}|wysoko(?:ść|ści)\p{L}{0,2}|wartości\p{L}{0,4}|wynagrodzeni\p{L}{0,4}|honorari\p{L}{0,4}|odszkodowani\p{L}{0,4}|należno\p{L}{0,5}|pożyczk\p{L}{0,4})[^\S\n]+(?:\p{L}+[^\S\n]+){0,9}(?:złotych|złote|złoty|zł|groszy|grosze|grosz)\b"""
+    ),
+
+    // Wzorzec B — liczebnik + skrót walutowy (bezpieczny):
+    // "dwadzieścia tysięcy zł", "pięćset groszy" — skróty walutowe nie są przymiotnikami.
+    // (?!\p{L}) zamiast \b bo "zł" kończy się na "ł" (non-\w) — \b by nie zadziałał.
+    TOKEN_KWOTA to Regex(
+        """(?i)\b(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4}|sto|stu|dwieście|dwustu|trzysta|trzystu|czterysta|czterystu|pięćset\p{L}{0,4}|sześćset\p{L}{0,4}|siedemset\p{L}{0,4}|osiemset\p{L}{0,4}|dziewięćset\p{L}{0,4}|dwadzieścia\p{L}{0,3}|dwudziestu|trzydzieści\p{L}{0,2}|trzydziestu|czterdzieści\p{L}{0,2}|czterdziestu|pięćdziesiąt|sześćdziesiąt|siedemdziesiąt|osiemdziesiąt|dziewięćdziesiąt|jedenaście|dwanaście|trzynaście|czternaście|piętnaście|szesnaście|siedemnaście|osiemnaście|dziewiętnaście|zero|jeden\p{L}{0,5}|dwa|dwie|dwóch?|trzy\p{L}{0,3}|cztery|czterech|pięć\p{L}{0,3}|sześć\p{L}{0,3}|siedem\p{L}{0,3}|osiem\p{L}{0,3}|dziewięć\p{L}{0,3}|dziesięć\p{L}{0,3})(?:[^\S\n]+\p{L}+){0,7}[^\S\n]+(?:zł|groszy|grosze|grosz)(?!\p{L})"""
+    ),
+
+    // Wzorzec C — liczebnik + pełne słowo walutowe:
+    // "dwadzieścia tysięcy złotych" — pokrywa główny case z backlogu S4.
+    // Ryzyko FP: "złotych" jako przymiotnik (np. "sto złotych monet"), ale w dokumentach
+    // finansowych dominuje użycie walutowe. Wzorzec A (kontekst) ma pierwszeństwo.
+    TOKEN_KWOTA to Regex(
+        """(?i)\b(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4}|sto|stu|dwieście|dwustu|trzysta|trzystu|czterysta|czterystu|pięćset\p{L}{0,4}|sześćset\p{L}{0,4}|siedemset\p{L}{0,4}|osiemset\p{L}{0,4}|dziewięćset\p{L}{0,4}|dwadzieścia\p{L}{0,3}|dwudziestu|trzydzieści\p{L}{0,2}|trzydziestu|czterdzieści\p{L}{0,2}|czterdziestu|pięćdziesiąt|sześćdziesiąt|siedemdziesiąt|osiemdziesiąt|dziewięćdziesiąt|jedenaście|dwanaście|trzynaście|czternaście|piętnaście|szesnaście|siedemnaście|osiemnaście|dziewiętnaście|zero|jeden\p{L}{0,5}|dwa|dwie|dwóch?|trzy\p{L}{0,3}|cztery|czterech|pięć\p{L}{0,3}|sześć\p{L}{0,3}|siedem\p{L}{0,3}|osiem\p{L}{0,3}|dziewięć\p{L}{0,3}|dziesięć\p{L}{0,3})(?:[^\S\n]+\p{L}+){0,7}[^\S\n]+złot\p{L}{0,3}\b"""
+    )
 )
 
 // ============================================================
