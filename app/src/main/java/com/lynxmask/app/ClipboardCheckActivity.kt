@@ -187,21 +187,23 @@ private fun ClipboardCheckScreen(onFinished: () -> Unit) {
                         coroutineScope.launch(Dispatchers.IO) {
                             val maskedText = s.result.pseudonymizedText
                                 .removePrefix("SESJA_${s.result.sessionId}\n")
-                            SessionStore.save(
+                            val saved = SessionStore.save(
                                 context      = context,
                                 sesjaId      = s.result.sessionId,
                                 tokenMapJson = s.result.tokenMapJson(),
                                 tokenCount   = s.result.tokenMap.size,
                                 maskedText   = maskedText
                             )
-                            SessionStore.recordAudit(
-                                context  = context,
-                                sesjaId  = s.result.sessionId,
-                                action   = "clipboard_saved"
-                            )
                             withContext(Dispatchers.Main) {
-                                Log.i(TAG, "Sesja zapisana z schowka: ${s.result.sessionId}")
-                                Toast.makeText(context, "Zapisano do biblioteki", Toast.LENGTH_SHORT).show()
+                                if (saved) {
+                                    SessionStore.recordAudit(context, s.result.sessionId, "clipboard_saved")
+                                    Log.i(TAG, "Sesja zapisana z schowka: ${s.result.sessionId}")
+                                    Toast.makeText(context, "Zapisano do biblioteki", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context,
+                                        "Błąd zapisu sesji — dane mogą być niedostępne w bibliotece",
+                                        Toast.LENGTH_LONG).show()
+                                }
                             }
                         }
                         onFinished()

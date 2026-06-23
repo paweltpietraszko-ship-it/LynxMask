@@ -1,6 +1,6 @@
 package com.lynxmask.app
 
-// SessionStore.kt — v1.4 (Potok RODO, 10.06.2026)
+// SessionStore.kt — v1.5 (BUG-SS-1 + AUD-M05, 23.06.2026)
 //
 // ZMIANY v1.4:
 //
@@ -124,13 +124,16 @@ object SessionStore {
     }
 
     /**
-     * Zapisuje sesję po pseudonimizacji.
+     * Zapisuje sesję po pseudonimizacji. Zwraca true przy sukcesie.
      * tokenMapJson = JSON z mapą token→original.
-     * Cicha kontynuacja przy błędzie (nie crashuje aplikacji).
+     *
+     * BUG-SS-1 FIX: UPSERT zamiast INSERT OR REPLACE — nie nadpisuje description
+     * ani masked_text_enc NULLem gdy kolumna nie jest wymieniona w SET.
+     * AUD-M05 FIX: zwraca false przy błędzie (Keystore/AES-GCM) zamiast cichego null.
      */
     fun save(context: Context, sesjaId: String, tokenMapJson: String, tokenCount: Int,
-             maskedText: String = "") {
-        try {
+             maskedText: String = ""): Boolean {
+        return try {
             ensureInit(context)
             val key = getOrCreateKey()
             val encBlob = encryptBytes(key, tokenMapJson.toByteArray(Charsets.UTF_8))
@@ -139,18 +142,31 @@ object SessionStore {
             if (maskedText.isNotEmpty()) {
                 val maskedEnc = encryptBytes(key, maskedText.toByteArray(Charsets.UTF_8))
                 db.execSQL(
-                    "INSERT OR REPLACE INTO sessions (sesja_id, token_map_enc, token_count, created_at, masked_text_enc) VALUES (?, ?, ?, ?, ?)",
+                    """INSERT INTO sessions (sesja_id, token_map_enc, token_count, created_at, masked_text_enc)
+                       VALUES (?, ?, ?, ?, ?)
+                       ON CONFLICT(sesja_id) DO UPDATE SET
+                           token_map_enc   = excluded.token_map_enc,
+                           token_count     = excluded.token_count,
+                           created_at      = excluded.created_at,
+                           masked_text_enc = excluded.masked_text_enc""",
                     arrayOf(sesjaId, encBlob, tokenCount.toString(), now, maskedEnc)
                 )
             } else {
                 db.execSQL(
-                    "INSERT OR REPLACE INTO sessions (sesja_id, token_map_enc, token_count, created_at) VALUES (?, ?, ?, ?)",
+                    """INSERT INTO sessions (sesja_id, token_map_enc, token_count, created_at)
+                       VALUES (?, ?, ?, ?)
+                       ON CONFLICT(sesja_id) DO UPDATE SET
+                           token_map_enc = excluded.token_map_enc,
+                           token_count   = excluded.token_count,
+                           created_at    = excluded.created_at""",
                     arrayOf(sesjaId, encBlob, tokenCount.toString(), now)
                 )
             }
             Log.i(TAG, "Sesja zapisana: $sesjaId ($tokenCount tokenów, tekst=${maskedText.isNotEmpty()})")
+            true
         } catch (e: Exception) {
             Log.e(TAG, "Błąd save() [$sesjaId]: ${e.message}", e)
+            false
         }
     }
 

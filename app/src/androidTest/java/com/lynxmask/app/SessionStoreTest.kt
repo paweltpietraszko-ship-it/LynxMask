@@ -160,7 +160,20 @@ class SessionStoreTest {
         assertEquals("Drugi save musi nadpisywać pierwszy", "Nowa", loaded!!["OSOBA_001"])
 
         val count = SessionStore.listSessions(ctx).count { it.sesjaId == "DUP001" }
-        assertEquals("INSERT OR REPLACE stworzył duplikat", 1, count)
+        assertEquals("UPSERT stworzył duplikat", 1, count)
+    }
+
+    @Test fun bug_ss1_ponowny_save_nie_nadpisuje_description() {
+        // BUG-SS-1: INSERT OR REPLACE nadpisywał NULLem opis i masked_text_enc.
+        // Fix: UPSERT z ON CONFLICT DO UPDATE — description poza SET.
+        SessionStore.save(ctx, "SS1_001", """{"OSOBA_001":"Jan"}""", 1, "zamaskowany tekst")
+        SessionStore.updateDescription(ctx, "SS1_001", "Faktura za marzec")
+        // Drugi save() bez maskedText — nie powinien wyzerować description
+        SessionStore.save(ctx, "SS1_001", """{"OSOBA_001":"Jan v2"}""", 1)
+
+        val record = SessionStore.listSessions(ctx).find { it.sesjaId == "SS1_001" }
+        assertEquals("description nadpisana NULLem przez ponowny save()",
+            "Faktura za marzec", record?.description)
     }
 
     // ══════════════════════════════════════════════════════════════════════════

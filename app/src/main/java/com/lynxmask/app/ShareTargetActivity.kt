@@ -359,13 +359,21 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             .removePrefix("SESJA_${s.result.sessionId}\n")
                         // I/O na Dispatchers.IO — save() szyfruje + INSERT, updateDescription() UPDATE
                         scope.launch(Dispatchers.IO) {
-                            SessionStore.save(
+                            val saved = SessionStore.save(
                                 context      = context,
                                 sesjaId      = s.result.sessionId,
                                 tokenMapJson = s.result.tokenMapJson(),
                                 tokenCount   = s.result.tokenMap.size,
                                 maskedText   = cleanText
                             )
+                            if (!saved) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context,
+                                        "Błąd zapisu sesji — dane mogą być niedostępne w bibliotece",
+                                        Toast.LENGTH_LONG).show()
+                                }
+                                return@launch
+                            }
                             // BUG-DESCRIPTION-01: saveResponse() zapisywało opis jako odpowiedź AI.
                             // Fix: updateDescription() → kolumna description w tabeli sessions.
                             if (description.isNotBlank()) {
