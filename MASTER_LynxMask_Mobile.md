@@ -82,9 +82,9 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |S1|CAPS LOCK w nazwiskach|NameEngine|KOWALSKI JAN, PIETRASZKO PAWEL niewykrywane. toLookupForm() → lookup, bramka tylko gdy trafia w słownik (eliminuje UMOWA/RODO/REGON)|✅ 21.06|
 |S2|ASCII imiona|NameEngine|Stanislaw, Lukasz niewykrywane — słownik ma tylko formy z ogonkami. fold() przy starcie, foldedNames map|✅ 21.06|
 |S3|Inicjały przy nazwiskach|NameEngine|K. Kowalski → maskować całość. INITIALS\_RE, rozszerz span w lewo. Niskie ryzyko FP (tylko przy potwierdzonym nazwisku)|✅ 21.06 (NameEngine v1.12)|
-|S4|Kwoty słownie|StructuralEngine|„dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy|🔲|
+|S4|Kwoty słownie|StructuralEngine|„dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy|✅ 23.06 — wzorce A/B/C w StructuralEngine; lookahead w C blokuje FP „sto złotych monet"|
 |S5|Walidacja sumy kontrolnej PESEL (RESEARCH-1)|StructuralEngine|PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność \~100%|✅ 21.06|
-|S6|Sklejanie nazwisk|NameEngine|„Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms|🔲|
+|S6|Sklejanie nazwisk|NameEngine|„Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms|✅ 23.06 — OCR_SURNAME_MIDSPACE w OcrNormalizer, bramka surnamesForms|
 |S7|BUG-EMAIL-TOKEN|StructuralEngine|EMAIL wykrywany jako NUMER zamiast EMAIL|✅ naprawione commit a3d4cf1 (22.06) — TOKEN_NUMER → TOKEN_EMAIL w STRUCTURAL_PATTERNS; 3 testy BUG-S7 jako regresja|
 |S8|BUG-DATE-PARTIAL|StructuralEngine|2026-06-20 → maskuje rok-miesiąc, zostaje „-20"|✅ 21.06|
 |~~S9~~|~~BUG-FP-REFNUM~~|~~StructuralEngine~~|~~UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive)~~|✅ zamknięty — >80% dopasowań to prawdziwe PII, FP kosmetyczne (encje i tak zakryte)|
@@ -662,6 +662,15 @@ Niezależny audyt kodu przez Codex (read-only, po commicie). Znaleziska podzielo
 | BUG-DELETE-DICT | SessionStore.kt:414, MainActivity.kt:342 | „Usuń wszystkie dane" czyści tylko tabele SQLCipher. Nie czyści UserDictionary ani GuardAllowlist — mogą zawierać PII | ✅ 23.06 — UserDictionary.clear() + GuardAllowlist.clear() dodane w SecurityModal |
 | BUG-EXPORT-DEPSEUDO | DepseudonymizationScreen.kt:303 | Depseudonimizowany tekst może być wyeksportowany do publicznego Downloads bez ostrzeżenia | 🔲 |
 
+### Zamknięte 23.06 (sesja dzienna)
+
+| Feature/Bug | Plik | Opis | Status |
+|---|---|---|---|
+| Stary dowód — 3b-CAPS | NameEngine.kt:688 | KOWALSKI solo all-caps → TOKEN_OSOBA przez bramkę surnamesForms. Akronimy (PESEL, RODO, KRS) bezpieczne — nie ma ich w słowniku | ✅ commit 3ba7b66 |
+| Stary dowód — ID_CARD_PARENT | NameEngine.kt:517 | „Imię ojca: STANISŁAW" / „Imię matki: MARIA" → etykieta zostaje, wartość TOKEN_OSOBA. Negatywny lookahead w ID_CARD_FIRSTNAME_REGEX blokuje pochłonięcie „ojca"/"matki" | ✅ commit 3ba7b66 |
+| S4 FP wzorzec C | StructuralEngine.kt:482 | Lookahead `(?=[^\S\n]*(?:[,.\n\);:\d]|\z|\b(?:brutto|netto|słownie|...)\b))` — „złotych" musi być terminatorem; blokuje FP „sto złotych monet" | ✅ commit 3ba7b66 |
+| UserDictionary backup | UserDictionary.kt, MainActivity.kt | `exportToJson()` / `importFromJson()` — format .lynxdict (plaintext JSON, Python-przenośny). UI w Zabezpieczeniach: Eksportuj → MediaStore Downloads, Importuj → SAF OpenDocument | ✅ commity 644ddbd, 4537858 |
+
 ### Naprawione przy audycie i w sesji 21.06 noc
 
 - ✅ 4 testy JVM z `println`-PASS zamiast asercji: `NIP rozne formaty`, `IBAN pelny zakres formatow`, `IBAN rozne formaty`, `testWyciekiV2` — commit 33eea12
@@ -697,7 +706,7 @@ Niezależny audyt kodu przez agenta Claude Code (read-only, 50 tool uses). Pełn
 
 | ID | Priorytet | Plik | Opis | Status |
 |---|---|---|---|---|
-| AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | ✅ 23.06 — calcOcrConfidence() wywołana w ocrFromImageUri/Pdf, confidence → pseudonymize() + banner jakości w Review |
+| AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | ✅ 23.06 s2 — ACTION_VIEW i ACTION_SEND destrukturyzowały Triple jako Pair, gubiąc ocrConf. Naprawiono: wszystkie 3 ścieżki przekazują mlKitConfidence (commit 31a3e03). |
 | AUDIT-02 | ŚREDNIE | GuardAllowlist.kt:86 | `_loaded = true` ustawiane nawet po błędzie ładowania — cicha utrata allowlist bez retry. Log.w bez DEBUG guard wyrzuca wartość słownika do Logcat | ✅ 23.06 — _loaded nie jest ustawiane w catch (kod był już poprawny), Log.w bez wartości PII |
 | AUDIT-03 | ŚREDNIE | StructuralEngine.kt | CATCHALL w `PESEL_PATTERN_STRINGS` i `NIP_PATTERN_STRINGS` → S5 sprawdza sumę dla WSZYSTKICH \d{8,}, nie tylko PESEL/NIP. FN ryzyko. Częściowo naprawione przez S5 regres fix (cb27dc0) | 🔲 |
 | AUDIT-04 | NISKIE | StructuralEngine.kt | Zduplikowane wzorce IBAN (PL IBAN i IBAN kontekstowy pojawiają się podwójnie ~linie 303-312 i ~338-340) | ✅ 23.06 — druga kopia usunięta |
@@ -744,7 +753,11 @@ Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REME
 
 **Ostrzeżenie S5 (commit 850174d):** komentarz ⚠️ w `StructuralEngine.kt` przy `*_PATTERN_STRINGS` wyjaśniający zasadę bypass. Zapobiega powtarzaniu błędu w kolejnych sesjach.
 
-**Stan testów: 153 testów, 0 FAILED.**
+**Stan testów: 153 testów, 0 FAILED** (przed sesją 23.06) **→ po sesji: +IdCardDetectionTest 12 testów, +OcrNormalizerSurnameTest 5 testów, +StructuralEngineAmountWordTest 9 testów. 0 FAILED.**
+
+**Zamknięte 23.06 sesja 1:** S4 kwoty słowne, S6 sklejanie nazwisk OCR, stary dowód (3b-CAPS + ID_CARD), S4 FP wzorzec C, UserDictionary eksport/import (.lynxdict).
+
+**Zamknięte 23.06 sesja 2:** AUDIT-01 (mlKitConfidence gubiony na 2 ścieżkach ACTION_VIEW/ACTION_SEND — destrukturyzacja Triple→Pair; commit 31a3e03).
 
 **Następna sesja: UL (biblioteka dokumentów, sekcja 24).**
 

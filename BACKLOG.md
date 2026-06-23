@@ -42,11 +42,8 @@ Integracja z istniejącym flow ShareTargetActivity. Nie ruszaj silnika tekstoweg
 
 | # | Bug | Skutek |
 |---|---|---|
-| BUG-FLAG-LIMIT | NameEngine: max 5 flag algorytmicznych | 6+ encji nieznanych → eksport odblokowany mimo niezamaskowanych fragmentów |
 | BUG-SCAN-P1 | ShareTargetActivity: OCR tylko str. 1 | PII na str. 2+ niewidoczne, użytkownik myśli że dokument czysty |
 | BUG-AUTH-RESET | LoginScreen: "Zapomniałem hasła" | Dostęp do biblioteki bez uwierzytelnienia |
-| AUDIT-01 | OcrQuality.kt: martwy kod | Bramka jakości OCR nigdy nie odpala — zły skan przechodzi bez ostrzeżenia |
-| BUG-DELETE-DICT | "Usuń wszystkie dane" | Nie czyści UserDictionary ani GuardAllowlist — PII zostaje |
 
 ---
 
@@ -66,8 +63,6 @@ Pliki: SessionStore.kt + composable biblioteki w MainActivity
 |---|---|---|
 | N2 | BUG-NIP-SPLIT: NIP naprawiony do połowy, silnik łapie fragmenty jako dwa NUMER | OcrNormalizer |
 | N3 | OCR_EMAIL_LOCALSPACE: wiele spacji — tylko jedna naprawiana | OcrNormalizer |
-| S4 | Kwoty słownie: „dwadzieścia tysięcy złotych" | StructuralEngine |
-| S6 | Sklejanie nazwisk: „Kowal ski" — OCR rozbija spacją | NameEngine |
 | S7 | BUG-EMAIL-TOKEN: email wykrywany jako NUMER | StructuralEngine |
 | S11 | Email z imieniem w local-part: konflikt wzorca email z NameEngine | StructuralEngine |
 
@@ -87,3 +82,4 @@ Pliki: SessionStore.kt + composable biblioteki w MainActivity
 - BUG-BENCH-PUBLIC: benchmark zapisuje w publicznym /storage (tool deweloperski)
 - BUG-SS-1/SS-3: SessionStore INSERT OR REPLACE + init() na Main thread
 - BUG-16/17: ManualTokenSection brak selektor typu / brak TOKEN_KWOTA
+- BUG-LIB-6: „Pobierz plik" w DepseudonymizationScreen używa File() — nie działa Android 11+ (fix: MediaStore)
