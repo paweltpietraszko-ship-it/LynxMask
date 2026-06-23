@@ -367,7 +367,8 @@ private fun SecurityModal(onDismiss: () -> Unit) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var deleteInProgress  by remember { mutableStateOf(false) }
 
-    val exportLauncher = rememberLauncherForActivityResult(
+    // Fallback SAF dla API < 29 (Android 9 i starsze)
+    val exportFallbackLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
@@ -376,7 +377,37 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                 val json = UserDictionary.exportToJson()
                 context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) }
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Słownik wyeksportowany (${UserDictionary.entries.size} wpisów)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Słownik wyeksportowany", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Błąd eksportu: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    fun exportDictionary() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val json = UserDictionary.exportToJson()
+                val filename = "lynxmask_slownik.lynxdict"
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    val values = android.content.ContentValues().apply {
+                        put(android.provider.MediaStore.Downloads.DISPLAY_NAME, filename)
+                        put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/json")
+                    }
+                    val uri = context.contentResolver.insert(
+                        android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values
+                    )
+                    uri?.let { context.contentResolver.openOutputStream(it)?.use { out -> out.write(json.toByteArray(Charsets.UTF_8)) } }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Zapisano w Pobrane: $filename", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        exportFallbackLauncher.launch(filename)
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -512,7 +543,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
                     ) {
                         OutlinedButton(
-                            onClick  = { exportLauncher.launch("lynxmask_slownik.lynxdict") },
+                            onClick  = { exportDictionary() },
                             modifier = Modifier.weight(1f).height(LynxSpacing.TouchTarget),
                             shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
                             border   = BorderStroke(1.dp, LynxColors.Border)
