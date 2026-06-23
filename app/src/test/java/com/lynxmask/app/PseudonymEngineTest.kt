@@ -113,6 +113,28 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_NUMER)
     }
 
+    @Test fun `NIP po OCR_NIP_SPLIT jest jednym tokenem nie dwoma`() {
+        val r = pseudonymize("NIP: 740-61 7-82-26")
+        assertEquals(
+            "Powinien być dokładnie 1 token NUMER",
+            1,
+            r.tokenMap.keys.count { it.startsWith("NUMER") }
+        )
+        assertFalse(r.pseudonymizedText.contains("740"))
+        assertFalse(r.pseudonymizedText.contains("82-26"))
+    }
+
+    @Test fun `NIP po OCR_NIP_SPLIT z newline jest jednym tokenem`() {
+        val r = pseudonymize("NIP: 740-617\n82-26")
+        assertEquals(
+            "Powinien być dokładnie 1 token NUMER",
+            1,
+            r.tokenMap.keys.count { it.startsWith("NUMER") }
+        )
+        assertFalse(r.pseudonymizedText.contains("740-617"))
+        assertFalse(r.pseudonymizedText.contains("82-26"))
+    }
+
     // =========================================================================
     // IBAN / konto bankowe
     // =========================================================================

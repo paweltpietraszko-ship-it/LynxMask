@@ -347,6 +347,37 @@ object OcrNormalizer {
         """(?i)(NIP\s{0,3}:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
     )
 
+    /** Wyciąga 10 cyfr NIP z fragmentu OCR (z mapą liter→cyfry). */
+    private fun nipDigitsFromOcrRaw(raw: String): String =
+        raw.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.filter { it.isDigit() }.joinToString("")
+
+    /** Format kanoniczny 3-3-2-2 (XXX-XXX-XX-XX). */
+    private fun formatNip3322(digits: String): String =
+        "${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6, 8)}-${digits.substring(8, 10)}"
+
+    /** Alternatywny format 3-2-2-3 (XXX-XX-XX-XXX). */
+    private fun formatNip3223(digits: String): String =
+        "${digits.substring(0, 3)}-${digits.substring(3, 5)}-${digits.substring(5, 7)}-${digits.substring(7, 10)}"
+
+    /**
+     * Skleja rozbito-spacjowany NIP do poprawnego formatu z myślnikami.
+     * Domyślnie 3-3-2-2; 3-2-2-3 gdy segmenty po myślnikach sugerują ten układ.
+     */
+    private fun fixOcrNipNumber(raw: String): String {
+        val digits = nipDigitsFromOcrRaw(raw)
+        if (digits.length != 10) {
+            return raw.replace(Regex("""[\s\n\r\t]+"""), "")
+        }
+        val segments = raw.replace(Regex("""[\s\n\r\t]+"""), "")
+            .split('-')
+            .map { seg -> nipDigitsFromOcrRaw(seg) }
+            .filter { it.isNotEmpty() }
+        if (segments.size >= 4 && segments.first().length == 3 && segments.last().length == 3) {
+            return formatNip3223(digits)
+        }
+        return formatNip3322(digits)
+    }
+
     // ----------------------------------------------------------
     // OCR_NIP_DOT: kropka zamiast ostatniego myślnika w NIP
     // Przykład: "873-054-80.39" → "873-054-80-39"
@@ -581,10 +612,11 @@ object OcrNormalizer {
             fixed
         }
 
-        // 11b. OCR: spacja wstawiona przez OCR wewnątrz NIP
+        // 11b. OCR: spacja/newline wewnątrz NIP → 10 cyfr → XXX-XXX-XX-XX (lub 3-2-2-3)
         text = OCR_NIP_SPLIT.replace(text) { m ->
-            val fixed = m.groupValues[2].replace(Regex("""\s"""), "")
-            if (fixed != m.groupValues[2]) corrections++
+            val raw = m.groupValues[2]
+            val fixed = fixOcrNipNumber(raw)
+            if (fixed != raw) corrections++
             m.groupValues[1] + fixed
         }
 
