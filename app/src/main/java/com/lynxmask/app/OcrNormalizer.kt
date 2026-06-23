@@ -226,29 +226,29 @@ object OcrNormalizer {
     // (odróżnia "Qinteria.pl" od "QBASIC.txt" gdzie Q to litera, nie @)
     // ----------------------------------------------------------
     private val OCR_EMAIL_AT_Q = Regex(
-        """([\w._%+\-]{3,})[^\S\n]+Q([a-z0-9][\w\-]*\.[a-zA-Z]{2,4})\b"""
+        """([\w._%+\-]{3,})[^\S\n]+Q([a-z0-9][\w\-]*\.[a-zA-Z][a-zA-Z0-9]{1,3})\b"""
     )
 
     // ----------------------------------------------------------
-    // OCR_EMAIL_SPACES v1.4: naprawa artefaktów spacji w adresach email
+    // OCR_EMAIL_SPACES: naprawa artefaktów spacji w adresach email
     //
-    // Reguła 1 — spacja przed TLD (uruchamiać PIERWSZA):
-    //   "jan@onet pl" → "jan@onet.pl"
-    //   Wzorzec: @domena + spacja + 2-4 litery/cyfry TLD
-    //   Bezpieczne: wymaga @ na początku, TLD ≤ 4 znaki — nie skleja zdań
+    // Kolejność stosowania (KRYTYCZNA):
+    //   1. OCR_EMAIL_SLDSPACE: spacja wewnątrz SLD — "@inte ria.pl" → "@interia.pl"
+    //   2. OCR_EMAIL_TLDSPACE: spacja przed TLD   — "@onet pl"      → "@onet.pl"
+    //   3. OCR_EMAIL_LOCALSPACE: spacja w local-part — "jan k@wp.pl" → "jan_k@wp.pl"
+    //      (lookahead wymaga już naprawionej domeny — TLD/SLD muszą być pierwsze)
     //
-    // Reguła 2 — spacja w local-part przed @ (uruchamiać PO regule TLD):
-    //   "mariusz kaminski@o2.pl" → "mariusz_kaminski@o2.pl"
-    //   Wzorzec: fragment + spacja + fragment + lookahead @domena.tld
-    //   Zamiana spacji → podkreślnik (dozwolony w RFC 5321)
-    //   Lookahead wymaga pełnej domeny z kropką — dlatego reguła TLD musi być pierwsza
+    // TLD we wszystkich wzorcach: [a-zA-Z][a-zA-Z0-9]{1,3} — przyjmuje cyfry (OCR: "p1"→"pl")
     // ----------------------------------------------------------
+    private val OCR_EMAIL_SLDSPACE = Regex(
+        """(@[a-zA-Z0-9\-]{2,15})[^\S\n]([a-zA-Z0-9\-]{2,15}\.[a-zA-Z][a-zA-Z0-9]{1,3})\b"""
+    )
     private val OCR_EMAIL_TLDSPACE = Regex(
         """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
     )
     // N3: {1,} zamiast {2,} w fragmencie1 — obsługa jednoliiterowych segmentów ("jan k owal ski@...")
     private val OCR_EMAIL_LOCALSPACE = Regex(
-        """([a-zA-Z0-9._%+\-]{1,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}\b)"""
+        """([a-zA-Z0-9._%+\-]{1,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z][a-zA-Z0-9]{1,3}\b)"""
     )
 
     // ----------------------------------------------------------
@@ -471,7 +471,13 @@ object OcrNormalizer {
             "${m.groupValues[1]}@${m.groupValues[2]}"
         }
 
-        // 7. OCR-spacja przed TLD emaila — "jan@onet pl" → "jan@onet.pl"
+        // 7a. OCR-spacja wewnątrz SLD emaila — "jan@inte ria.pl" → "jan@interia.pl"
+        text = OCR_EMAIL_SLDSPACE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}${m.groupValues[2]}"
+        }
+
+        // 7b. OCR-spacja przed TLD emaila — "jan@onet pl" → "jan@onet.pl"
         text = OCR_EMAIL_TLDSPACE.replace(text) { m ->
             corrections++
             "${m.groupValues[1]}.${m.groupValues[2]}"

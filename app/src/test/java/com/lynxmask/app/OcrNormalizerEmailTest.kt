@@ -75,14 +75,33 @@ class OcrNormalizerEmailTest {
     }
 
     @Test
-    fun `FAIL BUG-EMAIL-TLD1 TLD z cyfra nie jest naprawiany`() {
+    fun `BUG-EMAIL-TLD1 TLD z cyfra naprawiany przez TOKEN EMAIL`() {
         // OCR: l→1 w TLD, "bartosz@prawnik p1" zamiast "bartosz@prawnik.pl"
-        // OCR_EMAIL_TLDSPACE szuka [a-zA-Z]{2,4} — nie matchuje "p1" bo zawiera cyfrę
-        // OCZEKIWANY FAIL — fix: [a-zA-Z0-9]{2,4} w OCR_EMAIL_TLDSPACE
+        // OcrNormalizer (TLDSPACE) poprawia spację → "@prawnik.p1"
+        // TOKEN_EMAIL (po naprawie): [a-zA-Z][a-zA-Z0-9]{1,} akceptuje "p1"
         val input = "bartosz.jablowski@prawnik p1"
         val result = OcrNormalizer.normalize(input)
         println("PRZED: $input")
         println("PO:    ${result.normalizedText}")
         assertTrue("TLD 'p1' powinien byc naprawiony do '@prawnik.p1'", result.normalizedText.contains("@prawnik.p1"))
+    }
+
+    @Test
+    fun `OCR_EMAIL_SLDSPACE spacja wewnatrz SLD naprawiana`() {
+        val input = "jan.kowalski@inte ria.pl"
+        val result = OcrNormalizer.normalize(input)
+        println("PRZED: $input")
+        println("PO:    ${result.normalizedText}")
+        assertTrue("Spacja w SLD powinna byc usunieta", result.normalizedText.contains("@interia.pl"))
+    }
+
+    @Test
+    fun `OCR_EMAIL_SLDSPACE z local-part spacjami i spacja w SLD`() {
+        val input = "anna nowak@inte ria.pl dane osobowe"
+        val result = OcrNormalizer.normalize(input)
+        println("PRZED: $input")
+        println("PO:    ${result.normalizedText}")
+        assertTrue("Spacja w SLD usunieta", result.normalizedText.contains("@interia.pl"))
+        assertTrue("Spacja w local-part zamieniona na _", result.normalizedText.contains("anna_nowak@"))
     }
 }
