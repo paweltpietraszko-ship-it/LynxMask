@@ -1,6 +1,6 @@
 package com.lynxmask.app
 
-// DepseudoMode.kt — v1.0
+// DepseudoMode.kt — v1.1
 // Enum trybu ekranu DepseudonymizationScreen.
 // Współdzielony między LibraryScreen.kt i DepseudonymizationScreen.kt.
 // Osobny plik — nie zagnieżdżony w żadnym composable — żeby oba pliki importowały
@@ -13,5 +13,9 @@ enum class DepseudoMode {
 
     /** Odwróć maskowanie odpowiedzi AI.
      *  Użytkownik wkleja tekst z tokenami ręcznie. */
-    AI_RESPONSE
+    AI_RESPONSE,
+
+    /** Podgląd zamaskowanego tekstu (z tokenami OSOBA_1 itp.) bez odwracania.
+     *  Używany przez "Edytuj dokument" w bibliotece. */
+    MASKED_VIEW
 }

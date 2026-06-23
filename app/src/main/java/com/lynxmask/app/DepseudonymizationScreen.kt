@@ -1,6 +1,6 @@
-package com.lynxmask.app
+﻿package com.lynxmask.app
 
-// DepseudonymizationScreen.kt — v2.0
+// DepseudonymizationScreen.kt — v2.1
 // LOGIKA ZACHOWANA bez zmian (LaunchedEffects, autodetekt, dwa tryby).
 // UI przepisane na dwa ekrany: Ekran 1 (wklej/sesja) → Ekran 2 (wynik).
 // Usunięte: header PSE, chipy jako główna nawigacja, przycisk "← Zamaskuj".
@@ -71,7 +71,8 @@ fun DepseudonymizationScreen(
 
     val activeSessionId: String? = when (currentMode) {
         DepseudoMode.AI_RESPONSE     -> detectedSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
-        DepseudoMode.SOURCE_DOCUMENT -> preselectedSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
+        DepseudoMode.SOURCE_DOCUMENT,
+        DepseudoMode.MASKED_VIEW     -> preselectedSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
     }
 
     LaunchedEffect(Unit) {
@@ -124,6 +125,20 @@ fun DepseudonymizationScreen(
         isProcessing = false; savedDone = false
     }
 
+
+    // Tryb MASKED_VIEW — podglad zamaskowanego tekstu bez odwracania tokenow
+    LaunchedEffect(activeSessionId, currentMode) {
+        if (currentMode != DepseudoMode.MASKED_VIEW) return@LaunchedEffect
+        val sesId = activeSessionId ?: return@LaunchedEffect
+        isProcessing = true; errorMessage = ""; restoredText = ""
+        val maskedText = withContext(Dispatchers.IO) { SessionStore.loadMaskedText(context, sesId) }
+        if (maskedText == null) {
+            errorMessage = "Brak zamaskowanego tekstu dla tej sesji"
+            isProcessing = false; return@LaunchedEffect
+        }
+        restoredText = maskedText
+        isProcessing = false; savedDone = false
+    }
     // ── UI — dwa ekrany ───────────────────────────────────────────────────────
     Column(modifier = Modifier.fillMaxSize().background(LynxColors.Background)) {
 
@@ -227,8 +242,8 @@ fun DepseudonymizationScreen(
                     }
                 }
 
-                // Tryb SOURCE_DOCUMENT: sesja
-                if (currentMode == DepseudoMode.SOURCE_DOCUMENT) {
+                // Tryb SOURCE_DOCUMENT / MASKED_VIEW: sesja
+                if (currentMode == DepseudoMode.SOURCE_DOCUMENT || currentMode == DepseudoMode.MASKED_VIEW) {
                     Text("SESJA", fontFamily = LynxTypography.Mono,
                         fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
                     when {
@@ -254,7 +269,7 @@ fun DepseudonymizationScreen(
                 // Przycisk Odkryj — zachowany styl zaokrąglony jako wzorzec
                 Button(
                     onClick  = { /* LaunchedEffect wyzwala automatycznie po zmianie stanu */ },
-                    enabled  = activeSessionId != null && (inputText.isNotBlank() || currentMode == DepseudoMode.SOURCE_DOCUMENT),
+                    enabled  = activeSessionId != null && (inputText.isNotBlank() || currentMode == DepseudoMode.SOURCE_DOCUMENT || currentMode == DepseudoMode.MASKED_VIEW),
                     modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
                     shape    = RoundedCornerShape(50),  // zaokrąglony — wzorzec dla następcy
                     colors   = ButtonDefaults.buttonColors(

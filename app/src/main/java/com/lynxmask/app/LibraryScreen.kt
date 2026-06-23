@@ -356,9 +356,9 @@ private fun SessionDetailScreen(
                 .padding(LynxSpacing.md),
             verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
-            // BUG-LIB-EDIT: pusta lambda — SOURCE_DOCUMENT pokazuje oryginalny tekst sesji
+            // BUG-LIB-EDIT: MASKED_VIEW pokazuje zamaskowany tekst (tokeny OSOBA_1 itp.)
             SessionActionButton(label = "Edytuj dokument") {
-                onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
+                onDepseudo(DepseudoMode.MASKED_VIEW)
             }
             SessionActionButton(label = "Odkryj dane") {
                 onDepseudo(DepseudoMode.AI_RESPONSE)
