@@ -42,18 +42,13 @@ Integracja z istniejącym flow ShareTargetActivity. Nie ruszaj silnika tekstoweg
 
 | # | Bug | Skutek |
 |---|---|---|
-| BUG-SCAN-P1 | ShareTargetActivity: OCR tylko str. 1 | PII na str. 2+ niewidoczne, użytkownik myśli że dokument czysty |
 | BUG-AUTH-RESET | LoginScreen: "Zapomniałem hasła" | Dostęp do biblioteki bez uwierzytelnienia |
 
 ---
 
-## NASTĘPNA SESJA — UL (UI Library)
+## NASTĘPNA SESJA — SILNIK / BUGI
 
-Biblioteka dokumentów — pełny audyt flow:
-- **BUG-LIB-EDIT**: „Edytuj dokument" nie działa
-- Pozostałe bugi nieznane — odkryć podczas testowania
-
-Pliki: SessionStore.kt + composable biblioteki w MainActivity
+Silnik + otwarte bugi z KOLEJKI SILNIKA (N2, N3, S7, S11) + BUG-PESEL-OCR-SILNIK.
 
 ---
 
