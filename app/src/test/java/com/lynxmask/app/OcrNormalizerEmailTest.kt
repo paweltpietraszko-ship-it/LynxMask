@@ -56,6 +56,25 @@ class OcrNormalizerEmailTest {
     }
 
     @Test
+    fun `N3 wiele spacji w local-part wszystkie naprawiane`() {
+        // "jan k owal ski@wp.pl" → "jan_k_owal_ski@wp.pl"
+        // Poprzednio: jedna iteracja replace → tylko pierwsza spacja naprawiana
+        val input = "jan k owal ski@wp.pl"
+        val result = OcrNormalizer.normalize(input)
+        println("PRZED: $input")
+        println("PO:    ${result.normalizedText}")
+        assertTrue("Wszystkie spacje powinny być zastąpione _", result.normalizedText.contains("jan_k_owal_ski@wp.pl"))
+    }
+
+    @Test
+    fun `N3 trzy spacje w local-part`() {
+        val input = "kontakt: anna maria nowak kowalska@firma.com.pl dane"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue("Wszystkie spacje w local-part naprawione",
+            result.normalizedText.contains("anna_maria_nowak_kowalska@firma.com.pl"))
+    }
+
+    @Test
     fun `FAIL BUG-EMAIL-TLD1 TLD z cyfra nie jest naprawiany`() {
         // OCR: l→1 w TLD, "bartosz@prawnik p1" zamiast "bartosz@prawnik.pl"
         // OCR_EMAIL_TLDSPACE szuka [a-zA-Z]{2,4} — nie matchuje "p1" bo zawiera cyfrę

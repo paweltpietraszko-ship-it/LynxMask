@@ -236,8 +236,9 @@ object OcrNormalizer {
     private val OCR_EMAIL_TLDSPACE = Regex(
         """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
     )
+    // N3: {1,} zamiast {2,} w fragmencie1 — obsługa jednoliiterowych segmentów ("jan k owal ski@...")
     private val OCR_EMAIL_LOCALSPACE = Regex(
-        """([a-zA-Z0-9._%+\-]{2,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}\b)"""
+        """([a-zA-Z0-9._%+\-]{1,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}\b)"""
     )
 
     // ----------------------------------------------------------
@@ -452,12 +453,16 @@ object OcrNormalizer {
             "${m.groupValues[1]}.${m.groupValues[2]}"
         }
 
-        // 8. OCR-spacja w local-part emaila — "jan kowalski@wp.pl" → "jan_kowalski@wp.pl"
-        //    Po kroku 7 — lookahead wymaga już poprawnej domeny z kropką
-        text = OCR_EMAIL_LOCALSPACE.replace(text) { m ->
-            corrections++
-            "${m.groupValues[1]}_${m.groupValues[2]}"
-        }
+        // 8. OCR-spacja w local-part emaila — "jan k owal ski@wp.pl" → "jan_k_owal_ski@wp.pl"
+        //    N3: pętla do brak zmian — jedna iteracja naprawiała tylko pierwszą spację
+        var prev8: String
+        do {
+            prev8 = text
+            text = OCR_EMAIL_LOCALSPACE.replace(text) { m ->
+                corrections++
+                "${m.groupValues[1]}_${m.groupValues[2]}"
+            }
+        } while (text != prev8)
 
         // 9. OCR: "u. Nazwa" lub "u Nazwa" → "ul. Nazwa"
         text = OCR_UL_PREFIX.replace(text) { m ->
