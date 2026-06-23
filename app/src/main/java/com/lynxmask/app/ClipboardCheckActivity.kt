@@ -1,7 +1,11 @@
 package com.lynxmask.app
 
 // ClipboardCheckActivity.kt
-// Wersja: 1.4
+// Wersja: 1.5
+//
+// ZMIANA v1.5 (sesja 23.06 — BUG-FLAG-LIMIT):
+//   Dialog schowka pokazywał max 5 flag (take(5) + "...i X więcej").
+//   Fix: wszystkie flagi w verticalScroll Column — użytkownik widzi każdą encję.
 //
 // ZMIANA v1.4 — Potok 6 (08.06.2026):
 //   ZADANIE 5: Przycisk "Zamaskuj i zapisz do biblioteki".
@@ -49,7 +53,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -252,10 +258,14 @@ private fun ClipPiiDialog(
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // BUG-FLAG-LIMIT: wszystkie flagi w scrollable column, bez obcięcia do 5
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 if (state.result.flags.isNotEmpty()) {
                     Text("Znalezione dane wrażliwe:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    state.result.flags.take(5).forEach { flag ->
+                    state.result.flags.forEach { flag ->
                         Row(verticalAlignment = Alignment.Top) {
                             Text("• ", color = Color(0xFFFFC107))
                             Column {
@@ -264,11 +274,6 @@ private fun ClipPiiDialog(
                                      color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                    }
-                    if (state.result.flags.size > 5) {
-                        Text("...i ${state.result.flags.size - 5} więcej",
-                             style = MaterialTheme.typography.bodySmall,
-                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

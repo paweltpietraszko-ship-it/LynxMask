@@ -1,6 +1,6 @@
 package com.lynxmask.app
 
-// ShareTargetActivity.kt — Wersja 2.3
+// ShareTargetActivity.kt — Wersja 2.4
 //
 // ZMIANA v2.1: Dodany stan Review między OCR a pseudonimizacją.
 //   Od v2.1 WSZYSTKIE źródła przechodzą przez Review (Edytor 2) —
@@ -11,6 +11,14 @@ package com.lynxmask.app
 //              były czytane z EXTRA_TEXT (null) → pusty tekst. Teraz czyta stream.
 //   - ASYNC-FIX: onConfirm w Review uruchamia pseudonymize() w Dispatchers.Default
 //                zamiast na wątku głównym — brak ryzyka ANR przy długich dokumentach.
+//
+// ZMIANA v2.4 (sesja 23.06 — P1 bugi zakresu):
+//   - BUG-SCAN-P1: skan wielostronicowy OCR-ował tylko stronę 1.
+//     Fix: pages?.firstOrNull() → pages?.mapNotNull(), LaunchedEffect na List<Uri>.
+//     Strony sklejane separatorem "── Strona N ──" (jak PDF).
+//   - BUG-DOCX-PARTIAL: tylko word/document.xml — brak nagłówków i stopek.
+//     Fix: regex word/(document|header*|footer*).xml — te same <w:t> tagi.
+//   - BUG-PDF-LIMIT: MAX_PDF_PAGES 10 → 20.
 //
 // ZMIANA v2.3 (sesja 10):
 //   - LOG-FIX: logOcrAnalysis() wywoływane po pseudonimizacji — zarówno w ścieżce
@@ -135,7 +143,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     remember { UserDictionary.load(context) }   // tylko inicjalizacja, wynik porzucony
     remember { GuardAllowlist.load(context) }   // tylko inicjalizacja, wynik porzucony
 
-    var docScanUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var docScanUris by remember { mutableStateOf<List<android.net.Uri>?>(null) }
     var docScanError by remember { mutableStateOf(false) }
     var filePickerUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
@@ -150,11 +158,13 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val uri = GmsDocumentScanningResult
+            // BUG-SCAN-P1: pobierz WSZYSTKIE strony, nie tylko pierwszą
+            val uris = GmsDocumentScanningResult
                 .fromActivityResultIntent(result.data)
-                ?.pages?.firstOrNull()?.imageUri
-            if (uri != null) {
-                docScanUri = uri
+                ?.pages?.mapNotNull { it.imageUri }
+            if (!uris.isNullOrEmpty()) {
+                DebugLogBuffer.log("DocScanner", "Skan: ${uris.size} stron")
+                docScanUris = uris
             } else {
                 DebugLogBuffer.log("DocScanner", "Brak URI w wyniku — fallback")
                 docScanError = true
@@ -240,13 +250,18 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
         }
     }
 
-    // ZMIANA v2.1: skan → Review
-    LaunchedEffect(docScanUri) {
-        val uri = docScanUri ?: return@LaunchedEffect
+    // BUG-SCAN-P1: wszystkie strony skanu — OCR każdej strony i sklejenie wyników
+    LaunchedEffect(docScanUris) {
+        val uris = docScanUris ?: return@LaunchedEffect
         try {
             progressLabel = "Rozpoznaję tekst ze skanu..."
-            val rawText = withContext(Dispatchers.IO) { ocrFromImageUri(uri, context) }
-            DebugLogBuffer.log("DocScanner", "OCR wyniku: ${rawText.length} znaków")
+            val rawText = withContext(Dispatchers.IO) {
+                uris.mapIndexed { i, uri ->
+                    val text = ocrFromImageUri(uri, context)
+                    if (uris.size > 1) "── Strona ${i + 1} ──\n$text\n\n" else text
+                }.joinToString("")
+            }
+            DebugLogBuffer.log("DocScanner", "OCR: ${rawText.length} znaków (${uris.size} stron)")
             state = ShareScreenState.Review(rawText)
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd OCR: ${e.message}")
@@ -519,17 +534,20 @@ private suspend fun extractTextFromDocx(uri: Uri, context: android.content.Conte
             val sb = StringBuilder()
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zip ->
+                    val textRegex = Regex("""<w:t(?:\s[^>]*)?>([^<]*)</w:t>""")
+                    // BUG-DOCX-PARTIAL: przetwarzaj też nagłówki i stopki (ten sam format <w:t>)
+                    val docxTargetPattern = Regex("""word/(document|(header|footer)\d*)\.xml""")
                     var entry = zip.nextEntry
                     while (entry != null) {
-                        if (entry.name == "word/document.xml") {
+                        val name = entry.name
+                        if (name.matches(docxTargetPattern)) {
                             val xml = zip.readBytes().toString(Charsets.UTF_8)
                             val withBreaks = xml.replace(Regex("""<w:p[ >]"""), "\n<w:p ")
-                            val textRegex = Regex("""<w:t(?:\s[^>]*)?>([^<]*)</w:t>""")
                             textRegex.findAll(withBreaks).forEach { match ->
                                 sb.append(match.groupValues[1])
                             }
-                            DebugLogBuffer.log("DOCX", "Wyodrębniono ${sb.length} znaków z word/document.xml")
-                            break
+                            if (name != "word/document.xml") sb.append("\n")
+                            DebugLogBuffer.log("DOCX", "Wyodrębniono z $name (łącznie ${sb.length} znaków)")
                         }
                         zip.closeEntry()
                         entry = zip.nextEntry
@@ -577,7 +595,7 @@ private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context):
 // OCR z PDF — BEZ ZMIAN
 // ─────────────────────────────────────────────────────────────────────────────
 
-private const val MAX_PDF_PAGES = 10
+private const val MAX_PDF_PAGES = 20
 private const val PDF_RENDER_SCALE = 2
 
 private suspend fun ocrFromPdfUri(
