@@ -7,8 +7,9 @@
 // Dodane: Zapisz w bibliotece, Pobierz plik.
 // Przyciski zaokrąglone — zachowane jako wzorzec dla następcy.
 
-import android.os.Environment
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -36,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +60,28 @@ fun DepseudonymizationScreen(
     var isProcessing      by remember { mutableStateOf(false) }
     var savedDone         by remember { mutableStateOf(false) }
     val tokenMapCache = remember { mutableMapOf<String, Map<String, String>?>() }
+
+    // BUG-LIB-6: CreateDocument zamiast File(Downloads) — działa na Android 11+ (Scoped Storage)
+    var pendingDownloadText by remember { mutableStateOf<String?>(null) }
+    val saveFileLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        val text = pendingDownloadText ?: return@rememberLauncherForActivityResult
+        pendingDownloadText = null
+        if (uri == null) return@rememberLauncherForActivityResult
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Plik zapisany", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Błąd zapisu: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     val detectedSessionId by remember(inputText, currentMode) {
         derivedStateOf {
@@ -348,18 +370,9 @@ fun DepseudonymizationScreen(
                     // Pobierz plik
                     OutlinedButton(
                         onClick  = {
-                            try {
-                                val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
-                                val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                                File(downloads, fileName).writeText(restoredText)
-                                Toast.makeText(context,
-                                    "Zapisano w Pobrane: $fileName",
-                                    Toast.LENGTH_LONG).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(context,
-                                    "B\u0142\u0105d zapisu: ${e.message}",
-                                    Toast.LENGTH_SHORT).show()
-                            }
+                            val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
+                            pendingDownloadText = restoredText
+                            saveFileLauncher.launch(fileName)
                         },
                         modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
                         shape    = RoundedCornerShape(50),
