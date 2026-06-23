@@ -1,9 +1,13 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 2.5
+// Wersja: 2.6
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
+//
+// Zmiany v2.6 (22.06):
+//   - Krok 0: keyword canonicalization — zdegradowane PESEL/NIP/REGON → czyste słowa kluczowe
+//     przed naprawą cyfr i przed StructuralEngine (koniec łatania instancji w lookbehindach)
 //
 // Zmiany v2.4 (21.06):
 //   - N5: OCR_CITY_MIDSPACE — fold() dla kandydata bez ogonków
@@ -266,6 +270,23 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // Krok 0 — keyword canonicalization: zdegradowany keyword → czysty PESEL/NIP/REGON
+    // Wszystkie dalsze kroki (OCR_PESEL_WORD, OCR_NIP_DIGITS, StructuralEngine) widzą tylko canonical form.
+    // ----------------------------------------------------------
+    private val OCR_KW_PESEL = Regex(
+        """(?<![a-zA-Z0-9])P[^\S\n]?[E3B][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|](?![a-zA-Z0-9])""",
+        RegexOption.IGNORE_CASE
+    )
+    private val OCR_KW_NIP = Regex(
+        """(?<![a-zA-Z0-9])N[^\S\n]?[IiLl1|tTjJ][^\S\n]?P(?![a-zA-Z0-9])""",
+        RegexOption.IGNORE_CASE
+    )
+    private val OCR_KW_REGON = Regex(
+        """(?<![a-zA-Z0-9])R[^\S\n]?[E3][^\S\n]?G[^\S\n]?[O0][^\S\n]?N(?![a-zA-Z0-9])""",
+        RegexOption.IGNORE_CASE
+    )
+
+    // ----------------------------------------------------------
     // OCR_PESEL_WORD v1.6: naprawa liter zamiennych na cyfry w numerze PESEL
     //
     // OCR myli cyfry z literami: T→7, I/l→1, O→0, S→5, B→8, G→6, Z→2
@@ -301,10 +322,10 @@ object OcrNormalizer {
 
     // ----------------------------------------------------------
     // OCR_NIP_DIGITS: NIP z kreskami (XXX-XXX-XX-XX) lub bez (10 cyfr)
-    // Słowa kluczowe: NIP / NlP / N1P (artefakty OCR I→l/1)
+    // Keyword już zcanonicalizowany w kroku 0 — lookbehind tylko na NIP.
     // ----------------------------------------------------------
     private val OCR_NIP_DIGITS = Regex(
-        """(?i)(?<=(?:NIP|NlP|N1P)\s{0,3}:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+        """(?i)(?<=NIP\s{0,3}:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
     )
 
     // ----------------------------------------------------------
@@ -312,7 +333,7 @@ object OcrNormalizer {
     // Przykład: "NIP: 740-61 7-82-26" → "NIP: 740-617-82-26"
     // ----------------------------------------------------------
     private val OCR_NIP_SPLIT = Regex(
-        """(?i)(N[lI1]?P\s{0,3}:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
+        """(?i)(NIP\s{0,3}:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -408,6 +429,20 @@ object OcrNormalizer {
     fun normalize(rawText: String): NormalizationResult {
         var text = rawText
         var corrections = 0
+
+        // 0. Keyword canonicalization — PESEL/NIP/REGON zanim dotkniemy cyfr lub wzorców strukturalnych
+        text = OCR_KW_PESEL.replace(text) {
+            corrections++
+            "PESEL"
+        }
+        text = OCR_KW_NIP.replace(text) {
+            corrections++
+            "NIP"
+        }
+        text = OCR_KW_REGON.replace(text) {
+            corrections++
+            "REGON"
+        }
 
         // 1. Naprawa "Sp.z o.0." → "Sp. z o.o."
         text = LEGAL_ZERO_RE.replace(text) { m ->
