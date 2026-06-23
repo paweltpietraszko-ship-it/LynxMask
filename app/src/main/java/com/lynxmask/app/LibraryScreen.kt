@@ -360,8 +360,9 @@ private fun SessionDetailScreen(
             SessionActionButton(label = "Edytuj dokument") {
                 onDepseudo(DepseudoMode.MASKED_VIEW)
             }
+            // SOURCE_DOCUMENT: auto-restore z sesji → oryginalne dane bez wklejania
             SessionActionButton(label = "Odkryj dane") {
-                onDepseudo(DepseudoMode.AI_RESPONSE)
+                onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
             }
             SessionActionButton(label = "Dodaj odpowied\u017a AI") {
                 onDepseudo(DepseudoMode.AI_RESPONSE)
