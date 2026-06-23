@@ -397,11 +397,19 @@ fun LoginScreen(
                             onDismissRequest = { showResetDialog = false },
                             title = { Text("Resetuj has\u0142o?") },
                             text  = {
-                                Text(
-                                    "Resetowanie has\u0142a trwale kasuje wszystkie sesje, dokumenty i s\u0142owniki. " +
-                                    "Operacja jest nieodwracalna.",
-                                    fontSize = 13.sp, lineHeight = 19.sp
-                                )
+                                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "\u26a0\ufe0f UWAGA: ca\u0142a biblioteka dokument\u00f3w zostanie trwale usuni\u0119ta.",
+                                        fontSize = 13.sp, lineHeight = 19.sp,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        color = androidx.compose.ui.graphics.Color(0xFFCC3333)
+                                    )
+                                    Text(
+                                        "Je\u015bli pami\u0119tasz has\u0142o, u\u017cyj opcji \u201eZmie\u0144 has\u0142o\u201d w Zabezpieczeniach \u2014 dane zostan\u0105 zachowane.\n\n" +
+                                        "Reset jest nieodwracalny i s\u0142u\u017cy tylko gdy has\u0142o jest ca\u0142kowicie zapomniane.",
+                                        fontSize = 13.sp, lineHeight = 19.sp
+                                    )
+                                }
                             },
                             confirmButton = {
                                 TextButton(onClick = {

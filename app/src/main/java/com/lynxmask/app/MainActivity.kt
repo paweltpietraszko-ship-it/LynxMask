@@ -364,8 +364,13 @@ private fun NavButton(
 private fun SecurityModal(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-    var deleteInProgress  by remember { mutableStateOf(false) }
+    var showDeleteConfirm   by remember { mutableStateOf(false) }
+    var deleteInProgress    by remember { mutableStateOf(false) }
+    var showChangePassword  by remember { mutableStateOf(false) }
+    var oldPassword         by remember { mutableStateOf("") }
+    var newPassword         by remember { mutableStateOf("") }
+    var newPasswordConfirm  by remember { mutableStateOf("") }
+    var changePasswordError by remember { mutableStateOf<String?>(null) }
 
     // Fallback SAF dla API < 29 (Android 9 i starsze)
     val exportFallbackLauncher = rememberLauncherForActivityResult(
@@ -494,6 +499,75 @@ private fun SecurityModal(onDismiss: () -> Unit) {
         )
     }
 
+    // Dialog zmiany hasła
+    if (showChangePassword) {
+        AlertDialog(
+            onDismissRequest = {
+                showChangePassword = false
+                oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
+            },
+            title = { Text("Zmień hasło") },
+            text  = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (changePasswordError != null) {
+                        Text(changePasswordError!!, color = LynxColors.Red, fontSize = 12.sp)
+                    }
+                    androidx.compose.material3.OutlinedTextField(
+                        value = oldPassword,
+                        onValueChange = { oldPassword = it; changePasswordError = null },
+                        label = { Text("Aktualne hasło", fontSize = 12.sp) },
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it; changePasswordError = null },
+                        label = { Text("Nowe hasło (min. 4 znaki)", fontSize = 12.sp) },
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = newPasswordConfirm,
+                        onValueChange = { newPasswordConfirm = it; changePasswordError = null },
+                        label = { Text("Powtórz nowe hasło", fontSize = 12.sp) },
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    when {
+                        !verifyLoginPassword(context, oldPassword) ->
+                            changePasswordError = "Nieprawidłowe aktualne hasło"
+                        newPassword.length < 4 ->
+                            changePasswordError = "Nowe hasło musi mieć co najmniej 4 znaki"
+                        newPassword != newPasswordConfirm ->
+                            changePasswordError = "Hasła nie są identyczne"
+                        else -> {
+                            setLoginPassword(context, newPassword)
+                            showChangePassword = false
+                            oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
+                            Toast.makeText(context, "Hasło zostało zmienione", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }) {
+                    Text("Zmień", color = LynxColors.Blue, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showChangePassword = false
+                    oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
+                }) { Text("Anuluj") }
+            },
+            containerColor = LynxColors.Surface
+        )
+    }
+
     // Krok 1 — główny modal Zabezpieczenia
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -519,6 +593,33 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         lineHeight = 19.sp,
                         color      = LynxColors.TextSecondary
                     )
+                }
+
+                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
+                // Zmiana hasła
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "HASŁO",
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        "Zmiana hasła nie usuwa biblioteki dokumentów. Jeśli zapomnisz hasła i użyjesz opcji reset w ekranie logowania — biblioteka zostanie trwale usunięta.",
+                        fontSize   = 12.sp,
+                        lineHeight = 17.sp,
+                        color      = LynxColors.TextSecondary
+                    )
+                    OutlinedButton(
+                        onClick  = { showChangePassword = true },
+                        modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
+                        shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
+                        border   = BorderStroke(1.dp, LynxColors.Border)
+                    ) {
+                        Text("Zmień hasło", fontSize = 13.sp, color = LynxColors.TextPrimary)
+                    }
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
