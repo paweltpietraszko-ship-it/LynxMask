@@ -15,7 +15,7 @@ Use-case: zdjęcie dowodu / PJ / DR → udostępnienie w sieci. OCR+tekst **nie 
 | Faza | Zakres | Agent | Done? |
 |------|--------|-------|-------|
 | **0 — spike** | Share `image/*` → ML Kit Face Detection → blur domyślnie → podgląd z możliwością cofnięcia blur → share JPEG | **Claude Code** | ✅ |
-| **1** | Ręczny prostokąt: podpis / pieczątka; opcjonalnie „zostaw widoczne" na zaznaczonym | **Cursor** | 🔲 |
+| **1** | Ręczny prostokąt: podpis / pieczątka; opcjonalnie „zostaw widoczne" na zaznaczonym | **Cursor** | ✅ |
 | **2** | Kolejność: redakcja obrazu → OCR tekstu (do ustalenia w spike) | **Cursor** | 🔲 |
 
 **Pliki docelowe:** `ShareTargetActivity.kt`, `ImageRedactionPipeline.kt` (roboczo).
@@ -24,7 +24,9 @@ Use-case: zdjęcie dowodu / PJ / DR → udostępnienie w sieci. OCR+tekst **nie 
 
 **Kryterium sukcesu F0:** twarz zblurowana domyślnie; użytkownik może cofnąć blur na wybranym regionie i świadomie wysłać.
 
-**Stan F0:** zaimplementowane (Claude Code, sesja 23.06.2026). TODO-10 onboarding do usunięcia w Fazie 1.
+**Stan F0:** zaimplementowane (Claude Code, sesja 23.06.2026).
+
+**Stan F1:** zaimplementowane (Cursor, sesja 23.06.2026) — `ImageRedactionScreen.kt`: ręczny prostokąt, toggle odkrycia, ostrzeżenie przed Share.
 
 **Brief dla Cursor (Faza 0):**
 ```
@@ -56,7 +58,7 @@ Silnik + otwarte bugi z KOLEJKI SILNIKA (N2, N3, S7, S11) + BUG-PESEL-OCR-SILNIK
 
 | # | Zadanie | Plik |
 |---|---|---|
-| N2 | BUG-NIP-SPLIT: NIP naprawiony do połowy, silnik łapie fragmenty jako dwa NUMER | OcrNormalizer |
+| N2 | ~~BUG-NIP-SPLIT~~ | ✅ naprawione 23.06 — `fixOcrNipNumber` w OcrNormalizer krok 11b |
 | N3 | OCR_EMAIL_LOCALSPACE: wiele spacji — tylko jedna naprawiana | OcrNormalizer |
 | S7 | BUG-EMAIL-TOKEN: email wykrywany jako NUMER | StructuralEngine |
 | S11 | Email z imieniem w local-part: konflikt wzorca email z NameEngine | StructuralEngine |
