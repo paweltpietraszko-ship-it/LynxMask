@@ -162,6 +162,42 @@ object UserDictionary {
     }
 
     @Synchronized
+    fun exportToJson(): String {
+        val arr = JSONArray()
+        _entries.forEach { (value, type) ->
+            arr.put(JSONObject().apply {
+                put("value", value)
+                put("type", type)
+            })
+        }
+        return arr.toString(2)
+    }
+
+    @Synchronized
+    fun importFromJson(context: Context, json: String): Int {
+        return try {
+            val arr = JSONArray(json)
+            var added = 0
+            for (i in 0 until arr.length()) {
+                val obj   = arr.getJSONObject(i)
+                val value = obj.optString("value", "").trim()
+                val type  = obj.optString("type",  "").trim()
+                if (value.isBlank() || type.isBlank()) continue
+                if (_entries.any { it.first.equals(value, ignoreCase = true) && it.second == type }) continue
+                if (_entries.size >= MAX_ENTRIES) break
+                _entries.add(value to type)
+                added++
+            }
+            if (added > 0) save(context)
+            Log.i(TAG, "Zaimportowano $added wpisów")
+            added
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd importu słownika: ${e.message}")
+            -1
+        }
+    }
+
+    @Synchronized
     private fun save(context: Context) {
         if (_entries.isEmpty()) {
             context.filesDir.resolve(FILENAME).delete()

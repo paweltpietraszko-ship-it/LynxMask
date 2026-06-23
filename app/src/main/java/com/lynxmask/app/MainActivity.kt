@@ -12,11 +12,13 @@ package com.lynxmask.app
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -365,6 +367,47 @@ private fun SecurityModal(onDismiss: () -> Unit) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var deleteInProgress  by remember { mutableStateOf(false) }
 
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        scope.launch(Dispatchers.IO) {
+            try {
+                val json = UserDictionary.exportToJson()
+                context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Słownik wyeksportowany (${UserDictionary.entries.size} wpisów)", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Błąd eksportu: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        scope.launch(Dispatchers.IO) {
+            try {
+                val json = context.contentResolver.openInputStream(uri)
+                    ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                    ?: return@launch
+                val added = UserDictionary.importFromJson(context, json)
+                withContext(Dispatchers.Main) {
+                    val msg = if (added >= 0) "Dodano $added wpisów do słownika" else "Błąd: nieprawidłowy plik"
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Błąd importu: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     // Krok 2 — dialog potwierdzenia nieodwracalnej operacji
     if (showDeleteConfirm) {
         AlertDialog(
@@ -445,6 +488,46 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         lineHeight = 19.sp,
                         color      = LynxColors.TextSecondary
                     )
+                }
+
+                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
+                // Kopia zapasowa słownika użytkownika
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "SŁOWNIK",
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        "Kopia zapasowa słownika własnego. Zalecana przed reinstalacją lub zmianą urządzenia. Format: .lynxdict (JSON)",
+                        fontSize   = 12.sp,
+                        lineHeight = 17.sp,
+                        color      = LynxColors.TextSecondary
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+                    ) {
+                        OutlinedButton(
+                            onClick  = { exportLauncher.launch("lynxmask_slownik.lynxdict") },
+                            modifier = Modifier.weight(1f).height(LynxSpacing.TouchTarget),
+                            shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
+                            border   = BorderStroke(1.dp, LynxColors.Border)
+                        ) {
+                            Text("Eksportuj", fontSize = 13.sp, color = LynxColors.TextPrimary)
+                        }
+                        OutlinedButton(
+                            onClick  = { importLauncher.launch(arrayOf("application/json", "*/*")) },
+                            modifier = Modifier.weight(1f).height(LynxSpacing.TouchTarget),
+                            shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
+                            border   = BorderStroke(1.dp, LynxColors.Blue)
+                        ) {
+                            Text("Importuj", fontSize = 13.sp, color = LynxColors.Blue)
+                        }
+                    }
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
