@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // OcrNormalizer.kt — Warstwa 0: Normalizacja tekstu przed pseudonimizacją
-// Wersja: 2.3
+// Wersja: 2.5
 //
 // Zasada: TYLKO deterministyczne, bezpieczne poprawki o zerowym ryzyku fałszywych zmian.
 //
@@ -204,6 +204,16 @@ object OcrNormalizer {
         KNOWN_CITY_FORMS.map { foldPolish(it) }.toHashSet()
 
     private val OCR_CITY_MIDSPACE = Regex(
+        """([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,10})[^\S\n]+([a-ząćęłńóśźż]{2,8})"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_SURNAME_MIDSPACE: sklejanie nazwisk rozbitych przez OCR
+    //
+    // S6: "Kowal ski" → "Kowalski", "Malinow ski" → "Malinowski"
+    // Ten sam wzorzec co OCR_CITY_MIDSPACE — sprawdza LookupTables.surnamesForms.
+    // ----------------------------------------------------------
+    private val OCR_SURNAME_MIDSPACE = Regex(
         """([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,10})[^\S\n]+([a-ząćęłńóśźż]{2,8})"""
     )
 
@@ -438,6 +448,20 @@ object OcrNormalizer {
                 candidate
             } else {
                 m.value  // nie skleja — brak w liście
+            }
+        }
+
+        // 6c. OCR-spacja w środku nazwiska — sprawdza LookupTables.surnamesForms
+        //     S6: "Kowal ski" → "Kowalski" gdy złączone słowo znane w słowniku
+        if (LookupTables.initialized) {
+            text = OCR_SURNAME_MIDSPACE.replace(text) { m ->
+                val candidate = m.groupValues[1] + m.groupValues[2]
+                if (LookupTables.surnamesForms.contains(candidate.lowercase())) {
+                    corrections++
+                    candidate
+                } else {
+                    m.value
+                }
             }
         }
 
