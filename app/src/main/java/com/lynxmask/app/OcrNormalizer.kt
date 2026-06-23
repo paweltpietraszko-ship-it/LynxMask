@@ -255,6 +255,16 @@ object OcrNormalizer {
         """([a-zA-Z0-9._%+\-]{1,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z][a-zA-Z0-9]{1,3}\b)"""
     )
 
+    // OCR_EMAIL_COMPACT (krok 0b): spacje wewnątrz emaila przed pozostałymi krokami email
+    private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)\s+([a-zA-Z0-9])""")
+    // Tylko typowe artefakty OCR — nie skleja "krzysztof nowakowski@" (→ LOCALSPACE _)
+    private val OCR_EMAIL_SPACE_BEFORE_AT_DOT = Regex(
+        """([a-zA-Z0-9._%+\-]*\.[a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]+@)"""
+    )
+    private val OCR_EMAIL_SPACE_BEFORE_AT_DIGITS = Regex(
+        """([a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]*\d[a-zA-Z0-9._%+\-]*@)"""
+    )
+
     // ----------------------------------------------------------
     // OCR_UL_PREFIX v1.4: naprawa skrótu "ul." rozbitego przez OCR
     //
@@ -498,6 +508,27 @@ object OcrNormalizer {
             corrections++
             "IBAN"
         }
+
+        // 0b. OCR: spacje wewnątrz emaila (@ po local-part) — przed krokami 6b/7
+        var prev0b: String
+        do {
+            prev0b = text
+            text = OCR_EMAIL_SPACE_AFTER_AT.replace(text) { m ->
+                corrections++
+                "${m.groupValues[1]}${m.groupValues[2]}"
+            }
+        } while (text != prev0b)
+        do {
+            prev0b = text
+            text = OCR_EMAIL_SPACE_BEFORE_AT_DOT.replace(text) { m ->
+                corrections++
+                "${m.groupValues[1]}${m.groupValues[2]}"
+            }
+            text = OCR_EMAIL_SPACE_BEFORE_AT_DIGITS.replace(text) { m ->
+                corrections++
+                "${m.groupValues[1]}${m.groupValues[2]}"
+            }
+        } while (text != prev0b)
 
         // 1. Naprawa "Sp.z o.0." → "Sp. z o.o."
         text = LEGAL_ZERO_RE.replace(text) { m ->

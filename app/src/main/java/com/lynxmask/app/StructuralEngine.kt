@@ -185,8 +185,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // --- Email --- (przeniesiony na pozycję 0 — musi być przed CATCHALL \d{9} i VAT EU [A-Z]{2}\d{8,12})
     // TLD: [a-zA-Z][a-zA-Z0-9]{1,} — zaczyna się literą, może zawierać cyfry (OCR: "p1"→"pl", "c0m"→"com")
     TOKEN_EMAIL to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
-    // Wzorzec z kontekstem "e-mail:" / "email:" — OCR-tolerant, łapie gdy @ zgubiony
-    TOKEN_EMAIL to Regex("""(?i)\be[- ]?mail\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
+    // Wzorzec z kontekstem — toleruje OCR: "e-nnail", "e-maii" (podwójne n/i)
+    TOKEN_EMAIL to Regex("""(?i)\be[- ]?m[na]{1,2}i{1,2}l\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
 
     // ============================================================
     // Blok 0 — Kontekstowe wzorce dokumentów tożsamości i uprawnień
@@ -501,7 +501,7 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // "65-5110" przejdzie: "51" nie pasuje do (?:19|20) → lookahead nic nie blokuje.
     // "60-001" przejdzie: "00" nie pasuje do (?:19|20) → OK.
     TOKEN_ADRES to Regex(
-        """(?:(?i:ul\.|al\.|pl\.|os\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
     ),
     // BUG-KOD-POCZTOWY-FIX v1.5: analogicznie — wzorzec 33 (kod + miejscowość).
     TOKEN_ADRES to Regex("""\b\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ]{2,40}\b"""),
@@ -511,7 +511,7 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // ADDR-FIX v1.2: [^\S\n] zamiast \s w nazwie ulicy — zapobiega dopasowaniu
     // przez newline (np. łączeniu "ul. Długa" z akapitu 1 z "14/3" z akapitu 2)
     TOKEN_ADRES to Regex(
-        """(?i)(?:ul\.|al\.|pl\.|os\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]\-]{1,50}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
+        """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]\-]{1,50}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
     ),
 
     // --- Numer budynku/lokalu (np. 4/6, 12A/3B, 47/2) ---

@@ -564,6 +564,35 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_ADRES)
     }
 
+    @Test fun `adres z ul przecinek zamiast kropki`() {
+        val r = pseudonymize("ul, Wolności 99, 41-200 Sosnowiec")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse("adres powinien być zamaskowany", r.pseudonymizedText.contains("Wolności 99"))
+    }
+
+    @Test fun `adres z u-kropka zamiast ul-kropka`() {
+        val r = pseudonymize("u. Dębowa 19/23, 87-100 Białystok")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse(r.pseudonymizedText.contains("Dębowa 19"))
+    }
+
+    @Test fun `email OCR spacja po malpce maskowany end-to-end`() {
+        val r = pseudonymize("e-mail: piotr dudek45@ inte ria.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "interia.pl")
+    }
+
+    @Test fun `email OCR e-nnail keyword maskowany`() {
+        val r = pseudonymize("e-nnail: piotr@o2.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "piotr@o2.pl")
+    }
+
+    @Test fun `BRAK_W_OCR Niepodlegosci pseudonymize`() {
+        val r = pseudonymize("al. Niepodlegości 13/2, 65-001 Gliwice")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
     // =========================================================================
     // BUG-1 — "adresem" NIE jest OSOBA
     // =========================================================================

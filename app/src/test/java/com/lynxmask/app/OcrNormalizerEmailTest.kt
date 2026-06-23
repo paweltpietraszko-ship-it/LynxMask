@@ -104,4 +104,28 @@ class OcrNormalizerEmailTest {
         assertTrue("Spacja w SLD usunieta", result.normalizedText.contains("@interia.pl"))
         assertTrue("Spacja w local-part zamieniona na _", result.normalizedText.contains("anna_nowak@"))
     }
+
+    @Test
+    fun `spacja po malpce kompaktowana`() {
+        val r = OcrNormalizer.normalize("e-mail: piotr@  interia.pl")
+        assertTrue(r.normalizedText.contains("piotr@interia.pl"))
+    }
+
+    @Test
+    fun `spacja zamiast kropki w domenie po e-mail`() {
+        val r = OcrNormalizer.normalize("e-mail: piotr@o2 pl")
+        assertTrue(r.normalizedText.contains("@o2.pl"))
+    }
+
+    @Test
+    fun `spacja w local-part przed malpalka`() {
+        val r = OcrNormalizer.normalize("e-mail: justyna.dud ek@gmail.com")
+        assertTrue(r.normalizedText.contains("justyna.dudek@gmail.com"))
+    }
+
+    @Test
+    fun `benchmark spacja po malpce w SLD i local-part`() {
+        val r = OcrNormalizer.normalize("e-mail: piotr dudek45@ inte ria.pl")
+        assertTrue(r.normalizedText.contains("piotrdudek45@interia.pl"))
+    }
 }
