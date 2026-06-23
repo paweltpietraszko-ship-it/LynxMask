@@ -511,6 +511,16 @@ private fun applyStreetLookup(
     }
 }
 
+// Pola dowodu osobistego — maskują TYLKO wartość, etykieta zostaje w tekście.
+// Obsługują ALL-CAPS (stary dowód) i mixed-case (nowy dowód).
+// ID_CARD_PARENT przed FIRSTNAME — bardziej szczegółowy wzorzec ma pierwszeństwo.
+private val ID_CARD_PARENT_REGEX = Regex(
+    """(?i)\bimi[eę]\s+(?:ojca|matki|rodzica)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+)
+private val ID_CARD_FIRSTNAME_REGEX = Regex(
+    """(?i)\bimi[eę](?!\s+(?:ojca|matki|rodzica)\b)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+)
+
 // PERF-FIX v1.6: titlePattern jako lazy val — poprzednio był kompilowany na nowo
 // przy każdym wywołaniu applyContextualBlacklist(). Duża alternacja (~60 wpisów)
 // jest kosztowna. FUNCTION_TITLES to stała — lazy val jest tu bezpieczny
@@ -656,6 +666,38 @@ internal fun applyContextualBlacklist(
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
+
+    // 3b-IDCARD: Pola dowodu osobistego — etykieta zostaje, wartość maskowana.
+    // "Imię ojca: STANISŁAW" → "Imię ojca: OSOBA_001"
+    // "Imię: JAN" → "Imię: OSOBA_001"
+    result = ID_CARD_PARENT_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val nameCapture = match.groupValues[1]
+        val labelPart = match.value.dropLast(nameCapture.length)
+        labelPart + assignToken(nameCapture, TOKEN_OSOBA)
+    }
+    result = ID_CARD_FIRSTNAME_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val nameCapture = match.groupValues[1]
+        val labelPart = match.value.dropLast(nameCapture.length)
+        labelPart + assignToken(nameCapture, TOKEN_OSOBA)
+    }
+
+    // 3b-CAPS: Samo nazwisko ALL-CAPS bez etykiety (stary dowód: "KOWALSKI" w linii).
+    // Bramka surnamesForms — akronimy (PESEL, RODO, KRS, NIP) nie są w słowniku.
+    if (LookupTables.initialized) {
+        result = Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ]{4,20})\b""")
+            .replace(result) { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+                val word = match.groupValues[1]
+                if (!word.all { c -> c.isUpperCase() || !c.isLetter() }) return@replace match.value
+                val lower = word.lowercase()
+                if (!LookupTables.surnamesForms.contains(lower)) return@replace match.value
+                if (isOnWhiteList(word)) return@replace match.value
+                if (lower in OSOBA_DENYLIST) return@replace match.value
+                assignToken(word, TOKEN_OSOBA)
+            }
+    }
 
     // 3b: Tytuł/funkcja → następne słowo z wielkiej litery
     result = TITLE_PATTERN_REGEX.replace(result) { match ->

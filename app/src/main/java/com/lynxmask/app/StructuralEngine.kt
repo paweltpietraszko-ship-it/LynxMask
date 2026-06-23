@@ -479,10 +479,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 
     // Wzorzec C — liczebnik + pełne słowo walutowe:
     // "dwadzieścia tysięcy złotych" — pokrywa główny case z backlogu S4.
-    // Ryzyko FP: "złotych" jako przymiotnik (np. "sto złotych monet"), ale w dokumentach
-    // finansowych dominuje użycie walutowe. Wzorzec A (kontekst) ma pierwszeństwo.
+    // Lookahead: złot... musi być terminatorem — po nim interpunkcja/newline/cyfra
+    // lub słowa brutto/netto/słownie. Blokuje FP: "sto złotych monet" (monet = rzeczownik).
     TOKEN_KWOTA to Regex(
-        """(?i)\b(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4}|sto|stu|dwieście|dwustu|trzysta|trzystu|czterysta|czterystu|pięćset\p{L}{0,4}|sześćset\p{L}{0,4}|siedemset\p{L}{0,4}|osiemset\p{L}{0,4}|dziewięćset\p{L}{0,4}|dwadzieścia\p{L}{0,3}|dwudziestu|trzydzieści\p{L}{0,2}|trzydziestu|czterdzieści\p{L}{0,2}|czterdziestu|pięćdziesiąt|sześćdziesiąt|siedemdziesiąt|osiemdziesiąt|dziewięćdziesiąt|jedenaście|dwanaście|trzynaście|czternaście|piętnaście|szesnaście|siedemnaście|osiemnaście|dziewiętnaście|zero|jeden\p{L}{0,5}|dwa|dwie|dwóch?|trzy\p{L}{0,3}|cztery|czterech|pięć\p{L}{0,3}|sześć\p{L}{0,3}|siedem\p{L}{0,3}|osiem\p{L}{0,3}|dziewięć\p{L}{0,3}|dziesięć\p{L}{0,3})(?:[^\S\n]+\p{L}+){0,7}[^\S\n]+złot\p{L}{0,3}\b"""
+        """(?i)\b(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4}|sto|stu|dwieście|dwustu|trzysta|trzystu|czterysta|czterystu|pięćset\p{L}{0,4}|sześćset\p{L}{0,4}|siedemset\p{L}{0,4}|osiemset\p{L}{0,4}|dziewięćset\p{L}{0,4}|dwadzieścia\p{L}{0,3}|dwudziestu|trzydzieści\p{L}{0,2}|trzydziestu|czterdzieści\p{L}{0,2}|czterdziestu|pięćdziesiąt|sześćdziesiąt|siedemdziesiąt|osiemdziesiąt|dziewięćdziesiąt|jedenaście|dwanaście|trzynaście|czternaście|piętnaście|szesnaście|siedemnaście|osiemnaście|dziewiętnaście|zero|jeden\p{L}{0,5}|dwa|dwie|dwóch?|trzy\p{L}{0,3}|cztery|czterech|pięć\p{L}{0,3}|sześć\p{L}{0,3}|siedem\p{L}{0,3}|osiem\p{L}{0,3}|dziewięć\p{L}{0,3}|dziesięć\p{L}{0,3})(?:[^\S\n]+\p{L}+){0,7}[^\S\n]+złot\p{L}{0,3}(?=[^\S\n]*(?:[,.\n\);:\d]|\z|\b(?:brutto|netto|słownie|groszy|grosze|grosz|PLN)\b))"""
     )
 )
 
