@@ -201,8 +201,10 @@ object PseudonymEngine {
         }
 
         // --- Warstwa 2: Regex strukturalne ---
-        android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
-        android.util.Log.d("LynxMask", "ADDRESS_PATTERNS: ${ADDRESS_PATTERNS.size}")
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
+            android.util.Log.d("LynxMask", "ADDRESS_PATTERNS: ${ADDRESS_PATTERNS.size}")
+        }
         for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
             text = pattern.replace(text) { matchResult ->
                 val match = matchResult.value

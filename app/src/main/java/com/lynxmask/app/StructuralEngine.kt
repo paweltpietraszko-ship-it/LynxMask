@@ -350,14 +350,6 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\bPL\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b""", RegexOption.IGNORE_CASE),
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\d{8,12}\b"""),                       // VAT EU ogólny
 
-    // --- IBAN ---
-    // Polski IBAN: PL + 26 cyfr = 28 znaków łącznie.
-    // Spacje grupujące (format bankowy): PL05 3250 0003 ... — obsługiwane przez \s?
-    // OCR może dodawać lub pomijać spacje między grupami cyfr.
-    TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}\b"""),
-    // IBAN z kontekstem "IBAN:" — dla polskich i zagranicznych numerów UE.
-    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){3,7}\b"""),
-
     // --- REGON 9-cyfrowy ---
     TOKEN_NUMER to Regex("""\b\d{9}\b"""),
 

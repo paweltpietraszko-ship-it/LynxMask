@@ -1,6 +1,6 @@
 # MASTER — LynxMask Mobile
 
-**Wersja:** 1.2 (21.06.2026 noc, po sesji: P0 Codex, S5 regres PESEL, audyt agenta)
+**Wersja:** 1.3 (23.06.2026 — zasada produktowa outputu: bezpieczeństwo + czytelność dla AI)
 **Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
 **Data konsolidacji:** 20.06.2026
 **Źródła:** BRIEF\_Sonet\_18\_06\_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO\_silnik.md (20.06, OCR + silnik), TODO\_LynxMask\_mobile\_12\_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA\_ARCHITEKTURY\_mobile\_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
@@ -28,6 +28,8 @@ Nie pisz od nowa. Odznaczaj DONE, dopisuj nowe. Najnowszy dokument wygrywa przy 
 **Rzeczy współdzielone z Desktop (jeden właściciel = Paweł):** format tokenu + spójność TOKEN\_RE, samouczenie (sekcja 19), sync .lynxdict, taksonomia 9 typów. Nie zmieniać jednostronnie. **Format tokenu zamknięty tu 20.06 (sekcja 9) — Paweł musi przekazać tę decyzję do instancji Desktop, orchestrator Mobile tego nie synchronizuje.**
 
 **Zasady nienaruszalne / miny:** sekcja 18. Przeczytaj przed dotknięciem silnika lub OCR.
+
+**Cel outputu maskowania (ZAMKNIĘTE 23.06):** sekcja 9 — bezpieczny brak wycieków PII + zrozumiałość dla analizy AI. Nie optymalizować pod „purytańską czystość" tekstu.
 
 **Środowisko i benchmark:** sekcja 11 — pełna obowiązkowa sekwencja reinstalla + run\_benchmark\_fresh.bat.
 
@@ -94,7 +96,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |#|Zadanie|Opis|Status|
 |-|-|-|-|
 |N1|BUG-EMAIL-TLD1|@wp p1 — TLD z cyfrą. Fix: `(\\\[a-zA-Z]{2,4})\\\\b` → `(\\\[a-zA-Z0-9]{2,4})\\\\b` (linia 159)|✅ 19.06|
-|N2|BUG-NIP-SPLIT|NIP naprawiony tylko do połowy, silnik łapie fragmenty jako dwa NUMER. Zbadać który fragment nie jest naprawiany|🔲|
+|N2|BUG-NIP-CTX-3223|Wzorzec kontekstowy NIP obejmował tylko 3-3-2-2; format 3-2-2-3 maskował cyfry ale zostawiał "NIP:" w tekście. Dodatkowo wzorzec 3-2-2 łapał ogon odrzuconego NIPu (partial mask). Fix: nowy wzorzec kontekstowy + lookbehind.|✅ 23.06 commit 1b1707b|
 |N3|OCR\_EMAIL\_LOCALSPACE wiele spacji|naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów|🔲|
 |N4|IBAN przez newline|„PL61 1020...\\n0000..." nie sklejany. Reguła OCR\_IBAN\_NEWLINE|✅ 21.06 (v2.3)|
 |N5|KNOWN\_CITY\_FORMS bez ogonków|Bialystok, Lodz, Krakow — stosować fold() dla kandydata|✅ 21.06 (v2.4)|
@@ -110,15 +112,15 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |Express Mode — pełny przepływ (priorytet 1)|MainActivity / UI / Rust-brak (mobile RAM)|🟢 w toku|
 |RESEARCH-3 — ML Kit confidence + progi (avg<0.7 YELLOW, <0.5 RED)|ShareTargetActivity + OcrNormalizer assessQuality|🔲 (mlKitConfidence teraz null, linie 287/434)|
 |assessQuality shouldReject dla confidence<0.5 + obsługa odrzucenia w UI + override|OcrNormalizer + UI|🔲|
-|Luka reset hasła — „Zapomniałem hasła" daje dostęp bez uwierzytelnienia|LoginScreen.kt|🔲|
-|BUG-SS-1 INSERT OR REPLACE nadpisuje NULLami|SessionStore.kt|🔲|
+|Luka reset hasła — „Zapomniałem hasła" daje dostęp bez uwierzytelnienia|LoginScreen.kt|✅ 23.06 df77fb0 — UI deadlock fix, SHA-256 verify|
+|BUG-SS-1 INSERT OR REPLACE nadpisuje NULLami|SessionStore.kt|✅ 23.06 b65d560 — UPSERT ON CONFLICT DO UPDATE|
 |BUG-SS-3 init() na Main thread — ANR|SessionStore.kt|✅ naprawione — lifecycleScope + Dispatchers.IO (komentarz w kodzie), potwierdzone 23.06|
-|AUD-M05 silent failure AES-GCM/SQLCipher|SessionStore.kt|🔲|
+|AUD-M05 silent failure AES-GCM/SQLCipher|SessionStore.kt|✅ 23.06 b65d560 — save() zwraca Boolean, Toast przy false|
 |AUD-M06 security-crypto 1.1.0-alpha06 → 1.0.0|build.gradle.kts|🔲|
 |BUG-16 „Zamaskuj i zapamiętaj" hardcoded OSOBA — selektor typu|PseudonymResultPanel.kt|✅ naprawione — agent potwierdził 21.06|
 |BUG-17 ManualTokenSection brak TOKEN\_KWOTA|PseudonymResultPanel.kt|✅ naprawione — agent potwierdził 21.06|
-|BUG-DESCRIPTION-01 pole „Opis dokumentu" bez zapisu — **diagnoza (audit 21.06):** `saveResponse()` zamiast `updateDescription()` w ShareTargetActivity.kt:339 — opis trafia jako fałszywa odpowiedź AI, nie jako nazwa sesji|ShareTargetActivity.kt:339|🔲|
-|BUG-20 camera required="true" po usunięciu kamery|AndroidManifest.xml|🔲 sprawdzić|
+|BUG-DESCRIPTION-01 pole „Opis dokumentu" bez zapisu|ShareTargetActivity.kt|✅ 23.06 5e159b3|
+|BUG-20 camera required="true" po usunięciu kamery|AndroidManifest.xml|✅ naprawione wcześniej — `required="false"` w pliku, potwierdzono 23.06|
 |Testy JUnit 6.2: SessionStore (load/save/list/delete/deleteAll/TTL), Deanonymizer (detectSessionId/restore)|—|🔲|
 
 \---
@@ -181,6 +183,12 @@ Dwie rzeczy realnie testują dok. #101:
 * Testy JUnit type-agnostic — utrzymane.
 * PESEL odczyt z OCR (OCR\_PESEL\_WORD) — ✅ NAPRAWIONE 19.06. (Uwaga: to inna warstwa niż S5 walidacja sumy kontrolnej — nie mylić.)
 * **Format tokenu — ZAMKNIĘTE 20.06.** Decyzja orchestratora na zlecenie właściciela („wybierz bardziej bezpieczny"). Format: `TYP\\\_XXXXXX\\\_NNN` — TYP jeden z 9 typów; XXXXXX 6 znaków heks, wspólne dla wszystkich tokenów w jednej sesji maskowania (blokuje kolizję między sesjami); NNN 3-cyfrowy licznik per typ. Przykład: `OSOBA\\\_D0ECAF\\\_001`. TOKEN\_RE nadal `(?!\\\\d)`, nie `\\\\b`. Identyczny Mobile i Desktop — Paweł przekazuje tę decyzję do instancji Desktop. Status: decyzja zamknięta, format JESZCZE NIE wdrożony w kodzie — dziś realny format to nadal TYP\_NNN (sekcja 12). Migracja to osobne zadanie.
+* **Cel outputu maskowania — ZAMKNIĘTE 23.06.** Decyzja właściciela (konsultacja Cursor, test NIP + analiza priorytetów). Jedno zdanie: *output LynxMask ma być bezpieczny (zero odtwarzalnego PII) i semantycznie użyteczny dla dalszej analizy przez AI — zachowujemy strukturę dokumentu i etykiety pól, maskujemy wartości.* Nie jest celem „purytańska czystość" (zerowe słowo „NIP:", brak etykiet, samotne tokeny bez kontekstu). Hierarchia priorytetów przy ocenie bugów i fixów:
+  * **P0 — wyciek / partial leak:** w outputcie widać odtwarzalną lub częściową tożsamość (np. `526-NUMER_001` z prefixem prawdziwego NIP-u, goły PESEL/NIP/adres). Naprawiać natychmiast.
+  * **P1 — brak maskowania PII:** prawdziwe dane wrażliwe przeszły w output. Naprawiać przed release.
+  * **P2 — utrata zrozumiałości (nadmaskowanie):** daty, nr faktur, kwoty, kontekst zamaskowane bez potrzeby — dokument bezpieczny, ale bezużyteczny dla AI. Naprawiać gdy psuje analizę lub Review.
+  * **P3 — kosmetyka:** etykiety bez wartości zostają (`NIP wierzyciela: NUMER_001`), zlane linie w raporcie OCR, FP na tekście meta dokumentu. Akceptowalne; nie blokują release.
+  * **Przykłady:** `NIP wierzyciela: NUMER_002` = OK (etykieta pomaga AI); `526-NUMER_001` = P0; `5260001320` bez etykiety i z błędną sumą = OK (nie maskować); S5 bypass przy słowie „NIP" mimo błędu OCR = OK (lepszy recall niż czysty tekst).
 
 \---
 
@@ -624,19 +632,19 @@ Niezależny audyt kodu przez Codex (read-only, po commicie). Znaleziska podzielo
 
 | Bug | Plik / linia | Opis | Status |
 |---|---|---|---|
-| BUG-FLAG-LIMIT | NameEngine.kt:754 | Max 5 flag algorytmicznych — 6+ nieznanych encji nie trafia do UI. Po obsłużeniu pierwszych pięciu `allFlagsHandled` odblokowuje eksport | 🔲 |
-| BUG-SCAN-P1 | ShareTargetActivity.kt:91 | Skan wielostronicowy OCR-uje tylko stronę 1. PII na stronie 2+ niewidoczne, UI nie ostrzega | 🔲 |
-| BUG-PDF-LIMIT | ShareTargetActivity.kt:587 | PDF >10 stron przetwarzany częściowo. Info dopisywane do tekstu, ale eksport nie jest blokowany | 🔲 |
-| BUG-DOCX-PARTIAL | ShareTargetActivity.kt:518 | DOCX: tylko `word/document.xml`. PII w nagłówkach, stopkach, komentarzach, `docProps` nie analizowane | 🔲 |
+| BUG-FLAG-LIMIT | NameEngine.kt:754 | Max 5 flag algorytmicznych — 6+ nieznanych encji nie trafia do UI. Po obsłużeniu pierwszych pięciu `allFlagsHandled` odblokowuje eksport | ✅ 23.06 5642622 |
+| BUG-SCAN-P1 | ShareTargetActivity.kt:91 | Skan wielostronicowy OCR-uje tylko stronę 1. PII na stronie 2+ niewidoczne, UI nie ostrzega | ✅ 23.06 5642622 |
+| BUG-PDF-LIMIT | ShareTargetActivity.kt:587 | PDF >10 stron przetwarzany częściowo. Info dopisywane do tekstu, ale eksport nie jest blokowany | ✅ 23.06 5642622 |
+| BUG-DOCX-PARTIAL | ShareTargetActivity.kt:518 | DOCX: tylko `word/document.xml`. PII w nagłówkach, stopkach, komentarzach, `docProps` nie analizowane | ✅ 23.06 5642622 |
 
 ### NIEPILNE: logi i diagnostyka
 
 | Bug | Plik / linia | Opis | Status |
 |---|---|---|---|
-| BUG-LOG-DICT | UserDictionary.kt:125, GuardAllowlist.kt:86 | `Log.d`/`Log.w` bez warunku `BuildConfig.DEBUG` — wartości słownika (imiona, numery) lecą do Logcat zawsze, nie tylko w debug | 🔲 |
+| BUG-LOG-DICT | UserDictionary.kt:125, GuardAllowlist.kt:86 | `Log.d`/`Log.w` bez warunku `BuildConfig.DEBUG` — wartości słownika (imiona, numery) lecą do Logcat zawsze, nie tylko w debug | ✅ 23.06 — Log.w bez wartości, Log.d owinięty w BuildConfig.DEBUG |
 | BUG-LOG-OCR | ShareTargetActivity.kt:435, DebugLogBuffer.kt:75 | Pierwsze 300 znaków surowego OCR zapisywane do RAM i Logcat. Zawiera wszystkie dane osobowe z dokumentu | 🔲 |
 | BUG-BENCH-PUBLIC | BenchmarkService.kt:57, BenchmarkInstrumentedTest.kt:157 | Benchmark zapisuje pełny OCR i tokeny do `getExternalFilesDir` i `/storage/emulated/0/Documents/LynxMask` — publiczny katalog, nieszyfrowany | 🔲 |
-| BUG-DELETE-DICT | SessionStore.kt:414, MainActivity.kt:342 | „Usuń wszystkie dane" czyści tylko tabele SQLCipher. Nie czyści UserDictionary ani GuardAllowlist — mogą zawierać PII | 🔲 |
+| BUG-DELETE-DICT | SessionStore.kt:414, MainActivity.kt:342 | „Usuń wszystkie dane" czyści tylko tabele SQLCipher. Nie czyści UserDictionary ani GuardAllowlist — mogą zawierać PII | ✅ 23.06 — UserDictionary.clear() + GuardAllowlist.clear() dodane w SecurityModal |
 | BUG-EXPORT-DEPSEUDO | DepseudonymizationScreen.kt:303 | Depseudonimizowany tekst może być wyeksportowany do publicznego Downloads bez ostrzeżenia | 🔲 |
 
 ### Naprawione przy audycie i w sesji 21.06 noc
@@ -675,12 +683,12 @@ Niezależny audyt kodu przez agenta Claude Code (read-only, 50 tool uses). Pełn
 | ID | Priorytet | Plik | Opis | Status |
 |---|---|---|---|---|
 | AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | 🔲 |
-| AUDIT-02 | ŚREDNIE | GuardAllowlist.kt:86 | `_loaded = true` ustawiane nawet po błędzie ładowania — cicha utrata allowlist bez retry. Log.w bez DEBUG guard wyrzuca wartość słownika do Logcat | 🔲 |
+| AUDIT-02 | ŚREDNIE | GuardAllowlist.kt:86 | `_loaded = true` ustawiane nawet po błędzie ładowania — cicha utrata allowlist bez retry. Log.w bez DEBUG guard wyrzuca wartość słownika do Logcat | ✅ 23.06 — _loaded nie jest ustawiane w catch (kod był już poprawny), Log.w bez wartości PII |
 | AUDIT-03 | ŚREDNIE | StructuralEngine.kt | CATCHALL w `PESEL_PATTERN_STRINGS` i `NIP_PATTERN_STRINGS` → S5 sprawdza sumę dla WSZYSTKICH \d{8,}, nie tylko PESEL/NIP. FN ryzyko. Częściowo naprawione przez S5 regres fix (cb27dc0) | 🔲 |
-| AUDIT-04 | NISKIE | StructuralEngine.kt | Zduplikowane wzorce IBAN (PL IBAN i IBAN kontekstowy pojawiają się podwójnie ~linie 303-312 i ~338-340) | 🔲 |
-| AUDIT-05 | NISKIE | PseudonymEngine.kt:203-204 | `Log.d` z liczbami wzorców bez warunku `BuildConfig.DEBUG` — w odróżnieniu od reszty projektu | 🔲 |
-| AUDIT-06 | NISKIE | DebugLogBuffer | `clearOnExit()` nie jest podpięty do żadnej metody cyklu życia (MainActivity / ShareTargetActivity) | 🔲 |
-| AUDIT-07 | NISKIE | SessionStore.kt | `save()` z pustym maskedText używa `INSERT OR REPLACE` bez kolumny `masked_text_enc` — może nadpisać wcześniej zaszyfrowany tekst dla tego samego sessionId | 🔲 |
+| AUDIT-04 | NISKIE | StructuralEngine.kt | Zduplikowane wzorce IBAN (PL IBAN i IBAN kontekstowy pojawiają się podwójnie ~linie 303-312 i ~338-340) | ✅ 23.06 — druga kopia usunięta |
+| AUDIT-05 | NISKIE | PseudonymEngine.kt:203-204 | `Log.d` z liczbami wzorców bez warunku `BuildConfig.DEBUG` — w odróżnieniu od reszty projektu | ✅ 23.06 — owinięte w if (BuildConfig.DEBUG) |
+| AUDIT-06 | NISKIE | DebugLogBuffer | `clearOnExit()` nie jest podpięty do żadnej metody cyklu życia (MainActivity / ShareTargetActivity) | ✅ 23.06 — onDestroy() w obu Activity |
+| AUDIT-07 | NISKIE | SessionStore.kt | `save()` z pustym maskedText używa `INSERT OR REPLACE` bez kolumny `masked_text_enc` — może nadpisać wcześniej zaszyfrowany tekst dla tego samego sessionId | ✅ 23.06 b65d560 — UPSERT bez masked_text_enc w SET gdy pusty |
 | AUDIT-08 | INFO | ShareTargetActivity.kt | Niezgodność wersji: nagłówek mówi v2.3, mapa miała v2.6 | ✅ naprawione w mapie |
 
 Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REMEMBER-MASK, BUG-RED-COPY, BUG-MANUAL-SAVE, BUG-AL-OPEN, LoginScreen SHA-256.
@@ -697,12 +705,12 @@ Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REME
 
 | Bug | Priorytet | Plik | Opis | Status |
 |---|---|---|---|---|
-| BUG-DESCRIPTION-01 | KRYTYCZNY | ShareTargetActivity.kt:339 | `saveResponse()` zamiast `updateDescription()` — opis trafia jako fałszywa odpowiedź AI, nie jako nazwa dokumentu. Fix: zamienić wywołanie na `SessionStore.updateDescription(context, s.result.sessionId, description)` | 🔲 |
-| BUG-LIB-EDIT | KRYTYCZNY | LibraryScreen.kt:349 | „Edytuj dokument" ma pustą lambdę (TODO). Wymaga: (1) callback `onEdit` w SessionDetailScreen, (2) propagacja przez LibraryScreen do MainActivity. Najprostsza impl: alias DepseudoMode.SOURCE\_DOCUMENT | 🔲 |
-| BUG-LIB-5 | WAŻNY | LibraryScreen.kt:56 | `LaunchedEffect(Unit)` odpala się tylko raz — lista sesji nie odświeża się po powrocie z DepseudonymizationScreen. Fix: zmienić klucz na `refreshKey: Long` przekazywany z MainActivity, inkrementowany przy powrocie z DEPSEUDO | 🔲 |
-| BUG-LIB-3 | MAŁY | LibraryScreen.kt:71 | `selectedSession!!.sesjaId` w closure — NPE przy race condition. Fix: `val sesId = selectedSession?.sesjaId ?: return@SessionDetailScreen` | 🔲 |
+| BUG-DESCRIPTION-01 | KRYTYCZNY | ShareTargetActivity.kt | `saveResponse()` zamiast `updateDescription()` — opis trafia jako fałszywa odpowiedź AI. Fix: `updateDescription()` + scope.launch(IO) | ✅ 23.06 5e159b3 |
+| BUG-LIB-EDIT | KRYTYCZNY | LibraryScreen.kt | „Edytuj dokument" miał pustą lambdę. Fix: SOURCE_DOCUMENT. „Odkryj dane" poprawiony na AI_RESPONSE | ✅ 23.06 5e159b3 |
+| BUG-LIB-5 | WAŻNY | LibraryScreen.kt | `LaunchedEffect(Unit)` nie odświeżał listy. Fix: `LaunchedEffect(selectedSession)` | ✅ 23.06 5e159b3 |
+| BUG-LIB-3 | MAŁY | LibraryScreen.kt:71 | `selectedSession!!.sesjaId` w closure — NPE przy race condition. Fix: `val sesId = selectedSession?.sesjaId ?: return@SessionDetailScreen` | ✅ 23.06 — val session = selectedSession!! wyciągnięty przed lambdą |
 | BUG-SS-3 | DŁUG TECH | MainActivity.kt:59 | `SessionStore.init()` na Main thread — ryzyko ANR. Fix: `lifecycleScope.launch(Dispatchers.IO)` | ✅ naprawione 23.06 |
-| AUD-M05 | DŁUG TECH | SessionStore.kt | Silent failure AES-GCM/SQLCipher — `save()`/`loadTokenMap()`/`loadMaskedText()` łapią wyjątek i zwracają null bez widocznego błędu dla użytkownika. Scenariusz: Keystore niedostępny po backupie/resecie → dane przepadają cicho. Naprawa wymaga decyzji UX: co pokazać gdy baza nie działa (Snackbar? ekran błędu?) | 🔲 |
+| AUD-M05 | DŁUG TECH | SessionStore.kt | Silent failure AES-GCM — save() zwraca Boolean, callerzy pokazują Toast przy false | ✅ 23.06 b65d560 |
 | BUG-LIB-6 | MAŁY | DepseudonymizationScreen.kt:334 | „Pobierz plik" używa `File()` w Downloads — nie działa na Android 11+ (Scoped Storage). Fix: MediaStore ContentValues API | 🔲 |
 
 ---

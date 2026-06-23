@@ -67,6 +67,11 @@ class MainActivity : ComponentActivity() {
             setContent { LynxMaskTheme { AppNavigation() } }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        DebugLogBuffer.clearOnExit()
+    }
 }
 
 @Composable
@@ -379,6 +384,8 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         deleteInProgress = true
                         scope.launch(Dispatchers.IO) {
                             SessionStore.deleteAllData(context)
+                            UserDictionary.clear(context)
+                            GuardAllowlist.clear(context)
                             kotlinx.coroutines.withContext(Dispatchers.Main) {
                                 deleteInProgress  = false
                                 showDeleteConfirm = false

@@ -122,12 +122,12 @@ object UserDictionary {
         if (trimmed.isBlank()) return
         if (_entries.any { it.first.equals(trimmed, ignoreCase = true) && it.second == type }) return
         if (_entries.size >= MAX_ENTRIES) {
-            Log.w(TAG, "Słownik pełny ($MAX_ENTRIES wpisów) — wpis odrzucony: '$trimmed'")
+            Log.w(TAG, "Słownik pełny ($MAX_ENTRIES wpisów) — wpis odrzucony (${trimmed.length} znaków)")
             return
         }
         _entries.add(trimmed to type)
         save(context)
-        Log.d(TAG, "Dodano: '$trimmed' ($type) — łącznie ${_entries.size} wpisów")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Dodano: '$trimmed' ($type) — łącznie ${_entries.size} wpisów")
     }
 
     @Synchronized

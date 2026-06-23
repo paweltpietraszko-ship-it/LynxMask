@@ -100,6 +100,11 @@ class ShareTargetActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        DebugLogBuffer.clearOnExit()
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

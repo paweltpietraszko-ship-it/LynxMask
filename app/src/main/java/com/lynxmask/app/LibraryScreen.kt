@@ -75,16 +75,17 @@ fun LibraryScreen(
     }
 
     if (selectedSession != null) {
+        val session = selectedSession!!
         SessionDetailScreen(
-            session        = selectedSession!!,
+            session        = session,
             onBack         = { selectedSession = null },
-            onDepseudo     = { mode -> onDepseudo(selectedSession!!.sesjaId, mode) },
+            onDepseudo     = { mode -> onDepseudo(session.sesjaId, mode) },
             onSessionUpdated = { updatedSession ->
                 selectedSession = updatedSession
                 sessions = sessions.map { if (it.sesjaId == updatedSession.sesjaId) updatedSession else it }
             },
             onSessionDeleted = {
-                sessions = sessions.filter { it.sesjaId != selectedSession!!.sesjaId }
+                sessions = sessions.filter { it.sesjaId != session.sesjaId }
                 selectedSession = null
             }
         )

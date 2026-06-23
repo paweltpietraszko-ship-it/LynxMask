@@ -83,12 +83,12 @@ object GuardAllowlist {
         if (trimmed.isBlank()) return
         if (_entries.any { it.first.equals(trimmed, ignoreCase = true) && it.second == ruleType }) return
         if (_entries.size >= MAX_ENTRIES) {
-            Log.w(TAG, "GuardAllowlist pełna ($MAX_ENTRIES wpisów) — wpis odrzucony: '$trimmed'")
+            Log.w(TAG, "GuardAllowlist pełna ($MAX_ENTRIES wpisów) — wpis odrzucony (${trimmed.length} znaków)")
             return
         }
         _entries.add(trimmed to ruleType)
         save(context)
-        Log.d(TAG, "Dodano: '$trimmed' ($ruleType) — łącznie ${_entries.size} wpisów")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Dodano: '$trimmed' ($ruleType) — łącznie ${_entries.size} wpisów")
     }
 
     @Synchronized
