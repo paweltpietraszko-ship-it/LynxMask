@@ -47,7 +47,7 @@ fun PseudonymResultPanel(
     var revealedTokens by remember { mutableStateOf(setOf<String>()) }
     var manualMasks by remember { mutableStateOf(mapOf<String, String>()) }
 
-    val outputText by remember(revealedTokens, manualMasks, result) {
+    val maskedOutputText by remember(manualMasks, result) {
         derivedStateOf {
             var t = result.pseudonymizedText
             val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
@@ -58,6 +58,13 @@ fun PseudonymResultPanel(
                 )
                 t = maskRegex.replace(t, token)
             }
+            t
+        }
+    }
+
+    val outputText by remember(revealedTokens, maskedOutputText, result) {
+        derivedStateOf {
+            var t = maskedOutputText
             revealedTokens.forEach { tok ->
                 result.tokenMap[tok]?.let { original -> t = t.replace(tok, original) }
             }
@@ -65,8 +72,8 @@ fun PseudonymResultPanel(
         }
     }
 
-    val displayText by remember(outputText, result) {
-        derivedStateOf { outputText.removePrefix("SESJA_${result.sessionId}\n") }
+    val maskedDisplayText by remember(maskedOutputText, result) {
+        derivedStateOf { maskedOutputText.removePrefix("SESJA_${result.sessionId}\n") }
     }
 
     fun nextToken(type: String): String {
@@ -198,7 +205,7 @@ fun PseudonymResultPanel(
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = {
-                    onSaveDescription(outputText, descText)
+                    onSaveDescription(maskedOutputText, descText)
                     librarySaved = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -230,7 +237,7 @@ fun PseudonymResultPanel(
 
     if (showTextPreview) {
         TextPreviewModal(
-            displayText = displayText,
+            displayText = maskedDisplayText,
             tokenMap = result.tokenMap,
             revealedTokens = revealedTokens,
             onRevealedTokensChange = { revealedTokens = it },

@@ -1,0 +1,131 @@
+================================================================
+PLIK TESTOWY — UI-2 + encje silnika
+Data: 2026-06-22
+Cel: smoke test panelu wyniku (UI-2) ORAZ podstawowe typy encji
+Instrukcja: Udostępnij cały plik do LynxMask (Share → LynxMask)
+================================================================
+
+CHECKLIST UI-2 — odhacz na telefonie po pseudonimizacji:
+  [ ] Baner statusu u góry (zielony / żółty / czerwony)
+  [ ] Sekcja RED (jeśli widoczna): „Maskuj” → hit znika, Kopiuj odblokowane
+  [ ] Sekcja YELLOW „Do sprawdzenia”: Guard + flagi NameEngine
+  [ ] YELLOW „Maskuj” → auto-token; „Nie maskuj” → znika z listy
+  [ ] „Podgląd tekstu” → klik OSOBA_001 (lub inny token) → odkrycie wartości
+  [ ] Podgląd: wklej zaznaczony fragment → typ → „Maskuj”
+  [ ] „Kopiuj dokument” → schowek ma tokeny (OSOBA_001), nie oryginały
+  [ ] „Dodaj do biblioteki” (gdy brak RED) + opis opcjonalny
+  [ ] Brak przycisków „Encje” / „Dodaj” (stary layout usunięty)
+
+CHECKLIST SILNIK — co powinno zostać zamaskowane (tokeny w podglądzie):
+  OSOBA:   Jan Kowalski, Monika Wiśniewska, Anna Grabowska
+  EMAIL:   jan.kowalski@wp.pl, a.grabowska@kancelaria.pl
+  NUMER:   PESEL 85071792056, NIP 521-334-00-01, tel. +48 512 345 678
+  ADRES:   ul. Szkolna 150, 20-100 Kielce; os. Słoneczne 7/3, 30-001 Kraków
+  FIRMA:   Przedsiębiorstwo „ALTEX” Sp. z o.o. (jeśli wykryte)
+  KWOTA:   12 500,00 PLN (jeśli wykryte)
+
+CHECKLIST GUARD — co może zostać jako alert PO maskowaniu silnika:
+  RED (blokuje Kopiuj): pełny email, telefon, dowód, IBAN, NIP — jeśli silnik pominął
+  YELLOW: PESEL z błędną sumą, ur. + data, ur. w + miasto, sygnatura z „nr”, email@fragment
+
+================================================================
+DOKUMENT TESTOWY — Pismo procesowe
+Sygn. akt I C 234/2026 — Sąd Rejonowy w Kielcach
+================================================================
+
+Kielce, dnia 22 czerwca 2026 r.
+
+W sprawie o zapłatę wierzytelności pomiędzy:
+
+Powód: Jan Kowalski, PESEL: 85071792056, NIP: 521-334-00-01,
+zamieszkały ul. Szkolna 150, 20-100 Kielce,
+tel. kom.: +48 512 345 678,
+e-mail: jan.kowalski@wp.pl
+
+Pozwany: Monika Wiśniewska, PESEL: 80012312345,
+zamieszkała os. Słoneczne 7/3, 30-001 Kraków,
+tel.: 601-234-567
+
+Pełnomocnik powoda: adw. Anna Grabowska, nr wpisu 12345,
+e-mail: a.grabowska@kancelaria.pl
+
+-- FLAGI NameEngine (YELLOW w UI-2) --
+Pełnomocnik strony pozwanej: dr inż. Oskar Zepelin, specjalista ds. mediacji.
+Inspektor nadzoru budowlanego: mgr Ewa Celej, upoważniona do oględzin terenu.
+
+-- YELLOW Guard: daty i miejsca urodzenia --
+Powód podaje: ur. 17.07.1985 r. w Kielcach.
+Pozwana podaje: ur. 15.09.1992 w Krakowie.
+
+-- YELLOW Guard: sygnatury i numery z kotwicą --
+Poprzednia sprawa: nr 1204/EI/2024. Akt notarialny: poz. 4/2022.
+Nr polisy ubezpieczeniowej: 89765432.
+
+-- YELLOW Guard: PESEL z błędną sumą kontrolną (silnik NIE maskuje) --
+Numer identyfikacyjny w kopii akt: 12345678901
+Inny błędny numer: 11111111111
+
+-- YELLOW Guard: fragment email (zniekształcony OCR) --
+Kopia korespondencji: jan.kowalski@ (ucięty adres)
+
+-- RED Guard: wycieki celowo „gołe” (mogą przejść jeśli silnik pominie) --
+Kontakt awaryjny: sekretny.kontakt@example.com
+Telefon pełnomocnika: 502-111-222
+Dowód osobisty powoda: AZT 445566
+Rachunek do wpłaty: PL61 1090 1014 0000 0712 1981 2874
+NIP wierzyciela pomocniczego: 526-000-13-29
+
+================================================================
+SEKCJA NEGATYWNA — NIE powinno być maskowane / flagowane
+================================================================
+
+Data zawarcia umowy: 15 marca 2024 r.
+Termin płatności: 2024-06-22
+Podstawa prawna: art. 23 ust. 1 RODO, § 5 pkt 2 ustawy.
+Strona www: www.lynxmask.pl
+Instytucja: Sąd Rejonowy w Kielcach, Urząd Skarbowy Kielce-Południe.
+Numer faktury (bez kotwicy Guard): FV/2024/001234
+Rok budowy budynku: 1998
+Paginacja: str. 1/3
+
+================================================================
+SCENARIUSZ MIESZANY — jeden akapit (najtrudniejszy)
+================================================================
+
+Umowa nr UZ/2026/0042 zawarta w Kielcach dnia 22 czerwca 2026 r.
+pomiędzy Janem Kowalskim, PESEL 85071792056, NIP 521-334-00-01,
+zamieszkałym ul. Szkolna 150, 20-100 Kielce, tel. 512 345 678,
+e-mail jan.kowalski@wp.pl, a Moniką Wiśniewską, PESEL 80012312345,
+zamieszkałą os. Słoneczne 7/3, 30-001 Kraków,
+nr konta PL36 1020 2892 0020 0886 2353 5888,
+na kwotę 12 500,00 PLN brutto, z terminem płatności 30 dni.
+
+================================================================
+OCZEKIWANY PRZEBIEG UI-2 (orientacyjny)
+================================================================
+
+1. Po wejściu: baner żółty/czerwony jeśli są flagi lub RED hity.
+2. RED (jeśli widoczne): email / tel / dowód / IBAN / NIP z sekcji wycieków.
+   → „Maskuj” na każdym → sekcja znika → „Kopiuj” i „Dodaj do biblioteki” aktywne.
+3. YELLOW: PESEL 12345678901, ur. 17.07.1985, sygn. nr 1204/EI/2024,
+   flagi „Pełnomocnik… Oskar Zepelin”, „Inspektor… Ewa Celej”.
+   → „Maskuj” lub „Nie maskuj” na każdej pozycji.
+4. Podgląd tekstu: tokeny OSOBA_001, NUMER_001, ADRES_001 itd.
+   → klik token → oryginał na czerwono → ponowny klik → z powrotem token.
+5. Kopiuj: tekst ze schowka = outputText (tokeny, bez SESJA_ prefix w treści kopiowanej
+   zależy od implementacji ShareTarget — sprawdź czy są tokeny).
+6. Dodaj do biblioteki: opis np. „Test UI-2 22.06” → zapis w Bibliotece.
+
+================================================================
+PUŁAPKI REGRESJI (znane edge case’y — notatka dla testera)
+================================================================
+
+[NIP 3-2-2-3] 526-000-13-29 — pełny NIP wierzyciela (BUG-NIP-CTX historyczny)
+[NIP błędna suma] 526-000-13-20 — silnik może nie maskować; Guard RED NIP
+[PESEL spacje] 85 0717 92056 — silnik/OCR może skleić przed Guardem
+[SYGNATURA FP] § 5 ust. 1/2 — NIE powinno trafić do YELLOW (brak kotwicy sygn)
+[Miasto FP] Zielona Góra — NameEngine nie powinien flagować „Góra” jako nazwisko
+
+================================================================
+KONIEC PLIKU TESTOWEGO
+================================================================

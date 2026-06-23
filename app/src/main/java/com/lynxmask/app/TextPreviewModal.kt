@@ -69,7 +69,7 @@ internal fun TextPreviewModal(
                 HorizontalDivider(color = LynxColors.Blue.copy(alpha = 0.15f))
 
                 Text(
-                    "Dotknij tokenu (np. OSOBA_001) aby odkryć wartość. Zaznacz fragment tekstu i wklej poniżej aby zamaskować.",
+                    "Dotknij tokenu (np. OSOBA_001) aby odkryć — dotknij ponownie aby ukryć. Zaznacz fragment i wklej poniżej aby zamaskować.",
                     style = MaterialTheme.typography.labelSmall,
                     color = LynxColors.TextMuted,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

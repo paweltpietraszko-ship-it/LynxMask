@@ -1,0 +1,81 @@
+================================================================
+PLIK TESTOWY — UI-2 Guard-only v2
+Cel: sekcja YELLOW w UI-2 (Guard po maskowaniu silnika)
+Instrukcja: Share → LynxMask, nie obsługuj ręcznie
+================================================================
+
+UWAGA DLA TESTERA (ten blok też zostanie zamaskowany — to OK):
+  Silnik ZAWSZE maskuje email/tel/IBAN/NIP/dowód z sekcji RED poniżej.
+  Sekcji RED na ekranie NIE BĘDZIE — to oczekiwane.
+  Ten plik testuje YELLOW: PESEL błędny, ur. w mieście, sygnatura, email@fragment.
+  Podgląd tokenu (toggle) — testuj na pliku test_ui2_encje_silnik.txt gdzie są OSOBA_001.
+
+================================================================
+WNIOSEK — uzupełnienie rubryk formularza
+Ref. wewn. UI2-GUARD
+================================================================
+
+Szanowni Państwo,
+
+Prosimy o uzupełnienie rubryk oznaczonych jako wymagające weryfikacji.
+
+Rubryka A — numer identyfikacyjny wpisany błędnie:
+12345678901
+
+Rubryka B — powtórzenie przez operatora:
+11111111111
+
+Rubryka C — OCR ze spacjami w numerze:
+85 0717 92056
+
+Rubryka D — miejsce urodzenia:
+ur. w Krakowie
+
+Rubryka E — sygnatura aktu notarialnego:
+poz. 4/2022
+
+Rubryka F — fragment adresu email w kopii (ucięty):
+jan.kowalski@
+
+Rubryka G — inny fragment email:
+email@fragment
+
+Rubryka H — sygnatura sprawy (z kotwicą „sygn.”):
+sygn. nr 1204/EI/2024
+
+Rubryka I — numer polisy (z kotwicą „nr polisy”):
+nr polisy 89765432
+
+-- Poniższe silnik maskuje → Guard RED nie zobaczy (test produkcyjny OK) --
+Kontakt: sekretny.kontakt@example.com
+Tel: 502-111-222
+Dowód: AZT 445566
+IBAN: PL61 1090 1014 0000 0712 1981 2874
+NIP: 526-000-13-29
+
+-- Negatywne (Guard NIE powinien flagować) --
+Data zawarcia: piętnastego marca dwa tysiące dwudziestego czwartego roku
+Podstawa prawna: art. 23 ust. 1 RODO
+Paginacja dokumentu: strona pierwsza z trzech
+Skrót: paragraf piąty ustęp pierwszy (bez ukośnika sygnatury)
+
+================================================================
+OCZEKIWANY EKRAN PO MASKOWANIU (v2 — realistyczny)
+================================================================
+
+YELLOW „Do sprawdzenia” — ok. 6–8 pozycji:
+  PESEL: 12345678901, 11111111111, 85 0717 92056
+  MIEJSCE_UR: ur. w Krakowie
+  SYGNATURA: 4/2022, opcjonalnie 1204/EI/2024
+  LICZBA: 89765432 (jeśli silnik nie zamaskował)
+  EMAIL_FRAGMENT: jan.kowalski@, email@fragment
+
+RED: brak (silnik maskuje wycieki — OK)
+
+Kopiuj + Dodaj do biblioteki: aktywne (brak RED)
+
+NIE powinno być: duplikatu email@fragment z checklisty, jan.kowalski@i/lub
+
+================================================================
+KONIEC
+================================================================
