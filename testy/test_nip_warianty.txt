@@ -1,0 +1,116 @@
+=============================================================
+TEST NIP — WSZYSTKIE WARIANTY ZAPISU
+Cel: sprawdzić czy silnik maskuje / nie maskuje poprawnie.
+Prawidłowe NIPy (S5 OK): 5213340001, 5211000005, 5260001329,
+  4151122269, 1421990638, 4510523526
+Błędny NIP (zła suma S5): 5260001320
+=============================================================
+
+--- SEKCJA 1: FORMAT 3-3-2-2 Z ETYKIETĄ ---
+Oczekiwane: cały fragment "NIP: XXX-XXX-XX-XX" zamaskowany → NUMER_001
+
+Faktura VAT nr FV/2024/03/0041.
+Sprzedawca: Firma Testowa Sp. z o.o., NIP: 521-334-00-01.
+Nabywca: Jan Kowalski, ul. Polna 12, 00-001 Warszawa.
+Kwota netto: 10 000,00 PLN. VAT 23%: 2 300,00 PLN.
+
+Umowa o świadczenie usług nr U/2024/009 zawarta dnia 12.02.2024.
+Wykonawca: ABC Solutions S.A., NIP: 415-112-22-69.
+Zamawiający: Tomasz Kowalski, zam. ul. Lipowa 5, Kraków.
+Wynagrodzenie: 5 500,00 PLN brutto miesięcznie.
+
+Wezwanie do zapłaty. Wierzyciel: Usługi Budowlane Marek Nowak.
+NIP wierzyciela: 526-000-13-29. Kwota zaległości: 12 400,00 PLN.
+Termin zapłaty: 14 dni od daty doręczenia pisma.
+
+--- SEKCJA 2: FORMAT 3-2-2-3 Z ETYKIETĄ ---
+Oczekiwane: cały fragment "NIP: XXX-XX-XX-XXX" zamaskowany → NUMER_001
+BUG-NIP-CTX-3223: wcześniej "NIP:" zostawało w tekście, same cyfry były maskowane.
+
+Deklaracja VAT-7 za miesiąc marzec 2024.
+Podatnik: Sklep Elektroniczny XYZ, NIP: 521-10-00-005.
+Adres: ul. Handlowa 8, 50-950 Wrocław.
+
+Protokół z kontroli sanitarnej z dnia 18.03.2024.
+Kontrolowany podmiot: Bar Smakowity, NIP: 142-199-06-38.
+Wynik kontroli: warunki sanitarne spełnione.
+
+Wniosek o rejestrację w CEIDG.
+Wnioskodawca: Anna Zawadzka, NIP: 451-052-35-26.
+Działalność: usługi kosmetyczne. Data rozpoczęcia: 01.04.2024.
+
+--- SEKCJA 3: SPACJE ZAMIAST MYŚLNIKÓW (OCR) ---
+Oczekiwane: NIP zamaskowany — OCR zamienia myślniki na spacje.
+
+Pismo z dnia 14.04.2024 do Urzędu Skarbowego w Poznaniu.
+Dane podatnika: NIP: 521 334 00 01.
+Proszę o wydanie zaświadczenia o niezaleganiu w podatkach.
+
+Faktura korygująca nr FK/2024/0012.
+Sprzedawca: Hurtownia ABC. NIP: 415 112 22 69.
+Korekta dotyczy faktury FV/2024/0010 z dnia 01.03.2024.
+
+--- SEKCJA 4: BEZ SEPARATORÓW (10 CYFR) ---
+Oczekiwane: NIP zamaskowany — ciągłe cyfry po słowie kluczowym.
+
+Zaświadczenie wydane przez Naczelnika US Warszawa-Mokotów.
+NIP podatnika: 5213340001. Brak zaległości na dzień 01.04.2024.
+
+Pismo wychodzące nr PW/2024/0551.
+Nadawca NIP 5260001329, adres do korespondencji: ul. Prosta 10, Warszawa.
+
+--- SEKCJA 5: WARIANTY SŁOWA KLUCZOWEGO ---
+Oczekiwane: wszystkie warianty etykiety maskują NIP.
+
+Rachunek uproszczony. Wystawca: Jan Kowal. nip: 521-334-00-01.
+Wartość usługi: 750,00 PLN brutto.
+
+Oferta handlowa nr OH/2024/88.
+Wystawiający: Usługi IT sp. z o.o., NIP 415-112-22-69.
+Termin ważności oferty: 30 dni.
+
+Karta klienta biznesowego. nip_nabywcy: 142-199-06-38.
+Przyznany limit kredytowy: 50 000 PLN.
+
+--- SEKCJA 6: NIP BEZ ETYKIETY (GOŁA LICZBA) ---
+Oczekiwane: NIP zamaskowany przez wzorzec strukturalny (S5 musi przejść).
+Uwaga: "NIP:" nie pojawia się w tekście, tylko same cyfry.
+
+Raport kasowy za dzień 20.03.2024.
+Transakcje z podmiotem 521-334-00-01 na łączną kwotę 3 200,00 PLN.
+
+Rejestr umów. Kontrahent 415-112-22-69 — umowa z dnia 10.01.2024.
+
+W pliku widnieje numer 526-000-13-29 powiązany z reklamacją RK-204.
+
+--- SEKCJA 7: PREFIKS PL ---
+Oczekiwane: NIP z prefiksem PL zamaskowany.
+
+Faktura unijna. Numer VAT sprzedawcy: PL5213340001.
+Usługa świadczona na terenie UE. Data wystawienia: 28.02.2024.
+
+Transakcja wewnątrzwspólnotowa. NIP UE nabywcy: PL526-000-13-29.
+
+--- SEKCJA 8: BŁĘDNY NIP BEZ ETYKIETY (S5 FAIL) ---
+Oczekiwane: NIE zamaskowane — zła suma kontrolna, brak słowa "NIP".
+(Ostatnia cyfra zmieniona: 5260001329 → 5260001320)
+
+Raport rozbieżności. Podany numer kontrahenta: 526-000-13-20.
+Weryfikacja w bazie GUS: numer nieprawidłowy, brak rekordu.
+
+Uwaga: liczba 526-000-13-20 nie powinna zostać zamaskowana — brak etykiety i błędna suma.
+
+--- SEKCJA 9: BŁĘDNY NIP Z ETYKIETĄ (S5 BYPASS) ---
+Oczekiwane: ZAMASKOWANE mimo złej sumy — keyword "NIP" zwalnia z S5.
+Symulacja: OCR przekręcił ostatnią cyfrę prawidłowego NIPu.
+
+Formularz zgłoszeniowy (skan OCR słabej jakości).
+NIP: 526-000-13-20.
+Właściciel: Adam Wiśniak. Proszę o weryfikację dokumentu.
+
+=============================================================
+KLUCZ DO OCENY WYNIKÓW:
+  SEKCJA 1-7,9 → wszystkie numery NIP powinny być zamaskowane (NUMER_XXX)
+  SEKCJA 8     → liczba 526-000-13-20 NIE powinna być zamaskowana
+  W żadnej sekcji słowo "NIP:" nie powinno zostawać w tekście bez tokenu
+=============================================================

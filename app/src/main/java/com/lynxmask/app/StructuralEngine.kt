@@ -1,7 +1,19 @@
 package com.lynxmask.app
 
 // StructuralEngine.kt — Wzorce regex warstwy strukturalnej
-// Wersja: 2.0
+// Wersja: 2.2
+//
+// Zmiany v2.2 (sesja 23.06 — BUG-NIP-CTX-3223):
+//   - Dodano drugi wzorzec kontekstowy NIP dla formatu 3-2-2-3 (XXX-XX-XX-XXX).
+//     Poprzednio wzorzec kontekstowy obsługiwał tylko 3-3-2-2 → NIP w formacie
+//     3-2-2-3 był maskowany przez wzorzec strukturalny, ale "NIP:" zostawało w tekście.
+//     Fix: nowy wzorzec tuż po 3-3-2-2, celowo poza NIP_PATTERN_STRINGS (S5 bypass).
+//
+// Zmiany v2.1 (sesja 22.06 — NIP context pattern no-S5):
+//   - Dodano wzorzec kontekstowy NIP (L200): \bNIP\b + cyfry, S5 pominięte.
+//     OCR może przekręcić jedną cyfrę NIPu → suma błędna → bez tego wzorca prawidłowe
+//     NIPy z keywordem "NIP:" nie byłyby maskowane. Zasada S5 bypass opisana w komentarzu
+//     przy NIP_PATTERN_STRINGS (L500+).
 //
 // Zmiany v2.0 (sesja 21.06 — S5 + BUG-PESEL-10 + BUG-FP-REFNUM):
 //   - S5: Dodano isValidPesel() i isValidNip() — walidacja sum kontrolnych.
@@ -196,8 +208,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
-    // Wzorzec NIE jest w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
+    // Wzorce NIE są w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
     TOKEN_NUMER to Regex("""(?i)\bNIP\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
+    // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX) — bez tego wzorca "NIP:" zostawało w tekście.
+    TOKEN_NUMER to Regex("""(?i)\bNIP\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
@@ -423,7 +437,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b[A-Z]{2,3}[.\s]\d{6}[.\s]\d{4}\b"""),
 
     // --- Numer wewnętrzny 3-2-2 ---
-    TOKEN_NUMER to Regex("""\b\d{3}[\s\-]\d{2}[\s\-]\d{2}\b"""),
+    // (?<!\d{3}[\s\-]): nie matchuj jeśli poprzedza 3 cyfry + separator — to ogon odrzuconego NIPu.
+    // Przypadek: 526-000-13-20 (zła suma S5) → wzorzec 3-2-2-3 odrzuca cały NIP,
+    // ale bez lookbehind wzorzec 3-2-2 złapałby ogon "000-13-20" jako oddzielny token.
+    TOKEN_NUMER to Regex("""(?<!\d{3}[\s\-])\b\d{3}[\s\-]\d{2}[\s\-]\d{2}\b"""),
 
     // --- Sygnatura sądowa/notarialna z odstępem (np. II K 123/25, I C 456/26, A 4567/2026) ---
     // Musi być PRZED wzorcem budynku, żeby nie była brana za adres

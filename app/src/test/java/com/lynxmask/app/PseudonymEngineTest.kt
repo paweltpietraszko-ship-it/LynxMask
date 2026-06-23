@@ -100,9 +100,11 @@ class PseudonymEngineTest {
 
     @Test fun `NIP format 3-2-2-3 jest maskowany`() {
         // S5: użyto NIP z poprawną sumą kontrolną (521-10-00-005, cyfry: 5211000005)
+        // BUG-NIP-CTX-3223: wzorzec kontekstowy musi objąć też "NIP:" — bez fixa zostawało w tekście
         val r = pseudonymize("NIP: 521-10-00-005")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "521-10-00-005")
+        assertNotInOutput(r, "NIP:")
     }
 
     @Test fun `NIP bez myslnikow jest maskowany`() {
@@ -183,6 +185,16 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("NUMER_"))
         assertTrue("Tekst z błędnym NIP powinien pozostać w wyjściu",
             r.pseudonymizedText.contains("5260001320"))
+    }
+
+    @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu nie maskuje czesciowo`() {
+        // Regresja: wzorzec 3-2-2 (numer wewnętrzny) łapał ogon "000-13-20" z "526-000-13-20"
+        // po tym jak S5 odrzuciło pełny NIP. Lookbehind (?<!\d{3}[\s\-]) blokuje to.
+        val r = pseudonymize("Kontrahent 526-000-13-20 zalegał z płatnością.")
+        assertTrue("Błędny NIP bez kontekstu powinien zostać w tekście",
+            r.pseudonymizedText.contains("526-000-13-20"))
+        assertFalse("Żaden fragment błędnego NIPu nie powinien być zamaskowany",
+            r.pseudonymizedText.contains("NUMER_"))
     }
 
     @Test fun `s5 NIP z keywordem maskowany mimo bledu OCR w sumie kontrolnej`() {
