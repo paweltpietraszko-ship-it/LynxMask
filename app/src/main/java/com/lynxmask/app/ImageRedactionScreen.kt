@@ -23,9 +23,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+
+private data class OcrSuggestion(val text: String)
 
 @Composable
 fun ImageRedactionScreen(
@@ -38,6 +44,7 @@ fun ImageRedactionScreen(
     val scope = rememberCoroutineScope()
     var regions by remember { mutableStateOf(initialRegions) }
     var isProcessing by remember { mutableStateOf(false) }
+    var ocrSuggestion by remember { mutableStateOf<OcrSuggestion?>(null) }
 
     // Podgląd z faktycznym pixelate blur — aktualizowany przy każdej zmianie regionów
     var previewBitmap by remember { mutableStateOf(bitmap) }
@@ -138,6 +145,15 @@ fun ImageRedactionScreen(
                                 )
                                 if (newRect.width() > 10 && newRect.height() > 10) {
                                     regions = regions + RedactionRegion(rect = newRect, type = RegionType.MANUAL)
+                                    // OCR z oryginału — zaproponuj dodanie do słownika
+                                    scope.launch(Dispatchers.Default) {
+                                        val suggestion = ocrRegionForDictionary(bitmap, newRect)
+                                        if (suggestion != null) {
+                                            withContext(Dispatchers.Main) {
+                                                ocrSuggestion = suggestion
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             dragStartBitmap = null
@@ -233,6 +249,68 @@ fun ImageRedactionScreen(
             val blurredCount  = regions.count { it.isBlurred }
             val revealedCount = regions.count { !it.isBlurred }
 
+            // Sugestia słownikowa po ręcznym zaznaczeniu obszaru
+            val suggestion = ocrSuggestion
+            if (suggestion != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(
+                            "💡 Wykryto tekst w zaznaczonym obszarze:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            "\"${suggestion.text}\"",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Dodać do słownika? Będzie chronione w kolejnych dokumentach.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedButton(
+                                onClick = { ocrSuggestion = null },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                            ) { Text("Pomiń", style = MaterialTheme.typography.labelSmall) }
+                            Button(
+                                onClick = {
+                                    scope.launch(Dispatchers.IO) {
+                                        UserDictionary.add(context, suggestion.text, "FIRMA")
+                                        DebugLogBuffer.log("ImageRedact", "Słownik: '${suggestion.text}' → FIRMA")
+                                    }
+                                    ocrSuggestion = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                            ) { Text("FIRMA", style = MaterialTheme.typography.labelSmall) }
+                            Button(
+                                onClick = {
+                                    scope.launch(Dispatchers.IO) {
+                                        UserDictionary.add(context, suggestion.text, "OSOBA")
+                                        DebugLogBuffer.log("ImageRedact", "Słownik: '${suggestion.text}' → OSOBA")
+                                    }
+                                    ocrSuggestion = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+                            ) { Text("OSOBA", style = MaterialTheme.typography.labelSmall) }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             if (revealedCount > 0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -289,3 +367,33 @@ fun ImageRedactionScreen(
         }
     }
 }
+
+// OCR wyciętego obszaru z oryginału — dla sugestii słownikowej po ręcznym zaznaczeniu.
+// Zwraca null gdy tekst za krótki, nieczytelny lub wygląda jak podpis odręczny (śmieci OCR).
+private suspend fun ocrRegionForDictionary(bitmap: Bitmap, rect: RectF): OcrSuggestion? =
+    withContext(Dispatchers.Default) {
+        try {
+            val left   = rect.left.coerceIn(0f, bitmap.width.toFloat()).toInt()
+            val top    = rect.top.coerceIn(0f, bitmap.height.toFloat()).toInt()
+            val width  = (rect.right.coerceIn(0f, bitmap.width.toFloat()) - left).toInt()
+            val height = (rect.bottom.coerceIn(0f, bitmap.height.toFloat()) - top).toInt()
+            if (width < 10 || height < 10) return@withContext null
+
+            val cropped = Bitmap.createBitmap(bitmap, left, top, width, height)
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            try {
+                val result = recognizer.process(InputImage.fromBitmap(cropped, 0)).await()
+                val conf = calcOcrConfidence(result)
+                val text = result.text.trim().replace(Regex("""\s+"""), " ")
+                // Odrzucamy: zbyt krótki tekst lub niski confidence (podpis odręczny = śmieci OCR)
+                if (conf < 0.55f || text.length < 4) return@withContext null
+                OcrSuggestion(text = text)
+            } finally {
+                recognizer.close()
+                cropped.recycle()
+            }
+        } catch (e: Exception) {
+            DebugLogBuffer.log("ImageRedact", "OCR sugestia BŁĄD: ${e.message}")
+            null
+        }
+    }
