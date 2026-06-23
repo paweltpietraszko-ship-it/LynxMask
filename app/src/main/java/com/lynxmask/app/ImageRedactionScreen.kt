@@ -39,22 +39,32 @@ fun ImageRedactionScreen(
     var regions by remember { mutableStateOf(initialRegions) }
     var isProcessing by remember { mutableStateOf(false) }
 
-    // Rozmiar kontenera obrazu (w px ekranu)
+    // Podgląd z faktycznym pixelate blur — aktualizowany przy każdej zmianie regionów
+    var previewBitmap by remember { mutableStateOf(bitmap) }
+    var isPreviewGenerating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(regions) {
+        isPreviewGenerating = true
+        previewBitmap = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.applyRedactions(bitmap, regions)
+        }
+        isPreviewGenerating = false
+    }
+
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    // Aktualnie rysowany prostokąt ręczny (koordynaty bitmapa)
     var dragStartBitmap by remember { mutableStateOf<Offset?>(null) }
     var dragCurrentBitmap by remember { mutableStateOf<Offset?>(null) }
     var isDragging by remember { mutableStateOf(false) }
 
-    // Oblicza parametry skalowania: bitmap → ekran (ContentScale.Fit, wyśrodkowane)
     fun scaleParams(): Triple<Float, Float, Float> {
         if (boxSize == IntSize.Zero) return Triple(1f, 0f, 0f)
-        val scaleX = boxSize.width.toFloat() / bitmap.width
-        val scaleY = boxSize.height.toFloat() / bitmap.height
-        val scale = minOf(scaleX, scaleY)
-        val offsetX = (boxSize.width - bitmap.width * scale) / 2f
-        val offsetY = (boxSize.height - bitmap.height * scale) / 2f
-        return Triple(scale, offsetX, offsetY)
+        val scale = minOf(
+            boxSize.width.toFloat() / bitmap.width,
+            boxSize.height.toFloat() / bitmap.height
+        )
+        val ox = (boxSize.width - bitmap.width * scale) / 2f
+        val oy = (boxSize.height - bitmap.height * scale) / 2f
+        return Triple(scale, ox, oy)
     }
 
     fun screenToBitmap(x: Float, y: Float): Offset {
@@ -66,29 +76,24 @@ fun ImageRedactionScreen(
 
         // Nagłówek
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(
-                "Redakcja obrazu",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
+            Text("Redakcja obrazu", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                "Twarz i wrażliwe miejsca zakryte automatycznie. " +
-                "Stuknij region żeby odkryć. Przeciągnij żeby dodać nowy obszar.",
+                "Stuknij zaznaczony obszar żeby odkryć. Przeciągnij żeby dodać nowy.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (initialRegions.isEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Nie wykryto twarzy. Przeciągnij żeby ręcznie zaznaczyć obszary do ukrycia.",
+                    "Nie wykryto twarzy automatycznie. Przeciągnij żeby ręcznie zaznaczyć obszar.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Podgląd obrazu z overlayem
+        // Podgląd — faktyczny pixelate blur na żywo
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -105,21 +110,24 @@ fun ImageRedactionScreen(
                             change.consume()
                             dragCurrentBitmap = screenToBitmap(change.position.x, change.position.y)
                             val threshold = 8f
-                            if (!isDragging && (dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y) > threshold * threshold) {
+                            if (!isDragging &&
+                                dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y > threshold * threshold) {
                                 isDragging = true
                             }
                         },
                         onDragEnd = {
                             val start = dragStartBitmap ?: return@detectDragGestures
-                            val end = dragCurrentBitmap ?: start
+                            val end   = dragCurrentBitmap ?: start
                             if (!isDragging) {
-                                // Tap — toggle blur regionu
+                                // Tap — toggle blur/odkryj
                                 val hit = regions.firstOrNull { r -> r.rect.contains(start.x, start.y) }
                                 if (hit != null) {
-                                    regions = regions.map { if (it.id == hit.id) it.copy(isBlurred = !it.isBlurred) else it }
+                                    regions = regions.map {
+                                        if (it.id == hit.id) it.copy(isBlurred = !it.isBlurred) else it
+                                    }
                                 }
                             } else {
-                                // Drag — nowy ręczny prostokąt
+                                // Drag — nowy ręczny prostokąt (podpis, pieczątka)
                                 val newRect = RectF(
                                     minOf(start.x, end.x).coerceIn(0f, bitmap.width.toFloat()),
                                     minOf(start.y, end.y).coerceIn(0f, bitmap.height.toFloat()),
@@ -135,91 +143,93 @@ fun ImageRedactionScreen(
                             isDragging = false
                         },
                         onDragCancel = {
-                            dragStartBitmap = null
-                            dragCurrentBitmap = null
-                            isDragging = false
+                            dragStartBitmap = null; dragCurrentBitmap = null; isDragging = false
                         }
                     )
                 }
         ) {
+            // Obraz z faktycznym pixelate blur
             Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Podgląd obrazu",
+                bitmap = previewBitmap.asImageBitmap(),
+                contentDescription = "Podgląd z redakcją",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Overlay z regionami redakcji
+            // Spinner gdy trwa generowanie podglądu
+            if (isPreviewGenerating) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp).align(Alignment.Center),
+                    strokeWidth = 3.dp
+                )
+            }
+
+            // Overlay — kontury regionów + podgląd nowego prostokąta podczas drag
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val (scale, ox, oy) = scaleParams()
 
-                fun bitmapRectToScreen(r: RectF): androidx.compose.ui.geometry.Rect {
-                    return androidx.compose.ui.geometry.Rect(
+                fun bitmapRectToScreen(r: RectF): androidx.compose.ui.geometry.Rect =
+                    androidx.compose.ui.geometry.Rect(
                         left   = r.left * scale + ox,
                         top    = r.top * scale + oy,
                         right  = r.right * scale + ox,
                         bottom = r.bottom * scale + oy
                     )
-                }
 
                 regions.forEach { region ->
                     val sr = bitmapRectToScreen(region.rect)
                     if (region.isBlurred) {
-                        // Zablurowany — ciemny prostokąt z oznaczeniem
+                        // Kontur zakrytego regionu (blur widoczny na obrazie)
                         drawRect(
-                            color = Color(0xCC000000),
-                            topLeft = Offset(sr.left, sr.top),
-                            size = Size(sr.width, sr.height)
-                        )
-                        drawRect(
-                            color = if (region.type == RegionType.FACE) Color(0xFF1565C0) else Color(0xFF6A1B9A),
+                            color = if (region.type == RegionType.FACE)
+                                Color(0xFF1565C0) else Color(0xFF6A1B9A),
                             topLeft = Offset(sr.left, sr.top),
                             size = Size(sr.width, sr.height),
                             style = Stroke(width = 2.dp.toPx())
                         )
                     } else {
-                        // Odkryty — kolorowy kontur ostrzeżenia
+                        // Odkryty — pomarańczowe ostrzeżenie
                         drawRect(
                             color = Color(0xFFE65100),
                             topLeft = Offset(sr.left, sr.top),
                             size = Size(sr.width, sr.height),
-                            style = Stroke(width = 2.dp.toPx())
+                            style = Stroke(width = 3.dp.toPx())
                         )
                         drawRect(
-                            color = Color(0x22E65100),
+                            color = Color(0x33E65100),
                             topLeft = Offset(sr.left, sr.top),
                             size = Size(sr.width, sr.height)
                         )
                     }
                 }
 
-                // Prostokąt rysowany ręcznie (w trakcie drag)
+                // Prostokąt rysowany w trakcie drag (nowy region)
                 if (isDragging) {
                     val start = dragStartBitmap ?: return@Canvas
-                    val end = dragCurrentBitmap ?: return@Canvas
-                    val left   = minOf(start.x, end.x) * scale + ox
-                    val top    = minOf(start.y, end.y) * scale + oy
-                    val right  = maxOf(start.x, end.x) * scale + ox
-                    val bottom = maxOf(start.y, end.y) * scale + oy
+                    val end   = dragCurrentBitmap ?: return@Canvas
+                    val l = minOf(start.x, end.x) * scale + ox
+                    val t = minOf(start.y, end.y) * scale + oy
+                    val r = maxOf(start.x, end.x) * scale + ox
+                    val b = maxOf(start.y, end.y) * scale + oy
                     drawRect(
                         color = Color(0xFF6A1B9A),
-                        topLeft = Offset(left, top),
-                        size = Size(right - left, bottom - top),
+                        topLeft = Offset(l, t),
+                        size = Size(r - l, b - t),
                         style = Stroke(width = 2.dp.toPx())
                     )
                     drawRect(
                         color = Color(0x226A1B9A),
-                        topLeft = Offset(left, top),
-                        size = Size(right - left, bottom - top)
+                        topLeft = Offset(l, t),
+                        size = Size(r - l, b - t)
                     )
                 }
             }
         }
 
-        // Legenda + przyciski
+        // Przyciski + ostrzeżenie odkrytych danych
         Column(modifier = Modifier.padding(12.dp)) {
-            val blurredCount   = regions.count { it.isBlurred }
-            val revealedCount  = regions.count { !it.isBlurred }
+            val blurredCount  = regions.count { it.isBlurred }
+            val revealedCount = regions.count { !it.isBlurred }
 
             if (revealedCount > 0) {
                 Card(
@@ -229,7 +239,7 @@ fun ImageRedactionScreen(
                     )
                 ) {
                     Text(
-                        "⚠ $revealedCount ${if (revealedCount == 1) "region odkryty" else "regiony odkryte"} — dane będą widoczne w wysłanym obrazie",
+                        "⚠ $revealedCount ${if (revealedCount == 1) "obszar odkryty" else "obszary odkryte"} — dane będą widoczne w wysłanym obrazie",
                         modifier = Modifier.padding(10.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
@@ -246,25 +256,22 @@ fun ImageRedactionScreen(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     enabled = !isProcessing
-                ) {
-                    Text("Anuluj")
-                }
+                ) { Text("Anuluj") }
+
                 Button(
                     onClick = {
                         isProcessing = true
-                        scope.launch(Dispatchers.Default) {
-                            val redacted = ImageRedactionPipeline.applyRedactions(bitmap, regions)
-                            val uri = withContext(Dispatchers.IO) {
-                                ImageRedactionPipeline.saveToCache(redacted, context)
-                            }
-                            DebugLogBuffer.log("ImageRedact", "Zapisano zredagowany obraz: $uri (blur=$blurredCount, odkryto=$revealedCount)")
-                            withContext(Dispatchers.Main) {
-                                onShare(uri)
-                            }
+                        scope.launch(Dispatchers.IO) {
+                            val uri = ImageRedactionPipeline.saveToCache(previewBitmap, context)
+                            DebugLogBuffer.log(
+                                "ImageRedact",
+                                "Udostępniono (blur=$blurredCount, odkryto=$revealedCount): $uri"
+                            )
+                            withContext(Dispatchers.Main) { onShare(uri) }
                         }
                     },
                     modifier = Modifier.weight(2f),
-                    enabled = !isProcessing
+                    enabled = !isProcessing && !isPreviewGenerating
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(
@@ -273,7 +280,7 @@ fun ImageRedactionScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text(if (blurredCount > 0) "Udostępnij bezpiecznie" else "Udostępnij obraz")
+                        Text(if (blurredCount > 0) "Udostępnij bezpiecznie" else "Udostępnij bez redakcji")
                     }
                 }
             }
