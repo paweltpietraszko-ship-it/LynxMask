@@ -1,6 +1,6 @@
 # MASTER — LynxMask Mobile
 
-**Wersja:** 1.3 (23.06.2026 — zasada produktowa outputu: bezpieczeństwo + czytelność dla AI)
+**Wersja:** 1.4 (22.06.2026 — decyzja P1: warstwa obrazu blur twarzy + podpis)
 **Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
 **Data konsolidacji:** 20.06.2026
 **Źródła:** BRIEF\_Sonet\_18\_06\_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO\_silnik.md (20.06, OCR + silnik), TODO\_LynxMask\_mobile\_12\_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA\_ARCHITEKTURY\_mobile\_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
@@ -30,6 +30,8 @@ Nie pisz od nowa. Odznaczaj DONE, dopisuj nowe. Najnowszy dokument wygrywa przy 
 **Zasady nienaruszalne / miny:** sekcja 18. Przeczytaj przed dotknięciem silnika lub OCR.
 
 **Cel outputu maskowania (ZAMKNIĘTE 23.06):** sekcja 9 — bezpieczny brak wycieków PII + zrozumiałość dla analizy AI. Nie optymalizować pod „purytańską czystość" tekstu.
+
+**Warstwa obrazu — P1 produktowy (ZAMKNIĘTE 22.06):** sekcja 9 + BACKLOG IMAGE-REDACT. **Właściciel implementacji: Cursor** (UI, pipeline obrazu, Compose). Claude Code / Sonet **nie bierze tego tematu** bez explicite polecenia Pawła — silnik tekstowy i benchmark zostają u Claude Code. Blur twarzy i maskowanie podpisu **nie wyrzucać z backlogu** bez decyzji Pawła.
 
 **Środowisko i benchmark:** sekcja 11 — pełna obowiązkowa sekwencja reinstalla + run\_benchmark\_fresh.bat.
 
@@ -166,6 +168,8 @@ Dwie rzeczy realnie testują dok. #101:
 * **Dokumenty adwersaryjne** — celowo budowane pod znane słabe miejsca (CAPS LOCK, ASCII imiona, kwoty słownie, sklejone nazwiska, inicjały).
 * **Fixed dataset** — porównywalność między runami (run\_benchmark.bat), obok fresh.
 
+**Use-case produktowy (22.06, sekcja 9):** użytkownik fotografuje dowód/PJ/DR i wrzuca do sieci — wymaga **warstwy obrazu** (blur twarzy, maska podpisu), nie tylko OCR+tekst. Testy ręczne UI-2 potwierdziły: silnik tekstowy nie wystarcza dla tego scenariusza.
+
 \---
 
 ## 8\. DECYZJE OTWARTE
@@ -189,6 +193,17 @@ Dwie rzeczy realnie testują dok. #101:
   * **P2 — utrata zrozumiałości (nadmaskowanie):** daty, nr faktur, kwoty, kontekst zamaskowane bez potrzeby — dokument bezpieczny, ale bezużyteczny dla AI. Naprawiać gdy psuje analizę lub Review.
   * **P3 — kosmetyka:** etykiety bez wartości zostają (`NIP wierzyciela: NUMER_001`), zlane linie w raporcie OCR, FP na tekście meta dokumentu. Akceptowalne; nie blokują release.
   * **Przykłady:** `NIP wierzyciela: NUMER_002` = OK (etykieta pomaga AI); `526-NUMER_001` = P0; `5260001320` bez etykiety i z błędną sumą = OK (nie maskować); S5 bypass przy słowie „NIP" mimo błędu OCR = OK (lepszy recall niż czysty tekst).
+* **Warstwa obrazu (redakcja pikseli) — ZAMKNIĘTE 22.06.2026.** Decyzja właściciela (konsultacja Cursor, testy ręczne UI-2 + analiza use-case „zdjęcie dokumentu w sieci").
+  * **Problem:** LynxMask maskuje **tekst z OCR**, nie **piksele**. Przy dowodzie, prawie jazdy, dowodzie rejestracyjnym użytkownik często udostępnia **zdjęcie** (ogłoszenie, social, messenger) — twarz i podpis na obrazie to często większe ryzyko niż brakujący PESEL w tekście.
+  * **Use-case objęty dziś:** zdjęcie → OCR → tokeny → tekst do AI (Share, skaner GMS).
+  * **Use-case NIEobjęty:** publikacja **oryginalnego JPEG** dokumentu z widoczną twarzą/podpisem/pieczątką.
+  * **Priorytet:** **P1 produktowy** — wymagane przed release dla scenariusza „zdjęcie dokumentu w sieci". **Nie klasyfikować jako post-release / nice-to-have** ani nie odkładać na rzecz recall silnika tekstowego bez explicite decyzji Pawła.
+  * **Stan obecny (TODO-10):** slajd onboardingu „zakryj twarz i podpis palcem" — **tylko obejście UX**, nie implementacja. Agentom: **nie traktować jako zamknięcia tematu**.
+  * **Faza 0 (spike, szac. 1–2 dni):** Share obrazu → wykrycie twarzy (ML Kit Face Detection) → blur domyślnie → podgląd → share JPEG. Pliki: `ShareTargetActivity.kt` + nowy moduł `ImageRedactionPipeline.kt` (nazwa robocza). **Implementuje Cursor.**
+  * **Faza 1:** ręczny prostokąt użytkownika na podpis/pieczątkę (prostsze niż auto-segmentacja). **Implementuje Cursor.**
+  * **Świadome odkrycie (wymóg produktowy):** użytkownik może **celowo** wysłać część danych wrażliwych **odkrytą** — np. skan dokumentu, ale NIP lub imię ma iść do odbiorcy w oryginale. Analogia do UI-2: klik token → odkryj → Kopiuj (`revealedTokens` w `PseudonymResultPanel`). Warstwa obrazu: w podglądzie możliwość **cofnięcia blur / odznaczenia regionu** przed Share (domyślnie zamaskowane, opt-in na odkrycie). Nie blokować eksportu — użytkownik decyduje świadomie; UI ma to sygnalizować (np. ostrzeżenie gdy coś odkryte).
+  * **Out of scope Fazy 0:** automatyczne wykrywanie podpisu algorytmiczne; redakcja PDF/DOCX jako obraz (osobny ticket).
+  * **Podział ról agentów:** **Cursor** = IMAGE-REDACT (F0–F2), UI-2, Share flow obrazu. **Claude Code / Sonet** = PseudonymEngine, OcrNormalizer, OutputGuard, benchmark, testy silnika. Sonet **nie proponuje odkładania** IMAGE-REDACT ani **nie implementuje** bez polecenia — temat przekazany Cursorowi 22.06.
 
 \---
 
@@ -682,7 +697,7 @@ Niezależny audyt kodu przez agenta Claude Code (read-only, 50 tool uses). Pełn
 
 | ID | Priorytet | Plik | Opis | Status |
 |---|---|---|---|---|
-| AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | 🔲 |
+| AUDIT-01 | WYSOKIE | OcrQuality.kt | Martwy kod — `calcOcrConfidence()` i `isOcrQualityAcceptable()` nigdy nie są wywoływane z ShareTargetActivity. `mlKitConfidence` zawsze null. Bramka jakości 0.60f nigdy nie odpala | ✅ 23.06 — calcOcrConfidence() wywołana w ocrFromImageUri/Pdf, confidence → pseudonymize() + banner jakości w Review |
 | AUDIT-02 | ŚREDNIE | GuardAllowlist.kt:86 | `_loaded = true` ustawiane nawet po błędzie ładowania — cicha utrata allowlist bez retry. Log.w bez DEBUG guard wyrzuca wartość słownika do Logcat | ✅ 23.06 — _loaded nie jest ustawiane w catch (kod był już poprawny), Log.w bez wartości PII |
 | AUDIT-03 | ŚREDNIE | StructuralEngine.kt | CATCHALL w `PESEL_PATTERN_STRINGS` i `NIP_PATTERN_STRINGS` → S5 sprawdza sumę dla WSZYSTKICH \d{8,}, nie tylko PESEL/NIP. FN ryzyko. Częściowo naprawione przez S5 regres fix (cb27dc0) | 🔲 |
 | AUDIT-04 | NISKIE | StructuralEngine.kt | Zduplikowane wzorce IBAN (PL IBAN i IBAN kontekstowy pojawiają się podwójnie ~linie 303-312 i ~338-340) | ✅ 23.06 — druga kopia usunięta |
