@@ -1,6 +1,6 @@
 package com.lynxmask.app
 
-// ShareTargetActivity.kt — Wersja 2.5
+// ShareTargetActivity.kt — Wersja 2.7
 //
 // ZMIANA v2.5 (sesja 23.06 — bugi biblioteki):
 //   - BUG-DESCRIPTION-01: saveResponse() zapisywało opis jako odpowiedź AI.
@@ -143,6 +143,10 @@ private sealed class ShareScreenState {
         val rawText: String,
         val ocrConfidence: Float? = null  // null = brak OCR lub model nie zwrócił confidence
     ) : ShareScreenState()
+    data class ImageRedact(
+        val bitmap: android.graphics.Bitmap,
+        val regions: List<RedactionRegion>
+    ) : ShareScreenState()
     data class Scanned(val result: PseudonymResult) : ShareScreenState()
     data class Error(val message: String) : ShareScreenState()
 }
@@ -237,10 +241,26 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             }
 
             if (intent.type?.startsWith("image/") == true) {
-                progressLabel = "Otwieranie skanera dokumentów..."
-                withContext(Dispatchers.Main) {
-                    startDocumentScanner(activity, scannerLauncher)
+                progressLabel = "Analizuję obraz..."
+                val imageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                else @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                if (imageUri == null) {
+                    state = ShareScreenState.Error("Brak obrazu do przetworzenia")
+                    return@LaunchedEffect
                 }
+                val bmp = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(imageUri)?.use { BitmapFactory.decodeStream(it) }
+                }
+                if (bmp == null) {
+                    state = ShareScreenState.Error("Nie udało się wczytać obrazu")
+                    return@LaunchedEffect
+                }
+                progressLabel = "Wykrywam twarze..."
+                val regions = withContext(Dispatchers.Default) {
+                    ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                }
+                state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                 return@LaunchedEffect
             }
             val (rawText, isOcr) = withContext(Dispatchers.IO) {
@@ -341,6 +361,22 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                                 state = ShareScreenState.Scanned(result = result)
                             }
                         }
+                    },
+                    onCancel = onFinished
+                )
+
+            is ShareScreenState.ImageRedact ->
+                ImageRedactionScreen(
+                    bitmap         = s.bitmap,
+                    initialRegions = s.regions,
+                    onShare        = { uri ->
+                        val fwd = Intent(Intent.ACTION_SEND).apply {
+                            type = "image/jpeg"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
+                        onFinished()
                     },
                     onCancel = onFinished
                 )

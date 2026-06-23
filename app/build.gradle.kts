@@ -73,6 +73,7 @@ dependencies {
     // ML Kit
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
+    implementation("com.google.mlkit:face-detection:16.1.7")  // IMAGE-REDACT F0: blur twarzy
 
     // SQLCipher
     implementation("net.zetetic:sqlcipher-android:4.5.4")

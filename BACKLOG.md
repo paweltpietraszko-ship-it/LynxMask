@@ -14,7 +14,7 @@ Use-case: zdjęcie dowodu / PJ / DR → udostępnienie w sieci. OCR+tekst **nie 
 
 | Faza | Zakres | Agent | Done? |
 |------|--------|-------|-------|
-| **0 — spike** | Share `image/*` → ML Kit Face Detection → blur domyślnie → podgląd z możliwością cofnięcia blur → share JPEG | **Cursor** | 🔲 |
+| **0 — spike** | Share `image/*` → ML Kit Face Detection → blur domyślnie → podgląd z możliwością cofnięcia blur → share JPEG | **Claude Code** | ✅ |
 | **1** | Ręczny prostokąt: podpis / pieczątka; opcjonalnie „zostaw widoczne" na zaznaczonym | **Cursor** | 🔲 |
 | **2** | Kolejność: redakcja obrazu → OCR tekstu (do ustalenia w spike) | **Cursor** | 🔲 |
 
@@ -24,7 +24,7 @@ Use-case: zdjęcie dowodu / PJ / DR → udostępnienie w sieci. OCR+tekst **nie 
 
 **Kryterium sukcesu F0:** twarz zblurowana domyślnie; użytkownik może cofnąć blur na wybranym regionie i świadomie wysłać.
 
-**Stan tymczasowy:** onboarding TODO-10 („zakryj palcem") — obejście.
+**Stan F0:** zaimplementowane (Claude Code, sesja 23.06.2026). TODO-10 onboarding do usunięcia w Fazie 1.
 
 **Brief dla Cursor (Faza 0):**
 ```
