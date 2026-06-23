@@ -58,6 +58,9 @@ class NipFormatMatrixTest {
         case("NIP: 3-3-2-2", "NIP: 526-000-13-29", true)
         case("NIP bez dwukropka", "NIP 5260001329", true)
         case("nip lowercase", "nip: 526-000-13-29", true)
+        case("NlP artefakt l", "NlP: 526-000-13-29", true)
+        case("N1P artefakt cyfra 1", "N1P: 526-000-13-29", true)
+        case("NLP artefakt L", "NLP: 526-000-13-29", true)
         case("NIP 3-2-2-3", "NIP: 521-10-00-005", true)
         case("NIP OCR bledna suma 3-3-2-2", "NIP: 5260001320", true) // kontekstowy, bez S5
 

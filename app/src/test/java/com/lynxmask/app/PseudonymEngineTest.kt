@@ -1390,6 +1390,43 @@ class PseudonymEngineTest {
     // S7 — EMAIL jako EMAIL (nie NUMER)
     // =========================================================================
 
+    // =========================================================================
+    // OCR artefakty — NlP / N1P / PESE1
+    // =========================================================================
+
+    @Test fun `NlP z malym l jest maskowany kontekstowo`() {
+        // OCR: I (duże i) → l (małe L) w "NIP" → "NlP"
+        // Wzorzec kontekstowy N[IL1]P obsługuje ten artefakt.
+        val r = pseudonymize("NlP: 526-000-13-29")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "526-000-13-29")
+    }
+
+    @Test fun `N1P z cyfra 1 jest maskowany kontekstowo`() {
+        val r = pseudonymize("N1P: 526-000-13-29")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "526-000-13-29")
+    }
+
+    @Test fun `PESE1 z cyfra 1 zamiast L jest maskowany kontekstowo`() {
+        // OCR: L → 1 w "PESEL" → "PESE1"
+        // Wzorzec kontekstowy pe[s5][e3][lL1] obsługuje ten artefakt.
+        val r = pseudonymize("PESE1: 44051401458")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "44051401458")
+    }
+
+    @Test fun `PESE1 pacjenta z dodatkowym slowem jest maskowany`() {
+        // OCR artefakt + opcjonalne słowo między keyword a cyframi.
+        val r = pseudonymize("PESE1 pacjenta: 44051401458")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "44051401458")
+    }
+
+    // =========================================================================
+    // S7 — EMAIL jako EMAIL (nie NUMER)
+    // =========================================================================
+
     @Test fun `S7 email strukturalny dostaje token EMAIL nie NUMER`() {
         val r = pseudonymize("kontakt: jan.kowalski@example.com")
         assertTokenExists(r, TOKEN_EMAIL)

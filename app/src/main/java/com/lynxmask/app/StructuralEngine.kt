@@ -198,20 +198,20 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // ============================================================
 
     // PESEL z kontekstem
-    // pe[s5][e3]l — obsługuje OCR: E→3 ("PES3L" ✓), S→5 ("PE5EL" ✓)
+    // pe[s5][e3][lL1] — obsługuje OCR: E→3 ("PES3L" ✓), S→5 ("PE5EL" ✓), L→1 ("PESE1" ✓)
     // (?:[^\S\n]+\w+)? — opcjonalne jedno słowo między PESEL a cyframi:
     //   "PESEL: 6505..." ✓, "PESEL pacjenta: 6505..." ✓, "PESEL nr 6505..." ✓
     // \d[\d \t\-]{3,16}\d — minimum 5 cyfr (BUG-PESEL-10: OCR może zgubić 1 cyfrę;
     //   kontekst słowny "pesel" eliminuje FP przy tak krótkim ciągu cyfr)
     //   Poprzednio {4,16} = min 6 cyfr; teraz {3,16} = min 5 cyfr.
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3]l\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
+    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
 
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
     // Wzorce NIE są w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
-    TOKEN_NUMER to Regex("""(?i)\bNIP\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
+    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
     // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX) — bez tego wzorca "NIP:" zostawało w tekście.
-    TOKEN_NUMER to Regex("""(?i)\bNIP\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
+    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
