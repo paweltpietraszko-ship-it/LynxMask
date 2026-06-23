@@ -1,6 +1,20 @@
 package com.lynxmask.app
 
-// ShareTargetActivity.kt — Wersja 2.4
+// ShareTargetActivity.kt — Wersja 2.5
+//
+// ZMIANA v2.5 (sesja 23.06 — bugi biblioteki):
+//   - BUG-DESCRIPTION-01: saveResponse() zapisywało opis jako odpowiedź AI.
+//     Fix: updateDescription() → kolumna description w tabeli sessions.
+//   - Threading: onSaveDescription owrapowany w scope.launch(Dispatchers.IO) —
+//     SessionStore.save() + updateDescription() nie mogą być na Main thread.
+//
+// ZMIANA v2.4 (sesja 23.06 — P1 bugi zakresu):
+//   - BUG-SCAN-P1: skan wielostronicowy OCR-ował tylko stronę 1.
+//     Fix: pages?.firstOrNull() → pages?.mapNotNull(), LaunchedEffect na List<Uri>.
+//     Strony sklejane separatorem "── Strona N ──" (jak PDF).
+//   - BUG-DOCX-PARTIAL: tylko word/document.xml — brak nagłówków i stopek.
+//     Fix: regex word/(document|header*|footer*).xml — te same <w:t> tagi.
+//   - BUG-PDF-LIMIT: MAX_PDF_PAGES 10 → 20.
 //
 // ZMIANA v2.1: Dodany stan Review między OCR a pseudonimizacją.
 //   Od v2.1 WSZYSTKIE źródła przechodzą przez Review (Edytor 2) —
@@ -343,17 +357,22 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     onSaveDescription = { maskedText, description ->
                         val cleanText = maskedText
                             .removePrefix("SESJA_${s.result.sessionId}\n")
-                        SessionStore.save(
-                            context      = context,
-                            sesjaId      = s.result.sessionId,
-                            tokenMapJson = s.result.tokenMapJson(),
-                            tokenCount   = s.result.tokenMap.size,
-                            maskedText   = cleanText
-                        )
-                        if (description.isNotBlank()) {
-                            SessionStore.saveResponse(context, s.result.sessionId, description)
+                        // I/O na Dispatchers.IO — save() szyfruje + INSERT, updateDescription() UPDATE
+                        scope.launch(Dispatchers.IO) {
+                            SessionStore.save(
+                                context      = context,
+                                sesjaId      = s.result.sessionId,
+                                tokenMapJson = s.result.tokenMapJson(),
+                                tokenCount   = s.result.tokenMap.size,
+                                maskedText   = cleanText
+                            )
+                            // BUG-DESCRIPTION-01: saveResponse() zapisywało opis jako odpowiedź AI.
+                            // Fix: updateDescription() → kolumna description w tabeli sessions.
+                            if (description.isNotBlank()) {
+                                SessionStore.updateDescription(context, s.result.sessionId, description)
+                            }
+                            DebugLogBuffer.log("SessionStore", "Zapisano sesję ${s.result.sessionId} z opisem: '$description'")
                         }
-                        DebugLogBuffer.log("SessionStore", "Zapisano sesję ${s.result.sessionId} z opisem: '$description'")
                     },
                     onDebugLog = {
                         clipboardManager.setText(AnnotatedString(DebugLogBuffer.getAll()))

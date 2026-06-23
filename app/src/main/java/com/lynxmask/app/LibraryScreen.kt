@@ -1,9 +1,15 @@
 package com.lynxmask.app
 
-// LibraryScreen.kt — v2.0
+// LibraryScreen.kt — v2.3
 // Nowa architektura: lista sesji (półka) → ekran sesji z akcjami
 // Usunięte: rozwijane wiersze, tokeny w liście, przyciski wstecz
 // Dodane: nawigacja lista→sesja, 5 przycisków akcji, odpowiedzi AI
+//
+// ZMIANA v2.1 (BUG-LIB-5): LaunchedEffect(Unit) → LaunchedEffect(selectedSession)
+//   — lista nie odświeżała się po zamknięciu szczegółów sesji.
+// ZMIANA v2.2 (BUG-LIB-EDIT): "Edytuj dokument" miał pustą lambdę.
+//   Fix: SOURCE_DOCUMENT. "Odkryj dane" poprawiony na AI_RESPONSE (duplikat SOURCE_DOCUMENT).
+// ZMIANA v2.3: brak (tylko korekta komentarzy)
 
 import android.content.Intent
 import android.net.Uri
@@ -53,10 +59,14 @@ fun LibraryScreen(
     var isLoading       by remember { mutableStateOf(true) }
     var selectedSession by remember { mutableStateOf<SessionStore.SessionRecord?>(null) }
 
-    LaunchedEffect(Unit) {
-        isLoading = true
-        sessions  = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
-        isLoading = false
+    // BUG-LIB-5: LaunchedEffect(Unit) ładował listę tylko raz — po powrocie z SessionDetailScreen
+    // lista pozostawała nieaktualna. Trigger na selectedSession: null = start lub powrót z detali.
+    LaunchedEffect(selectedSession) {
+        if (selectedSession == null) {
+            isLoading = true
+            sessions  = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
+            isLoading = false
+        }
     }
 
     // Back: jeśli sesja otwarta → wróć do listy, inaczej → wyjdź z biblioteki
@@ -346,11 +356,12 @@ private fun SessionDetailScreen(
                 .padding(LynxSpacing.md),
             verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
+            // BUG-LIB-EDIT: pusta lambda — SOURCE_DOCUMENT pokazuje oryginalny tekst sesji
             SessionActionButton(label = "Edytuj dokument") {
-                // TODO: otwórz edytor (PseudonymResultPanel z sesją)
+                onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
             }
             SessionActionButton(label = "Odkryj dane") {
-                onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
+                onDepseudo(DepseudoMode.AI_RESPONSE)
             }
             SessionActionButton(label = "Dodaj odpowied\u017a AI") {
                 onDepseudo(DepseudoMode.AI_RESPONSE)
