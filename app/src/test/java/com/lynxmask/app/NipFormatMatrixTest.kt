@@ -32,7 +32,14 @@ class NipFormatMatrixTest {
         val numerTokens = r.tokenMap.filterKeys { it.startsWith("NUMER") }
         val digitsInOutput = Regex("""\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}""").containsMatchIn(r.pseudonymizedText) ||
             Regex("""\b\d{10}\b""").containsMatchIn(r.pseudonymizedText)
-        val isMasked = numerTokens.isNotEmpty() && !digitsInOutput
+        // Partial mask: NIP podzielony na wiele tokenów = partial. Oryginalne cyfry NIP muszą
+        // być przypisane do JEDNEGO klucza NUMER (10 cyfr w jednej wartości tokenMap).
+        val nipDigits = input.filter { it.isDigit() }.takeLast(10)
+        val maskedAsOne = numerTokens.values.any { v ->
+            v.filter { it.isDigit() }.takeLast(10) == nipDigits
+        }
+        val isMasked = numerTokens.isNotEmpty() && !digitsInOutput &&
+            (!expectMasked || maskedAsOne)
         println(
             "${if (isMasked == expectMasked) "OK" else "FAIL"} | $label\n" +
                 "  IN:  $input\n" +
