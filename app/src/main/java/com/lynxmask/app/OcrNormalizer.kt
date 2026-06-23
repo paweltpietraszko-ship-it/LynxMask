@@ -285,6 +285,17 @@ object OcrNormalizer {
         """(?<![a-zA-Z0-9])R[^\S\n]?[E3][^\S\n]?G[^\S\n]?[O0][^\S\n]?N(?![a-zA-Z0-9])""",
         RegexOption.IGNORE_CASE
     )
+    private val OCR_KW_IBAN = Regex(
+        """(?<![a-zA-Z0-9])[Il1][^\S\n]?B[^\S\n]?A[^\S\n]?N(?![a-zA-Z0-9])""",
+        RegexOption.IGNORE_CASE
+    )
+
+    // ----------------------------------------------------------
+    // OCR_POSTAL_CODE: kod pocztowy PL XX-XXX z artefaktami O→0, I→1, l→1
+    // "2O-1OO" → "20-100", "T2-345" → "72-345"
+    // Zamienia TYLKO gdy obie grupy po normalizacji są czystymi cyframi (brak FP na seriach).
+    // ----------------------------------------------------------
+    private val OCR_POSTAL_CODE = Regex("""(?<!\w)([0-9TIlOo]{2})-([0-9TIlOo]{3})(?!\w)""")
 
     // ----------------------------------------------------------
     // OCR_PESEL_WORD v1.6: naprawa liter zamiennych na cyfry w numerze PESEL
@@ -451,6 +462,10 @@ object OcrNormalizer {
         text = OCR_KW_REGON.replace(text) {
             corrections++
             "REGON"
+        }
+        text = OCR_KW_IBAN.replace(text) {
+            corrections++
+            "IBAN"
         }
 
         // 1. Naprawa "Sp.z o.0." → "Sp. z o.o."
@@ -636,6 +651,17 @@ object OcrNormalizer {
             val fixed = m.groupValues[1].map { if (it == ' ') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.groupValues[1]) corrections++
             fixed
+        }
+
+        // 13b. OCR: kod pocztowy PL XX-XXX z artefaktami O→0, I/l→1 (OCR_DIGIT_IN_CONTEXT nie działa przez myślnik)
+        text = OCR_POSTAL_CODE.replace(text) { m ->
+            val g1 = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            val g2 = m.groupValues[2].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (g1.all { it.isDigit() } && g2.all { it.isDigit() } &&
+                (g1 != m.groupValues[1] || g2 != m.groupValues[2])) {
+                corrections++
+                "$g1-$g2"
+            } else m.value
         }
 
         // 14. OCR: litera l/O/I bezpośrednio między cyframi → cyfra (safety net)
