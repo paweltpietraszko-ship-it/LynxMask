@@ -81,7 +81,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |S4|Kwoty słownie|StructuralEngine|„dwadzieścia tysięcy złotych" niewykrywane. Wymagać kotwicy: złotych/zł/groszy|🔲|
 |S5|Walidacja sumy kontrolnej PESEL (RESEARCH-1)|StructuralEngine|PESEL wagi 1,3,7,9,1,3,7,9,1,3 mod 10. NIP wagi 6,5,7,2,3,4,5,6,7 mod 11. Zmniejsza FP + po korekcie l→1 daje pewność \~100%|✅ 21.06|
 |S6|Sklejanie nazwisk|NameEngine|„Kowal ski" — OCR rozbija spacją. Sprawdź left+right w surnamesForms|🔲|
-|S7|BUG-EMAIL-TOKEN|StructuralEngine|EMAIL wykrywany jako NUMER zamiast EMAIL|🔲|
+|S7|BUG-EMAIL-TOKEN|StructuralEngine|EMAIL wykrywany jako NUMER zamiast EMAIL|✅ naprawione commit a3d4cf1 (22.06) — TOKEN_NUMER → TOKEN_EMAIL w STRUCTURAL_PATTERNS; 3 testy BUG-S7 jako regresja|
 |S8|BUG-DATE-PARTIAL|StructuralEngine|2026-06-20 → maskuje rok-miesiąc, zostaje „-20"|✅ 21.06|
 |~~S9~~|~~BUG-FP-REFNUM~~|~~StructuralEngine~~|~~UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive)~~|✅ zamknięty — >80% dopasowań to prawdziwe PII, FP kosmetyczne (encje i tak zakryte)|
 |~~S10~~|~~BUG-TEL-PREFIX~~|~~StructuralEngine~~|~~(22) 765-43-21 → prefiks (22) pomijany~~|✅ 21.06|

@@ -448,6 +448,25 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "jan@biuro")
     }
 
+    @Test fun `BUG-S7 email bez etykiety jest maskowany jako EMAIL nie NUMER`() {
+        val r = pseudonymize("Proszę o kontakt: jan.kowalski@firma.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTrue("email nie może być NUMER", r.tokenMap.keys.none { it.startsWith(TOKEN_NUMER) })
+        assertNotInOutput(r, "jan.kowalski@firma.pl")
+    }
+
+    @Test fun `BUG-S7 email sam w sobie bez kontekstu jest maskowany jako EMAIL`() {
+        val r = pseudonymize("jan@wp.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "jan@wp.pl")
+    }
+
+    @Test fun `BUG-S7 email w zdaniu bez slowa kluczowego jest maskowany jako EMAIL`() {
+        val r = pseudonymize("Umowa zawarta z osobą posługującą się adresem anna.nowak@poczta.onet.pl w dniu dzisiejszym.")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "anna.nowak@poczta.onet.pl")
+    }
+
     // =========================================================================
     // KRS / REGON
     // =========================================================================
