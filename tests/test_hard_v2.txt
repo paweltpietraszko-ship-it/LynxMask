@@ -1,0 +1,61 @@
+GROUND TRUTH (co silnik POWINIEN zamaskować):
+  OSOBA: Bartosz Jabłoński, Monika Nowakowska
+  PESEL: 91040512361 (PESE1: z cyfrą), 80012312349 (PESE1 pacjenta:)
+  NIP:   526-030-01-34 (NlP: z małym l), 831-145-84-09 (NlP: z małym l)
+  IBAN:  PL04325000005633956078831852 (Nr konta: z J w środku)
+  EMAIL: bartosz.jablowski@prawnik.pl (e-mai1: + TLD p1), b.nowakowska@onet.pl
+  TEL:   +48 606 219 727 (T2T artefakt), (32) 456-78-90
+  ADRES: ul. Niepodległości 135, 20-100 Rybnik; ul. Kopernika 120, 31-001 Katowice
+  PASZPORT: AB 1234567 (brak wzorca — oczekiwany miss)
+  REGON: 123456785
+  DOWÓD: EFG 456789
+
+ZNANE LUKI (silnik nie maskuje, guard powinien wykryć RED/YELLOW):
+  - NlP: (małe l) — wzorzec kontekstowy szuka \bNIP\b, nie matchuje NlP
+  - PESE1 pacjenta: — 1 zamiast L w PESE1, keyword z dodatkowym słowem
+  - Paszport: — brak wzorca TOKEN_PASZPORT w StructuralEngine
+  - Nr konta: PL04...000J... — IBAN z J przerywa ciąg cyfr
+  - Tel: ...T2T — litery T jako cyfry w numerze telefonu (tylko Guard)
+  - Kod pocztowy 2O-1OO — O zamiast 0, wzorzec adresu może nie matchować
+
+================================================================================
+
+UMOWA ZLECENIA nr UZ/2O26/OO43
+zawarta dnia 2O czerwca 2O26 r. w Kielcach
+
+ZLECENIODAWCA:
+Imię i nazwisko: Bartosz Jab1oński
+PESE1: 91O4O512361
+NlP: 526-O3O-O1-34
+Adres: u. Niepodleg1ości I35, 2O-1OO Rybnik
+Tel: +48 6O6 2I9 T2T
+e-mai1: bartosz.jab1owski@prawnik.p1
+Dowód osobisty: EFG 456789
+Paszport: AB I234567
+
+ZLECENIOBIORCA:
+Imię i nazwisko: M0nka Nowak0sa
+PESE1 pacjenta: 800I23I2349
+NlP: 831-I45-84-O9
+Adres: u Kopernka I2O, 3I-OOI Katowce
+Nr konta: PL04 3250 000J 5633 9560 7883 1852
+e-mail: b.nowakowska@onet.pl
+Tel: (32) 456-78-9O
+
+DANE PODATKOWE:
+NIP sprzedawcy: 5l2-34-56-786
+NIP nabywcy: 45I-OS2-35-26
+REGON: I23456785
+IBAN: PL89 1090 10l4 7449 5552 52llO732
+
+DANE DODATKOWE:
+Nr PESEL: 9l040512 361
+Nr paszportu: AB 1234567
+Nr dowodu: EFG 456789
+Data urodzenia: 21.O5.I979
+
+KLAUZULA POUFNOŚCI:
+Niniejsza umowa zawiera dane osobowe w rozumieniu RODO.
+Zleceniobiorca zobowiązuje się do zachowania poufności
+danych osobowych zleceniodawcy: Bartosz Jabłoński,
+PESEL 91040512361, NIP 526-030-01-34.
