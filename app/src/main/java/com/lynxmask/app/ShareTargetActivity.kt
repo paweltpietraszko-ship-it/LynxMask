@@ -222,6 +222,22 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     ?: context.contentResolver.getType(uri)
                     ?: "application/octet-stream"
                 DebugLogBuffer.log("ShareTarget", "ACTION_VIEW: $uri MIME: $mime")
+                if (mime.startsWith("image/")) {
+                    progressLabel = "Wczytuję obraz..."
+                    val bmp = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                    }
+                    if (bmp == null) {
+                        state = ShareScreenState.Error("Nie udało się wczytać obrazu")
+                        return@LaunchedEffect
+                    }
+                    progressLabel = "Wykrywam twarze..."
+                    val regions = withContext(Dispatchers.Default) {
+                        ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                    }
+                    state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
+                    return@LaunchedEffect
+                }
                 val syntheticIntent = Intent(Intent.ACTION_SEND).apply {
                     type = mime
                     putExtra(Intent.EXTRA_STREAM, uri)
