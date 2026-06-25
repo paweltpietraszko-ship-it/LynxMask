@@ -87,6 +87,7 @@ class ClipboardCheckActivity : ComponentActivity() {
         )
         LookupTables.initialize(this)
         resetRegexCache()
+        EngineSmoke.runOnce()
         setContent {
             LynxMaskTheme {
                 ClipboardCheckScreen(onFinished = { finish() })

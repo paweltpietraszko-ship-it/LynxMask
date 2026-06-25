@@ -30,6 +30,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resumeWithException
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -54,9 +55,9 @@ class BenchmarkInstrumentedTest {
     fun regexSmokeTest() {
         LookupTables.initialize(context)
         resetRegexCache()
-        OcrNormalizer.normalize("PESEL 90010100010 NIP 123-456-78-90 test@test.pl ul. Kwiatowa 5")
-        PseudonymEngine.pseudonymize("Jan Kowalski PESEL 90010100010 NIP 111-22-33-444")
-        println("[SMOKE] OK — brak PatternSyntaxException na urządzeniu")
+        EngineSmoke.runOnce()
+        assertFalse("EngineSmoke.failed — regex ICU nie skompilował się na urządzeniu", EngineSmoke.failed)
+        println("[SMOKE] OK")
     }
 
     // ── Główny test ──────────────────────────────────────────────────────────
