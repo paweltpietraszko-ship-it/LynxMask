@@ -132,7 +132,7 @@ private fun ClipboardCheckScreen(onFinished: () -> Unit) {
                 val result = withContext(Dispatchers.Default) {
                     PseudonymEngine.pseudonymize(clipText, userDictionary = userDict)
                 }
-                if (result.flags.isEmpty() && result.riskScore == RiskScore.GREEN) {
+                if (isClipboardClean(result)) {
                     ClipState.Clean
                 } else {
                     ClipState.PiiFound(result = result)
@@ -169,31 +169,22 @@ private fun ClipboardCheckScreen(onFinished: () -> Unit) {
                 ClipPiiDialog(
                     state = s,
                     onReplaceClipboard = {
-                        // BUG-31 FIX v1.2: Odetnij SESJA_XXXXXX\n przed wklejeniem
-                        composeClip.setText(AnnotatedString(
-                            s.result.pseudonymizedText.substringAfter("\n")
-                                .ifBlank { s.result.pseudonymizedText }
-                        ))
+                        composeClip.setText(AnnotatedString(clipSafeMaskedText(s.result)))
                         Log.i(TAG, "Schowek zastąpiony. Flags: ${s.result.flags.size}")
                         Toast.makeText(context, "Schowek zaktualizowany — bezpieczna wersja gotowa", Toast.LENGTH_SHORT).show()
                         onFinished()
                     },
                     onReplaceAndSave = {
-                        // Zastąp schowek BEZ SESJA_ prefiksu
-                        composeClip.setText(AnnotatedString(
-                            s.result.pseudonymizedText.substringAfter("\n")
-                                .ifBlank { s.result.pseudonymizedText }
-                        ))
+                        val safeText = clipSafeMaskedText(s.result)
+                        composeClip.setText(AnnotatedString(safeText))
                         // Zapis sesji do bazy na IO thread
                         coroutineScope.launch(Dispatchers.IO) {
-                            val maskedText = s.result.pseudonymizedText
-                                .removePrefix("SESJA_${s.result.sessionId}\n")
                             val saved = SessionStore.save(
                                 context      = context,
                                 sesjaId      = s.result.sessionId,
                                 tokenMapJson = s.result.tokenMapJson(),
                                 tokenCount   = s.result.tokenMap.size,
-                                maskedText   = maskedText
+                                maskedText   = safeText
                             )
                             withContext(Dispatchers.Main) {
                                 if (saved) {
