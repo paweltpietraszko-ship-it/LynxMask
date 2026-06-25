@@ -47,8 +47,7 @@ internal fun runOutputGuard(
 
     val hits = mutableListOf<GuardHit>()
 
-    // Zamień własne tokeny na placeholder — FIRMA i ORGANIZACJA oba przez czas migracji taksonomii
-    val tokenRe = Regex("""\b(?:OSOBA|ADRES|NUMER|ORGANIZACJA|FIRMA|EMAIL|TELEFON|SYGNATURA|DATA|KWOTA)_\d{3}\b""")
+    val tokenRe = Regex("""\b(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b""")
     val text = tokenRe.replace(pseudonymizedText, "⟦TOKEN⟧")
 
     fun hit(label: String, level: String, m: MatchResult) =
