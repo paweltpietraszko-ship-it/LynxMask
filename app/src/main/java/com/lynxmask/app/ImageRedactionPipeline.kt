@@ -41,7 +41,7 @@ object ImageRedactionPipeline {
     suspend fun detectFacesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
         val options = FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-            .setMinFaceSize(0.01f)
+            .setMinFaceSize(0.005f)
             .build()
         val detector = FaceDetection.getClient(options)
         return try {
@@ -93,10 +93,9 @@ object ImageRedactionPipeline {
         }
     }
 
-    // Wykryj PII w tekście. Face Detection pominięte — zdjęcia legitymacyjne (dowód, paszport)
-    // nie są wykrywane przez ML Kit (4-5s oczekiwania, 0 wyników). User zaznacza twarz ręcznie.
+    // Wykryj twarze + PII w tekście. EXIF rotacja naprawiona przed wywołaniem (w ShareTargetActivity).
     suspend fun detectFacesAndTextAsRegions(bitmap: Bitmap): List<RedactionRegion> =
-        detectTextLinesAsRegions(bitmap)
+        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap)
 
     fun applyRedactions(source: Bitmap, regions: List<RedactionRegion>): Bitmap {
         val result = source.copy(Bitmap.Config.ARGB_8888, true)

@@ -46,6 +46,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color as AndroidColor
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Build
@@ -225,7 +227,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 if (mime.startsWith("image/")) {
                     progressLabel = "Wczytuję obraz..."
                     val bmp = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                        loadBitmapExifAware(context, uri)
                     }
                     if (bmp == null) {
                         state = ShareScreenState.Error("Nie udało się wczytać obrazu")
@@ -273,7 +275,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     return@LaunchedEffect
                 }
                 val bmp = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(imageUri)?.use { BitmapFactory.decodeStream(it) }
+                    loadBitmapExifAware(context, imageUri)
                 }
                 if (bmp == null) {
                     state = ShareScreenState.Error("Nie udało się wczytać obrazu")
@@ -824,6 +826,31 @@ private suspend fun ocrFromPdfUri(
     }
     val avgConf = pageConfs.takeIf { it.isNotEmpty() }?.average()?.toFloat()
     sb.toString() to avgConf
+}
+
+// Wczytuje bitmap z uwzględnieniem EXIF rotacji (BitmapFactory.decodeStream ignoruje EXIF).
+// Bez tego zdjęcia robione pionowo trafiają do ML Kit "na boku" → 0 wykrytych twarzy.
+private fun loadBitmapExifAware(context: android.content.Context, uri: Uri): Bitmap? {
+    val raw = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        ?: return null
+    val degrees = try {
+        context.contentResolver.openInputStream(uri)?.use { stream ->
+            val exif = ExifInterface(stream)
+            when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90  -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+        } ?: 0
+    } catch (e: Exception) {
+        DebugLogBuffer.log("ImageLoad", "EXIF err: ${e.message}")
+        0
+    }
+    if (degrees == 0) return raw
+    DebugLogBuffer.log("ImageLoad", "EXIF rotate ${degrees}°")
+    val m = Matrix().apply { postRotate(degrees.toFloat()) }
+    return Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true).also { raw.recycle() }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
