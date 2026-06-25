@@ -29,9 +29,9 @@ data class RedactionRegion(
 
 object ImageRedactionPipeline {
 
-    // Iteracje blur dla twarzy: 3× scale do 1/12 + scale z powrotem (Gaussian-like, smooth)
+    // Pixelate blur twarzy: scale do 1/8 z filter=false (blocky mozaika) — zawsze widoczne
     private const val BLUR_PASSES = 3
-    private const val BLUR_DIVISOR = 12
+    private const val BLUR_DIVISOR = 8
 
     private val blackPaint = Paint().apply {
         color = Color.BLACK
@@ -60,7 +60,10 @@ object ImageRedactionPipeline {
 
     // Wykryj linie tekstu zawierające PII (PESEL, nr doc, data, imię/nazwisko, etc.)
     // ALL-CAPS linie konwertowane na Title Case przed PseudonymEngine — NameEngine wymaga Caps.
-    suspend fun detectTextLinesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
+    suspend fun detectTextLinesAsRegions(
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>> = emptyList()
+    ): List<RedactionRegion> {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         return try {
             val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
@@ -76,7 +79,7 @@ object ImageRedactionPipeline {
                         }
                     } else raw
                     val norm = OcrNormalizer.normalize(textForEngine)
-                    val engineResult = PseudonymEngine.pseudonymize(norm.normalizedText)
+                    val engineResult = PseudonymEngine.pseudonymize(norm.normalizedText, userDictionary = userDict)
                     if (engineResult.tokenMap.isNotEmpty()) {
                         DebugLogBuffer.log("TextPii", "PII: \"$raw\" → ${engineResult.tokenMap.keys}")
                         RedactionRegion(rect = RectF(box), type = RegionType.MANUAL, isBlurred = true)
@@ -94,8 +97,11 @@ object ImageRedactionPipeline {
     }
 
     // Wykryj twarze + PII w tekście. EXIF rotacja naprawiona przed wywołaniem (w ShareTargetActivity).
-    suspend fun detectFacesAndTextAsRegions(bitmap: Bitmap): List<RedactionRegion> =
-        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap)
+    suspend fun detectFacesAndTextAsRegions(
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>> = emptyList()
+    ): List<RedactionRegion> =
+        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap, userDict)
 
     fun applyRedactions(source: Bitmap, regions: List<RedactionRegion>): Bitmap {
         val result = source.copy(Bitmap.Config.ARGB_8888, true)
@@ -109,22 +115,27 @@ object ImageRedactionPipeline {
         return result
     }
 
-    // Twarze: iteracyjny Gaussian-like blur (wygląda jak Apple/Google — gładko, profesjonalnie)
+    // Twarze: pixelate blur (scale do 1/BLUR_DIVISOR z filter=false = mozaika, zawsze widoczna)
     private fun blurRegion(canvas: Canvas, source: Bitmap, rect: RectF) {
         val left   = rect.left.coerceIn(0f, source.width.toFloat()).toInt()
         val top    = rect.top.coerceIn(0f, source.height.toFloat()).toInt()
         val right  = rect.right.coerceIn(0f, source.width.toFloat()).toInt()
         val bottom = rect.bottom.coerceIn(0f, source.height.toFloat()).toInt()
         val w = right - left; val h = bottom - top
-        if (w <= 0 || h <= 0) return
+        if (w <= 0 || h <= 0) {
+            DebugLogBuffer.log("BlurRegion", "SKIP w=$w h=$h src=${source.width}x${source.height} rect=$rect")
+            return
+        }
+        DebugLogBuffer.log("BlurRegion", "Pixelate face: left=$left top=$top w=$w h=$h")
 
         var pass = Bitmap.createBitmap(source, left, top, w, h)
         repeat(BLUR_PASSES) {
-            val sw = maxOf(1, pass.width / BLUR_DIVISOR)
-            val sh = maxOf(1, pass.height / BLUR_DIVISOR)
-            val small = Bitmap.createScaledBitmap(pass, sw, sh, true)
+            val sw = maxOf(1, w / BLUR_DIVISOR)
+            val sh = maxOf(1, h / BLUR_DIVISOR)
+            // filter=false → bez bilinear → blocky pixelate (zawsze widoczne, niezależnie od rozmiaru)
+            val small = Bitmap.createScaledBitmap(pass, sw, sh, false)
             pass.recycle()
-            pass = Bitmap.createScaledBitmap(small, w, h, true)
+            pass = Bitmap.createScaledBitmap(small, w, h, false)
             small.recycle()
         }
         canvas.drawBitmap(pass, left.toFloat(), top.toFloat(), null)

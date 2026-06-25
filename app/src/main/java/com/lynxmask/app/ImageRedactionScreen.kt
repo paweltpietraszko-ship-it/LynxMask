@@ -271,19 +271,27 @@ fun ImageRedactionScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         OutlinedButton(onClick = {
                             val word = addWordInput.trim()
+                            showAddWordDialog = false; addWordInput = ""
                             if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
                                 UserDictionary.add(context, word, "FIRMA")
                                 DebugLogBuffer.log("ImageRedact", "Slownik+: '$word' → FIRMA")
+                                val newText = ImageRedactionPipeline.detectTextLinesAsRegions(bitmap, UserDictionary.entries)
+                                withContext(Dispatchers.Main) {
+                                    regions = regions.filter { it.type == RegionType.FACE } + newText
+                                }
                             }
-                            showAddWordDialog = false; addWordInput = ""
                         }, enabled = addWordInput.isNotBlank()) { Text("FIRMA") }
                         Button(onClick = {
                             val word = addWordInput.trim()
+                            showAddWordDialog = false; addWordInput = ""
                             if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
                                 UserDictionary.add(context, word, "OSOBA")
                                 DebugLogBuffer.log("ImageRedact", "Slownik+: '$word' → OSOBA")
+                                val newText = ImageRedactionPipeline.detectTextLinesAsRegions(bitmap, UserDictionary.entries)
+                                withContext(Dispatchers.Main) {
+                                    regions = regions.filter { it.type == RegionType.FACE } + newText
+                                }
                             }
-                            showAddWordDialog = false; addWordInput = ""
                         }, enabled = addWordInput.isNotBlank()) { Text("OSOBA") }
                     }
                 },
@@ -336,22 +344,32 @@ fun ImageRedactionScreen(
                             ) { Text("Pomiń", style = MaterialTheme.typography.labelSmall) }
                             Button(
                                 onClick = {
-                                    scope.launch(Dispatchers.IO) {
-                                        UserDictionary.add(context, suggestion.text, "FIRMA")
-                                        DebugLogBuffer.log("ImageRedact", "Słownik: '${suggestion.text}' → FIRMA")
-                                    }
+                                    val txt = suggestion.text
                                     ocrSuggestion = null
+                                    scope.launch(Dispatchers.IO) {
+                                        UserDictionary.add(context, txt, "FIRMA")
+                                        DebugLogBuffer.log("ImageRedact", "Słownik: '$txt' → FIRMA")
+                                        val newText = ImageRedactionPipeline.detectTextLinesAsRegions(bitmap, UserDictionary.entries)
+                                        withContext(Dispatchers.Main) {
+                                            regions = regions.filter { it.type == RegionType.FACE } + newText
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.weight(1f),
                                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                             ) { Text("FIRMA", style = MaterialTheme.typography.labelSmall) }
                             Button(
                                 onClick = {
-                                    scope.launch(Dispatchers.IO) {
-                                        UserDictionary.add(context, suggestion.text, "OSOBA")
-                                        DebugLogBuffer.log("ImageRedact", "Słownik: '${suggestion.text}' → OSOBA")
-                                    }
+                                    val txt = suggestion.text
                                     ocrSuggestion = null
+                                    scope.launch(Dispatchers.IO) {
+                                        UserDictionary.add(context, txt, "OSOBA")
+                                        DebugLogBuffer.log("ImageRedact", "Słownik: '$txt' → OSOBA")
+                                        val newText = ImageRedactionPipeline.detectTextLinesAsRegions(bitmap, UserDictionary.entries)
+                                        withContext(Dispatchers.Main) {
+                                            regions = regions.filter { it.type == RegionType.FACE } + newText
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.weight(1f),
                                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)

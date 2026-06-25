@@ -234,8 +234,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         return@LaunchedEffect
                     }
                     progressLabel = "Wykrywam twarze i tekst..."
+                    withContext(Dispatchers.IO) { UserDictionary.load(context) }
                     val regions = withContext(Dispatchers.Default) {
-                        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
+                        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
                     }
                     state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                     return@LaunchedEffect
@@ -282,8 +283,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     return@LaunchedEffect
                 }
                 progressLabel = "Wykrywam twarze i tekst..."
+                withContext(Dispatchers.IO) { UserDictionary.load(context) }
                 val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
+                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
                 }
                 state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                 return@LaunchedEffect
@@ -307,15 +309,16 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             if (mimeType.startsWith("image/")) {
                 progressLabel = "Wczytuję obraz..."
                 val bmp = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                    loadBitmapExifAware(context, uri)
                 }
                 if (bmp == null) {
                     state = ShareScreenState.Error("Nie udało się wczytać obrazu")
                     return@LaunchedEffect
                 }
                 progressLabel = "Wykrywam twarze i tekst..."
+                withContext(Dispatchers.IO) { UserDictionary.load(context) }
                 val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
+                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
                 }
                 state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
             } else {
