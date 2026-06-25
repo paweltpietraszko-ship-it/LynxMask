@@ -529,6 +529,24 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "anna.nowak@poczta.onet.pl")
     }
 
+    // S11 — email z imieniem/nazwiskiem w local-part nie jest maskowany jako OSOBA
+    // EMAIL (STRUCTURAL_PATTERNS[0]) wyprzedza NameEngine → token EMAIL_001 zastępuje cały adres
+    // przed tym jak NameEngine zobaczy "joanna.grabowska" jako potencjalną osobę.
+    @Test fun `s11 email z imieniem w local-part maskowany jako EMAIL nie OSOBA`() {
+        val r = pseudonymize("email: joanna.grabowska@interia.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "joanna.grabowska@interia.pl")
+        assertFalse("local-part emaila nie powinien być maskowany jako OSOBA",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+    }
+
+    @Test fun `s11 email z imieniem i nazwiskiem w local-part bez etykiety`() {
+        val r = pseudonymize("Kontakt: piotr.nowak@wp.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertFalse("Piotr Nowak wewnątrz emaila nie powinien dać osobnego OSOBA",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+    }
+
     // =========================================================================
     // KRS / REGON
     // =========================================================================
