@@ -1,0 +1,164 @@
+=============================================================
+TEST EMAIL + ADRES — TRUDNE PRZYPADKI (benchmark missed 2026-06-25)
+Cel: sprawdzić czy silnik wykrywa encje które failowały w benchmarku.
+=============================================================
+
+GROUND TRUTH (co silnik POWINIEN zamaskować):
+  EMAIL: piotr_dudek45@interia.pl, kamil.wozniak@wp.pl, justyna.dudek@gmail.com
+  ADRES: ul. Wolności 99, 41-200 Sosnowiec
+         al. Niepodległości 13/2, 65-001 Gliwice
+         ul. Zielona 84, 85-001 Gdynia
+         ul. Kwiatowa 189, 87-100 Lublin
+         ul. Dębowa 19/23, 87-100 Białystok
+         pl. Wolności 175, 30-001 Wrocław
+         ul. Długa 72, 70-001 Rybnik
+  OSOBA: Andrzej Wieczorek, Kamil Michalski
+
+=============================================================
+
+--- SEKCJA 1: EMAIL Z PODKREŚLNIKIEM W LOCAL-PART ---
+OCR często czyta _ jako spację lub myślnik.
+Silnik POWINIEN zamaskować mimo artefaktu.
+
+Zlecenie nr ZL/2026/0034.
+Wykonawca: Piotr Dudek, adres e-mail: piotr_dudek45@interia.pl
+Telefon: 512 345 678. NIP: 987-654-32-10.
+
+OCR wariant (spacja zamiast podkreślnika):
+Adres e-mail: piotr dudek45@interia.pl
+Kwota wynagrodzenia: 4 500,00 PLN brutto.
+
+OCR wariant (myślnik zamiast podkreślnika):
+Kontakt: piotr-dudek45@interia.pl. Termin realizacji: 30.06.2026.
+
+Zapis formalny wniosku: adres poczty elektronicznej piotr_dudek45@interia.pl,
+zamieszkały ul. Wolności 99, 41-200 Sosnowiec.
+
+--- SEKCJA 2: EMAIL Z KROPKĄ W LOCAL-PART — SPACJE OCR ---
+
+Wniosek o udzielenie informacji publicznej.
+Wnioskodawca: Kamil Woźniak, e-mail: kamil.wozniak@wp.pl
+Adres korespondencyjny: al. Niepodległości 13/2, 65-001 Gliwice.
+
+OCR wariant (spacja w local-part):
+Kontakt e-mail: kamil wozniak@wp.pl, tel. 601 234 567.
+
+OCR wariant (brak kropki między nazwą a @ → sklejenie):
+e-mail kamil.wozniak@wp pl (spacja przed TLD)
+
+=============================================================
+
+Protokół odbioru prac nr PO/2026/0019.
+Zamawiający: Justyna Dudek, e-mail: justyna.dudek@gmail.com
+Adres: ul. Zielona 84, 85-001 Gdynia. PESEL: 87050612345.
+
+OCR wariant (spacja w local-part przed @):
+Adres mailowy: justyna.dud ek@gmail.com — do weryfikacji.
+
+OCR wariant (keyword rozbity):
+e mail: justyna.dudek@gmail.com
+
+--- SEKCJA 3: ADRES — PREFIKSY ul./al./pl./os. ---
+Silnik POWINIEN maskować pełny adres z kodem pocztowym.
+
+Decyzja administracyjna nr DA/2026/0501.
+Strona postępowania: Andrzej Wieczorek, zam. ul. Wolności 99, 41-200 Sosnowiec.
+PESEL: 73051649957. Pełnomocnik: adw. Marek Lis.
+
+=============================================================
+
+Umowa o dzieło nr UD/2026/0217.
+Zamawiający: Kamil Michalski, zamieszkały al. Niepodległości 13/2, 65-001 Gliwice.
+Nr dowodu: CDE 345678. Tel.: +48 698 765 432.
+
+=============================================================
+
+Zaświadczenie o zameldowaniu.
+Osoba: Zuzanna Kowalczyk. Adres stałego zameldowania: pl. Wolności 175, 30-001 Wrocław.
+Data wydania zaświadczenia: 15.06.2026.
+
+=============================================================
+
+Korespondencja seryjna — dane nadawców:
+1. Jan Nowak, ul. Kwiatowa 189, 87-100 Lublin, PESEL: 55091961277
+2. Anna Wiśniewska, ul. Dębowa 19/23, 87-100 Białystok, tel. 506 111 222
+3. Tomasz Górski, ul. Długa 72, 70-001 Rybnik, e-mail: t.gorski@onet.pl
+
+--- SEKCJA 4: ADRES — OCR ARTEFAKTY W KODZIE POCZTOWYM ---
+
+Pismo do Urzędu Miasta.
+Wnioskodawca: Ryszard Kowal. Adres: ul. Wolności 99, 4l-200 Sosnowiec.
+(kod pocztowy: l zamiast 1)
+
+Akta sprawy sądowej sygn. I C 445/2026.
+Pozwany: Henryk Ostrowski, zam. al. Niepodległości 13/2, 65-OO1 Gliwice.
+(kod pocztowy: O zamiast 0)
+
+Dane ewidencyjne systemu:
+Adres: ul. Wolności 99, 41 200 Sosnowiec
+(kod pocztowy bez myślnika — spacja zamiast -)
+
+--- SEKCJA 5: ADRES — RÓŻNE FORMY ZAPISU PREFIKSU ---
+
+Formularz ZUS ZUA.
+Adres zamieszkania: Ulica Wolności 99, 41-200 Sosnowiec.
+
+Akta komornicze Km 1234/2026.
+Dłużnik zamieszkuje przy al Niepodległości 13/2, 65-001 Gliwice.
+(al bez kropki)
+
+Wniosek o świadczenie rodzinne.
+Adres: Kwiatowa 189, 87-100 Lublin.
+(brak prefiksu ul.)
+
+Skrócony opis: Wolności 99 Sosnowiec 41-200 (kolejność zamieniona).
+
+--- SEKCJA 6: OSOBA BEZ KEYWORDU — KONTEKST DOKUMENTU ---
+
+Wezwanie do zapłaty nr WZ/2026/0091.
+Andrzej Wieczorek zamieszkały ul. Wolności 99, 41-200 Sosnowiec
+zalega z opłatą czynszu za okres styczeń–marzec 2026 r.
+Kwota zadłużenia: 3 600,00 PLN. Termin zapłaty: 7 dni.
+
+=============================================================
+
+Protokół zebrania wspólnoty mieszkaniowej z dnia 10.06.2026.
+Obecni: Kamil Michalski (al. Niepodległości 13/2), Zofia Dąbrowska (al. Niepodległości 14),
+Ryszard Kowal (al. Niepodległości 15/3). Nieobecni: Jan Kowalski.
+Uchwała nr 3/2026 — przyjęta jednomyślnie.
+
+--- SEKCJA 7: KOMBINACJE — EMAIL + ADRES W JEDNYM DOKUMENCIE ---
+
+Reklamacja konsumencka nr RK/2026/0834.
+Składający: Kamil Michalski
+Adres: al. Niepodległości 13/2, 65-001 Gliwice
+E-mail: kamil.wozniak@wp.pl
+PESEL: 90010155382
+Treść: Zgłaszam reklamację zakupionego urządzenia. Proszę o kontakt na powyższy e-mail.
+
+=============================================================
+
+Umowa sprzedaży nr US/2026/0711.
+Sprzedający: Andrzej Wieczorek, zam. ul. Wolności 99, 41-200 Sosnowiec,
+e-mail: piotr_dudek45@interia.pl, tel. 512 000 111.
+Kupujący: Firma XYZ Sp. z o.o., ul. Przemysłowa 10, 00-001 Warszawa.
+Przedmiot: laptop Lenovo ThinkPad. Cena: 2 800,00 PLN.
+
+=============================================================
+
+--- SEKCJA 8: TRUDNE — BRAK SEPARATORA LUB ZMIENIONA KOLEJNOŚĆ ---
+
+Wydruk z systemu ERP (sklejony OCR):
+NazwiskoWieczorekImieAndrzejAdresWolnosci99-41200Sosnowiec
+
+Dane kontrahenta (tabelaryczne):
+Michalski Kamil | al.Niepodleglosci 13/2 | 65-001 Gliwice | kamil.wozniak@wp.pl
+
+Formularz uproszczony — bez przecinków:
+adres: ul Dębowa 19/23 87-100 Białystok tel 506 111 222
+
+--- KONIEC DOKUMENTU TESTOWEGO ---
+Łączna liczba encji do zamaskowania:
+  EMAIL: 3 unikalne (piotr_dudek45@interia.pl, kamil.wozniak@wp.pl, justyna.dudek@gmail.com)
+  ADRES: 7 unikalnych ulic z kodami
+  OSOBA: 2 (Andrzej Wieczorek, Kamil Michalski)

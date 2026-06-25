@@ -308,6 +308,13 @@ object OcrNormalizer {
     private val OCR_POSTAL_CODE = Regex("""(?<!\w)([0-9TIlOo]{2})-([0-9TIlOo]{3})(?!\w)""")
 
     // ----------------------------------------------------------
+    // OCR_POSTAL_SPACE: kod pocztowy z spacją zamiast myślnika: "41 200 Sosnowiec"
+    // Naprawia tylko po przecinku (kontekst adresu), przed wielką literą (nazwa miasta).
+    // Bezpieczne: kwoty ("cena 41 200 zł") nie są poprzedzone przecinkiem → brak FP.
+    // ----------------------------------------------------------
+    private val OCR_POSTAL_SPACE = Regex("""(,\s{0,5})(\d{2})\s{1,3}(\d{3})(?=\s+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-Za-z])""")
+
+    // ----------------------------------------------------------
     // OCR_PESEL_WORD v1.6: naprawa liter zamiennych na cyfry w numerze PESEL
     //
     // OCR myli cyfry z literami: T→7, I/l→1, O→0, S→5, B→8, G→6, Z→2
@@ -806,6 +813,13 @@ object OcrNormalizer {
                 corrections++
                 "$g1-$g2"
             } else m.value
+        }
+
+        // 13c. OCR: kod pocztowy z spacją zamiast myślnika ("41 200 Sosnowiec" → "41-200 Sosnowiec")
+        text = OCR_POSTAL_SPACE.replace(text) { m ->
+            val fixed = "${m.groupValues[1]}${m.groupValues[2]}-${m.groupValues[3]}"
+            if (fixed != m.value) corrections++
+            fixed
         }
 
         // 14a. OCR: numer telefonu po słowie kluczowym — l/O/I → cyfry w bloku numeru
