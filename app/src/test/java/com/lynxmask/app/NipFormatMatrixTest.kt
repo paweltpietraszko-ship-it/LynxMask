@@ -83,9 +83,10 @@ class NipFormatMatrixTest {
 
         case("nip_sprzedawcy", "nip_sprzedawcy: 451-052-35-26", true)
 
-        println("\n=== Negatywne (nie powinno maskowac) ===")
-        case("10 cyfr zla suma bez NIP", "5260001320", false)
-        case("losowy 10 cyfr zla suma", "1234567890", false)
+        println("\n=== AUDIT-03: gołe 10 cyfr (CATCHALL, bez S5) ===")
+        // S5 odrzuca błędną sumę na wzorcu NIP z separatorami; CATCHALL \d{8,} maskuje goły ciąg.
+        case("10 cyfr zla suma bez NIP", "5260001320", true)
+        case("losowy 10 cyfr zla suma", "1234567890", true)
 
         println("\n=== Uwagi (inny typ numeru) ===")
         case("9 cyfr = REGON nie NIP", "123456789", true) // wzorzec REGON 9-cyfrowy
