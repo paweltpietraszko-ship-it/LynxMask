@@ -93,9 +93,10 @@ object ImageRedactionPipeline {
         }
     }
 
-    // Wykryj twarze + linie tekstu jednocześnie
+    // Wykryj PII w tekście. Face Detection pominięte — zdjęcia legitymacyjne (dowód, paszport)
+    // nie są wykrywane przez ML Kit (4-5s oczekiwania, 0 wyników). User zaznacza twarz ręcznie.
     suspend fun detectFacesAndTextAsRegions(bitmap: Bitmap): List<RedactionRegion> =
-        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap)
+        detectTextLinesAsRegions(bitmap)
 
     fun applyRedactions(source: Bitmap, regions: List<RedactionRegion>): Bitmap {
         val result = source.copy(Bitmap.Config.ARGB_8888, true)

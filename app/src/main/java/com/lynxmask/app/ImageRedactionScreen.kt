@@ -23,6 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardType
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -45,6 +49,8 @@ fun ImageRedactionScreen(
     var regions by remember { mutableStateOf(initialRegions) }
     var isProcessing by remember { mutableStateOf(false) }
     var ocrSuggestion by remember { mutableStateOf<OcrSuggestion?>(null) }
+    var showAddWordDialog by remember { mutableStateOf(false) }
+    var addWordInput by remember { mutableStateOf("") }
 
     // Podgląd z faktycznym pixelate blur — aktualizowany przy każdej zmianie regionów
     var previewBitmap by remember { mutableStateOf(bitmap) }
@@ -86,7 +92,7 @@ fun ImageRedactionScreen(
             Text("Sprawdź i wyślij", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                "Dane osobiste i twarz zakryte automatycznie. Stuknij by odsłonić. Przeciągnij by zakryć coś dodatkowego.",
+                "Dane osobiste zakryte automatycznie. Przeciągnij palcem by zakryć twarz lub coś co pominięto. Stuknij zakryty obszar by odsłonić.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
@@ -239,6 +245,56 @@ fun ImageRedactionScreen(
             }
         }
 
+        // Dialog — dodaj słowo do słownika ręcznie
+        if (showAddWordDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddWordDialog = false; addWordInput = "" },
+                title = { Text("Dodaj do ochrony") },
+                text = {
+                    Column {
+                        Text(
+                            "Słowo będzie zawsze maskowane w kolejnych dokumentach.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = addWordInput,
+                            onValueChange = { addWordInput = it },
+                            label = { Text("Imię, nazwisko lub firma") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        )
+                    }
+                },
+                confirmButton = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        OutlinedButton(onClick = {
+                            val word = addWordInput.trim()
+                            if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
+                                UserDictionary.add(context, word, "FIRMA")
+                                DebugLogBuffer.log("ImageRedact", "Slownik+: '$word' → FIRMA")
+                            }
+                            showAddWordDialog = false; addWordInput = ""
+                        }, enabled = addWordInput.isNotBlank()) { Text("FIRMA") }
+                        Button(onClick = {
+                            val word = addWordInput.trim()
+                            if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
+                                UserDictionary.add(context, word, "OSOBA")
+                                DebugLogBuffer.log("ImageRedact", "Slownik+: '$word' → OSOBA")
+                            }
+                            showAddWordDialog = false; addWordInput = ""
+                        }, enabled = addWordInput.isNotBlank()) { Text("OSOBA") }
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddWordDialog = false; addWordInput = "" }) {
+                        Text("Anuluj")
+                    }
+                }
+            )
+        }
+
         // Przyciski + ostrzeżenie odkrytych danych
         Column(modifier = Modifier.padding(12.dp)) {
             val blurredCount  = regions.count { it.isBlurred }
@@ -332,6 +388,12 @@ fun ImageRedactionScreen(
                     modifier = Modifier.weight(1f),
                     enabled = !isProcessing
                 ) { Text("Anuluj") }
+
+                OutlinedButton(
+                    onClick = { showAddWordDialog = true },
+                    modifier = Modifier.weight(1f),
+                    enabled = !isProcessing
+                ) { Text("+ Słowo") }
 
                 Button(
                     onClick = {
