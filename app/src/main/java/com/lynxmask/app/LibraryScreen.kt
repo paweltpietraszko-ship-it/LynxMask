@@ -27,9 +27,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
+import android.content.ClipData
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +53,6 @@ fun LibraryScreen(
     onDepseudo: (sessionId: String, mode: DepseudoMode) -> Unit
 ) {
     val context          = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     val coroutineScope   = rememberCoroutineScope()
 
     var sessions        by remember { mutableStateOf<List<SessionStore.SessionRecord>>(emptyList()) }
@@ -209,7 +209,7 @@ private fun SessionDetailScreen(
     onSessionDeleted: () -> Unit
 ) {
     val context        = LocalContext.current
-    val clipManager    = LocalClipboardManager.current
+    val clipboard      = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
 
     var responses       by remember { mutableStateOf<List<SessionStore.ResponseRecord>>(emptyList()) }
@@ -392,7 +392,7 @@ private fun SessionDetailScreen(
                 responses.forEach { response ->
                     ResponseItem(
                         response = response,
-                        onCopy   = { clipManager.setText(AnnotatedString(response.content)) },
+                        onCopy   = { coroutineScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("masked", response.content))) } },
                         onPreview = {
                             previewText = response.content
                             showPreview = true

@@ -61,9 +61,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
+import android.content.ClipData
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -109,7 +110,7 @@ private sealed class ClipState {
 @Composable
 private fun ClipboardCheckScreen(onFinished: () -> Unit) {
     val context = LocalContext.current
-    val composeClip = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
     var state by remember { mutableStateOf<ClipState>(ClipState.Checking) }
 
@@ -170,14 +171,18 @@ private fun ClipboardCheckScreen(onFinished: () -> Unit) {
                 ClipPiiDialog(
                     state = s,
                     onReplaceClipboard = {
-                        composeClip.setText(AnnotatedString(clipSafeMaskedText(s.result)))
+                        coroutineScope.launch {
+                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("masked", clipSafeMaskedText(s.result))))
+                        }
                         Log.i(TAG, "Schowek zastąpiony. Flags: ${s.result.flags.size}")
                         Toast.makeText(context, "Schowek zaktualizowany — bezpieczna wersja gotowa", Toast.LENGTH_SHORT).show()
                         onFinished()
                     },
                     onReplaceAndSave = {
                         val safeText = clipSafeMaskedText(s.result)
-                        composeClip.setText(AnnotatedString(safeText))
+                        coroutineScope.launch {
+                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("masked", safeText)))
+                        }
                         // Zapis sesji do bazy na IO thread
                         coroutineScope.launch(Dispatchers.IO) {
                             val saved = SessionStore.save(
@@ -202,7 +207,9 @@ private fun ClipboardCheckScreen(onFinished: () -> Unit) {
                         onFinished()
                     },
                     onClearClipboard = {
-                        composeClip.setText(AnnotatedString(""))
+                        coroutineScope.launch {
+                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", "")))
+                        }
                         Log.i(TAG, "Schowek wyczyszczony przez użytkownika")
                         Toast.makeText(context, "Schowek wyczyszczony", Toast.LENGTH_SHORT).show()
                         onFinished()

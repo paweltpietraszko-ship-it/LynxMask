@@ -69,8 +69,10 @@ import com.lynxmask.app.ui.theme.LynxMaskTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import android.content.ClipData
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -164,7 +166,7 @@ private sealed class ShareScreenState {
 private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     val context = LocalContext.current
     val activity = context as androidx.activity.ComponentActivity
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     var state by remember { mutableStateOf<ShareScreenState>(ShareScreenState.Loading) }
     var progressLabel by remember { mutableStateOf("Wczytuję...") }
     // ASYNC-FIX v2.2: scope do uruchomienia pseudonymize() poza wątkiem głównym
@@ -403,7 +405,11 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     result = s.result,
                     mode = PanelMode.SHARE_SHEET,
                     onCopy = { text ->
-                        clipboardManager.setText(AnnotatedString(text))
+                        scope.launch {
+                            clipboard.setClipEntry(
+                                ClipEntry(ClipData.newPlainText("masked", text))
+                            )
+                        }
                         onFinished()
                     },
                     onForward = { text ->
@@ -451,7 +457,11 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         }
                     },
                     onDebugLog = {
-                        clipboardManager.setText(AnnotatedString(DebugLogBuffer.getAll()))
+                        scope.launch {
+                            clipboard.setClipEntry(
+                                ClipEntry(ClipData.newPlainText("debug_log", DebugLogBuffer.getAll()))
+                            )
+                        }
                         Toast.makeText(context, "Logi skopiowane (${DebugLogBuffer.size()} wpisów)", Toast.LENGTH_SHORT).show()
                     },
                     onCancel = onFinished
@@ -821,29 +831,53 @@ private fun ShareErrorContent(message: String, onDismiss: () -> Unit) {
 @Composable
 private fun ShareOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Obraz zbyt słabej jakości", fontWeight = FontWeight.Bold, fontSize = 18.sp,
-             textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Nie możemy zagwarantować bezpiecznego maskowania.\nZrób wyraźniejsze zdjęcie i spróbuj ponownie.",
-            style = MaterialTheme.typography.bodySmall,
+            "Dokument zbyt słabej jakości",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            "Nie możemy zagwarantować bezpiecznego maskowania danych na tym obrazie — ryzyko pominięcia danych osobowych.",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         if (conf != null) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Jakość OCR: ${"%.0f%%".format(conf * 100)} (wymagane min. ${"%.0f%%".format(OCR_CONF_THRESHOLD * 100)})",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center
             )
         }
+        Spacer(modifier = Modifier.height(20.dp))
+        androidx.compose.material3.Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Jak poprawic jakość:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text("• Dobre oświetlenie, bez cieni i odblasków", fontSize = 13.sp)
+                Text("• Aparat prostopadle do dokumentu (nie pod kątem)", fontSize = 13.sp)
+                Text("• Cały tekst widoczny w kadrze", fontSize = 13.sp)
+                Text("• Dokument na płaskim podłożu bez zagięć", fontSize = 13.sp)
+            }
+        }
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onDismiss) { Text("Zamknij") }
+        Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            Text("Zamknij i zrób nowe zdjęcie")
+        }
     }
 }

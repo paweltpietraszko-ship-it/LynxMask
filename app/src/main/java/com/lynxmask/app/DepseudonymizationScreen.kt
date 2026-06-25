@@ -20,9 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +44,6 @@ fun DepseudonymizationScreen(
     onBack: () -> Unit
 ) {
     val context        = LocalContext.current
-    val clipManager    = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 
     // ── Stan (logika bez zmian) ───────────────────────────────────────────────
@@ -462,7 +459,7 @@ private fun SessionDropdown(
             value         = selectedSessionId.ifEmpty { "Wybierz sesj\u0119..." },
             onValueChange = {},
             readOnly      = true,
-            modifier      = Modifier.fillMaxWidth().menuAnchor(),
+            modifier      = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             shape  = RoundedCornerShape(LynxShapes.CardRadius),
             colors = OutlinedTextFieldDefaults.colors(
