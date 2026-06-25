@@ -18,11 +18,8 @@ package com.lynxmask.app
 
 object Deanonymizer {
 
-    // Wzorzec SESJA_ — jedyne miejsce z hardcoded formatem.
-    // Capture group 1 = sam identyfikator (np. "45E188"), BEZ prefiksu "SESJA_".
-    // Ważne: DB przechowuje "45E188" (result.sessionId), nie "SESJA_45E188".
-    // Po Potoku 7: zamienić na wzorzec suffixu tokenów.
     private val SESJA_PATTERN = Regex("SESJA_([A-Z0-9]{6})")
+    private val TOKEN_IN_TEXT  = Regex("""\b(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b""")
 
     /**
      * Odtwarza oryginalny tekst przez zamianę tokenów na oryginały z mapy.
@@ -52,4 +49,8 @@ object Deanonymizer {
      * @return pierwsze dopasowanie SESJA_[A-Z0-9]{6} lub null jeśli brak
      */
     fun detectSessionId(text: String): String? = SESJA_PATTERN.find(text)?.groupValues?.get(1)
+
+    /** Tokeny pseudonimizacji obecne w tekście (do fingerprint search). */
+    fun extractTokens(text: String): Set<String> =
+        TOKEN_IN_TEXT.findAll(text).map { it.value }.toSet()
 }

@@ -84,18 +84,34 @@ fun DepseudonymizationScreen(
         }
     }
 
-    val detectedSessionId by remember(inputText, currentMode) {
-        derivedStateOf {
-            if (currentMode == DepseudoMode.AI_RESPONSE)
-                Deanonymizer.detectSessionId(inputText)
-            else null
+    // SESJA_ header — we wszystkich trybach (kopiowany tekst zawiera header)
+    val detectedSessionId by remember(inputText) {
+        derivedStateOf { Deanonymizer.detectSessionId(inputText) }
+    }
+
+    // Fingerprint: gdy brak SESJA_, szukaj sesji po tokenach w tekście (IO)
+    var fingerprintSessionId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(inputText, detectedSessionId) {
+        if (detectedSessionId != null) { fingerprintSessionId = null; return@LaunchedEffect }
+        val tokens = Deanonymizer.extractTokens(inputText)
+        if (tokens.isEmpty()) { fingerprintSessionId = null; return@LaunchedEffect }
+        fingerprintSessionId = withContext(Dispatchers.IO) {
+            SessionStore.listSessions(context).firstOrNull { record ->
+                val map = tokenMapCache.getOrPut(record.sessionId) {
+                    SessionStore.loadTokenMap(context, record.sessionId)
+                }
+                map?.keys?.any { it in tokens } == true
+            }?.sessionId
         }
     }
 
     val activeSessionId: String? = when (currentMode) {
-        DepseudoMode.AI_RESPONSE     -> detectedSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
+        DepseudoMode.AI_RESPONSE     ->
+            detectedSessionId ?: fingerprintSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
         DepseudoMode.SOURCE_DOCUMENT,
-        DepseudoMode.MASKED_VIEW     -> preselectedSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
+        DepseudoMode.MASKED_VIEW     ->
+            preselectedSessionId ?: detectedSessionId ?: fingerprintSessionId ?: selectedSessionId.takeIf { it.isNotEmpty() }
     }
 
     LaunchedEffect(Unit) {
