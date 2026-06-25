@@ -97,6 +97,7 @@ class ShareTargetActivity : ComponentActivity() {
         if (!BuildConfig.DEBUG) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         LookupTables.initialize(this)
         resetRegexCache()
+        ImageRedactionPipeline.purgeStaleRedactedImages(this)
         setContent {
             LynxMaskTheme {
                 ShareTargetScreen(intent = intent, onFinished = { finish() })
