@@ -41,6 +41,18 @@ class OutputGuardTest {
     }
 
     @Test
+    fun dowodOcrSeriesDigitFlaggedAsRed() {
+        val hits = guard("Nr dowodu osobistego 2TS935950")
+        assertTrue(hits.any { it.label == "DOWOD" && it.level == "RED" })
+    }
+
+    @Test
+    fun ibanGarbledPlFlaggedAsRed() {
+        val hits = guard("Nr konta PL5001013sesoZ2901z0")
+        assertTrue(hits.any { it.label == "IBAN" && it.level == "RED" })
+    }
+
+    @Test
     fun sygnatura2024FlaggedAsYellow() {
         val hits = guard("Sprawa 2024/1234")
         val hit = hits.find { it.label == "SYGNATURA" }

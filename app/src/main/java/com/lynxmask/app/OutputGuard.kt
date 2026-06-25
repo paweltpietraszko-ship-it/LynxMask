@@ -68,6 +68,17 @@ internal fun runOutputGuard(
     for ((label, re) in redPatterns)
         re.findAll(text).forEach { hits += hit(label, "RED", it) }
 
+    // RED tolerancyjny — OCR-artefakty które silnik mógł pominąć (IBAN garbled, dowód 2TS…)
+    Regex("""\bPL[A-Z0-9\s]{14,40}\b""", RegexOption.IGNORE_CASE).findAll(text).forEach { m ->
+        if (m.value.count { it.isDigit() } >= 10)
+            hits += hit("IBAN", "RED", m)
+    }
+    Regex("""\b[A-Z0-9]{3}\s?\d{6}\b""").findAll(text).forEach { m ->
+        val prefix = m.value.take(3)
+        if (prefix.count { it.isLetter() } >= 2 && m.value.filter { it.isDigit() }.length >= 6)
+            hits += hit("DOWOD", "RED", m)
+    }
+
     // ── YELLOW z kotwicą słowną (okno 35 znaków przed hitem) ────────────────
     fun before(pos: Int) = text.substring(maxOf(0, pos - 35), pos)
 

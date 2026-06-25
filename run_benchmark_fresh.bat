@@ -1,8 +1,12 @@
 @echo off
+cd /d "%~dp0"
 echo === LynxMask Benchmark (fresh dataset) ===
 
 set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 set PATH=%JAVA_HOME%\bin;%PATH%
+
+set BENCH=/storage/emulated/0/Android/data/com.lynxmask.app/files/bench
+set DOCS=/storage/emulated/0/Documents/LynxMask
 
 echo [0/4] Instalacja APK testowego...
 call .\gradlew :app:installDebugAndroidTest
@@ -31,10 +35,32 @@ adb shell am instrument -w -r -e class com.lynxmask.app.BenchmarkInstrumentedTes
 echo [4/4] Pobieranie wynikow...
 for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm"') do set TIMESTAMP=%%a
 set OUTDIR=benchmark_results\fresh\%TIMESTAMP%
-mkdir %OUTDIR%
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_report.txt %OUTDIR%\benchmark_report.txt
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_bugs.txt %OUTDIR%\benchmark_bugs.txt
-adb pull /storage/emulated/0/Documents/LynxMask/benchmark_trace.txt %OUTDIR%\
+if not exist "benchmark_results\fresh" mkdir "benchmark_results\fresh"
+mkdir "%OUTDIR%"
+
+adb shell test -f %BENCH%/benchmark_report.txt
+if errorlevel 1 (
+    echo.
+    echo BLAD: Brak %BENCH%/benchmark_report.txt na telefonie.
+    echo Test mogl sie nie powiesc — sprawdz output z kroku [3/4].
+    pause
+    exit /b 1
+)
+
+adb pull %BENCH%/benchmark_report.txt "%OUTDIR%\benchmark_report.txt"
+if errorlevel 1 adb pull %DOCS%/benchmark_report.txt "%OUTDIR%\benchmark_report.txt"
+adb pull %BENCH%/benchmark_bugs.txt "%OUTDIR%\benchmark_bugs.txt"
+if errorlevel 1 adb pull %DOCS%/benchmark_bugs.txt "%OUTDIR%\benchmark_bugs.txt"
+adb pull %BENCH%/benchmark_trace.txt "%OUTDIR%\"
+if errorlevel 1 adb pull %DOCS%/benchmark_trace.txt "%OUTDIR%\"
+
+if not exist "%OUTDIR%\benchmark_report.txt" (
+    echo.
+    echo BLAD: Nie udalo sie pobrac benchmark_report.txt do %OUTDIR%
+    pause
+    exit /b 1
+)
 
 echo === Gotowe. Wyniki w %OUTDIR%\ ===
+dir /b "%OUTDIR%"
 pause

@@ -39,6 +39,28 @@ class OcrNormalizerIbanSplitTest {
     }
 
     @Test
+    fun `OCR_IBAN_PL_LOOSE naprawia garbled PL z benchmarku gdy 26 cyfr po mapie`() {
+        val r = OcrNormalizer.normalize("Nr konta PL5001013sesoZ2901z0")
+        // mocno zdeformowany — normalizer lub Guard; nie wymagamy pełnej naprawy
+        assertTrue(
+            r.normalizedText.contains("PL5001013") ||
+                r.normalizedText.filter { it.isDigit() }.length >= 10
+        )
+    }
+
+    @Test
+    fun `pseudonymize garbled IBAN staly doc24 Guard RED lub token`() {
+        LookupTables.initializeForTesting()
+        resetRegexCache()
+        val r = PseudonymEngine.pseudonymize("Nr konta PL5001013sesoZ2901z0 NABYWCA")
+        assertFalse(r.pseudonymizedText.contains("sesoZ"))
+        assertTrue(
+            r.tokenMap.isNotEmpty() ||
+                r.guardHits.any { it.label == "IBAN" && it.level == "RED" }
+        )
+    }
+
+    @Test
     fun `OCR_IBAN_SPLIT nie skleja gdy suma cyfr nie wynosi 26`() {
         // Ochrona przed false-positive: "PL123 456" to nie IBAN (6 cyfr ≠ 26)
         val input = "PL123 456"

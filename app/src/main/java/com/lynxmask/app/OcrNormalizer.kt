@@ -324,6 +324,7 @@ object OcrNormalizer {
         'O' to '0', 'o' to '0',  // OCR_ZERO_AS_O może zmienić '0' → 'o' w kontekście l0l
         'S' to '5', 'B' to '8',
         'G' to '6', 'Z' to '2',
+        'z' to '2',
     )
 
     /** Homoglify OCR w segmentach liczbowych (np. cyrylica З→3 w gołym NIP — S4 / RODO v2 zad. 4). */
@@ -434,7 +435,7 @@ object OcrNormalizer {
     //           "dowód: AHB S45316"    → "AHB 545316" (S→5)
     // ----------------------------------------------------------
     private val OCR_DOWOD_DIGITS = Regex(
-        """(?i)(?:dow[oó]d\b(?:[^\S\n]+os\w{0,7})?|d\.?o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*([A-Z0-9]{2,3})[^\S\n]?([TIlOSBGZ0-9]{2,3}[^\S\n]?[TIlOSBGZ0-9]{3,4})"""
+        """(?i)(?:dow[oó]d\w{0,4}\b(?:\s+os\w{0,10})?|d\.?o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*([A-Z0-9]{2,3})[^\S\n]?([TIlOSBGZ0-9]{2,3}[^\S\n]?[TIlOSBGZ0-9]{3,4}|[TIlOSBGZ0-9]{6})"""
     )
 
     // ----------------------------------------------------------
@@ -516,9 +517,30 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
     // ----------------------------------------------------------
+    // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
+    // Bez lookbehind — Android ICU wymaga bounded lookbehind; \w* / \s* w (?<=…) crashuje test.
     private val OCR_IBAN_DIGITS = Regex(
-        """(?i)(?<=(?:IBAN|Nr konta)\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,36}[TIlOSBGZ0-9A-Z])(?!\w)"""
+        """(?i)((?:IBAN|Nr\s{0,1}kont\w{0,6}|kont\w{0,4}|N\s+kort\w{0,6})\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,36}[TIlOSBGZ0-9A-Z])(?!\w)"""
     )
+
+    // OCR_IBAN_PL_LOOSE: zdeformowany PL… bez poprawnej struktury (benchmark lvl 1–2)
+    private val OCR_IBAN_PL_LOOSE = Regex("""\bPL([TIlOSBGZ0-9A-Za-z\s]{20,40})\b""")
+
+    private fun isGarbledPlIban(raw: String): Boolean {
+        val body = raw.drop(2)
+        return body.any { it.isLowerCase() } ||
+            Regex("""[A-Za-z]{4,}""").containsMatchIn(body)
+    }
+
+    private fun fixPlIbanLoose(raw: String): String? {
+        val ibanHomoglyph = OCR_HOMOGLYPH_DIGIT_MAP + mapOf('e' to '3', 'E' to '3', 's' to '5', 'S' to '5')
+        fun mapC(c: Char) = ibanHomoglyph[c] ?: c
+        val homoglyph = raw.map { mapC(it) }.joinToString("")
+        if (!homoglyph.uppercase().startsWith("PL")) return null
+        val digits = homoglyph.filter { it.isDigit() }
+        if (digits.length != 26) return null
+        return "PL$digits"
+    }
 
     // ----------------------------------------------------------
 
@@ -758,9 +780,21 @@ object OcrNormalizer {
 
         // 13. OCR: litery zamienione na cyfry w IBAN / Nr konta
         text = OCR_IBAN_DIGITS.replace(text) { m ->
-            val fixed = m.groupValues[1].map { if (it == ' ') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
-            if (fixed != m.groupValues[1]) corrections++
-            fixed
+            val prefix = m.groupValues[1]
+            val digits = m.groupValues[2]
+            val fixed = digits.map { if (it == ' ') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != digits) corrections++
+            prefix + fixed
+        }
+
+        // 13c. OCR: zdeformowany polski IBAN PL + homoglify (sesoZ, PLos1690…)
+        text = OCR_IBAN_PL_LOOSE.replace(text) { m ->
+            if (!isGarbledPlIban(m.value)) return@replace m.value
+            val fixed = fixPlIbanLoose(m.value)
+            if (fixed != null && fixed != m.value) {
+                corrections++
+                fixed
+            } else m.value
         }
 
         // 13b. OCR: kod pocztowy PL XX-XXX z artefaktami O→0, I/l→1 (OCR_DIGIT_IN_CONTEXT nie działa przez myślnik)

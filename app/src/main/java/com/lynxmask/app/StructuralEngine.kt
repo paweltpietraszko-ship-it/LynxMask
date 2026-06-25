@@ -247,7 +247,7 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Format numeru: 2–3 litery + 5–11 znaków + ostatnia cyfra
     // DOWOD-CTX-FIX v1.9: dodano \n? po [:–\-]? — OCR może mieć newline między
     // "Nr dowodu osobistego:" a samym numerem (np. w formularzu z polem na osobnej linii)
-    TOKEN_NUMER to Regex("""(?i)(?:dow[oó]d\b(?:[^\S\n]+os\w{0,7})?|d\.?[^\S\n]*o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Z]{2,3}[\w \t\-]{5,11}\d"""),
+    TOKEN_NUMER to Regex("""(?i)(?:dow[oó]d\w{0,4}\b(?:\s+os\w{0,10})?|d\.?[^\S\n]*o\.)[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Z0-9]{2,3}[\w \t\-]{5,11}\d"""),
 
     // Paszport z kontekstem
     // paszport\w{0,2} — "paszport", "paszportu", "paszportem"
@@ -325,6 +325,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // IBAN z kontekstem "konto" — fallback gdy OCR wstawia spacje w nieregularnych miejscach
     // Łapie: "konto komornika: PL41 169010 14937..." niezależnie od podziału na grupy
     TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}\s+\S{0,20}\s*[:–\-]\s*(PL[\d\s]{24,34})\b"""),
+    // IBAN garbled OCR — PL + 20–40 alfanum (bez lookahead — poprzedni wzorzec ReDoS na długim OCR)
+    TOKEN_NUMER to Regex("""\bPL[A-Z0-9]{20,40}\b""", RegexOption.IGNORE_CASE),
     // Konto bez prefiksu PL ze spacjami grupującymi (61 1090 1014 0000 0712 1981 2874)
     TOKEN_NUMER to Regex("""\b\d{2}(?:\s\d{4}){5,6}\b"""),
     // Konto bez prefiksu PL z myślnikami (61-1090-1014-0000-0712-1981-2874)
@@ -377,7 +379,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // DOWOD-FIX v1.9: \d{3}[^\S\n]?\d{3} → \d{2,3}[^\S\n]?\d{3,4}.
     // OCR lvl3 (doc_00033) produkuje "AWY57 1380" — spacja po 2 cyfrach zamiast 3.
     // Nowy wzorzec: 2-3 cyfry + opcjonalna spacja + 3-4 cyfry = razem 5-7 cyfr (oczekiwane 6).
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL
+    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
+    TOKEN_NUMER to Regex("""\b[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"

@@ -98,11 +98,11 @@ fun DepseudonymizationScreen(
         if (tokens.isEmpty()) { fingerprintSessionId = null; return@LaunchedEffect }
         fingerprintSessionId = withContext(Dispatchers.IO) {
             SessionStore.listSessions(context).firstOrNull { record ->
-                val map = tokenMapCache.getOrPut(record.sessionId) {
-                    SessionStore.loadTokenMap(context, record.sessionId)
+                val map = tokenMapCache.getOrPut(record.sesjaId) {
+                    SessionStore.loadTokenMap(context, record.sesjaId)
                 }
                 map?.keys?.any { it in tokens } == true
-            }?.sessionId
+            }?.sesjaId
         }
     }
 

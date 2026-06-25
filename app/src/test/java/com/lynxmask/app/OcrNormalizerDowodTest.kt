@@ -1,9 +1,16 @@
 package com.lynxmask.app
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
 
 class OcrNormalizerDowodTest {
+
+    @Before
+    fun setup() {
+        LookupTables.initializeForTesting()
+        resetRegexCache()
+    }
 
     // Krok 11d — OCR_DOWOD_DIGITS: litery jako cyfry w numerze dowodu po słowie kluczowym
 
@@ -58,5 +65,18 @@ class OcrNormalizerDowodTest {
         val result = OcrNormalizer.normalize("dowód osobisty: ZTS935950")
         assertTrue("poprawna seria liter pozostaje bez zmian",
             result.normalizedText.contains("ZTS935950"))
+    }
+
+    @Test
+    fun `OCR dowod forma dowodu osobistego benchmark doc20`() {
+        val result = OcrNormalizer.normalize("Nr dowodu osobistego 2TS935950")
+        assertTrue("dowodu + 2TS → ZTS", result.normalizedText.contains("ZTS935950"))
+    }
+
+    @Test
+    fun `pseudonymize benchmark doc20 dowodu nie wycieka`() {
+        val r = PseudonymEngine.pseudonymize("Nr dowodu osobistego 2TS935950 PESEL 60020104908")
+        assertFalse(r.pseudonymizedText.contains("2TS935950"))
+        assertFalse(r.pseudonymizedText.contains("935950"))
     }
 }
