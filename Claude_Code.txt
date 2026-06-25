@@ -1,0 +1,60 @@
+CLAUDE CODE — NOTATKI MIĘDZY SESJAMI
+LynxMask Mobile | C:\Projects\LynxMask\
+================================================================================
+
+## SESJA 2026-06-25 (cd. — wieczór)
+
+### Commity
+- 7e4bd95  fix: ImageRedact blur pixelate + słownik w detekcji + re-detect po dodaniu słowa
+- f1bf622  chore: cleanup root — usunięto śmieci AI, stara mapa, test_ocr_normalizer_hard
+- fe527a4  chore: dodaj CLAUDE.md — pamięć projektu dla wszystkich instancji Claude Code
+- 7e8b18e  fix: usun zbędny key(regionPreviewKey) z Image + fix bitmap recycle
+
+### Co zrobiono
+1. **ImageRedactionPipeline.kt** — trzy zmiany:
+   - BLUR_DIVISOR 12→8, filter=false w createScaledBitmap (pixelate zamiast smooth blur)
+   - detectTextLinesAsRegions() + detectFacesAndTextAsRegions() dostały parametr userDict
+   - PseudonymEngine.pseudonymize() teraz dostaje userDictionary = userDict
+   - Dodano log [BlurRegion] z wymiarami
+
+2. **ShareTargetActivity.kt** — wszystkie 3 ścieżki ImageRedact:
+   - UserDictionary.load(context) przed detekcją
+   - detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
+   - Ścieżka file picker: naprawiono na loadBitmapExifAware() (wcześniej ignorowała EXIF)
+
+3. **ImageRedactionScreen.kt** — cztery zmiany:
+   - Po dodaniu słowa FIRMA/OSOBA: natychmiast re-detect tekstu z nowym słownikiem
+   - To samo po akceptacji OCR suggestion card
+   - Usunięty zbędny key(regionPreviewKey) z Image composable (race condition)
+   - Fix memory leak: cropped bitmap w osobnym try/finally
+
+4. **Sprzątanie** — usunięto: AgentAudit.txt, AuditLibrary.txt, Codex.txt, Cursor.txt,
+   Claude_Code.txt (stary), benchmark_report.txt, 1000005989.jpg, BRIEF_Cursor_Onboarding_Copy.md,
+   MAPA_ARCHITEKTURY_LynxMask_mobile_v2.md, tests/test_ocr_normalizer_hard.txt
+
+5. **CLAUDE.md** — stworzony w root projektu, zastępuje pamięć między sesjami i kontami
+
+### Stan bugów ImageRedact po sesji
+✅ Słownik użytkownika teraz używany w auto-detekcji PII
+✅ Re-detect po dodaniu słowa — słowo maskowane natychmiast bez re-share
+✅ File picker ścieżka — EXIF rotation naprawiona
+✅ key(regionPreviewKey) race condition usunięty
+🔲 Cały tekst maskowany zamiast tylko PII — Cursor pracuje (prompt wysłany)
+🔲 Blur twarzy niewidoczny (ramka) — Cursor pracuje (ten sam prompt)
+
+### Kolejka ogólna (stan po sesji)
+🔲 Testy 6.2: JUnit SessionStore + Deanonymizer
+🔲 S10 — TELEFON nie w tokenMap (wyciek PII)
+🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0 (wymaga weryfikacji wersji stable)
+🔲 BUG-PESEL-OCR-SILNIK — wymaga OCR z telefonu (niskie)
+🔲 Audyt RODO/security (Cursor)
+🔲 Prawnik: ToS, Privacy Policy
+🔲 Google Play: konto, screenshoty, opis
+🔲 Express Mode (koncepcja zapisana w CLAUDE.md)
+
+### Uwagi techniczne
+- Build: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && ./gradlew :app:assembleDebug
+- gradlew PowerShell nie działa (problem z ścieżką) — używać Bash
+- UserDictionary.entries jest thread-safe (@Synchronized getter) — bezpieczne do przekazania
+- ImageRedactionScreen.kt był modyfikowany przez Cursora między commitami — sprawdź aktualny stan przed edycją
+================================================================================
