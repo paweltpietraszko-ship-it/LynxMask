@@ -53,7 +53,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                "Dane osobowe ukryte zanim dokument trafi do AI.\nDziała lokalnie — nic nie wychodzi z urządzenia.",
+                "Dane osobowe zamaskowane zanim dokument trafi do AI.\nDziała lokalnie — nic nie wychodzi z urządzenia.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -74,14 +74,14 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
-                StepCard(emoji = "🔒", label = "Dane\nukryte")
+                StepCard(emoji = "🔒", label = "Dane\nzamaskowane")
                 Text(
                     "→",
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
-                StepCard(emoji = "💬", label = "Wyślij\nbezpiecznie")
+                StepCard(emoji = "💬", label = "Wyślij\nzamaskowane")
             }
 
             Spacer(modifier = Modifier.height(48.dp))
