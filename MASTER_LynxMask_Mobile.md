@@ -66,7 +66,7 @@ Po diagnozie wydajesz pojedynczą zmianę. Po każdej zmianie: test (`.\\\\gradl
 |-|-|-|
 |Czysty dokument, ręcznie przez apkę, LVL0–1|100% maskowania|silnik na czystym tekście działa|
 |**Benchmark v1 (archiwum — MARTWA METRYKA)** stały 68 dok., 2026-06-25\_0747|RECALL 79,2% / PREC 67,9% / F1 73,1%. Lvl0 95,2%, Lvl1 93,8%, Lvl2 42,0%, Lvl3 82,7%. Krit. braki: 17, FP: 160|**Jedna liczba na całym worku (lvl2 miesza sufit OCR z bugami silnika). Nie porównywać z v2.**|
-|**Benchmark v2 — sekcja B (IN-SCOPE ACCEPTED)** — baseline TBD|TBD — po pierwszym runie `run_benchmark_v2.bat`|**GŁÓWNY KPI RELEASE** — patrz sekcja 1a. Regresja = gorszy wynik na fixed core.|
+|**Benchmark v2 — sekcja B (IN-SCOPE ACCEPTED)** — baseline 2026-06-25|Recall 90,5% / Recall kryt. 98,0% / Prec 67,7% / F1 77,5%. BUG_SILNIKA=0, Guard RED=0, BRAK_W_OCR(kryt.)=2. Sec B: 51 dok. / Sec C: 10 odrzucone / Sec D: 7 lvl2 accepted|**GŁÓWNY KPI RELEASE** — patrz sekcja 1a. Regresja = gorszy wynik na fixed core.|
 |Zachowanie na NIEZNANYM dokumencie (dok. \#101)|**NIEZBADANE**|ani testy ręczne, ani benchmark nie pokazują — patrz sekcja 7|
 
 **Wariancja benchmarku:** świeży dataset = inne dokumenty co run, recall waha się ±5%. To nie regresja. Regresja = ten sam dataset gorszy wynik.
