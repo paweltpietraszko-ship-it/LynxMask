@@ -69,6 +69,12 @@ class BenchmarkInstrumentedTest {
 
         LookupTables.initialize(context)
         resetRegexCache()
+        EngineSmoke.runOnce()
+        check(!EngineSmoke.failed) {
+            "EngineSmoke FAIL — regex ICU nie skompilował się (patrz logcat). Napraw OcrNormalizer/StructuralEngine."
+        }
+        println("[SMOKE] OK")
+
         UserDictionary.load(context)
         UserDictionary.clear(context)
         GuardAllowlist.clear(context)
@@ -604,6 +610,13 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             emailMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
+                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
+                if (r.normalizedText != r.ocrText) {
+                    val normSnippet = r.normalizedText.windowed(300, 1, true)
+                        .firstOrNull { it.contains("@") }?.take(120) ?: ""
+                    if (normSnippet.isNotEmpty())
+                        bb.appendLine("    NORM[@]: $normSnippet")
+                }
             }
             bb.appendLine()
         }
@@ -617,6 +630,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             adresMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
+                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
             }
             bb.appendLine()
         }
@@ -649,13 +663,22 @@ class BenchmarkInstrumentedTest {
         }
         traceFile.writeText("DOC\tLAYER\tRULE\tTOKEN\tMATCHED_TEXT\n" + traceLines.joinToString("\n"))
 
-        // Kopia do Documents (backwards compat)
-        val publicDir = File("/storage/emulated/0/Documents/LynxMask")
-        publicDir.mkdirs()
-        benchDir.listFiles()?.forEach { file ->
-            val dest = File(publicDir, file.name)
-            if (dest.exists()) dest.delete()
-            file.copyTo(dest, overwrite = true)
+        // Kopia do Documents (backwards compat) — best-effort; Android 16+ może odrzucić zapis.
+        // Nie failuj testu po zapisie raportów do benchDir (incydent: FileAlreadyExistsException).
+        try {
+            val publicDir = File("/storage/emulated/0/Documents/LynxMask")
+            publicDir.mkdirs()
+            benchDir.listFiles()?.forEach { file ->
+                val dest = File(publicDir, file.name)
+                runCatching {
+                    if (dest.exists()) dest.delete()
+                    file.copyTo(dest, overwrite = true)
+                }.onFailure { e ->
+                    println("[BENCH_WARN] Kopia ${file.name} → Documents: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            println("[BENCH_WARN] Kopia do Documents pominięta: ${e.message}")
         }
     }
 
