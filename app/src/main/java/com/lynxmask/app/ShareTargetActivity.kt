@@ -73,6 +73,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.mlkit.vision.common.InputImage
@@ -152,6 +153,7 @@ private sealed class ShareScreenState {
     ) : ShareScreenState()
     data class Scanned(val result: PseudonymResult) : ShareScreenState()
     data class Error(val message: String) : ShareScreenState()
+    data class OcrRejected(val conf: Float?) : ShareScreenState()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -313,7 +315,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             val avgConf = pages.mapNotNull { it.second }.takeIf { it.isNotEmpty() }
                 ?.average()?.toFloat()
             DebugLogBuffer.log("DocScanner", "OCR: ${rawText.length} znaków (${uris.size} stron), conf=${avgConf?.let { "%.0f%%".format(it * 100) } ?: "N/A"}")
-            state = ShareScreenState.Review(rawText, ocrConfidence = avgConf)
+            state = if (isOcrQualityAcceptable(avgConf, rawText.length))
+                ShareScreenState.Review(rawText, ocrConfidence = avgConf)
+            else
+                ShareScreenState.OcrRejected(avgConf)
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd OCR: ${e.message}")
         }
@@ -330,7 +335,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             val (rawText, ocrConf) = withContext(Dispatchers.IO) {
                 if (uri != null) ocrFromImageUri(uri, context) else "" to null
             }
-            state = ShareScreenState.Review(rawText, ocrConfidence = ocrConf)
+            state = if (isOcrQualityAcceptable(ocrConf, rawText.length))
+                ShareScreenState.Review(rawText, ocrConfidence = ocrConf)
+            else
+                ShareScreenState.OcrRejected(ocrConf)
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd OCR: ${e.message}")
         }
@@ -383,6 +391,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     },
                     onCancel = onFinished
                 )
+
+            is ShareScreenState.OcrRejected ->
+                ShareOcrRejectedContent(conf = s.conf, onDismiss = onFinished)
 
             is ShareScreenState.Error ->
                 ShareErrorContent(message = s.message, onDismiss = onFinished)
@@ -802,6 +813,36 @@ private fun ShareErrorContent(message: String, onDismiss: () -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
         Text(message, style = MaterialTheme.typography.bodySmall,
              color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onDismiss) { Text("Zamknij") }
+    }
+}
+
+@Composable
+private fun ShareOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Obraz zbyt słabej jakości", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+             textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Nie możemy zagwarantować bezpiecznego maskowania.\nZrób wyraźniejsze zdjęcie i spróbuj ponownie.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        if (conf != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Jakość OCR: ${"%.0f%%".format(conf * 100)} (wymagane min. ${"%.0f%%".format(OCR_CONF_THRESHOLD * 100)})",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onDismiss) { Text("Zamknij") }
     }
