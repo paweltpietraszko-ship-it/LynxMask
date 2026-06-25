@@ -33,10 +33,12 @@ echo [3/4] Uruchamianie benchmarku (czekaj ~30 sekund)...
 adb shell am instrument -w -r -e class com.lynxmask.app.BenchmarkInstrumentedTest com.lynxmask.app.test/androidx.test.runner.AndroidJUnitRunner
 
 echo [4/4] Pobieranie wynikow...
-for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm"') do set TIMESTAMP=%%a
+powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm" > "%TEMP%\lm_ts.txt"
+set /p TIMESTAMP=< "%TEMP%\lm_ts.txt"
+del "%TEMP%\lm_ts.txt" >nul 2>&1
 set OUTDIR=benchmark_results\fresh\%TIMESTAMP%
 if not exist "benchmark_results\fresh" mkdir "benchmark_results\fresh"
-mkdir "%OUTDIR%"
+if not exist "%OUTDIR%" mkdir "%OUTDIR%"
 
 adb shell test -f %BENCH%/benchmark_report.txt
 if errorlevel 1 (
