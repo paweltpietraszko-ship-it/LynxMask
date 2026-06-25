@@ -83,12 +83,32 @@ object ImageRedactionPipeline {
     }
 
     fun saveToCache(bitmap: Bitmap, context: Context): Uri {
-        val dir = File(context.cacheDir, "redacted_images")
-        dir.mkdirs()
-        val file = File(dir, "redacted_${System.currentTimeMillis()}.jpg")
+        val file = writeRedactedJpeg(bitmap, context)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    private fun redactedDir(context: Context): File =
+        File(context.cacheDir, "redacted_images").also { it.mkdirs() }
+
+    private fun writeRedactedJpeg(bitmap: Bitmap, context: Context): File {
+        val file = File(redactedDir(context), "redacted_${System.currentTimeMillis()}.jpg")
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
         }
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        return file
+    }
+
+    /** Usuwa plik cache powiązany z URI FileProvider (po share). */
+    fun deleteRedactedUri(context: Context, uri: Uri) {
+        val name = uri.lastPathSegment ?: return
+        File(redactedDir(context), name).takeIf { it.exists() }?.delete()
+    }
+
+    /** Kasuje pliki starsze niż [maxAgeMs] (domyślnie 5 min) — nie w trakcie aktywnego choosera. */
+    fun purgeStaleRedactedImages(context: Context, maxAgeMs: Long = 5 * 60 * 1000L) {
+        val cutoff = System.currentTimeMillis() - maxAgeMs
+        redactedDir(context).listFiles()?.forEach { f ->
+            if (f.lastModified() < cutoff) f.delete()
+        }
     }
 }
