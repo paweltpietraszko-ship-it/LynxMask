@@ -77,7 +77,8 @@ class BenchmarkInstrumentedTest {
         val results    = mutableListOf<DocResult>()
 
         UserDictionary.clear(context)
-        println("[BENCH_DEBUG] UserDictionary wyczyszczony przed benchmarkiem")
+        GuardAllowlist.clear(context)
+        println("[BENCH_DEBUG] UserDictionary + GuardAllowlist wyczyszczone przed benchmarkiem")
 
         val dictSize = UserDictionary.entries.size
         println("[BENCH_DEBUG] UserDictionary: $dictSize encji")
