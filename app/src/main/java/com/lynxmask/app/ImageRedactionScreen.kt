@@ -360,7 +360,7 @@ fun ImageRedactionScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text(if (blurredCount > 0) "Udostępnij bezpiecznie" else "Udostępnij bez redakcji")
+                        Text(if (blurredCount > 0) "Udostępnij zamaskowany obraz" else "Udostępnij bez redakcji")
                     }
                 }
             }
