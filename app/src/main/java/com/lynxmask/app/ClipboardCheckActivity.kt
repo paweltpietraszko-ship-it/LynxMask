@@ -85,7 +85,8 @@ class ClipboardCheckActivity : ComponentActivity() {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
-        LookupTables.initialize(this)   // ładuje names/surnames z assets — idempotentne
+        LookupTables.initialize(this)
+        resetRegexCache()
         setContent {
             LynxMaskTheme {
                 ClipboardCheckScreen(onFinished = { finish() })

@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 LookupTables.initialize(this@MainActivity)
+                resetRegexCache()
                 SessionStore.init(this@MainActivity)
             }
             getExternalFilesDir("bench")?.mkdirs()

@@ -96,6 +96,7 @@ class ShareTargetActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (!BuildConfig.DEBUG) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         LookupTables.initialize(this)
+        resetRegexCache()
         setContent {
             LynxMaskTheme {
                 ShareTargetScreen(intent = intent, onFinished = { finish() })
@@ -402,11 +403,11 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     },
                     onAddToDict = { word, type ->
                         UserDictionary.add(context, word, type)
-                        DebugLogBuffer.log("UserDict", "Zapamiętano: '$word' jako $type — łącznie ${UserDictionary.entries.size}")
+                        DebugLogBuffer.log("UserDict", "Zapamiętano: ${word.length} znaków jako $type — łącznie ${UserDictionary.entries.size}")
                     },
                     onAddToAllowlist = { value, ruleType ->
                         GuardAllowlist.add(context, value, ruleType)
-                        DebugLogBuffer.log("GuardAllowlist", "Nie maskuj: '$value' ($ruleType) — łącznie ${GuardAllowlist.entries.size}")
+                        DebugLogBuffer.log("GuardAllowlist", "Nie maskuj: ${value.length} znaków ($ruleType) — łącznie ${GuardAllowlist.entries.size}")
                     },
                     onSaveDescription = { maskedText, description ->
                         val cleanText = maskedText
@@ -565,7 +566,6 @@ private suspend fun finishWithText(
         return
     }
     DebugLogBuffer.log("ShareTarget", "Tekst wyodrębniony: ${rawText.length} znaków")
-    DebugLogBuffer.log("ShareTarget", rawText.take(300).replace("\n", "↵"))
     if (goToReview) {
         setState(ShareScreenState.Review(rawText, ocrConfidence = mlKitConfidence))
         return

@@ -63,6 +63,7 @@ fun DepseudonymizationScreen(
 
     // BUG-LIB-6: CreateDocument zamiast File(Downloads) — działa na Android 11+ (Scoped Storage)
     var pendingDownloadText by remember { mutableStateOf<String?>(null) }
+    var showDownloadWarning by remember { mutableStateOf(false) }
     val saveFileLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
@@ -369,11 +370,7 @@ fun DepseudonymizationScreen(
 
                     // Pobierz plik
                     OutlinedButton(
-                        onClick  = {
-                            val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
-                            pendingDownloadText = restoredText
-                            saveFileLauncher.launch(fileName)
-                        },
+                        onClick  = { showDownloadWarning = true },
                         modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
                         shape    = RoundedCornerShape(50),
                         colors   = ButtonDefaults.outlinedButtonColors(contentColor = LynxColors.TextMuted)
@@ -391,6 +388,25 @@ fun DepseudonymizationScreen(
                 }
             }
         }
+    }
+
+    if (showDownloadWarning) {
+        AlertDialog(
+            onDismissRequest = { showDownloadWarning = false },
+            title = { Text("Pobierasz odkryty tekst") },
+            text  = { Text("Plik będzie zawierał oryginalne dane osobowe w formie jawnej (PII plaintext). Upewnij się, że zapisujesz go w bezpiecznym miejscu.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDownloadWarning = false
+                    val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
+                    pendingDownloadText = restoredText
+                    saveFileLauncher.launch(fileName)
+                }) { Text("Pobierz") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDownloadWarning = false }) { Text("Anuluj") }
+            }
+        )
     }
 }
 
