@@ -56,6 +56,27 @@ class OcrNormalizerDigitContextTest {
     }
 
     @Test
+    fun `OCR_DIGIT_IN_CONTEXT naprawia l przed myslnikiem w NIP`() {
+        val r = OcrNormalizer.normalize("52l-334-15-33")
+        assertTrue(r.normalizedText.contains("521-334"))
+        assertFalse(r.normalizedText.contains("52l"))
+    }
+
+    @Test
+    fun `OCR_NIP_BARE3322 naprawia cyrylice Z w segmencie`() {
+        val r = OcrNormalizer.normalize("521-3\u04174-15-33")
+        assertTrue(r.normalizedText.contains("334"))
+        assertFalse(r.normalizedText.contains("\u0417"))
+    }
+
+    @Test
+    fun `OCR_PHONE_AFTER_KW naprawia 48 60l po tel`() {
+        val r = OcrNormalizer.normalize("tel: 48 60l 234 567")
+        assertTrue(r.normalizedText.contains("601 234 567"))
+        assertFalse(r.normalizedText.contains("60l"))
+    }
+
+    @Test
     fun `OCR_DIGIT_IN_CONTEXT naprawia l przez spacje gdy po spacji cyfra`() {
         // v2.1: 'l' po cyfrze + spacja + cyfra → naprawia (kontekst liczby z grupami)
         // "60l 234 567" → "601 234 567" (np. numer telefonu rozbity przez OCR)

@@ -284,7 +284,6 @@ class OcrDegradationTest {
             tokens(LVL3).any { it.replace(" ", "").replace("l", "1")
                 .contains("PL89109010147449555252110732") })
 
-    @Ignore("BUG-TEL-PREFIX: TELEFON nie trafia do tokenMap — maskowany tylko przez OutputGuard, nie StructuralEngine. Czeka na dodanie wzorca TELEFON do StructuralEngine (S10).")
     @Test fun `FAIL lvl3 TEL1 pominiety 48 60l 234 567`() =
         assertTrue("48 60l 234 567 nie wykryty (LVL3)",
             tokens(LVL3).any { "601" in it.replace("l","1") && "234" in it })

@@ -326,6 +326,18 @@ object OcrNormalizer {
         'G' to '6', 'Z' to '2',
     )
 
+    /** Homoglify OCR w segmentach liczbowych (np. cyrylica З→3 w gołym NIP — S4 / RODO v2 zad. 4). */
+    private val OCR_HOMOGLYPH_DIGIT_MAP: Map<Char, Char> = OCR_NUMERIC_CHAR_MAP + mapOf(
+        '\u0417' to '3', '\u0437' to '3', // Cyrillic З
+        '\u041E' to '0', '\u043E' to '0', // Cyrillic О
+        '\u0406' to '1', '\u0456' to '1', // Cyrillic І
+    )
+
+    private fun ocrHomoglyphDigit(c: Char): Char = OCR_HOMOGLYPH_DIGIT_MAP[c] ?: c
+
+    private fun fixOcrDigitSegment(seg: String): String =
+        seg.map { ocrHomoglyphDigit(it) }.joinToString("")
+
     // Odwrotność OCR_NUMERIC_CHAR_MAP — cyfra jako litera w serii dowodu (pozycja zawsze liter)
     private val OCR_SERIES_CHAR_MAP = mapOf(
         '2' to 'Z', '1' to 'I', '0' to 'O',
@@ -397,6 +409,22 @@ object OcrNormalizer {
         """(\d{3}-\d{3}-\d{2})\.(\d{2})(?!\d)"""
     )
 
+    // OCR_NIP_BARE3322 / 3223: kształt NIP bez słowa kluczowego — l/O/cyrylica w segmentach (S4)
+    private val OCR_NIP_BARE3322 = Regex(
+        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})\b"""
+    )
+    private val OCR_NIP_BARE3223 = Regex(
+        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})\b"""
+    )
+
+    private fun replaceNipBareShape(m: MatchResult): String {
+        val seps = listOf(m.groupValues[2], m.groupValues[4], m.groupValues[6])
+        val segs = listOf(m.groupValues[1], m.groupValues[3], m.groupValues[5], m.groupValues[7])
+        val fixed = segs.map { fixOcrDigitSegment(it) }
+        if (fixed == segs || fixed.any { s -> s.any { !it.isDigit() } }) return m.value
+        return "${fixed[0]}${seps[0]}${fixed[1]}${seps[1]}${fixed[2]}${seps[2]}${fixed[3]}"
+    }
+
     // ----------------------------------------------------------
     // OCR_DOWOD_DIGITS: litery jako cyfry w numerze dowodu osobistego po słowie kluczowym
     // Słowa kluczowe: "dowód/dowod/dow." + "os." + dwukropek/separator
@@ -447,12 +475,19 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
-    // OCR_DIGIT_IN_CONTEXT: litera l/O/I po cyfrze, przed cyfrą lub spacją+cyfrą → cyfra
-    // "9l04"    → "9104"   (bez spacji)
-    // "325O 0003" → "3250 0003" (O na końcu grupy IBAN przed spacją — v2.1)
-    // NIE przekracza newline: [^\S\n]* zatrzymuje się na końcu linii
+    // OCR_PHONE_AFTER_KW (krok 14a): l/O/I w numerze po tel/kom/mob/fax
+    // "tel: 48 60l 234 567" → "tel: 48 601 234 567" (S10 / BUG-TEL-PREFIX)
     // ----------------------------------------------------------
-    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOIo]+(?=[^\S\n]*\d)""")
+    private val OCR_PHONE_AFTER_KW = Regex(
+        """(?i)\b(tel(?:efon)?|kom(?:\.|orkowy)?|mob(?:\.|ile)?|fax|faks)\.?[^\S\n]*[:–\-]?[^\S\n]*(\+?(?:48[^\S\n]*)?[\d\s\-().lOIo]{7,22}\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_DIGIT_IN_CONTEXT: litera l/O/I po cyfrze, przed cyfrą (z opcj. separatorami) → cyfra
+    // "9l04" → "9104"; "52l-334" → "521-334" (myślnik między l a cyfrą — RODO v2 S4)
+    // NIE przekracza newline.
+    // ----------------------------------------------------------
+    private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOIo]+(?=[\s\-./]*\d)""")
 
     // ----------------------------------------------------------
     // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
@@ -657,6 +692,18 @@ object OcrNormalizer {
             "${m.groupValues[1]}-${m.groupValues[2]}"
         }
 
+        // 11c2. OCR: goły NIP (3-3-2-2 / 3-2-2-3) bez keyword — homoglify w segmentach
+        text = OCR_NIP_BARE3322.replace(text) { m ->
+            val fixed = replaceNipBareShape(m)
+            if (fixed != m.value) corrections++
+            fixed
+        }
+        text = OCR_NIP_BARE3223.replace(text) { m ->
+            val fixed = replaceNipBareShape(m)
+            if (fixed != m.value) corrections++
+            fixed
+        }
+
         // 11d. OCR: cyfry jako litery w serii dowodu + litery jako cyfry w numerze (po słowie kluczowym)
         text = OCR_DOWOD_DIGITS.replace(text) { m ->
             val rawSeria = m.groupValues[1]
@@ -724,6 +771,16 @@ object OcrNormalizer {
                 (g1 != m.groupValues[1] || g2 != m.groupValues[2])) {
                 corrections++
                 "$g1-$g2"
+            } else m.value
+        }
+
+        // 14a. OCR: numer telefonu po słowie kluczowym — l/O/I → cyfry w bloku numeru
+        text = OCR_PHONE_AFTER_KW.replace(text) { m ->
+            val numPart = m.groupValues[2]
+            val fixed = numPart.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != numPart) {
+                corrections++
+                m.value.replace(numPart, fixed)
             } else m.value
         }
 
