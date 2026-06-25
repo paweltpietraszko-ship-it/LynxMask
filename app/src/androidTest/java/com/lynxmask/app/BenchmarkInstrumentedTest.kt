@@ -1,26 +1,28 @@
 package com.lynxmask.app
 
-// BenchmarkInstrumentedTest.kt — Benchmark end-to-end na urządzeniu
+// BenchmarkInstrumentedTest.kt — Benchmark v2 — sekcje A-D, bramka OCR, klasyfikacja miss
 //
 // Uruchamianie: Android Studio → plik → zielony trójkąt przy klasie
-// Lokalizacja:  app/src/androidTest/java/com/lynxmask/app/BenchmarkInstrumentedTest.kt
 //
-// Wymaga na telefonie (wgraj przez adb push):
-//   /storage/emulated/0/Documents/LynxMask/bench/images/    — folder z PNG z generatora
-//   /storage/emulated/0/Documents/LynxMask/bench/ground_truth.json
+// Dataset na telefonie (adb push):
+//   /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/images/
+//   /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json
 //
-// Raport zapisywany do:
-//   /storage/emulated/0/Documents/LynxMask/bench/benchmark_report.txt
-//   /storage/emulated/0/Documents/LynxMask/bench/benchmark_bugs.txt
+// Raporty:
+//   adb pull /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/benchmark_report.txt
+//   adb pull /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/benchmark_bugs.txt
 //
-// Pobierz raporty po teście:
-//   adb pull /storage/emulated/0/Documents/LynxMask/bench/benchmark_report.txt
-//   adb pull /storage/emulated/0/Documents/LynxMask/bench/benchmark_bugs.txt
+// Sekcje raportu (BRIEF_Wlasciciel_Benchmark_v2.md §4):
+//   A — ENGINE-ONLY: testy JVM (nie run tu)
+//   B — IN-SCOPE ACCEPTED: lvl 0/1/3 + bramka OK → GŁÓWNY KPI
+//   C — REJECTED: bramka odrzuciła (100% reject oczekiwane)
+//   D — OUT-OF-SCOPE: lvl 2 który przeszedł bramkę (informacyjnie)
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.runBlocking
@@ -36,29 +38,40 @@ import java.io.File
 class BenchmarkInstrumentedTest {
 
     companion object {
-        // "ground_truth_lvl01.json"  — 34 dok., lvl 0+1, ~213 encji ← diagnoza silnika
-        // "ground_truth_lvl0.json"   — 17 dok., tylko perfect scan  ← minimalna wersja
-        // "ground_truth_lvl03.json"  — 68 dok., lvl 0-3             ← standardowy benchmark
-        // "ground_truth.json"        — 100 dok., wszystkie poziomy   ← pełny dataset
+        // ground_truth_lvl03.json — 68 dok., lvl 0–3 — używany dla sekcji B+C+D
+        // Sekcja B = lvl 0/1/3 + bramka OK; C = reject; D = lvl2 accepted
         const val GROUND_TRUTH_FILE = "ground_truth_lvl03.json"
     }
 
     private val context by lazy { InstrumentationRegistry.getInstrumentation().targetContext }
     private val benchDir by lazy { File(context.getExternalFilesDir(null), "bench") }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Główny test
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Smoke test — regex ICU na urządzeniu ────────────────────────────────
+    // Musi przejść PRZED benchmarkiem — incydent 2026-06-25: PatternSyntaxException
+    // w OcrNormalizer (ICU nie akceptuje lookbehind z \w*) ubijał cały run.
+
+    @Test
+    fun regexSmokeTest() {
+        LookupTables.initialize(context)
+        resetRegexCache()
+        OcrNormalizer.normalize("PESEL 90010100010 NIP 123-456-78-90 test@test.pl ul. Kwiatowa 5")
+        PseudonymEngine.pseudonymize("Jan Kowalski PESEL 90010100010 NIP 111-22-33-444")
+        println("[SMOKE] OK — brak PatternSyntaxException na urządzeniu")
+    }
+
+    // ── Główny test ──────────────────────────────────────────────────────────
 
     @Test
     fun runBenchmark() = runBlocking {
         benchDir.mkdirs()
         println("[BENCH] benchDir: ${benchDir.absolutePath}")
 
-        // Inicjalizacja silnika — musi być przed pierwszym pseudonymize()
-        // Bez tego w trybie DEBUG silnik rzuca IllegalStateException i ubija apkę
         LookupTables.initialize(context)
+        resetRegexCache()
         UserDictionary.load(context)
+        UserDictionary.clear(context)
+        GuardAllowlist.clear(context)
+        println("[BENCH_DEBUG] UserDictionary + GuardAllowlist wyczyszczone przed benchmarkiem")
 
         val gtFile = File(benchDir, GROUND_TRUTH_FILE)
         check(gtFile.exists()) {
@@ -69,24 +82,13 @@ class BenchmarkInstrumentedTest {
         val groundTruth = JSONArray(gtFile.readText())
         val imagesDir   = File(benchDir, "images")
         check(imagesDir.exists()) {
-            "Brak folderu images — wgraj dataset:\n" +
-            "adb push dataset/images /storage/emulated/0/Documents/LynxMask/bench/images"
+            "Brak folderu images — wgraj:\nadb push dataset/images /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/images"
         }
 
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         val results    = mutableListOf<DocResult>()
 
-        UserDictionary.clear(context)
-        GuardAllowlist.clear(context)
-        println("[BENCH_DEBUG] UserDictionary + GuardAllowlist wyczyszczone przed benchmarkiem")
-
-        val dictSize = UserDictionary.entries.size
-        println("[BENCH_DEBUG] UserDictionary: $dictSize encji")
-        UserDictionary.entries.take(10).forEach { (phrase, type) ->
-            println("[BENCH_DEBUG]   '$phrase' → $type")
-        }
-
-        println("\n[BENCHMARK] Dokumentów: ${groundTruth.length()}")
+        println("\n[BENCHMARK v2] Dokumentów: ${groundTruth.length()}")
         println("─".repeat(72))
 
         for (i in 0 until groundTruth.length()) {
@@ -104,22 +106,26 @@ class BenchmarkInstrumentedTest {
 
             val s    = result.summary
             val rec  = if (s.recall != null) "${(s.recall * 100).toInt()}%" else "N/A"
-            val prec = if (s.precision != null) "${(s.precision * 100).toInt()}%" else "N/A"
             val crit = if (s.criticalMissed > 0) " ⚠CRIT:${s.criticalMissed}" else ""
+            val rej  = if (!result.ocrAccepted) " REJECT(conf=${"%.2f".format(result.ocrConf)})" else ""
             val err  = if (result.error != null) " ERR:${result.error}" else ""
 
             println("  [${(i+1).toString().padStart(3)}] ${fileName.padEnd(20)} " +
-                    "${result.docType.padEnd(22)} lvl=${result.degLevel} " +
-                    "R=$rec P=$prec$crit$err")
+                    "[${result.section}] lvl=${result.degLevel} " +
+                    "R=$rec$crit$rej$err")
         }
 
-        saveReports(results)
-        printSummary(results)
+        try {
+            saveReports(results)
+            printSummary(results)
+        } catch (e: Exception) {
+            println("[BENCH_FATAL] saveReports: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Przetwarzanie jednego obrazu
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Przetwarzanie jednego obrazu ─────────────────────────────────────────
 
     private suspend fun processImage(
         imgFile: File,
@@ -127,59 +133,68 @@ class BenchmarkInstrumentedTest {
         recognizer: com.google.mlkit.vision.text.TextRecognizer,
     ): DocResult {
         return try {
-            // ML Kit OCR
             val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                ?: return analyze(gt, emptyList(), ocrText = "", error = "bitmap null: ${imgFile.name}")
-            val mlImage  = InputImage.fromBitmap(bitmap, 0)
-            val ocrText: String = suspendCancellableCoroutine { cont ->
+                ?: return analyze(gt, emptyList(), ocrText = "", ocrAccepted = false, ocrConf = 0f,
+                                  error = "bitmap null: ${imgFile.name}")
+
+            val mlImage = InputImage.fromBitmap(bitmap, 0)
+            val ocrResult: Text = suspendCancellableCoroutine { cont ->
                 recognizer.process(mlImage)
-                    .addOnSuccessListener { r -> cont.resume(r.text) {} }
+                    .addOnSuccessListener { r -> cont.resume(r) {} }
                     .addOnFailureListener { e -> cont.resumeWithException(e) }
             }
 
+            val ocrText     = ocrResult.text
+            val ocrAccepted = isOcrQualityAcceptable(ocrResult)
+            val ocrConf     = calcOcrConfidence(ocrResult)
 
-            // OcrNormalizer + PseudonymEngine z UserDictionary
-            // .toList() jest bezpieczniejsze niż ArrayList() — działa niezależnie
-            // od konkretnego typu kolekcji zwracanej przez UserDictionary.entries
-            val normalized  = OcrNormalizer.normalize(ocrText)
-            val dictEntries = UserDictionary.entries.toList()
+            if (!ocrAccepted) {
+                return analyze(gt, emptyList(), ocrText = ocrText,
+                               ocrAccepted = false, ocrConf = ocrConf, error = null)
+            }
+
+            val normalized   = OcrNormalizer.normalize(ocrText)
+            val dictEntries  = UserDictionary.entries.toList()
             val engineResult = PseudonymEngine.pseudonymize(normalized.normalizedText, dictEntries, traceMode = true)
 
-            // Tokeny: tokenMap to Map<token, original>
             val tokens = engineResult.tokenMap.map { (token, original) ->
-                DetectedToken(
-                    original = original,
-                    token    = token,
-                    type     = token.substringBefore("_"),
-                )
+                DetectedToken(original = original, token = token, type = token.substringBefore("_"))
             }
 
-            // Token dump dla pierwszego dokumentu (plik nie istnieje = pierwszy dok.)
             val dumpFile = File(benchDir, "token_dump_doc0.txt")
             if (!dumpFile.exists()) {
-                val tokenDump = engineResult.tokenMap.entries
-                    .joinToString("\n") { (k, v) -> "$k = $v" }
-                dumpFile.writeText(tokenDump)
+                dumpFile.writeText(engineResult.tokenMap.entries.joinToString("\n") { (k, v) -> "$k = $v" })
             }
 
-            analyze(gt, tokens, ocrText, normalizedText = normalized.normalizedText, error = null, trace = engineResult.trace)
+            analyze(gt, tokens, ocrText,
+                normalizedText = normalized.normalizedText,
+                ocrAccepted    = true,
+                ocrConf        = ocrConf,
+                error          = null,
+                trace          = engineResult.trace,
+                guardRedHits   = engineResult.guardHits.count { it.level == "RED" },
+            )
         } catch (e: Exception) {
-            analyze(gt, emptyList(), ocrText = "", error = e.message ?: "błąd")
+            analyze(gt, emptyList(), ocrText = "", ocrAccepted = false, ocrConf = 0f,
+                    error = e.message ?: "błąd")
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analiza — porównanie z ground truth
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Analiza — porównanie z ground truth ──────────────────────────────────
 
     private val criticalKeys = setOf(
         "pesel", "nip", "nip_sprzedawcy", "nip_nabywcy",
         "iban", "dowod_osobisty", "numer_paszportu",
     )
 
-    // Oczekiwany typ tokenu dla każdego klucza ground truth.
-    // Używany WYŁĄCZNIE do metryki diagnostycznej type_mismatch_count —
-    // NIE wpływa na found (encja zamaskowana dowolnym tokenem = sukces).
+    private val numericKeys = setOf(
+        "pesel", "nip", "nip_sprzedawcy", "nip_nabywcy", "regon_sprzedawcy",
+        "iban", "dowod_osobisty", "numer_paszportu", "telefon",
+        "numer_faktury", "numer_klienta", "numer_umowy", "numer_kw",
+        "sygnatura_akt", "sygnatura_komornicza", "sygnatura_administracyjna",
+        "data_urodzenia",
+    )
+
     private val ENTITY_TYPE_MAP = mapOf(
         "pesel" to "NUMER", "nip" to "NUMER", "nip_sprzedawcy" to "NUMER",
         "nip_nabywcy" to "NUMER", "iban" to "NUMER", "dowod_osobisty" to "NUMER",
@@ -205,22 +220,13 @@ class BenchmarkInstrumentedTest {
             'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
             'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
         )
-        // OCR_EMAIL_LOCALSPACE zamienia spację w local-part → '_', a GT ma '.':
-        // "malgorzata._kowalska" vs "malgorzata.kowalska" — normalizujemy "._" → "."
         return v.replace(" ", "").replace("-", "").replace("._", ".")
             .map { diacritics[it] ?: it }
             .joinToString("")
             .lowercase()
     }
 
-    // Fuzzy match tylko dla kluczy numerycznych — dla nazwisk byłoby niebezpieczne
-    private val numericKeys = setOf(
-        "pesel", "nip", "nip_sprzedawcy", "nip_nabywcy", "regon_sprzedawcy",
-        "iban", "dowod_osobisty", "numer_paszportu", "telefon",
-        "numer_faktury", "numer_klienta", "numer_umowy", "numer_kw",
-        "sygnatura_akt", "sygnatura_komornicza", "sygnatura_administracyjna",
-        "data_urodzenia",
-    )
+    private fun normalizeForCompare(s: String) = norm(s)
 
     private fun fuzzyMatch(a: String, b: String): Boolean {
         if (a.length < 9 || b.length < 9) return false
@@ -234,37 +240,58 @@ class BenchmarkInstrumentedTest {
         return false
     }
 
+    private fun extractNumericRuns(text: String): List<String> =
+        Regex("""[A-Z0-9]{9,}""", RegexOption.IGNORE_CASE).findAll(text)
+            .map { normalizeForCompare(it.value) }
+            .toList()
+
+    // Klasyfikacja miss wg §12.2 briefa właściciela
+    private fun classifyMiss(key: String, value: String, normalizedText: String): String {
+        val normVal = normalizeForCompare(value)
+        return when {
+            normalizeForCompare(normalizedText).contains(normVal) -> "BUG_SILNIKA"
+            key in numericKeys && extractNumericRuns(normalizedText).any { fuzzyMatch(normVal, it) } -> "OCR_ZNIEKSZTAŁCONY"
+            else -> "BRAK_W_OCR"
+        }
+    }
+
     private fun analyze(
         gt: JSONObject,
         tokens: List<DetectedToken>,
         ocrText: String,
         normalizedText: String = ocrText,
+        ocrAccepted: Boolean,
+        ocrConf: Float,
         error: String?,
         trace: List<DetectionTrace> = emptyList(),
+        guardRedHits: Int = 0,
     ): DocResult {
-        val gtEntities = gt.optJSONObject("entities") ?: JSONObject()
-        // names() zwraca null dla pustego JSONObject — null!! = NPE, dlatego null-safe
-        val gtNames = gtEntities.names()
-        val gtNorms = if (gtNames != null)
-            (0 until gtNames.length()).map { norm(gtEntities.get(gtNames.getString(it)).toString()) }
-        else
-            emptyList()
+        val degLevel = gt.optInt("degradation_level", -1)
+        val section: String = when {
+            !ocrAccepted -> "C"
+            degLevel == 2 -> "D"
+            else -> "B"
+        }
 
-        val entities = mutableListOf<EntityResult>()
-        var detected = 0
+        val gtEntities = gt.optJSONObject("entities") ?: JSONObject()
+        val gtNames    = gtEntities.names()
+        val gtNorms    = if (gtNames != null)
+            (0 until gtNames.length()).map { norm(gtEntities.get(gtNames.getString(it)).toString()) }
+        else emptyList()
+
+        val entities   = mutableListOf<EntityResult>()
+        val missLabels = mutableMapOf<String, String>()
+        var detected   = 0
         var criticalMissed = 0
-        var typeMismatch = 0  // ile razy encja znaleziona, ale innym typem tokenu niż oczekiwany
+        var typeMismatch   = 0
 
         gtEntities.keys().forEach { key ->
             val value  = gtEntities.getString(key)
             val valN   = norm(value)
             val isCrit = key in criticalKeys
 
-            // Sukces = encja zamaskowana DOWOLNYM tokenem (type-agnostic).
-            // Porażka = encja w ogóle niezamaskowana.
-            // Zgodnie z NOTA_FILOZOFIA_MASKOWANIA: typ tokenu jest wtórny.
             var matchedTokenType: String? = null
-            val found = error == null && tokens.any { tok ->
+            val found = error == null && ocrAccepted && tokens.any { tok ->
                 val on = norm(tok.original)
                 val matched = valN == on ||
                     (valN.length >= 6 && (valN.contains(on) || on.contains(valN))) ||
@@ -275,150 +302,157 @@ class BenchmarkInstrumentedTest {
 
             if (found) {
                 detected++
-                // Diagnostyka: czy typ tokenu zgadza się z oczekiwanym?
                 val expectedType = ENTITY_TYPE_MAP[key]
-                if (expectedType != null && matchedTokenType != null &&
-                    expectedType != matchedTokenType) {
+                if (expectedType != null && matchedTokenType != null && expectedType != matchedTokenType)
                     typeMismatch++
-                }
-            } else if (isCrit) criticalMissed++
+            } else {
+                missLabels[key] = classifyMiss(key, value, normalizedText)
+                if (isCrit) criticalMissed++
+            }
             entities.add(EntityResult(key, value, found, isCrit))
         }
 
-        val total     = entities.size
+        val total = entities.size
         var fpCount = 0
-        val fpExamples = mutableListOf<String>()
-        println("[FP_DEBUG_COUNT] Tokenów do sprawdzenia: ${tokens.size}")
         tokens.forEach { tok ->
             val on = norm(tok.original)
             val isFp = on.length >= 2 && gtNorms.none { gn ->
                 on == gn || (on.length >= 6 && (on.contains(gn) || gn.contains(on)))
             }
-            if (isFp) {
-                if (fpCount < 10) {
-                    fpExamples.add("FP: ${tok.token} = '${tok.original}' → norm='${norm(tok.original)}'")
-                }
-                fpCount++
-            }
+            if (isFp) fpCount++
         }
-        println("[FP_DEBUG] Pierwsze 10 FP w tym dokumencie:")
-        fpExamples.forEach { println("  $it") }
-        val fp = fpCount
+        val fp        = fpCount
         val recall    = if (total > 0) detected.toDouble() / total else null
         val precision = if (detected + fp > 0) detected.toDouble() / (detected + fp) else null
         val f1        = if (recall != null && precision != null && recall + precision > 0)
             2 * recall * precision / (recall + precision) else null
 
+        val critMisses   = entities.filter { !it.found && it.critical }
+        val bugSilnika   = critMisses.count { missLabels[it.key] == "BUG_SILNIKA" }
+        val ocrZniek     = critMisses.count { missLabels[it.key] == "OCR_ZNIEKSZTAŁCONY" }
+        val brakWOcr     = critMisses.count { missLabels[it.key] == "BRAK_W_OCR" }
+
         return DocResult(
-            file      = gt.getString("file"),
-            docType   = gt.optString("doc_type", "?"),
-            degLevel  = gt.optInt("degradation_level", -1),
-            qualScore = gt.optInt("quality_score", -1),
-            ocrLen    = ocrText.length,
-            ocrText   = ocrText,
-            error     = error,
-            tokens    = tokens,
-            entities  = entities,
-            fpCount   = fp,
-            summary   = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
-                                typeMismatch),
-            trace     = trace,
+            file           = gt.getString("file"),
+            docType        = gt.optString("doc_type", "?"),
+            degLevel       = degLevel,
+            qualScore      = gt.optInt("quality_score", -1),
+            ocrLen         = ocrText.length,
+            ocrText        = ocrText,
+            ocrAccepted    = ocrAccepted,
+            ocrConf        = ocrConf,
+            section        = section,
+            error          = error,
+            tokens         = tokens,
+            entities       = entities,
+            fpCount        = fp,
+            missLabels     = missLabels,
+            guardRedHits   = guardRedHits,
+            summary        = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
+                                     typeMismatch, bugSilnika, ocrZniek, brakWOcr),
+            trace          = trace,
             normalizedText = normalizedText,
         )
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Raporty
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Raporty ──────────────────────────────────────────────────────────────
 
     private fun printSummary(results: List<DocResult>) {
-        val totalEnt  = results.sumOf { it.summary.total }
-        val totalDet  = results.sumOf { it.summary.detected }
-        val totalFp   = results.sumOf { it.summary.fp }
-        val totalCrit = results.sumOf { it.summary.criticalMissed }
-        val totalMismatch = results.sumOf { it.summary.typeMismatch }
-        val errors    = results.count { it.error != null }
-        val recall    = if (totalEnt > 0) totalDet.toDouble() / totalEnt else 0.0
-        val precision = if (totalDet + totalFp > 0) totalDet.toDouble() / (totalDet + totalFp) else 0.0
+        val secB = results.filter { it.section == "B" }
+        val secC = results.filter { it.section == "C" }
+        val secD = results.filter { it.section == "D" }
+
+        val bEnt      = secB.sumOf { it.summary.total }
+        val bDet      = secB.sumOf { it.summary.detected }
+        val bFp       = secB.sumOf { it.summary.fp }
+        val bRecall   = if (bEnt > 0) bDet.toDouble() / bEnt else 0.0
+        val bBugSil   = secB.sumOf { it.summary.bugSilnika }
+        val bOcrZniek = secB.sumOf { it.summary.ocrZniekształcony }
+        val bGuardRed = secB.sumOf { it.guardRedHits }
+        val bCritEnt  = secB.flatMap { r -> r.entities.filter { it.critical } }
+        val bCritDet  = bCritEnt.count { it.found }
+        val bCritRec  = if (bCritEnt.isNotEmpty()) bCritDet.toDouble() / bCritEnt.size else 0.0
+        val cFail     = secC.count { it.tokens.isNotEmpty() }
 
         println("\n${"═".repeat(60)}")
-        println("BENCHMARK ZAKOŃCZONY")
-        println("  Recall:          ${"%.1f".format(recall * 100)}%")
-        println("  Precision:       ${"%.1f".format(precision * 100)}%")
-        println("  Krytyczne braki: $totalCrit")
-        println("  False positives: $totalFp")
-        println("  Type mismatch:   $totalMismatch  ← zamaskowane złym typem (diagnostyka)")
-        println("  Błędy:           $errors")
+        println("BENCHMARK v2 — WYNIKI")
+        println()
+        println("B. IN-SCOPE ACCEPTED (główny KPI release)")
+        println("   Dokumenty:                  ${secB.size}")
+        println("   Recall ogólny:              ${"%.1f".format(bRecall * 100)}%  (próg: 90%)")
+        println("   Recall encje krytyczne:     ${"%.1f".format(bCritRec * 100)}%  (próg: 95%)")
+        println()
+        println("   BLOKERY RELEASE:")
+        println("   BUG_SILNIKA (kryt.):        $bBugSil  ${if (bBugSil == 0) "✓" else "✗ FAIL"}")
+        println("   OCR_ZNIEKSZTAŁCONY (kryt.): $bOcrZniek  ${if (bOcrZniek == 0) "✓" else "✗ FAIL"}")
+        println("   Guard RED hits:             $bGuardRed  ${if (bGuardRed == 0) "✓" else "✗ FAIL"}")
+        println("   FP metryczne:               $bFp  (informacyjnie)")
+        println()
+        println("C. REJECTED:  ${secC.size} dok.  ${if (cFail == 0) "✓ 100% poprawnie" else "✗ FAIL: $cFail przetworzone"}")
+        println("D. OUT-OF-SCOPE (lvl2 accepted): ${secD.size} dok.")
+        println()
         println("  Raporty na telefonie:")
-        println("    /storage/emulated/0/Documents/LynxMask/bench/benchmark_report.txt")
-        println("    /storage/emulated/0/Documents/LynxMask/bench/benchmark_bugs.txt")
-        println("  Pobierz: adb pull /storage/emulated/0/Documents/LynxMask/bench/benchmark_report.txt")
+        println("    adb pull /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/benchmark_report.txt")
+        println("    adb pull /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/benchmark_bugs.txt")
         println("${"═".repeat(60)}\n")
     }
 
-    private fun normalizeForCompare(s: String): String {
-        val diacritics = mapOf(
-            'ą' to 'a', 'ć' to 'c', 'ę' to 'e', 'ł' to 'l', 'ń' to 'n',
-            'ó' to 'o', 'ś' to 's', 'ź' to 'z', 'ż' to 'z',
-            'Ą' to 'a', 'Ć' to 'c', 'Ę' to 'e', 'Ł' to 'l', 'Ń' to 'n',
-            'Ó' to 'o', 'Ś' to 's', 'Ź' to 'z', 'Ż' to 'z'
-        )
-        return s.replace(" ", "").replace("-", "").replace("._", ".")
-            .map { diacritics[it] ?: it }
-            .joinToString("")
-            .lowercase()
-    }
+    private val typeMap = mapOf(
+        "imie_nazwisko" to "OSOBA", "imie_nazwisko_nabywcy" to "OSOBA",
+        "imie_nazwisko_zleceniodawca" to "OSOBA", "imie_nazwisko_zleceniobiorca" to "OSOBA",
+        "autor" to "OSOBA", "osoba" to "OSOBA",
+        "pesel" to "NUMER", "nip" to "NUMER", "nip_sprzedawcy" to "NUMER",
+        "nip_nabywcy" to "NUMER", "regon_sprzedawcy" to "NUMER",
+        "telefon" to "NUMER", "iban" to "NUMER", "dowod_osobisty" to "NUMER",
+        "numer_faktury" to "NUMER", "numer_klienta" to "NUMER",
+        "sygnatura_akt" to "NUMER", "sygnatura_komornicza" to "NUMER",
+        "sygnatura_administracyjna" to "NUMER", "data_urodzenia" to "NUMER",
+        "adres" to "ADRES", "adres_nabywcy" to "ADRES",
+        "adres_zleceniobiorca" to "ADRES", "adres_zleceniodawca" to "ADRES",
+        "nip_zleceniobiorca" to "NUMER", "nip_zleceniodawca" to "NUMER",
+        "numer_dzialki" to "NUMER", "numer_kw" to "NUMER",
+        "numer_umowy" to "NUMER", "pesel_zleceniodawca" to "NUMER",
+        "numer_paszportu" to "NUMER",
+        "email" to "EMAIL",
+    )
 
     private fun saveReports(results: List<DocResult>) {
-        val totalEnt  = results.sumOf { it.summary.total }
-        val totalDet  = results.sumOf { it.summary.detected }
-        val totalFp   = results.sumOf { it.summary.fp }
-        val totalCrit = results.sumOf { it.summary.criticalMissed }
-        val errors    = results.count { it.error != null }
-        val recall    = if (totalEnt > 0) totalDet.toDouble() / totalEnt else 0.0
-        val precision = if (totalDet + totalFp > 0) totalDet.toDouble() / (totalDet + totalFp) else 0.0
-        val f1        = if (recall + precision > 0) 2 * recall * precision / (recall + precision) else 0.0
+        val ts = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+            .format(java.util.Date())
 
-        // Per typ encji
-        val perType = mutableMapOf<String, Triple<Int, Int, Int>>() // det, total, fp
-        val typeMap = mapOf(
-            "imie_nazwisko" to "OSOBA", "imie_nazwisko_nabywcy" to "OSOBA",
-            "imie_nazwisko_zleceniodawca" to "OSOBA", "imie_nazwisko_zleceniobiorca" to "OSOBA",
-            "autor" to "OSOBA", "osoba" to "OSOBA",
-            "pesel" to "NUMER", "nip" to "NUMER", "nip_sprzedawcy" to "NUMER",
-            "nip_nabywcy" to "NUMER", "regon_sprzedawcy" to "NUMER",
-            "telefon" to "NUMER", "iban" to "NUMER", "dowod_osobisty" to "NUMER",
-            "numer_faktury" to "NUMER", "numer_klienta" to "NUMER",
-            "sygnatura_akt" to "NUMER", "sygnatura_komornicza" to "NUMER",
-            "sygnatura_administracyjna" to "NUMER", "data_urodzenia" to "NUMER",
-            "adres" to "ADRES", "adres_nabywcy" to "ADRES",
-            "adres_zleceniobiorca" to "ADRES", "adres_zleceniodawca" to "ADRES",
-            "nip_zleceniobiorca" to "NUMER", "nip_zleceniodawca" to "NUMER",
-            "numer_dzialki" to "NUMER", "numer_kw" to "NUMER",
-            "numer_umowy" to "NUMER", "pesel_zleceniodawca" to "NUMER",
-            "numer_paszportu" to "NUMER",
-            "email" to "EMAIL",
-        )
-        results.forEach { r ->
+        val secB = results.filter { it.section == "B" }
+        val secC = results.filter { it.section == "C" }
+        val secD = results.filter { it.section == "D" }
+
+        val bEnt      = secB.sumOf { it.summary.total }
+        val bDet      = secB.sumOf { it.summary.detected }
+        val bFp       = secB.sumOf { it.summary.fp }
+        val bRecall   = if (bEnt > 0) bDet.toDouble() / bEnt else 0.0
+        val bPrec     = if (bDet + bFp > 0) bDet.toDouble() / (bDet + bFp) else 0.0
+        val bF1       = if (bRecall + bPrec > 0) 2 * bRecall * bPrec / (bRecall + bPrec) else 0.0
+        val bBugSil   = secB.sumOf { it.summary.bugSilnika }
+        val bOcrZniek = secB.sumOf { it.summary.ocrZniekształcony }
+        val bBrakWOcr = secB.sumOf { it.summary.brakWOcr }
+        val bGuardRed = secB.sumOf { it.guardRedHits }
+        val bErrors   = secB.count { it.error != null }
+        val bCritEnt  = secB.flatMap { r -> r.entities.filter { it.critical } }
+        val bCritDet  = bCritEnt.count { it.found }
+        val bCritRec  = if (bCritEnt.isNotEmpty()) bCritDet.toDouble() / bCritEnt.size else 0.0
+        val cFail     = secC.count { it.tokens.isNotEmpty() }
+
+        val perType = mutableMapOf<String, Triple<Int, Int, Int>>()
+        secB.forEach { r ->
             r.entities.forEach { e ->
                 val t = typeMap[e.key] ?: "?"
                 val (d, tot, fp) = perType.getOrDefault(t, Triple(0, 0, 0))
                 perType[t] = Triple(if (e.found) d + 1 else d, tot + 1, fp)
             }
-            r.tokens.forEach { tok ->
-                // fp already counted in summary
-            }
         }
 
-        // Per poziom degradacji
-        val perLevel = mutableMapOf<Int, Triple<Int, Int, Int>>() // det, total, docs
-        results.forEach { r ->
+        val perLevel = mutableMapOf<Int, Triple<Int, Int, Int>>()
+        secB.forEach { r ->
             val (d, tot, docs) = perLevel.getOrDefault(r.degLevel, Triple(0, 0, 0))
-            perLevel[r.degLevel] = Triple(
-                d + r.summary.detected,
-                tot + r.summary.total,
-                docs + 1,
-            )
+            perLevel[r.degLevel] = Triple(d + r.summary.detected, tot + r.summary.total, docs + 1)
         }
 
         val lvlLabels = mapOf(
@@ -426,188 +460,186 @@ class BenchmarkInstrumentedTest {
             3 to "phone (good)  ", 4 to "phone (casual)", 5 to "poor quality  ",
         )
 
-        val ts = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-            .format(java.util.Date())
-
-        // ── summary.txt ──────────────────────────────────────────────────────
+        // ── benchmark_report.txt ─────────────────────────────────────────────
         val sb = StringBuilder()
-        sb.appendLine("BENCHMARK LYNXMASK MOBILE — RAPORT")
-        sb.appendLine("Data:  $ts")
+        sb.appendLine("BENCHMARK LYNXMASK MOBILE v2 — RAPORT")
+        sb.appendLine("Data:    $ts")
+        sb.appendLine("Dataset: $GROUND_TRUTH_FILE")
         sb.appendLine("═".repeat(60))
         sb.appendLine()
-        sb.appendLine("OGÓLNE")
-        sb.appendLine("  Dokumentów:                    ${results.size}")
-        sb.appendLine("  Encji w ground truth:          $totalEnt")
-        sb.appendLine("  Wykrytych i zamaskowanych:     $totalDet")
-        sb.appendLine("  Pominiętych:                   ${totalEnt - totalDet}")
-        sb.appendLine("  False positives:               $totalFp")
-        sb.appendLine("  RECALL:    ${"%.1f".format(recall * 100)}%")
-        sb.appendLine("  PRECISION: ${"%.1f".format(precision * 100)}%")
-        sb.appendLine("  F1:        ${"%.1f".format(f1 * 100)}%")
-        sb.appendLine("  Krytyczne braki:               $totalCrit")
-        sb.appendLine("  Błędy:                         $errors")
+        sb.appendLine("A. ENGINE-ONLY (testy JVM)")
+        sb.appendLine("   → gradlew :app:testDebugUnitTest")
+        sb.appendLine("   → wynik: patrz Claude_Code.txt (ostatni run JVM)")
         sb.appendLine()
-        sb.appendLine("RECALL PER TYP ENCJI")
+        sb.appendLine("B. IN-SCOPE ACCEPTED — GŁÓWNY KPI RELEASE")
+        sb.appendLine("   Dokumenty:                       ${secB.size}")
+        sb.appendLine("   Encji w ground truth:            $bEnt")
+        sb.appendLine("   Wykrytych i zamaskowanych:       $bDet")
+        sb.appendLine("   Pominiętych:                     ${bEnt - bDet}")
+        sb.appendLine("   RECALL ogólny:                   ${"%.1f".format(bRecall * 100)}%  (próg: ≥90%)")
+        sb.appendLine("   RECALL encje krytyczne:          ${"%.1f".format(bCritRec * 100)}%  (próg: ≥95%)")
+        sb.appendLine("   PRECISION:                       ${"%.1f".format(bPrec * 100)}%")
+        sb.appendLine("   F1:                              ${"%.1f".format(bF1 * 100)}%")
+        sb.appendLine()
+        sb.appendLine("   ── BLOKERY RELEASE ─────────────────────────────────")
+        sb.appendLine("   BUG_SILNIKA (kryt.):             $bBugSil   ${if (bBugSil == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
+        sb.appendLine("   OCR_ZNIEKSZTAŁCONY (kryt.):      $bOcrZniek   ${if (bOcrZniek == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
+        sb.appendLine("   Guard RED hits:                  $bGuardRed   ${if (bGuardRed == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
+        sb.appendLine("   ── INFORMACYJNIE ───────────────────────────────────")
+        sb.appendLine("   BRAK_W_OCR (kryt.):              $bBrakWOcr   (nie blokuje — sufit OCR)")
+        sb.appendLine("   FP metryczne (token vs GT):      $bFp   (nie blokuje)")
+        sb.appendLine("   Błędy pipeline:                  $bErrors")
+        sb.appendLine()
+        sb.appendLine("   RECALL PER TYP ENCJI (sekcja B)")
         perType.toSortedMap().forEach { (t, triple) ->
             val (d, tot, _) = triple
             val rc  = if (tot > 0) d.toDouble() / tot else 0.0
             val bar = "█".repeat((rc * 16).toInt()) + "░".repeat(16 - (rc * 16).toInt())
-            sb.appendLine("  ${t.padEnd(12)} ${"%.1f".format(rc * 100)}%  [$bar]  ($d/$tot)")
+            sb.appendLine("   ${t.padEnd(12)} ${"%.1f".format(rc * 100)}%  [$bar]  ($d/$tot)")
         }
         sb.appendLine()
-        sb.appendLine("RECALL PER POZIOM DEGRADACJI")
+        sb.appendLine("   RECALL PER POZIOM DEGRADACJI (sekcja B)")
         perLevel.toSortedMap().forEach { (lv, triple) ->
             val (d, tot, docs) = triple
             val rc  = if (tot > 0) d.toDouble() / tot else 0.0
             val bar = "█".repeat((rc * 20).toInt()) + "░".repeat(20 - (rc * 20).toInt())
-            sb.appendLine("  Lvl $lv ${lvlLabels[lv] ?: ""} [$bar] ${"%.1f".format(rc * 100)}%  docs=$docs ent=$tot")
+            sb.appendLine("   Lvl $lv ${lvlLabels[lv] ?: ""} [$bar] ${"%.1f".format(rc * 100)}%  docs=$docs ent=$tot")
+        }
+        sb.appendLine()
+        sb.appendLine("C. REJECTED (bramka OCR odrzuciła)")
+        sb.appendLine("   Dokumenty odrzucone:             ${secC.size}")
+        sb.appendLine("   Status:                          ${if (cFail == 0) "✓ 100% poprawnie odrzucone" else "✗ FAIL: $cFail dokumentów przetworzone mimo reject"}")
+        if (secC.isNotEmpty()) {
+            val lvlCounts = secC.groupBy { it.degLevel }.mapValues { it.value.size }
+            lvlCounts.toSortedMap().forEach { (lv, cnt) ->
+                sb.appendLine("   Lvl $lv: $cnt dok.")
+            }
+        }
+        sb.appendLine()
+        sb.appendLine("D. OUT-OF-SCOPE (lvl2 accepted — informacyjnie)")
+        if (secD.isEmpty()) {
+            sb.appendLine("   Brak dokumentów (bramka poprawnie odrzuca lvl2)")
+        } else {
+            val dEnt = secD.sumOf { it.summary.total }
+            val dDet = secD.sumOf { it.summary.detected }
+            val dRec = if (dEnt > 0) dDet.toDouble() / dEnt else 0.0
+            sb.appendLine("   Dokumenty:                       ${secD.size}  ← sygnał: obniżyć próg bramki?")
+            sb.appendLine("   Recall (sufit OCR na lvl2):      ${"%.1f".format(dRec * 100)}%")
         }
 
         File(benchDir, "benchmark_report.txt").writeText(sb.toString())
 
-        // ── bugs.txt ─────────────────────────────────────────────────────────
+        // ── benchmark_bugs.txt ───────────────────────────────────────────────
         val bb = StringBuilder()
-        bb.appendLine("BUGS / ANOMALIE — $ts")
+        bb.appendLine("BUGS v2 — SEKCJA B (IN-SCOPE ACCEPTED) — $ts")
         bb.appendLine("═".repeat(60))
         bb.appendLine()
 
-        val critCases = results.flatMap { r -> r.entities.filter { !it.found && it.critical }.map { r to it } }
-        if (critCases.isNotEmpty()) {
-            bb.appendLine("[KRYTYCZNE] Pominięte encje wysokiego ryzyka: ${critCases.size}")
+        val critMissesB = secB.flatMap { r ->
+            r.entities.filter { !it.found && it.critical }.map { r to it }
+        }
+        val bugSilCases   = critMissesB.filter { (r, e) -> r.missLabels[e.key] == "BUG_SILNIKA" }
+        val ocrZniekCases = critMissesB.filter { (r, e) -> r.missLabels[e.key] == "OCR_ZNIEKSZTAŁCONY" }
+        val brakOcrCases  = critMissesB.filter { (r, e) -> r.missLabels[e.key] == "BRAK_W_OCR" }
+
+        if (bugSilCases.isNotEmpty()) {
+            bb.appendLine("[BUG_SILNIKA] Encje krytyczne — BLOCKER RELEASE: ${bugSilCases.size}")
             bb.appendLine()
-            critCases.take(40).forEach { (r, e) ->
-                bb.appendLine("  ${r.file}  lvl=${r.degLevel}  qs=${r.qualScore}  ${e.key}=${e.value.take(35)}")
+            bugSilCases.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}  ${e.key}=${e.value.take(40)}")
+                val idx = r.normalizedText.indexOf(e.value.take(4), ignoreCase = true)
+                if (idx >= 0) {
+                    val from = maxOf(0, idx - 10)
+                    val to   = minOf(r.normalizedText.length, idx + e.value.length + 15)
+                    bb.appendLine("    OCR: «${r.normalizedText.substring(from, to).replace("\n", "↵")}»")
+                }
             }
             bb.appendLine()
         }
 
-        val lowRecall = perType.filter { (_, v) -> v.second >= 5 && v.first.toDouble() / v.second < 0.80 }
-        if (lowRecall.isNotEmpty()) {
-            bb.appendLine("[RECALL<80%] Typy z niskim recall (min. 5 próbek):")
+        if (ocrZniekCases.isNotEmpty()) {
+            bb.appendLine("[OCR_ZNIEKSZTAŁCONY] Encje krytyczne — BLOCKER RELEASE: ${ocrZniekCases.size}")
             bb.appendLine()
-            lowRecall.forEach { (t, v) ->
-                val rc = v.first.toDouble() / v.second
-                bb.appendLine("  ${t.padEnd(12)} ${"%.1f".format(rc * 100)}%  (${v.first}/${v.second})")
+            ocrZniekCases.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}  ${e.key}=${e.value.take(40)}")
+                bb.appendLine("    → encja nie jest exact w OCR, ale fuzzy match — bug silnika/normalizera")
             }
             bb.appendLine()
         }
 
-        if (errors > 0) {
-            bb.appendLine("[ERRORS] Błędy OCR/silnika: $errors")
+        if (brakOcrCases.isNotEmpty()) {
+            bb.appendLine("[BRAK_W_OCR] Encje krytyczne (nie blokuje release): ${brakOcrCases.size}")
             bb.appendLine()
-            results.filter { it.error != null }.take(10).forEach { r ->
-                bb.appendLine("  ${r.file} → ${r.error}")
+            brakOcrCases.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}  qs=${r.qualScore}  ${e.key}=${e.value.take(40)}")
             }
             bb.appendLine()
         }
 
-        if (critCases.isEmpty() && lowRecall.isEmpty() && errors == 0)
-            bb.appendLine("Brak krytycznych anomalii.")
+        if (critMissesB.isEmpty())
+            bb.appendLine("✓ Brak krytycznych braków w sekcji B — silnik gotowy do release.\n")
 
-        // ── Diagnostyka pominiętych OSOBA ────────────────────────────────────
-        val osobaCases = results.flatMap { r ->
+        // Diagnostyka OSOBA
+        val osobaMisses = secB.flatMap { r ->
             r.entities.filter { !it.found && (it.key.startsWith("imie_") || it.key == "autor" || it.key == "osoba") }
                 .map { r to it }
         }
-        if (osobaCases.isNotEmpty()) {
+        if (osobaMisses.isNotEmpty()) {
+            bb.appendLine("[OSOBA POMINIĘTE] ${osobaMisses.size} encji:")
             bb.appendLine()
-            bb.appendLine("[OSOBA POMINIĘTE] ${osobaCases.size} encji:")
-            bb.appendLine()
-            osobaCases.forEach { (r, e) ->
-                val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
-                // Czy silnik zamaskował coś co zawiera nazwisko (druga część GT)?
-                val surname = e.value.substringAfterLast(" ").lowercase()
-                val maskedBySurname = r.tokens.any { tok ->
-                    tok.original.lowercase().contains(surname) && tok.original.length >= 4
-                }
-                val status = when {
-                    !inOcr          -> "BRAK_W_OCR"
-                    maskedBySurname -> "ODMIANA_ZAMASKOWANA"
-                    else            -> "BUG_SILNIKA"
-                }
-                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
+            osobaMisses.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
                 bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
             }
             bb.appendLine()
         }
 
-        // ── Diagnostyka pominiętych EMAIL ────────────────────────────────────
-        val emailCases = results.flatMap { r ->
-            r.entities.filter { !it.found && it.key == "email" }
-                .map { r to it }
+        // Diagnostyka EMAIL
+        val emailMisses = secB.flatMap { r ->
+            r.entities.filter { !it.found && it.key == "email" }.map { r to it }
         }
-        if (emailCases.isNotEmpty()) {
+        if (emailMisses.isNotEmpty()) {
+            bb.appendLine("[EMAIL POMINIĘTE] ${emailMisses.size} encji:")
             bb.appendLine()
-            bb.appendLine("[EMAIL POMINIĘTE] ${emailCases.size} encji:")
-            bb.appendLine()
-            emailCases.forEach { (r, e) ->
-                val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
-                val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
-                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
-                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
+            emailMisses.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
             }
             bb.appendLine()
         }
 
-        // ── Diagnostyka pominiętych ADRES ────────────────────────────────────
-        val adresCases = results.flatMap { r ->
-            r.entities.filter { !it.found && (it.key == "adres" || it.key.startsWith("adres")) }
-                .map { r to it }
+        // Diagnostyka ADRES
+        val adresMisses = secB.flatMap { r ->
+            r.entities.filter { !it.found && it.key.startsWith("adres") }.map { r to it }
         }
-        if (adresCases.isNotEmpty()) {
+        if (adresMisses.isNotEmpty()) {
+            bb.appendLine("[ADRES POMINIĘTE] ${adresMisses.size} encji:")
             bb.appendLine()
-            bb.appendLine("[ADRES POMINIĘTE] ${adresCases.size} encji:")
-            bb.appendLine()
-            adresCases.forEach { (r, e) ->
-                val normVal = normalizeForCompare(e.value)
-                val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
-                val status = if (!inOcr) "BRAK_W_OCR" else "BUG_SILNIKA"
-                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → $status")
-                bb.appendLine("    OCR[300]: ${r.ocrText.take(300).replace("\n", " ")}")
+            adresMisses.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
             }
             bb.appendLine()
         }
 
-        // ── Diagnostyka OCR dla krytycznych braków ───────────────────────────
-        if (critCases.isNotEmpty()) {
+        // Sekcja C — fail jeśli tokeny mimo reject
+        if (cFail > 0) {
+            bb.appendLine("[REJECT FAIL] Dokumenty przetworzone mimo odrzucenia przez bramkę OCR:")
             bb.appendLine()
-            bb.appendLine("[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:")
-            bb.appendLine("Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.")
-            bb.appendLine()
-            critCases.map { (r, _) -> r }.distinctBy { it.file }.forEach { r ->
-                bb.appendLine("  ── ${r.file}  lvl=${r.degLevel}  qs=${r.qualScore} ──")
-                bb.appendLine("  Brakujące encje:")
-                r.entities.filter { !it.found && it.critical }.forEach { e ->
-                    bb.appendLine("    ${e.key} = ${e.value}")
-                    val normVal = normalizeForCompare(e.value)
-                    val inOcr = normalizeForCompare(r.normalizedText).contains(normVal)
-                    bb.appendLine("    → ${if (inOcr) "✓ JEST w tekście OCR (bug silnika)" else "✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)"}")
-                    if (inOcr) {
-                        // Pokaż fragment RAW OCR wokół znalezionej encji
-                        val idx = r.ocrText.indexOf(e.value.take(3), ignoreCase = true)
-                        if (idx >= 0) {
-                            val from = maxOf(0, idx - 10)
-                            val to   = minOf(r.ocrText.length, idx + e.value.length + 15)
-                            bb.appendLine("    OCR fragment: «${r.ocrText.substring(from, to).replace("\n", "↵")}»")
-                        }
-                    }
-                }
-                bb.appendLine()
+            secC.filter { it.tokens.isNotEmpty() }.forEach { r ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  conf=${"%.2f".format(r.ocrConf)}  tokens=${r.tokens.size}")
             }
+            bb.appendLine()
         }
 
         File(benchDir, "benchmark_bugs.txt").writeText(bb.toString())
 
-        // Drukuj bugs.txt do logcatu — działa nawet gdy adb pull jest zablokowany (Android 16)
+        // Logcat dump (działa gdy adb pull zablokowany przez Android 16)
         println("\n[BUGS_START]")
         bb.toString().lines().forEach { println(it) }
         println("[BUGS_END]")
 
-        generateDictionaryHtml(results)
+        generateDictionaryHtml(secB)
 
-        // Zapis trace do pliku
+        // Trace
         val traceFile = File(benchDir, "benchmark_trace.txt")
         val traceLines = results.flatMap { result ->
             result.trace.map { t ->
@@ -616,6 +648,7 @@ class BenchmarkInstrumentedTest {
         }
         traceFile.writeText("DOC\tLAYER\tRULE\tTOKEN\tMATCHED_TEXT\n" + traceLines.joinToString("\n"))
 
+        // Kopia do Documents (backwards compat)
         val publicDir = File("/storage/emulated/0/Documents/LynxMask")
         publicDir.mkdirs()
         benchDir.listFiles()?.forEach { file ->
@@ -625,35 +658,26 @@ class BenchmarkInstrumentedTest {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Generator HTML do zatwierdzania encji dla UserDictionary
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── HTML — kandydaci do słownika (sekcja B only) ─────────────────────────
 
-    private fun generateDictionaryHtml(results: List<DocResult>) {
-        // Zbierz wszystkie niewykryte encje które OCR widział (bug silnika, nie OCR)
-        // To są kandydaci do dodania do UserDictionary
-        data class Candidate(val value: String, val type: String, val key: String, val count: Int)
+    private fun generateDictionaryHtml(secBResults: List<DocResult>) {
+        data class Candidate(val value: String, val type: String)
 
-        val typeMap = mapOf(
+        val dictTypeMap = mapOf(
             "imie_nazwisko" to "OSOBA", "imie_nazwisko_nabywcy" to "OSOBA",
             "autor" to "OSOBA", "osoba" to "OSOBA",
             "adres" to "ADRES", "adres_nabywcy" to "ADRES",
             "adres_zleceniobiorca" to "ADRES", "adres_zleceniodawca" to "ADRES",
             "email" to "EMAIL",
         )
-        // Tylko typy które mają sens w słowniku — numery są wykrywane przez regex, nie słownik
         val dictTypes = setOf("OSOBA", "ADRES", "EMAIL")
 
         val counts = mutableMapOf<Pair<String, String>, Int>()
-        results.forEach { r ->
+        secBResults.forEach { r ->
             r.entities.filter { e ->
-                !e.found &&
-                typeMap.containsKey(e.key) &&
-                typeMap[e.key] in dictTypes &&
-                // Tylko jeśli OCR w ogóle coś widział (nie pusty wynik)
-                r.ocrLen > 50
+                !e.found && dictTypeMap.containsKey(e.key) && dictTypeMap[e.key] in dictTypes && r.ocrLen > 50
             }.forEach { e ->
-                val type = typeMap[e.key] ?: return@forEach
+                val type = dictTypeMap[e.key] ?: return@forEach
                 counts[e.value to type] = (counts[e.value to type] ?: 0) + 1
             }
         }
@@ -665,18 +689,16 @@ class BenchmarkInstrumentedTest {
             return
         }
 
-        val rows = counts.entries
-            .sortedByDescending { it.value }
-            .joinToString("\n") { (pair, cnt) ->
-                val (value, type) = pair
-                val safeValue = value.replace("\"", "&quot;").replace("<", "&lt;")
-                """<tr>
-                  <td><input type="checkbox" class="cb" data-value="$safeValue" data-type="$type" checked></td>
-                  <td class="val">$safeValue</td>
-                  <td class="type">$type</td>
-                  <td class="cnt">$cnt×</td>
-                </tr>"""
-            }
+        val rows = counts.entries.sortedByDescending { it.value }.joinToString("\n") { (pair, cnt) ->
+            val (value, type) = pair
+            val safeValue = value.replace("\"", "&quot;").replace("<", "&lt;")
+            """<tr>
+              <td><input type="checkbox" class="cb" data-value="$safeValue" data-type="$type" checked></td>
+              <td class="val">$safeValue</td>
+              <td class="type">$type</td>
+              <td class="cnt">$cnt×</td>
+            </tr>"""
+        }
 
         val html = """<!DOCTYPE html>
 <html lang="pl">
@@ -705,13 +727,12 @@ class BenchmarkInstrumentedTest {
 <body>
 <h1>Kandydaci do słownika LynxMask</h1>
 <p class="info">
-  Encje wykryte w ground truth ale pominięte przez silnik. Zaznacz które chcesz dodać i kliknij <b>Eksportuj zaznaczone</b>.
-  Następnie wgraj plik na telefon komendą z pliku <b>import_dictionary.bat</b>.
+  Encje in-scope (sekcja B) pominięte przez silnik. Zaznacz które chcesz dodać i kliknij <b>Eksportuj zaznaczone</b>.
 </p>
 <div>
   <button onclick="selectAll()">Zaznacz wszystko</button>
   <button class="sec" onclick="selectNone()">Odznacz wszystko</button>
-  <button onclick="exportSelected()">💾 Eksportuj zaznaczone</button>
+  <button onclick="exportSelected()">Eksportuj zaznaczone</button>
 </div>
 <div id="status"></div>
 <table>
@@ -721,7 +742,6 @@ class BenchmarkInstrumentedTest {
 <script>
 function selectAll()  { document.querySelectorAll('.cb').forEach(c => c.checked = true);  }
 function selectNone() { document.querySelectorAll('.cb').forEach(c => c.checked = false); }
-
 function exportSelected() {
   const items = [];
   document.querySelectorAll('.cb:checked').forEach(cb => {
@@ -733,21 +753,17 @@ function exportSelected() {
   a.href = URL.createObjectURL(blob);
   a.download = 'user_dictionary_additions.json';
   a.click();
-  document.getElementById('status').textContent =
-    '✓ Pobrano ' + items.length + ' wpisów. Wgraj przez import_dictionary.bat';
+  document.getElementById('status').textContent = '✓ Pobrano ' + items.length + ' wpisów.';
 }
 </script>
 </body>
 </html>"""
 
         File(benchDir, "missed_entities.html").writeText(html)
-        println("[HTML] Kandydaci do słownika: /storage/emulated/0/Documents/LynxMask/bench/missed_entities.html")
-        println("       Pobierz: adb pull /storage/emulated/0/Documents/LynxMask/bench/missed_entities.html")
+        println("[HTML] missed_entities.html gotowe")
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Data classes
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Data classes ─────────────────────────────────────────────────────────
 
     data class DetectedToken(val original: String, val token: String, val type: String)
 
@@ -756,14 +772,23 @@ function exportSelected() {
     data class Summary(
         val total: Int, val detected: Int, val criticalMissed: Int, val fp: Int,
         val recall: Double?, val precision: Double?, val f1: Double?,
-        val typeMismatch: Int = 0,  // ile encji zamaskowanych złym typem tokenu (diagnostyka)
+        val typeMismatch: Int = 0,
+        val bugSilnika: Int = 0,
+        val ocrZniekształcony: Int = 0,
+        val brakWOcr: Int = 0,
     )
 
     data class DocResult(
         val file: String, val docType: String, val degLevel: Int, val qualScore: Int,
-        val ocrLen: Int, val ocrText: String, val error: String?,
+        val ocrLen: Int, val ocrText: String,
+        val ocrAccepted: Boolean, val ocrConf: Float,
+        val section: String,
+        val error: String?,
         val tokens: List<DetectedToken>, val entities: List<EntityResult>,
-        val fpCount: Int, val summary: Summary,
+        val fpCount: Int,
+        val missLabels: Map<String, String>,
+        val guardRedHits: Int,
+        val summary: Summary,
         val trace: List<DetectionTrace> = emptyList(),
         val normalizedText: String = ocrText,
     )

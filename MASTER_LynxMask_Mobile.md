@@ -60,16 +60,52 @@ Po diagnozie wydajesz pojedynczą zmianę. Po każdej zmianie: test (`.\\\\gradl
 
 \---
 
-## 1\. STAN AKTUALNY — TRZY OSOBNE LICZBY (nie zlepiać)
+## 1\. STAN AKTUALNY — METRYKI (nie zlepiać)
 
 |Pomiar|Wynik|Co realnie mówi|
 |-|-|-|
-|Czysty dokument, ręcznie przez apkę, LVL0–1|100% maskowania|silnik na czystym tekście działa; mówi o przypadkach, które przetestowano|
-|Benchmark stały (dataset\_fresh, fixed), 68 dok. — 2026-06-21\_1956|**RECALL 78,9% / PRECISION 68,2% / F1 73,2%**|Lvl0 95,2%, Lvl1 92,9%, Lvl2 42,0% (sufit OCR), Lvl3 82,7%. FP 157. To BASELINE stały — porównywać z tym.|
-|Zachowanie na NIEZNANYM dokumencie (dok. #101)|**NIEZBADANE**|ani testy ręczne, ani benchmark tego nie pokazują — patrz sekcja 7|
+|Czysty dokument, ręcznie przez apkę, LVL0–1|100% maskowania|silnik na czystym tekście działa|
+|**Benchmark v1 (archiwum — MARTWA METRYKA)** stały 68 dok., 2026-06-25\_0747|RECALL 79,2% / PREC 67,9% / F1 73,1%. Lvl0 95,2%, Lvl1 93,8%, Lvl2 42,0%, Lvl3 82,7%. Krit. braki: 17, FP: 160|**Jedna liczba na całym worku (lvl2 miesza sufit OCR z bugami silnika). Nie porównywać z v2.**|
+|**Benchmark v2 — sekcja B (IN-SCOPE ACCEPTED)** — baseline TBD|TBD — po pierwszym runie `run_benchmark_v2.bat`|**GŁÓWNY KPI RELEASE** — patrz sekcja 1a. Regresja = gorszy wynik na fixed core.|
+|Zachowanie na NIEZNANYM dokumencie (dok. \#101)|**NIEZBADANE**|ani testy ręczne, ani benchmark nie pokazują — patrz sekcja 7|
 
 **Wariancja benchmarku:** świeży dataset = inne dokumenty co run, recall waha się ±5%. To nie regresja. Regresja = ten sam dataset gorszy wynik.
-**Lvl2 generatora ma błąd kalibracji** (blur po szumie, kontrast 70% gorszy niż lvl3). To problem generatora, nie silnika. Nie walczyć z lvl2.
+**Lvl2 generatora ma błąd kalibracji** (blur po szumie). To problem generatora, nie silnika — lvl2 idzie do sekcji C (reject) lub D (out-of-scope), nie do głównego KPI.
+
+\---
+
+## 1a\. BENCHMARK v2 — FILOZOFIA I PROGI (decyzja właściciela 2026-06-22)
+
+Źródło: `docs/BRIEF_Wlasciciel_Benchmark_v2.md` — **to jest wiążący dokument**. Sekcja 1a to streszczenie dla szybkiego kontekstu.
+
+**Jedno zdanie strategii:** LynxMask nie musi maskować wszystkiego, co ML Kit wyczyta — musi maskować wszystko, co obiecuje przyjąć, albo odrzucić dokument z jasnym komunikatem.
+
+**Sekcje raportu:**
+
+| Sekcja | Co mierzy | Blokuje release? |
+|---|---|---|
+| **A** | ENGINE-ONLY — testy JVM (PseudonymEngineTest itp.) | Tak — 100% suite pass |
+| **B** | IN-SCOPE ACCEPTED: lvl 0/1/3 + bramka OCR OK | **GŁÓWNY KPI** |
+| **C** | REJECTED: bramka odrzuciła (oczekiwane 100% reject) | Tak — 0 tokenów w output |
+| **D** | OUT-OF-SCOPE: lvl2 który przeszedł bramkę (informacyjnie) | Nie |
+
+**Progi sekcji B (startowe — weryfikować po pierwszym runie v2):**
+
+| Metryka | Próg release |
+|---|---|
+| Recall encje krytyczne (PESEL, NIP, IBAN, dowód, paszport) | ≥ 95% |
+| Recall ogólny | ≥ 90% |
+| BUG\_SILNIKA na encjach krytycznych | **0** |
+| OCR\_ZNIEKSZTAŁCONY na encjach krytycznych | **0** |
+| Guard RED hits | **0** |
+
+**Klasyfikacja miss (§12.2 briefa):**
+
+- `BUG_SILNIKA` — encja jest exact w tekście OCR, silnik nie zamaskował → **blokuje release**
+- `OCR_ZNIEKSZTAŁCONY` — nie exact, ale fuzzy match → **blokuje release**
+- `BRAK_W_OCR` — nie ma w OCR wcale → **nie blokuje** (sufit wejścia)
+
+**Antywzorce (zakaz):** nie podnosić recall v1 na lvl03 jako cel; nie łatać OcrNormalizer pod BRAK\_W\_OCR lvl2; nie mieszać metryk IMAGE-REDACT z recall tekstowym.
 
 \---
 
@@ -89,7 +125,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |S8|BUG-DATE-PARTIAL|StructuralEngine|2026-06-20 → maskuje rok-miesiąc, zostaje „-20"|✅ 21.06|
 |~~S9~~|~~BUG-FP-REFNUM~~|~~StructuralEngine~~|~~UZ/2026/0088, I C 234/26 maskowane jako NUMER (false positive)~~|✅ zamknięty — >80% dopasowań to prawdziwe PII, FP kosmetyczne (encje i tak zakryte)|
 |~~S10~~|~~BUG-TEL-PREFIX~~|~~StructuralEngine~~|~~(22) 765-43-21 → prefiks (22) pomijany~~|✅ 21.06|
-|S11|Email z imieniem w local-part|StructuralEngine + NameEngine|„email: joanna.grabowska@interia.pl" → imię maskowane jako OSOBA, wzorzec kontekstowy „e-mail:" wchodzi w konflikt z NameEngine. Zbadać kolejność|🔲|
+|S11|Email z imieniem w local-part|StructuralEngine + NameEngine|„email: joanna.grabowska@interia.pl" → imię maskowane jako OSOBA, wzorzec kontekstowy „e-mail:" wchodzi w konflikt z NameEngine. Zbadać kolejność|✅ 25.06 ad5c452 — rozwiązany architekturą: EMAIL[0] wyprzedza NameEngine, +2 testy regresji|
 
 \---
 
@@ -99,7 +135,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |-|-|-|-|
 |N1|BUG-EMAIL-TLD1|@wp p1 — TLD z cyfrą. Fix: `(\\\[a-zA-Z]{2,4})\\\\b` → `(\\\[a-zA-Z0-9]{2,4})\\\\b` (linia 159)|✅ 19.06|
 |N2|BUG-NIP-CTX-3223|Wzorzec kontekstowy NIP obejmował tylko 3-3-2-2; format 3-2-2-3 maskował cyfry ale zostawiał "NIP:" w tekście. Dodatkowo wzorzec 3-2-2 łapał ogon odrzuconego NIPu (partial mask). Fix: nowy wzorzec kontekstowy + lookbehind.|✅ 23.06 commit 1b1707b|
-|N3|OCR\_EMAIL\_LOCALSPACE wiele spacji|naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów|🔲|
+|N3|OCR\_EMAIL\_LOCALSPACE wiele spacji|naprawia tylko jedną spację. Pętla aż brak zmian lub wzorzec na wiele segmentów|✅ 23.06+ commit 192e940 — pętla do-while + {1,} dla multi-spacji|
 |N4|IBAN przez newline|„PL61 1020...\\n0000..." nie sklejany. Reguła OCR\_IBAN\_NEWLINE|✅ 21.06 (v2.3)|
 |N5|KNOWN\_CITY\_FORMS bez ogonków|Bialystok, Lodz, Krakow — stosować fold() dla kandydata|✅ 21.06 (v2.4)|
 |N6|De-leet imion/nazwisk|✅ 21.06 — własna impl. w OcrNormalizer krok 15 (bez zewnętrznych bibliotek)|✅|
@@ -115,6 +151,7 @@ Zasada wszędzie: **nie modyfikuj tekstu źródłowego — normalizuj tylko do l
 |RESEARCH-3 — ML Kit confidence + progi (avg<0.7 YELLOW, <0.5 RED)|ShareTargetActivity + OcrNormalizer assessQuality|🔲 (mlKitConfidence teraz null, linie 287/434)|
 |assessQuality shouldReject dla confidence<0.5 + obsługa odrzucenia w UI + override|OcrNormalizer + UI|🔲|
 |Luka reset hasła — „Zapomniałem hasła" daje dostęp bez uwierzytelnienia|LoginScreen.kt|✅ 23.06 df77fb0 — UI deadlock fix, SHA-256 verify|
+|Zmiana hasła bez utraty danych + ostrzeżenie przy resecie|LoginScreen.kt + MainActivity.kt|✅ 23.06+ commit 27c7907|
 |BUG-SS-1 INSERT OR REPLACE nadpisuje NULLami|SessionStore.kt|✅ 23.06 b65d560 — UPSERT ON CONFLICT DO UPDATE|
 |BUG-SS-3 init() na Main thread — ANR|SessionStore.kt|✅ naprawione — lifecycleScope + Dispatchers.IO (komentarz w kodzie), potwierdzone 23.06|
 |AUD-M05 silent failure AES-GCM/SQLCipher|SessionStore.kt|✅ 23.06 b65d560 — save() zwraca Boolean, Toast przy false|
@@ -252,18 +289,28 @@ Pełny reinstall przed benchmarkiem po zmianie kodu aplikacji (OBOWIĄZKOWY):
 .\\\\gradlew :app:installDebug
 .\\\\gradlew :app:uninstallDebugAndroidTest
 .\\\\gradlew :app:installDebugAndroidTest
-run\\\_benchmark\\\_fresh.bat
+run\\\_benchmark\\\_v2.bat
 ```
 
 Bez installDebug zmiany w silniku nie trafiają na telefon. Telefon podłączony i odblokowany.
 Testy jednostkowe: `.\\\\gradlew :app:testDebugUnitTest`
 Po każdej zmianie silnika: test DOCX na telefonie (silnik w izolacji) PRZED benchmarkiem obrazowym (OCR+silnik razem).
 
+**Skrypty benchmark:**
+
+| Skrypt | Cel | Dataset |
+|---|---|---|
+| `run_benchmark_v2.bat` | **Główny KPI v2** — sekcje A-D, bramka OCR | dataset\_staly (lvl 0-3) |
+| `run_benchmark.bat` | Stary run v1 (archiwum) | dataset\_staly |
+| `run_benchmark_fresh.bat` | Fresh dataset (overfitting check) | generator lvl 0/1/3 |
+
+**Smoke test** (`regexSmokeTest`) uruchamiany automatycznie przez `run_benchmark_v2.bat` przed `runBenchmark`. Jeśli padnie — jest PatternSyntaxException w OcrNormalizer/StructuralEngine na ICU. Napraw regex przed kolejnym runem.
+
 \---
 
 ## 12\. WERSJE PLIKÓW — DO WERYFIKACJI
 
-Najnowsze udokumentowane (22.06 sesja 2): OcrNormalizer v2.4, NameEngine v1.13, StructuralEngine v2.1, MorfologikHelper v1.1, OutputGuard v2.0. **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
+Najnowsze udokumentowane (25.06): OcrNormalizer v2.6 (+ krok 0 IBAN/postal + krok 0b email/adres — niezwersjonowane w nagłówku), NameEngine v1.12, StructuralEngine v2.3, MorfologikHelper v1.1, OutputGuard v2.0, ShareTargetActivity v2.7, SessionStore v1.5. **Przed startem każdego potoku zapytaj Claude Code o aktualny nagłówek dotykanego pliku** — dokumenty mogą być za realnym repo.
 
 \---
 
@@ -734,7 +781,7 @@ Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REME
 | BUG-LIB-3 | MAŁY | LibraryScreen.kt:71 | `selectedSession!!.sesjaId` w closure — NPE przy race condition. Fix: `val sesId = selectedSession?.sesjaId ?: return@SessionDetailScreen` | ✅ 23.06 — val session = selectedSession!! wyciągnięty przed lambdą |
 | BUG-SS-3 | DŁUG TECH | MainActivity.kt:59 | `SessionStore.init()` na Main thread — ryzyko ANR. Fix: `lifecycleScope.launch(Dispatchers.IO)` | ✅ naprawione 23.06 |
 | AUD-M05 | DŁUG TECH | SessionStore.kt | Silent failure AES-GCM — save() zwraca Boolean, callerzy pokazują Toast przy false | ✅ 23.06 b65d560 |
-| BUG-LIB-6 | MAŁY | DepseudonymizationScreen.kt:334 | „Pobierz plik" używa `File()` w Downloads — nie działa na Android 11+ (Scoped Storage). Fix: MediaStore ContentValues API | 🔲 |
+| BUG-LIB-6 | MAŁY | DepseudonymizationScreen.kt:334 | „Pobierz plik" używa `File()` w Downloads — nie działa na Android 11+ (Scoped Storage). Fix: MediaStore ContentValues API | ✅ 23.06+ commit 34d94c7 |
 
 ---
 
