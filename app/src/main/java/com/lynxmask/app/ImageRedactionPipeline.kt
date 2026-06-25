@@ -11,6 +11,8 @@ import androidx.core.content.FileProvider
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
@@ -46,10 +48,7 @@ object ImageRedactionPipeline {
             val result = detector.process(InputImage.fromBitmap(bitmap, 0)).await()
             DebugLogBuffer.log("FaceDetect", "Wykryto ${result.size} twarzy")
             result.map { face ->
-                RedactionRegion(
-                    rect = RectF(face.boundingBox),
-                    type = RegionType.FACE
-                )
+                RedactionRegion(rect = RectF(face.boundingBox), type = RegionType.FACE)
             }
         } catch (e: Exception) {
             DebugLogBuffer.log("FaceDetect", "BŁĄD: ${e.message}")
@@ -58,6 +57,33 @@ object ImageRedactionPipeline {
             detector.close()
         }
     }
+
+    // Wykryj linie tekstu i zwróć jako zakryte regiony (isBlurred=true).
+    // User może tapnąć żeby odsłonić linię która nie jest PII.
+    suspend fun detectTextLinesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        return try {
+            val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+            result.textBlocks.flatMap { block ->
+                block.lines.mapNotNull { line ->
+                    val box = line.boundingBox ?: return@mapNotNull null
+                    if (line.text.trim().length < 3) return@mapNotNull null
+                    RedactionRegion(rect = RectF(box), type = RegionType.MANUAL, isBlurred = true)
+                }
+            }.also {
+                DebugLogBuffer.log("TextDetect", "Wykryto ${it.size} linii tekstu")
+            }
+        } catch (e: Exception) {
+            DebugLogBuffer.log("TextDetect", "BŁĄD: ${e.message}")
+            emptyList()
+        } finally {
+            recognizer.close()
+        }
+    }
+
+    // Wykryj twarze + linie tekstu jednocześnie
+    suspend fun detectFacesAndTextAsRegions(bitmap: Bitmap): List<RedactionRegion> =
+        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap)
 
     fun applyRedactions(source: Bitmap, regions: List<RedactionRegion>): Bitmap {
         val result = source.copy(Bitmap.Config.ARGB_8888, true)

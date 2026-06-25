@@ -231,9 +231,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         state = ShareScreenState.Error("Nie udało się wczytać obrazu")
                         return@LaunchedEffect
                     }
-                    progressLabel = "Wykrywam twarze..."
+                    progressLabel = "Wykrywam twarze i tekst..."
                     val regions = withContext(Dispatchers.Default) {
-                        ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
                     }
                     state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                     return@LaunchedEffect
@@ -279,9 +279,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     state = ShareScreenState.Error("Nie udało się wczytać obrazu")
                     return@LaunchedEffect
                 }
-                progressLabel = "Wykrywam twarze..."
+                progressLabel = "Wykrywam twarze i tekst..."
                 val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
                 }
                 state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                 return@LaunchedEffect
@@ -311,9 +311,9 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     state = ShareScreenState.Error("Nie udało się wczytać obrazu")
                     return@LaunchedEffect
                 }
-                progressLabel = "Wykrywam twarze..."
+                progressLabel = "Wykrywam twarze i tekst..."
                 val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp)
                 }
                 state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
             } else {

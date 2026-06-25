@@ -83,23 +83,15 @@ fun ImageRedactionScreen(
 
         // Nagłówek
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text("Zakryj dane przed wysłaniem", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("Sprawdź i wyślij", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                "Przeciągnij palcem żeby zakryć podpis, pieczątkę lub inne wrażliwe miejsce. " +
-                "Stuknij zakryty obszar żeby odkryć.",
+                "Twarze i tekst zakryte automatycznie. Stuknij zakryty obszar żeby go odsłonić. " +
+                "Przeciągnij palcem żeby zakryć coś co pominięto.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
             )
-            if (initialRegions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "Twarz wykryta i zakryta automatycznie. Sprawdź czy podpis też wymaga zakrycia.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
 
         // Podgląd — faktyczny pixelate blur na żywo
