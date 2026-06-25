@@ -179,14 +179,14 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "44051401458")
     }
 
-    @Test fun `s5 niepoprawny PESEL bez kontekstu nie jest maskowany`() {
-        // Goły 11-cyfrowy bez słowa "PESEL:" → S5 sprawdza sumę → błędna → nie maskuje.
-        // S5 ma sens tylko dla gołych cyfr (bez kontekstu nie wiemy czy to PESEL).
-        // Gdy tekst zawiera "PESEL:" → maskuj bezwarunkowo (kontekst > suma kontrolna).
+    @Test fun `s5 niepoprawny PESEL bez kontekstu zamaskowany jako NUMER`() {
+        // AUDIT-03: goły 11-cyfrowy z błędną sumą PESEL → S5 odrzuca wzorzec \d{11},
+        // ale CATCHALL (\d{8,}) nie jest już w PESEL_PATTERN_STRINGS → S5 nie blokuje →
+        // CATCHALL maskuje jako NUMER. Priorytet prywatności > precyzja (P1 > P2).
         val r = pseudonymize("Numer referencyjny: 44051401459")
-        assertFalse("Goły numer z błędną sumą PESEL nie powinien być zamaskowany",
+        assertTrue("Goły numer z błędną sumą PESEL powinien być zamaskowany jako NUMER (CATCHALL)",
             r.pseudonymizedText.contains("NUMER_"))
-        assertTrue("Goły numer z błędną sumą powinien pozostać w wyjściu",
+        assertFalse("Oryginalna wartość nie powinna zostać w wyjściu",
             r.pseudonymizedText.contains("44051401459"))
     }
 
@@ -198,14 +198,14 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "526-000-13-29")
     }
 
-    @Test fun `s5 niepoprawny NIP bez kontekstu nie jest maskowany`() {
-        // NIP 5260001320 — ostatnia cyfra 0 zamiast 9 → zła suma kontrolna.
-        // Bez słowa kluczowego "NIP" → wzorzec strukturalny + S5 → odrzucony.
-        // (Z keywordem "NIP:" wzorzec kontekstowy maskuje bez S5 — jak PESEL z "PESEL:".)
+    @Test fun `s5 niepoprawny NIP bez kontekstu zamaskowany jako NUMER`() {
+        // AUDIT-03: 10-cyfrowy z błędną sumą NIP → S5 odrzuca wzorce NIP z separatorami,
+        // ale CATCHALL (\d{8,}) nie jest już w NIP_PATTERN_STRINGS → S5 nie blokuje →
+        // CATCHALL maskuje jako NUMER. Priorytet prywatności > precyzja (P1 > P2).
         val r = pseudonymize("Numer konta: 5260001320 przelew")
-        assertFalse("Niepoprawny NIP bez kontekstu nie powinien być zamaskowany",
+        assertTrue("Niepoprawny NIP bez kontekstu powinien być zamaskowany jako NUMER (CATCHALL)",
             r.pseudonymizedText.contains("NUMER_"))
-        assertTrue("Tekst z błędnym NIP powinien pozostać w wyjściu",
+        assertFalse("Oryginalna wartość nie powinna zostać w wyjściu",
             r.pseudonymizedText.contains("5260001320"))
     }
 
@@ -250,13 +250,15 @@ class PseudonymEngineTest {
         assertNotInOutput(r, peselBlednaSum)
     }
 
-    @Test fun `s5 goly PESEL z bledna suma nie jest maskowany`() {
-        // Goły 11-cyfrowy bez kontekstu słownego → S5 sprawdza sumę → jeśli błędna → nie maskuje.
-        val peselBlednaSum = "44051401448"  // cyfra 5→4 = błędna suma
+    @Test fun `s5 goly PESEL z bledna suma zamaskowany jako NUMER`() {
+        // AUDIT-03: goły 11-cyfrowy z błędną sumą → \d{11} S5 odrzuca,
+        // CATCHALL ∉ PESEL_PATTERN_STRINGS → CATCHALL maskuje jako NUMER.
+        // OCR może przekręcić cyfrę PESELu bez słowa "PESEL:" → priorytet: nie przepuść.
+        val peselBlednaSum = "44051401448"  // cyfra 5→4 = błędna suma (OCR error scenario)
         val r = pseudonymize("Numer: $peselBlednaSum")
-        assertFalse("Goły PESEL z błędną sumą nie powinien być zamaskowany",
+        assertTrue("Goły PESEL z błędną sumą powinien być zamaskowany jako NUMER (CATCHALL)",
             r.pseudonymizedText.contains("NUMER_"))
-        assertTrue("Goły PESEL z błędną sumą powinien pozostać w wyjściu",
+        assertFalse("Oryginalna wartość nie powinna zostać w wyjściu",
             r.pseudonymizedText.contains(peselBlednaSum))
     }
 
@@ -272,6 +274,32 @@ class PseudonymEngineTest {
         // → telefon NIE jest maskowany. 28 takich telefonów było w benchmark_trace.
         val r = pseudonymize("Tel: 48 571 488 856")
         assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // AUDIT-03 — CATCHALL nie powinien być w PESEL/NIP_PATTERN_STRINGS
+    // Przed naprawą: CATCHALL ∈ PESEL_PATTERN_STRINGS → S5 odrzuca 11-cyfrowe liczby z błędną sumą → FN.
+    //               CATCHALL ∈ NIP_PATTERN_STRINGS   → S5 odrzuca 10-cyfrowe liczby z błędną sumą → FN.
+    // Po naprawie:  CATCHALL ∉ żadnego zbioru → CATCHALL maskuje jako NUMER bez S5.
+    //               S5 sprawdza TYLKO wzorce (?<!\d)\d{11}(?!\d) i \d{3}[-\s.]?... (NIP).
+
+    @Test fun `audit03 jedenaście cyfr błędna suma PESEL bez kontekstu zamaskowane jako NUMER`() {
+        // "44051401459" — 11 cyfr, zła suma PESEL (ostatnia cyfra 9 zamiast 8).
+        // Bez "PESEL:" → tylko CATCHALL może go zamaskować → powinien dostać TOKEN_NUMER.
+        val r = pseudonymize("Numer referencyjny: 44051401459")
+        assertTrue("11-cyfrowy z błędną sumą PESEL bez kontekstu powinien być zamaskowany jako NUMER",
+            r.pseudonymizedText.contains("NUMER_"))
+        assertFalse("Oryginalna wartość nie powinna zostać w wyjściu",
+            r.pseudonymizedText.contains("44051401459"))
+    }
+
+    @Test fun `audit03 dziesięć cyfr błędna suma NIP bez kontekstu zamaskowane jako NUMER`() {
+        // "5260001320" — 10 cyfr, zła suma NIP (ostatnia cyfra 0 zamiast 9).
+        // Bez "NIP:" → NIP wzorzec strukturalny + S5 odrzuca; CATCHALL powinien zamaskować jako NUMER.
+        val r = pseudonymize("Numer konta: 5260001320 przelew")
+        assertTrue("10-cyfrowy z błędną sumą NIP bez kontekstu powinien być zamaskowany jako NUMER",
+            r.pseudonymizedText.contains("NUMER_"))
+        assertFalse("Oryginalna wartość nie powinna zostać w wyjściu",
+            r.pseudonymizedText.contains("5260001320"))
     }
 
     // S10b — kontekstowy: po "tel."/"telefon:"/"fax:" maskuj numer

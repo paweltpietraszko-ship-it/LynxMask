@@ -551,8 +551,10 @@ internal val PESEL_PATTERN_STRINGS: Set<String> = setOf(
     // Wzorzec kontekstowy pe[s5][e3]l celowo POMINIĘTY:
     // słowo "PESEL:" jest wystarczającym dowodem → maskuj bez sprawdzania sumy.
     // OCR może pomylić jedną cyfrę → suma błędna → S5 blokowałby prawidłowe PESELe.
-    // CATCHALL — bez wpisu S5 maskowałby \d{8,} bez walidacji sumy
-    """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
+    // CATCHALL celowo POMINIĘTY (AUDIT-03):
+    // S5 sprawdza tylko wzorce (?<!\d)\d{11}(?!\d) i \d{6} \d{5} — goły 11-cyfrowy.
+    // CATCHALL bez wzorca → maskuje 8+ cyfr jako NUMER bez walidacji sumy — prawidłowe.
+    // Przed naprawą: CATCHALL ∈ set → 11-cyfrowy z błędną sumą PESEL NIE był maskowany (FN).
 )
 
 internal val NIP_PATTERN_STRINGS: Set<String> = setOf(
@@ -562,6 +564,8 @@ internal val NIP_PATTERN_STRINGS: Set<String> = setOf(
     // Wzorzec kontekstowy NIP (z keywordem "NIP") celowo POMINIĘTY:
     // słowo "NIP" jest wystarczającym dowodem → maskuj bez sprawdzania sumy.
     // OCR może pomylić jedną cyfrę → suma błędna → S5 blokowałby prawidłowe NIPy.
-    // CATCHALL — bez wpisu S5 maskowałby niepoprawne NIPy o długości 10 cyfr
-    """\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""
+    // CATCHALL celowo POMINIĘTY (AUDIT-03):
+    // S5 sprawdza tylko wzorce NIP o formacie z separatorami — 10-cyfrowy goły NIP.
+    // CATCHALL bez wpisu → maskuje 10-cyfrowe bez separatorów jako NUMER — prawidłowe.
+    // Przed naprawą: CATCHALL ∈ set → 10-cyfrowy z błędną sumą NIP NIE był maskowany (FN).
 )
