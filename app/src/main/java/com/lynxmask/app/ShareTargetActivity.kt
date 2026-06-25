@@ -285,17 +285,33 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     LaunchedEffect(filePickerUri) {
         val uri = filePickerUri ?: return@LaunchedEffect
         try {
-            progressLabel = "Wczytuję plik..."
-            val syntheticIntent = Intent(Intent.ACTION_SEND).apply {
-                val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
-                type = mimeType
-                putExtra(Intent.EXTRA_STREAM, uri)
+            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+            if (mimeType.startsWith("image/")) {
+                progressLabel = "Wczytuję obraz..."
+                val bmp = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                }
+                if (bmp == null) {
+                    state = ShareScreenState.Error("Nie udało się wczytać obrazu")
+                    return@LaunchedEffect
+                }
+                progressLabel = "Wykrywam twarze..."
+                val regions = withContext(Dispatchers.Default) {
+                    ImageRedactionPipeline.detectFacesAsRegions(bmp)
+                }
+                state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
+            } else {
+                progressLabel = "Wczytuję plik..."
+                val syntheticIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = mimeType
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+                val _extracted = withContext(Dispatchers.IO) {
+                    extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
+                }
+                val (rawText, isOcr, ocrConf) = _extracted
+                finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
             }
-            val _extracted = withContext(Dispatchers.IO) {
-                extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
-            }
-            val (rawText, isOcr, ocrConf) = _extracted
-            finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd odczytu pliku: ${e.message}")
         }
