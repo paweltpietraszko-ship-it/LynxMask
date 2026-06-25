@@ -3,6 +3,8 @@ package com.lynxmask.app
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.RectF
 import android.net.Uri
 import androidx.core.content.FileProvider
@@ -25,8 +27,14 @@ data class RedactionRegion(
 
 object ImageRedactionPipeline {
 
-    // 8x scale-down + scale-up bez filtrowania = efekt pixelizacji
-    private const val PIXELATE_SCALE = 8
+    // Iteracje blur dla twarzy: 3× scale do 1/12 + scale z powrotem (Gaussian-like, smooth)
+    private const val BLUR_PASSES = 3
+    private const val BLUR_DIVISOR = 12
+
+    private val blackPaint = Paint().apply {
+        color = Color.BLACK
+        style = Paint.Style.FILL
+    }
 
     suspend fun detectFacesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
         val options = FaceDetectorOptions.Builder()
@@ -55,31 +63,39 @@ object ImageRedactionPipeline {
         val result = source.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
         regions.filter { it.isBlurred }.forEach { region ->
-            pixelateRegion(canvas, result, region.rect)
+            when (region.type) {
+                RegionType.FACE   -> blurRegion(canvas, source, region.rect)
+                RegionType.MANUAL -> fillBlackRegion(canvas, region.rect)
+            }
         }
         return result
     }
 
-    private fun pixelateRegion(canvas: Canvas, bitmap: Bitmap, rect: RectF) {
-        val left   = rect.left.coerceIn(0f, bitmap.width.toFloat()).toInt()
-        val top    = rect.top.coerceIn(0f, bitmap.height.toFloat()).toInt()
-        val right  = rect.right.coerceIn(0f, bitmap.width.toFloat()).toInt()
-        val bottom = rect.bottom.coerceIn(0f, bitmap.height.toFloat()).toInt()
-        if (right <= left || bottom <= top) return
+    // Twarze: iteracyjny Gaussian-like blur (wygląda jak Apple/Google — gładko, profesjonalnie)
+    private fun blurRegion(canvas: Canvas, source: Bitmap, rect: RectF) {
+        val left   = rect.left.coerceIn(0f, source.width.toFloat()).toInt()
+        val top    = rect.top.coerceIn(0f, source.height.toFloat()).toInt()
+        val right  = rect.right.coerceIn(0f, source.width.toFloat()).toInt()
+        val bottom = rect.bottom.coerceIn(0f, source.height.toFloat()).toInt()
+        val w = right - left; val h = bottom - top
+        if (w <= 0 || h <= 0) return
 
-        val w = right - left
-        val h = bottom - top
-        val scaledW = maxOf(1, w / PIXELATE_SCALE)
-        val scaledH = maxOf(1, h / PIXELATE_SCALE)
+        var pass = Bitmap.createBitmap(source, left, top, w, h)
+        repeat(BLUR_PASSES) {
+            val sw = maxOf(1, pass.width / BLUR_DIVISOR)
+            val sh = maxOf(1, pass.height / BLUR_DIVISOR)
+            val small = Bitmap.createScaledBitmap(pass, sw, sh, true)
+            pass.recycle()
+            pass = Bitmap.createScaledBitmap(small, w, h, true)
+            small.recycle()
+        }
+        canvas.drawBitmap(pass, left.toFloat(), top.toFloat(), null)
+        pass.recycle()
+    }
 
-        val region    = Bitmap.createBitmap(bitmap, left, top, w, h)
-        val small     = Bitmap.createScaledBitmap(region, scaledW, scaledH, false)
-        val pixelated = Bitmap.createScaledBitmap(small, w, h, false)
-        region.recycle()
-        small.recycle()
-
-        canvas.drawBitmap(pixelated, left.toFloat(), top.toFloat(), null)
-        pixelated.recycle()
+    // Tekst/podpis/pieczątka: solid czarny prostokąt — standard prawny (FOIA, RODO redakcja)
+    private fun fillBlackRegion(canvas: Canvas, rect: RectF) {
+        canvas.drawRect(rect, blackPaint)
     }
 
     fun saveToCache(bitmap: Bitmap, context: Context): Uri {
