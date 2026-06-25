@@ -1,0 +1,211 @@
+BUGS / ANOMALIE — 2026-06-23 10:24:07
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 19
+
+  images/doc_00002.png  lvl=3  qs=77  pesel=98012385426
+  images/doc_00004.png  lvl=3  qs=74  iban=PL05109010145945401626374725
+  images/doc_00012.png  lvl=2  qs=82  iban=PL20169010143757282899879147
+  images/doc_00018.png  lvl=2  qs=85  iban=PL10150010130424522871911176
+  images/doc_00023.png  lvl=2  qs=82  nip_sprzedawcy=998-036-70-26
+  images/doc_00028.png  lvl=2  qs=85  pesel=53060356370
+  images/doc_00038.png  lvl=2  qs=82  pesel=93113079461
+  images/doc_00038.png  lvl=2  qs=82  dowod_osobisty=WWG238570
+  images/doc_00038.png  lvl=2  qs=82  nip=296-198-53-40
+  images/doc_00038.png  lvl=2  qs=82  numer_paszportu=TS4166162
+  images/doc_00041.png  lvl=3  qs=79  pesel=83072595302
+  images/doc_00044.png  lvl=3  qs=73  nip_sprzedawcy=513-228-69-70
+  images/doc_00044.png  lvl=3  qs=73  iban=PL17240101353275583298346088
+  images/doc_00045.png  lvl=3  qs=74  pesel=79111499096
+  images/doc_00047.png  lvl=2  qs=85  pesel=03252269681
+  images/doc_00063.png  lvl=2  qs=86  pesel=77111840744
+  images/doc_00063.png  lvl=2  qs=86  iban=PL47325000032621263098131700
+  images/doc_00067.png  lvl=2  qs=80  pesel=69031777839
+  images/doc_00067.png  lvl=2  qs=80  nip=481-832-15-59
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  OSOBA        79,3%  (73/92)
+  NUMER        78,4%  (211/269)
+  ADRES        72,7%  (56/77)
+  EMAIL        70,0%  (7/10)
+
+
+[OSOBA POMINIĘTE] 19 encji:
+
+  doc_00002.png  autor=Łukasz Krawczyk  → BRAK_W_OCR
+    OCR[300]: Data 20 03 2023 Sporządzila Lukanz Kawczk Dotyczy zgloszenia zaginięcia dokumertu tozsamosci Wdniu 20 03 2023 do biura zgloslasię naspjeca oscba Paulina Paakowka PESEL: 96012385426 Ades: u. Rózana 131/1,60-001 Warszawa Tel:+48 501555 588 Roamowa tnwala ok 20 mint. Sprava zostala zarepstrowana w syse
+  doc_00002.png  osoba=Paulina Pawłowska  → BRAK_W_OCR
+    OCR[300]: Data 20 03 2023 Sporządzila Lukanz Kawczk Dotyczy zgloszenia zaginięcia dokumertu tozsamosci Wdniu 20 03 2023 do biura zgloslasię naspjeca oscba Paulina Paakowka PESEL: 96012385426 Ades: u. Rózana 131/1,60-001 Warszawa Tel:+48 501555 588 Roamowa tnwala ok 20 mint. Sprava zostala zarepstrowana w syse
+  doc_00007.png  imie_nazwisko=Zbigniew Wójcik  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Warszawa-Mokotów Tomasz Malinowski Sygn. akt Km 92236/2021 Data: 13.07.2024 Zbigniew Wöjcik al. Jana Pawła lI 99/28 70-001 Zabrze Na podstawie tytułu wykonawczego komornik sądowy zawiadamia, że w sprawie prowadzonej pod sygn. Km 92236/2021 wszczął postępowanie egzekucyjne prz
+  doc_00012.png  imie_nazwisko_zleceniodawca=Kamil Kozłowski  → BRAK_W_OCR
+    OCR[300]: Z dia 0607 2022 pony Za Kant Kowa Z y P s, 001 BaB NP 8563381 PESEL HO3ooes 2 Ma Koa $1. Przedmiot umowy ccar NP 88343684 $2 Wynagrodzenie i platrose nae prdiu uoy eoiaca gci naon baroy Decy BA PZOsoo43757aere $3 Czas treania umowy $4 Pouhose Dece Sony zo Jecaica UMOWAO SwIADCZENIE USŁUG U0180/2025 
+  doc_00012.png  imie_nazwisko_zleceniobiorca=Marta Kwiatkowska  → BRAK_W_OCR
+    OCR[300]: Z dia 0607 2022 pony Za Kant Kowa Z y P s, 001 BaB NP 8563381 PESEL HO3ooes 2 Ma Koa $1. Przedmiot umowy ccar NP 88343684 $2 Wynagrodzenie i platrose nae prdiu uoy eoiaca gci naon baroy Decy BA PZOsoo43757aere $3 Czas treania umowy $4 Pouhose Dece Sony zo Jecaica UMOWAO SwIADCZENIE USŁUG U0180/2025 
+  doc_00018.png  imie_nazwisko_zleceniodawca=Łukasz Kozłowski  → BRAK_W_OCR
+    OCR[300]: NP 60s6341PESEL S09e y 2 Ma Som NP 212n t208202 y y $1 Pzednot umowy $2 Wynagrodzene i pltno Z t 6AN RIOsoo 30434zss Sy $3 Caas trania umowy c $4 Poutose ey UMOWAO SwADCZENIE USŁUG U0e112025 y
+  doc_00018.png  imie_nazwisko_zleceniobiorca=Marta Szymańska  → BRAK_W_OCR
+    OCR[300]: NP 60s6341PESEL S09e y 2 Ma Som NP 212n t208202 y y $1 Pzednot umowy $2 Wynagrodzene i pltno Z t 6AN RIOsoo 30434zss Sy $3 Caas trania umowy c $4 Poutose ey UMOWAO SwADCZENIE USŁUG U0e112025 y
+  doc_00028.png  autor=Tomasz Nowak  → BRAK_W_OCR
+    OCR[300]: Spt Datyczy wosku o zmang atresu zameldwan Wou 2021 rsgi obe PESEL SocsS Rost20 Toma o NOTATKA SŁUŽBOWA boczyh
+  doc_00028.png  osoba=Jakub Wiśniewski  → BRAK_W_OCR
+    OCR[300]: Spt Datyczy wosku o zmang atresu zameldwan Wou 2021 rsgi obe PESEL SocsS Rost20 Toma o NOTATKA SŁUŽBOWA boczyh
+  doc_00029.png  imie_nazwisko_nabywcy=Wojciech Jankowski  → BRAK_W_OCR
+    OCR[300]: Data wystawienia: 14.12.2020 Numer klienta: KL-77265 SPRZEDAWCA Hurtownia Materiałów BUDMAT Sp. zo.o. Adres: ul. Kolejowa 116, 30-001 Białystok NIP: 428-921-61-98 REGON: 255127177 Nr konta: PL23109010144793490424003846 NABYWCA: Wojciech Jankowsi Adres: ul. Dębowa 98/35, 41-200 Bytom NIP: 955-107-65-
+  doc_00032.png  osoba=Wojciech Kozłowski  → BRAK_W_OCR
+    OCR[300]: Data 09. 11. 2022 Sporządzla Sawomir Kaecayk Dolyczy intenwencji dotyczącej zaduzenia czynszowego W dlu 9. tt 2022 do biura zgloslaię nastepujca osoba Wojclech Kosbwsk PESEL: 641216 19185 Ades . Polna 47, 40-001 Saczedán Te 48608 674 922 Roamowa thwala ok 20 mnt Sprawa zostala zarejestrowana w syste
+  doc_00038.png  imie_nazwisko=Karolina Woźniak  → BRAK_W_OCR
+    OCR[300]: DNE OS0BowE WOSKoOANCY PESEL A wwGS DAE KONTAKTOWE A TSe1 DAE POOATKOWE Ps wNIOSEK owYDANIE ZASWIADCZENA
+  doc_00041.png  autor=Mariusz Dąbrowski  → BRAK_W_OCR
+    OCR[300]: Daa 09D1 2020 Sporządzla Marusz Dabeowsi Dotyczy: skargi na warunki lokalowe W driu 09 01 2020 do bra zgjoslabię nastepjeca oscba Maciej Mazr PESEL 83072695302 Ades a Nepodeglosc s47, 76.00t Blalystok Tel 48 516 597 904 Roamowa trw als ok 20 mit Spraa zostaa zarejestrowana wniosku. Zslecong zloae pi
+  doc_00041.png  osoba=Maciej Mazur  → BRAK_W_OCR
+    OCR[300]: Daa 09D1 2020 Sporządzla Marusz Dabeowsi Dotyczy: skargi na warunki lokalowe W driu 09 01 2020 do bra zgjoslabię nastepjeca oscba Maciej Mazr PESEL 83072695302 Ades a Nepodeglosc s47, 76.00t Blalystok Tel 48 516 597 904 Roamowa trw als ok 20 mit Spraa zostaa zarejestrowana wniosku. Zslecong zloae pi
+  doc_00045.png  imie_nazwisko=Kamil Szymański  → BRAK_W_OCR
+    OCR[300]: Urząd Celno Skarbowy w Gdansku Sygn akt BK 3912/2023 Kaml Szymask Ogrodoa 10t 44 100 Warszaa Kani Szymask, PESEL 7911149o96 Deialajgc na podstaie at 156$1 Kodeku postepowanie administracynego cị Oz U.z 2023 t por T75 ae zm), Urzad Celno-Skabowy w Gdasku wzya Panią Pana: do zotenia pisemnych wyjainie
+  doc_00047.png  imie_nazwisko=Andrzej Jankowski  → BRAK_W_OCR
+    OCR[300]: Uząd Skartowy w Warszase Sgn t s 903201s And nos 4 Sekicas 10541 9001 Za Dri napodste a 156$1Kodku postepo Andze kows, PESEL 226981 ni pisemnydh we w emine S4 d Waie paprony o kot M8737 S14 603 Z powaaniem Saty WEZWANIE Do Z0ŽENIA wYJAŠNIEŃN Woda, da 25062021 ya PrigPna
+  doc_00052.png  imie_nazwisko=Natalia Pawłowska  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Natalia Pawtowska Data urodzenia: 20.01.1986 PESEL: 96082680708 Nr dowodu osobistego: OKN411892 DANE KONTAKTOWE Adres zamieszkania: ul. Polna 24/11, 80-001 Białystok Telefon: +48 501 693 197 Adres e-mail: natalia. pawlowska @o2.pl DANE PODATKOWE NIP jeśli d
+  doc_00054.png  imie_nazwisko_zleceniodawca=Zofia Kwiatkowska  → BRAK_W_OCR
+    OCR[300]: zaarta dnia 26082023 pomiędzy 1.Zofa Kaiathowska zamieszkatymig . Kolciuszi 2343, 70-001 Sacaecin NP. 818-400-21-82 | PESEL 96042468351 zanyl dale Zeceniodawca 2 Maciej Dudek zamieszkatymig . Kaatowa 186, 10-100 Bytom NP.817-948-71-65 zwanyl dale Zeceniobiorca $1. Przedmiot umowy $2 Wynagrodzenie i 
+  doc_00067.png  imie_nazwisko=Maria Kwiatkowska  → BRAK_W_OCR
+    OCR[300]: D y 4o2034 Maa Koka PESEL 97TT NP 48g-s eKosa 122 os.00 o S ORZEKAM UZASADaENE Po ppoau po Son POUCZENaE c e G Mo2004 Zakad Ubezpieczet Spolecznych Oddn wansze DECYZIAADMINISTRACYJNA wspre wpise do rejestu dralahosc
+
+
+[EMAIL POMINIĘTE] 3 encji:
+
+  doc_00035.png  email=zofia_pawlowska32@wp.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Zofia Pawłowska Data urodzenia: 29.12.1988 PESEL: 63111797377 Nr dowodu osobistego: HIW612019 DANE KONTAKTOWE Adres zamieszkania: ul. Polna 1, 30-001 Zielona Góra Telefon: +48 516 652 888 Adres e-mail: zofia _pawlowska32@wp.pl DANE PODATKOWE NIP Gešli dotyc
+  doc_00038.png  email=karolinawozniak@poczta.pl  → BRAK_W_OCR
+    OCR[300]: DNE OS0BowE WOSKoOANCY PESEL A wwGS DAE KONTAKTOWE A TSe1 DAE POOATKOWE Ps wNIOSEK owYDANIE ZASWIADCZENA
+  doc_00043.png  email=iwona_jankowska@gmail.com  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAVWCY Imię i nazwisko: Iwona Jankowska Daia urodzenia: 15.03.1997 PESEL: 82080875310 Nr dowodu osobistego: CRW355830 DANE KONTAKTOWE Adres zamieszkania: ul. Kościuszki 36, 45-001 Gdańsk Telefon: +48 733 215 322 Adres e-mail: Twona jankowska@gmail.con DANE PODATKOWE NIP (jeśli do
+
+
+[ADRES POMINIĘTE] 21 encji:
+
+  doc_00001.png  adres=ul. Piaskowa 137, 31-001 Toruń  → BRAK_W_OCR
+    OCR[300]: Urzad Marszakowski Województwa Mazowieckiego Sygn. akt i Co 96622015 Beata Man Plaskowa 137 31-001 Tonu Dzialając na podstaaie art 156$ 1 Kodeksu postepowania dministracjpego tị Dz U. z 2023r poz 775 m), Urzad Marszalkowski Wojew PaniPaa Beata Man, PESEL 96052400103 do zozenia pisemnyc wjainieh w te
+  doc_00004.png  adres_zleceniodawca=ul. Różana 123, 45-001 Katowice  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 17042024 pomiędy 1 Aeksandrs Nowak zamiesckalymia u Rózana 123, 45-001 Katoice NIP: 934-204-14-32 1 PESEL: 04312144559 zwanyla dale Zleceniodawcą 2. Andzej Dudek zamieszkaymia . Plaskowa 131, 45-001 Częstochowa NIP. 866-722-94-66 zanylą dale Zeceniobiorca" $1. Przedmiot umowy $2. Wynagr
+  doc_00004.png  adres_zleceniobiorca=ul. Piaskowa 131, 45-001 Częstochowa  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 17042024 pomiędy 1 Aeksandrs Nowak zamiesckalymia u Rózana 123, 45-001 Katoice NIP: 934-204-14-32 1 PESEL: 04312144559 zwanyla dale Zleceniodawcą 2. Andzej Dudek zamieszkaymia . Plaskowa 131, 45-001 Częstochowa NIP. 866-722-94-66 zanylą dale Zeceniobiorca" $1. Przedmiot umowy $2. Wynagr
+  doc_00012.png  adres_zleceniodawca=ul. Polna 196, 70-001 Bielsko-Biała  → BRAK_W_OCR
+    OCR[300]: Z dia 0607 2022 pony Za Kant Kowa Z y P s, 001 BaB NP 8563381 PESEL HO3ooes 2 Ma Koa $1. Przedmiot umowy ccar NP 88343684 $2 Wynagrodzenie i platrose nae prdiu uoy eoiaca gci naon baroy Decy BA PZOsoo43757aere $3 Czas treania umowy $4 Pouhose Dece Sony zo Jecaica UMOWAO SwIADCZENIE USŁUG U0180/2025 
+  doc_00012.png  adres_zleceniobiorca=ul. Krakowska 133/29, 03-300 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Z dia 0607 2022 pony Za Kant Kowa Z y P s, 001 BaB NP 8563381 PESEL HO3ooes 2 Ma Koa $1. Przedmiot umowy ccar NP 88343684 $2 Wynagrodzenie i platrose nae prdiu uoy eoiaca gci naon baroy Decy BA PZOsoo43757aere $3 Czas treania umowy $4 Pouhose Dece Sony zo Jecaica UMOWAO SwIADCZENIE USŁUG U0180/2025 
+  doc_00015.png  adres=ul. Piaskowa 161/40, 30-001 Gliwice  → BRAK_W_OCR
+    OCR[300]: Data: 10.12.2024 Sporządzitla: Katarzyna Kowalska Dotyczy interwencji dotyczącej zadłużenia czynszowego W dniu 10,12.2024 do biura zgłosiła/się następująca osoba: Ewa Mazur PESEL: 85012470333 Adres: ul. PiaskDwa 161/40,30-001 Gliwice Tel.: +48 606 566 634 Rozmowa trwała ok. 20 minut. Sprawa została 
+  doc_00018.png  adres_zleceniodawca=ul. Chopina 101, 03-300 Poznań  → BRAK_W_OCR
+    OCR[300]: NP 60s6341PESEL S09e y 2 Ma Som NP 212n t208202 y y $1 Pzednot umowy $2 Wynagrodzene i pltno Z t 6AN RIOsoo 30434zss Sy $3 Caas trania umowy c $4 Poutose ey UMOWAO SwADCZENIE USŁUG U0e112025 y
+  doc_00018.png  adres_zleceniobiorca=ul. Mickiewicza 90/26, 10-100 Bydgoszcz  → BRAK_W_OCR
+    OCR[300]: NP 60s6341PESEL S09e y 2 Ma Som NP 212n t208202 y y $1 Pzednot umowy $2 Wynagrodzene i pltno Z t 6AN RIOsoo 30434zss Sy $3 Caas trania umowy c $4 Poutose ey UMOWAO SwADCZENIE USŁUG U0e112025 y
+  doc_00022.png  adres=ul. Norwida 9, 00-001 Radom  → BRAK_W_OCR
+    OCR[300]: Powiatowy Urząd Pracy w Poznaniu Sygn. akt i K 21852015 Andrzej Nowak ul. Nonwida 9 00-001 Radom Andrzej Nowak, PESEL: 87102814883 Działając na podstaie ant. 155$ 1 Kodeksu postepowania administracyjnego (tį Dz U. z 2023 t poz 775 ze zm). Powiatowy Uzad Pracy w Pozrnaniu wzywa Panią/Pana: do zlbżeni
+  doc_00023.png  adres_nabywcy=ul. Norwida 143/6, 85-001 Bielsko-Biała  → BRAK_W_OCR
+    OCR[300]: Daa wystaienia 23032023 Numer keta KL-S7907 SPRZEDAwCA Pzediębiosteo Budoulan MARBUDSA Ades Kopemika 735 00001 Lodt NP 99806-70-26 REGON 28890047rs konta P6S1090 10144862 154190129238 NABYWCA Aleksandra Dudek Ades d onwida 1436, 8s001 Bebko-Baa NP 497-281-32-24 Naa sgi Cena VAT N Bnt 1.Solenie zawod
+  doc_00028.png  adres=ul. Różana 88, 90-001 Kraków  → BRAK_W_OCR
+    OCR[300]: Spt Datyczy wosku o zmang atresu zameldwan Wou 2021 rsgi obe PESEL SocsS Rost20 Toma o NOTATKA SŁUŽBOWA boczyh
+  doc_00038.png  adres=ul. Leśna 11/37, 65-001 Toruń  → BRAK_W_OCR
+    OCR[300]: DNE OS0BowE WOSKoOANCY PESEL A wwGS DAE KONTAKTOWE A TSe1 DAE POOATKOWE Ps wNIOSEK owYDANIE ZASWIADCZENA
+  doc_00041.png  adres=al. Niepodległości 14/7, 70-001 Białystok  → BRAK_W_OCR
+    OCR[300]: Daa 09D1 2020 Sporządzla Marusz Dabeowsi Dotyczy: skargi na warunki lokalowe W driu 09 01 2020 do bra zgjoslabię nastepjeca oscba Maciej Mazr PESEL 83072695302 Ades a Nepodeglosc s47, 76.00t Blalystok Tel 48 516 597 904 Roamowa trw als ok 20 mit Spraa zostaa zarejestrowana wniosku. Zslecong zloae pi
+  doc_00044.png  adres_nabywcy=ul. Warszawska 174, 70-001 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Data wystawienia 2703 2020 Numer kienta KL-87840 SPRZEDAwCA Biuro Rachurkowe RACHMSTRZ Ades u. Chopina 27/25, 00-001 Tonuń P. S13-228 65-70 REGON 223494179 Nr konta PLI724010t363275683298s46008 NABYWCA Andzej Kowalczyk Ades: u Wanszawka 124, 70001 Clsztyn NIP 260-966-03-97 L Naa uskugi Cena VAT Nto 
+  doc_00045.png  adres=ul. Ogrodowa 101, 44-100 Warszawa  → BRAK_W_OCR
+    OCR[300]: Urząd Celno Skarbowy w Gdansku Sygn akt BK 3912/2023 Kaml Szymask Ogrodoa 10t 44 100 Warszaa Kani Szymask, PESEL 7911149o96 Deialajgc na podstaie at 156$1 Kodeku postepowanie administracynego cị Oz U.z 2023 t por T75 ae zm), Urzad Celno-Skabowy w Gdasku wzya Panią Pana: do zotenia pisemnych wyjainie
+  doc_00047.png  adres=ul. Sienkiewicza 105/41, 70-001 Zabrze  → BRAK_W_OCR
+    OCR[300]: Uząd Skartowy w Warszase Sgn t s 903201s And nos 4 Sekicas 10541 9001 Za Dri napodste a 156$1Kodku postepo Andze kows, PESEL 226981 ni pisemnydh we w emine S4 d Waie paprony o kot M8737 S14 603 Z powaaniem Saty WEZWANIE Do Z0ŽENIA wYJAŠNIEŃN Woda, da 25062021 ya PrigPna
+  doc_00049.png  adres=ul. Słoneczna 118/19, 40-001 Rzeszów  → BRAK_W_OCR
+    OCR[300]: Sygn: PD 043451 2020 Data wydania 12 01 2021 Na podstawie po rozpatr zeniu wniosku Zofia Zajac art 104 ustawy z dnia 14 czerwca 1960 r- Kodeks postepowania administracyhego (tị Dz. U z 2023 r. poz 775 ze zm ) PESEL 72041780454 NIP: 205-289-84-97 adres: u. Sloneczna t118/19, 40-001 Raeszów ORZEKAM: U
+  doc_00054.png  adres_zleceniodawca=ul. Kościuszki 23/43, 70-001 Szczecin  → BRAK_W_OCR
+    OCR[300]: zaarta dnia 26082023 pomiędzy 1.Zofa Kaiathowska zamieszkatymig . Kolciuszi 2343, 70-001 Sacaecin NP. 818-400-21-82 | PESEL 96042468351 zanyl dale Zeceniodawca 2 Maciej Dudek zamieszkatymig . Kaatowa 186, 10-100 Bytom NP.817-948-71-65 zwanyl dale Zeceniobiorca $1. Przedmiot umowy $2 Wynagrodzenie i 
+  doc_00054.png  adres_zleceniobiorca=ul. Kwiatowa 186, 10-100 Bytom  → BRAK_W_OCR
+    OCR[300]: zaarta dnia 26082023 pomiędzy 1.Zofa Kaiathowska zamieszkatymig . Kolciuszi 2343, 70-001 Sacaecin NP. 818-400-21-82 | PESEL 96042468351 zanyl dale Zeceniodawca 2 Maciej Dudek zamieszkatymig . Kaatowa 186, 10-100 Bytom NP.817-948-71-65 zwanyl dale Zeceniobiorca $1. Przedmiot umowy $2 Wynagrodzenie i 
+  doc_00063.png  adres=ul. Ogrodowa 6/2, 20-100 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Komomik Sadowy przy SR Krakow-iowa Hua Piotr tiowacki Sygn akt Km 436/2020 Data 1106 2021 Alksandra Adamczk u Ogrodowa 62 20- 100 Oistyn la podtasie ty wyonawcago komek sowy zaadan, wsprie prowadzone pod sgn Km 4362020 wa potpo Alksandra Adamczyk, PESEL 7711840744 zamieskaya ZAWIADOMIENIE O WSZcZĘCI
+  doc_00067.png  adres=ul. Krakowska 122, 01-100 Bielsko-Biała  → BRAK_W_OCR
+    OCR[300]: D y 4o2034 Maa Koka PESEL 97TT NP 48g-s eKosa 122 os.00 o S ORZEKAM UZASADaENE Po ppoau po Son POUCZENaE c e G Mo2004 Zakad Ubezpieczet Spolecznych Oddn wansze DECYZIAADMINISTRACYJNA wspre wpise do rejestu dralahosc
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00002.png  lvl=3  qs=77 ──
+  Brakujące encje:
+    pesel = 98012385426
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00004.png  lvl=3  qs=74 ──
+  Brakujące encje:
+    iban = PL05109010145945401626374725
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00012.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    iban = PL20169010143757282899879147
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00018.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    iban = PL10150010130424522871911176
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00023.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    nip_sprzedawcy = 998-036-70-26
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00028.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 53060356370
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00038.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    pesel = 93113079461
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    dowod_osobisty = WWG238570
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 296-198-53-40
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    numer_paszportu = TS4166162
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00041.png  lvl=3  qs=79 ──
+  Brakujące encje:
+    pesel = 83072595302
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00044.png  lvl=3  qs=73 ──
+  Brakujące encje:
+    nip_sprzedawcy = 513-228-69-70
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL17240101353275583298346088
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00045.png  lvl=3  qs=74 ──
+  Brakujące encje:
+    pesel = 79111499096
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00047.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 03252269681
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00063.png  lvl=2  qs=86 ──
+  Brakujące encje:
+    pesel = 77111840744
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL47325000032621263098131700
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00067.png  lvl=2  qs=80 ──
+  Brakujące encje:
+    pesel = 69031777839
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 481-832-15-59
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+

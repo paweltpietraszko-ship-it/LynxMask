@@ -1,0 +1,31 @@
+BUGS v2 — SEKCJA B (IN-SCOPE ACCEPTED) — 2026-06-25 11:18:15
+════════════════════════════════════════════════════════════
+
+[BRAK_W_OCR] Encje krytyczne (nie blokuje release): 2
+
+  doc_00026.png  lvl=3  qs=81  pesel=88070505777
+  doc_00026.png  lvl=3  qs=81  dowod_osobisty=LKW771657
+
+[OSOBA POMINIĘTE] 2 encji:
+
+  doc_00050.png  autor=Andrzej Wieczorek  → BRAK_W_OCR
+    OCR[300]: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 189, 87-100 Lubin Tel: +48 576 477 050 Rozmowa trw ala ok 20 minut Spra zostala zarejestrow ana w syst
+  doc_00050.png  osoba=Kamil Michalski  → BRAK_W_OCR
+    OCR[300]: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 189, 87-100 Lubin Tel: +48 576 477 050 Rozmowa trw ala ok 20 minut Spra zostala zarejestrow ana w syst
+
+[EMAIL POMINIĘTE] 3 encji:
+
+  doc_00016.png  email=kamil.wozniak@wp.pl  → BRAK_W_OCR
+  doc_00020.png  email=piotr_dudek45@interia.pl  → BRAK_W_OCR
+  doc_00042.png  email=justyna.dudek@gmail.com  → BRAK_W_OCR
+
+[ADRES POMINIĘTE] 7 encji:
+
+  doc_00012.png  adres_nabywcy=ul. Wolności 99, 41-200 Sosnowiec  → BRAK_W_OCR
+  doc_00021.png  adres=al. Niepodległości 13/2, 65-001 Gliwice  → BRAK_W_OCR
+  doc_00033.png  adres=ul. Zielona 84, 85-001 Gdynia  → BRAK_W_OCR
+  doc_00050.png  adres=ul. Kwiatowa 189, 87-100 Lublin  → BRAK_W_OCR
+  doc_00057.png  adres_nabywcy=ul. Dębowa 19/23, 87-100 Białystok  → BRAK_W_OCR
+  doc_00059.png  adres=pl. Wolności 175, 30-001 Wrocław  → BRAK_W_OCR
+  doc_00064.png  adres=ul. Długa 72, 70-001 Rybnik  → BRAK_W_OCR
+

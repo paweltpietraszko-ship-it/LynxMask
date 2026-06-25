@@ -1,0 +1,27 @@
+EDGE CASES DO SŁOWNIKA — LynxMask Mobile
+=========================================
+Encje których silnik strukturalny nie obsługuje.
+Wklej tekst do aplikacji → zaznacz → Maskuj → zapisz do biblioteki.
+
+Format: VALUE  |  TYP
+Kolejność: od najważniejszych (Class B) do niższych
+
+=========================================
+DATY — skrócony rok bez kontekstu DATA/DNIA
+=========================================
+
+
+=========================================
+NIP — formaty bez separatorów / OCR artefakty
+=========================================
+
+
+=========================================
+DOWÓD OSOBISTY — OCR artefakty / niestandardowe formaty
+=========================================
+
+
+=========================================
+INNE
+=========================================
+

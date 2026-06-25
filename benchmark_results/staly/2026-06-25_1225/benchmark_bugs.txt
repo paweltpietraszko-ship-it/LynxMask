@@ -1,0 +1,57 @@
+BUGS v2 — SEKCJA B (IN-SCOPE ACCEPTED) — 2026-06-25 12:24:22
+════════════════════════════════════════════════════════════
+
+[BRAK_W_OCR] Encje krytyczne (nie blokuje release): 2
+
+  doc_00026.png  lvl=3  qs=81  pesel=88070505777
+  doc_00026.png  lvl=3  qs=81  dowod_osobisty=LKW771657
+
+[OSOBA POMINIĘTE] 2 encji:
+
+  doc_00050.png  autor=Andrzej Wieczorek  → BRAK_W_OCR
+    OCR[300]: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 189, 87-100 Lubin Tel: +48 576 477 050 Rozmowa trw ala ok 20 minut Spra zostala zarejestrow ana w syst
+  doc_00050.png  osoba=Kamil Michalski  → BRAK_W_OCR
+    OCR[300]: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 189, 87-100 Lubin Tel: +48 576 477 050 Rozmowa trw ala ok 20 minut Spra zostala zarejestrow ana w syst
+
+[EMAIL POMINIĘTE] 3 encji:
+
+  doc_00016.png  email=kamil.wozniak@wp.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Kamil Wożniak Data urodzenia: 05.08.1967 PESEL: 63031845581 Nr dowodu osobistego: HJD465182 DANE KONTAKTOWE Adres zamieszkania: ul. Leśna 64, 50-001 Gdańsk Telefon: +48 481 865 133 Adres e-nnail kamil. woziak@wppl DANE PODATKOWE NIP jeśli dotyczy): 519-317-
+  doc_00020.png  email=piotr_dudek45@interia.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imie i nazwisko: Piotr Dudek Data urodzenia: 05.09.1999 PESEL: 60020104908 Nr dowodu osobístego 2TS935950 DANE KONTAKTOWE Adres zamieszkania: ul. Leśna 110, 50-001 Warszawa Telefon: t48 787 897 038 Adres e-mail: piotr dudek45@ inte ria.pl DANE PODATKOWE Data: NIP Geśli doty
+    NORM[@]: DANE OSOBOWE WNIOSKODAWCY
+Imie i nazwisko:
+Piotr Dudek
+Data urodzenia:
+05.09.1999
+PESEL:
+60020104908
+Nr dowodu osobísteg
+  doc_00042.png  email=justyna.dudek@gmail.com  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Justyna Dudek Data urodzenia 07.09.1974 PESEL: 86071041805 Nr dowodu osobistego: IIU247920 DANE KONTAKTOWE Adres zamieszkania: ul. Zielona 176, 80-001 Olsztyn Telefon: +48 667 171 671 Adres e-mail: justyna.dud ek@amail.com DANE PODATKOWE NIP ((ešli dotyczy)
+    NORM[@]: DANE OSOBOWE WNIOSKODAWCY
+Imię i nazwisko:
+Justyna Dudek
+Data urodzenia
+07.09.1974
+PESEL:
+86071041805
+Nr dowodu osobiste
+
+[ADRES POMINIĘTE] 7 encji:
+
+  doc_00012.png  adres_nabywcy=ul. Wolności 99, 41-200 Sosnowiec  → BRAK_W_OCR
+    OCR[200]: Data wwstawienia: 13.04.2021 Numer klienta: KL-75125 SPRZEDAWCA Serwis AGD ELEKTRO Sp. z 0.0. Adres: ul. Nowa 97, 10-100 Zielona Góra NIP: 108-329-91-94 REGON: 847976550 Nr konta: PL151500101396463485
+  doc_00021.png  adres=al. Niepodległości 13/2, 65-001 Gliwice  → BRAK_W_OCR
+    OCR[200]: Data: 14.03.2021 Sporządzila: Agnieszka Szyman ska Dotyczy: prośby o udostępnienie informacçji publicznej W dniu 14.03.2021 do biura zgłosiłalsię następująca osoba: Zofia Jankowska PESEL: 74012016856 
+  doc_00033.png  adres=ul. Zielona 84, 85-001 Gdynia  → BRAK_W_OCR
+    OCR[200]: Data: 13.09.2023 Sporządzila: Sylwia Kamińska Dotyczy: zgłoszenia zaginięcia dokumentu tożsamości W dniu 1309 2023 do biura zglosilalsię następująca osoba: Elzbieta Wieczorek. PESEL: 590726624 18 Adre
+  doc_00050.png  adres=ul. Kwiatowa 189, 87-100 Lublin  → BRAK_W_OCR
+    OCR[200]: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 18
+  doc_00057.png  adres_nabywcy=ul. Dębowa 19/23, 87-100 Białystok  → BRAK_W_OCR
+    OCR[200]: Data wystawienia 1903 2023 Numer kdienta KL-71014 SPRZEDAWCA ALFA Sp. z 60. Adres: u Råzana 2or38,60-001 Zabrze NIP: 721-458-13-28 REGON: 557374054 Nr konta PL19102028926340039277573006 NABYWCA Lukasz
+  doc_00059.png  adres=pl. Wolności 175, 30-001 Wrocław  → BRAK_W_OCR
+    OCR[200]: Urząd Gmirny Warszawa Wola Sygn. akt IK 9658/2023 Mausz Michalski pl. Wolhoci 175 30-001 Wodaw Marusz Michalski, PESEL 61030656762 Dzialając na podstaie at 155$1 Kodeksu postepowania adninistracnego t
+  doc_00064.png  adres=ul. Długa 72, 70-001 Rybnik  → BRAK_W_OCR
+    OCR[200]: Urząd Skarbowy Kraków-Sródmieście Sygn. aktl Ns 4768/2023 Ewa Wöjcik d. Dga 72 70-001 Rybnik Ewa Wojcik, PESEL 99011707741 Dzialając na podstawie art 155 1 Kodeksu postepowania adninistracyjnego tį Dz
+

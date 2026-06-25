@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>LynxMask — Kandydaci do słownika</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; font-size: 18px; }
+  h1 { color: #1a1a2e; }
+  p.info { background: #e8f4fd; padding: 12px; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th { background: #1a1a2e; color: white; padding: 10px; text-align: left; }
+  td { padding: 10px; border-bottom: 1px solid #ddd; }
+  tr:hover { background: #f5f5f5; }
+  .type { color: #666; font-size: 14px; }
+  .cnt  { color: #999; font-size: 14px; }
+  .val  { font-weight: bold; }
+  input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
+  button { background: #1a1a2e; color: white; border: none; padding: 14px 28px;
+           font-size: 18px; border-radius: 6px; cursor: pointer; margin: 10px 4px; }
+  button:hover { background: #2d2d5e; }
+  button.sec { background: #555; }
+  #status { color: green; font-weight: bold; margin: 10px 0; }
+</style>
+</head>
+<body>
+<h1>Kandydaci do słownika LynxMask</h1>
+<p class="info">
+  Encje in-scope (sekcja B) pominięte przez silnik. Zaznacz które chcesz dodać i kliknij <b>Eksportuj zaznaczone</b>.
+</p>
+<div>
+  <button onclick="selectAll()">Zaznacz wszystko</button>
+  <button class="sec" onclick="selectNone()">Odznacz wszystko</button>
+  <button onclick="exportSelected()">Eksportuj zaznaczone</button>
+</div>
+<div id="status"></div>
+<table>
+  <thead><tr><th></th><th>Wartość</th><th>Typ</th><th>Pominięć</th></tr></thead>
+  <tbody><tr>
+              <td><input type="checkbox" class="cb" data-value="ul. Wolności 99, 41-200 Sosnowiec" data-type="ADRES" checked></td>
+              <td class="val">ul. Wolności 99, 41-200 Sosnowiec</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="kamil.wozniak@wp.pl" data-type="EMAIL" checked></td>
+              <td class="val">kamil.wozniak@wp.pl</td>
+              <td class="type">EMAIL</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="piotr_dudek45@interia.pl" data-type="EMAIL" checked></td>
+              <td class="val">piotr_dudek45@interia.pl</td>
+              <td class="type">EMAIL</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="al. Niepodległości 13/2, 65-001 Gliwice" data-type="ADRES" checked></td>
+              <td class="val">al. Niepodległości 13/2, 65-001 Gliwice</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="ul. Zielona 84, 85-001 Gdynia" data-type="ADRES" checked></td>
+              <td class="val">ul. Zielona 84, 85-001 Gdynia</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="justyna.dudek@gmail.com" data-type="EMAIL" checked></td>
+              <td class="val">justyna.dudek@gmail.com</td>
+              <td class="type">EMAIL</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="Andrzej Wieczorek" data-type="OSOBA" checked></td>
+              <td class="val">Andrzej Wieczorek</td>
+              <td class="type">OSOBA</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="Kamil Michalski" data-type="OSOBA" checked></td>
+              <td class="val">Kamil Michalski</td>
+              <td class="type">OSOBA</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="ul. Kwiatowa 189, 87-100 Lublin" data-type="ADRES" checked></td>
+              <td class="val">ul. Kwiatowa 189, 87-100 Lublin</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="ul. Dębowa 19/23, 87-100 Białystok" data-type="ADRES" checked></td>
+              <td class="val">ul. Dębowa 19/23, 87-100 Białystok</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="pl. Wolności 175, 30-001 Wrocław" data-type="ADRES" checked></td>
+              <td class="val">pl. Wolności 175, 30-001 Wrocław</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr>
+<tr>
+              <td><input type="checkbox" class="cb" data-value="ul. Długa 72, 70-001 Rybnik" data-type="ADRES" checked></td>
+              <td class="val">ul. Długa 72, 70-001 Rybnik</td>
+              <td class="type">ADRES</td>
+              <td class="cnt">1×</td>
+            </tr></tbody>
+</table>
+<script>
+function selectAll()  { document.querySelectorAll('.cb').forEach(c => c.checked = true);  }
+function selectNone() { document.querySelectorAll('.cb').forEach(c => c.checked = false); }
+function exportSelected() {
+  const items = [];
+  document.querySelectorAll('.cb:checked').forEach(cb => {
+    items.push({ value: cb.dataset.value, type: cb.dataset.type });
+  });
+  if (items.length === 0) { alert('Nic nie zaznaczone.'); return; }
+  const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'user_dictionary_additions.json';
+  a.click();
+  document.getElementById('status').textContent = '✓ Pobrano ' + items.length + ' wpisów.';
+}
+</script>
+</body>
+</html>

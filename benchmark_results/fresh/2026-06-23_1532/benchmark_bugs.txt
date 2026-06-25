@@ -1,0 +1,204 @@
+BUGS / ANOMALIE — 2026-06-23 15:32:50
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 24
+
+  images/doc_00002.png  lvl=2  qs=81  pesel=77051019879
+  images/doc_00002.png  lvl=2  qs=81  nip=593-784-03-32
+  images/doc_00003.png  lvl=3  qs=81  pesel=94052474197
+  images/doc_00008.png  lvl=2  qs=80  nip=594-031-75-92
+  images/doc_00019.png  lvl=2  qs=80  pesel=72091503683
+  images/doc_00019.png  lvl=2  qs=80  iban=PL31169010141318291971785346
+  images/doc_00022.png  lvl=2  qs=82  nip=902-110-35-89
+  images/doc_00026.png  lvl=2  qs=82  iban=PL47102028922002877387247623
+  images/doc_00029.png  lvl=2  qs=88  pesel=58082685954
+  images/doc_00029.png  lvl=2  qs=88  iban=PL82169010148185597275464016
+  images/doc_00031.png  lvl=3  qs=86  pesel=51051390462
+  images/doc_00033.png  lvl=2  qs=83  pesel=55072845961
+  images/doc_00033.png  lvl=2  qs=83  iban=PL89114019873138870995259457
+  images/doc_00035.png  lvl=0  qs=100  nip=740-986-94-80
+  images/doc_00041.png  lvl=2  qs=82  nip_sprzedawcy=918-009-18-64
+  images/doc_00041.png  lvl=2  qs=82  nip_nabywcy=330-471-88-52
+  images/doc_00041.png  lvl=2  qs=82  iban=PL27169010145310338398211012
+  images/doc_00044.png  lvl=2  qs=85  pesel=50082245194
+  images/doc_00046.png  lvl=2  qs=83  pesel=52020670592
+  images/doc_00046.png  lvl=2  qs=83  nip=156-053-03-89
+  images/doc_00047.png  lvl=2  qs=83  pesel=61040450626
+  images/doc_00047.png  lvl=2  qs=83  nip=399-345-24-69
+  images/doc_00063.png  lvl=2  qs=85  pesel=69112095445
+  images/doc_00063.png  lvl=2  qs=85  nip=847-081-89-37
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  NUMER        76,4%  (201/263)
+
+
+[OSOBA POMINIĘTE] 16 encji:
+
+  doc_00000.png  imie_nazwisko_zleceniobiorca=Tomasz Pawłowski  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 27.01.2020 pomiędzy: 1. Marcin Pawłowski zamieszkałymlą: ul. Sienkiewicza 125/30,65-001 Zabrze NIP: 570-818-42-40| PESEL: 81020145777 zwanylą dalej.Zleceniodawca" 2. Tomasz Pawowski zamieszkałymlą: ul. Sportowa 118/6, 30-001 Radom NIP: 356-070-56-70 zwanylą dalej .Zleceniobiorcą" S1. Pr
+  doc_00002.png  imie_nazwisko=Dorota Grabowska  → BRAK_W_OCR
+    OCR[300]: Syg KP08 2021 D ydia 27 11 2022 podtae pea wok Deta Grtoska PESEL 77Osso 19679 NP S83-7sM312 tes Paoa S541200 aca ORZEKAM UZASADIENE Po pragowteru poe Stonapae pe POUCZENNE ot say rca Puna dria 27 112022 Urzad Ceno Skarbowy w Gdasku DECYZJAADMINISTRACYJNA wsprasie wpisie do rejestu dralahos
+  doc_00003.png  imie_nazwisko=Tadeusz Woźniak  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Poznan Grunwald Janusz Wierzbicki Sygn akt Km 499672021 Data 1404 2023 Tadeusz Wotniak p Wolnolci 96/27 02-200 Biahtok a podstasie tyu wykonawczego komomik sadowy zaiadamia, 2e w sprie prowadzonej pod sygn Km 499672021 wsecz postepoanie Tadeusz Wotiak, PESEL S4052474197 ZAWIA
+  doc_00007.png  imie_nazwisko_nabywcy=Marek Mazur  → BRAK_W_OCR
+    OCR[300]: Data wystawienia 14.10 2020 Numer klenta KL-61364 SPRZEDAWCA Centrum Medyczne MEOYK Sp. z o.o. Adres: Krakowska 708, 80-001 Bydgoszcz NIP. 330-938-10-21 REGON: 459051217 N konta PLS22401013652251966715044622 NABYWCA Marek Manur Adres: Soneczna 127, 60-001 Bytom NIP. 600-976-44-23 Lp Nawa uskugi Cena
+  doc_00008.png  imie_nazwisko=Dariusz Kozłowski  → BRAK_W_OCR
+    OCR[300]: Sygn: SA0res01 2023 Data wydania 2306 2021 a podstawie t 104 ustawy z dnia 14 carwca 1960r po ropatanu wiosk Dausz Kodows PESEL 00322835672 NP. 554-01-75-92 ades Wosenna 86 60-001 Radom ORZEKAM Organ odmaia wydania UZASADIENE Po pezproatcenu posponia adnistacegoi brani Srona speainie speia wymogi fo
+  doc_00019.png  imie_nazwisko=Paweł Lewandowski  → BRAK_W_OCR
+    OCR[300]: Komomik Sadowy przy SR Warsza Mokctów Tomasz Malinowsk Sgn t K 2771020s Pl Ledosk Sneca 162 s001 Bym L a potaa ynag onn sy ane oone pod sgn Kn 277102023+ Palendosk PESEL TOsES Da a z ZAWIADOMIENIE O WSZCZĘCU EGZEKUCJ tySneca t62, 6001 Bym Konnk Soy yno 2256 PUNe 22tiey S y oaai sach mu o
+  doc_00025.png  imie_nazwisko=Agnieszka Pawłowska  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Agnieszka Pawiowska Data urodzenia 25.06.1961 PESEL: 9309231 0287 Nr dowodu osobistego: SYZ887341 DANE KONTAKTOVWE Adres zamieszkania: ul. Mickiewicza 57, 45-001 Lublin Telefon: +48 489 576 694 Adres e-mail: agnieszka pawlowska@gmail.com DANE PODATKOWE NIP 
+  doc_00029.png  imie_nazwisko=Elżbieta Pawłowska  → BRAK_W_OCR
+    OCR[300]: Komema Sdy prny SR Wocftncane Maa Kedenka EPa P PESEL SA Knnk Se ZAWADOMENE O WSZcZECU EGZEKUC e0ssrzs4640ne
+  doc_00033.png  imie_nazwisko=Mateusz Pawłowski  → BRAK_W_OCR
+    OCR[300]: Komomk Sạdowy prry SR Warsza Moktow Tmasz Malinowsk Dul 16 12 223 M P PESEL sorasese Kannk Sy ZAWIADOMIENE O WSZcZEĘCIU EGZEKUCa
+  doc_00041.png  imie_nazwisko_nabywcy=Łukasz Krawczyk  → BRAK_W_OCR
+    OCR[300]: Duy 300 2622 SPRZEDAwCA ALFA Sts As Pzreeoseeo WCA NP S04ns RZreeoseso2 FAKTURA VAT VATI2021
+  doc_00044.png  autor=Jakub Krawczyk  → BRAK_W_OCR
+    OCR[300]: Spozt a Dayczy skargi na wank bkaloe Maka ska PESEL SOoRZ24S154 A Dt1420 2 Gn NOTATKA SsŁuŽBOWA boch
+  doc_00044.png  osoba=Monika Kozłowska  → BRAK_W_OCR
+    OCR[300]: Spozt a Dayczy skargi na wank bkaloe Maka ska PESEL SOoRZ24S154 A Dt1420 2 Gn NOTATKA SsŁuŽBOWA boch
+  doc_00046.png  imie_nazwisko=Sylwia Lewandowska  → BRAK_W_OCR
+    OCR[300]: Du yi 060 2024 peda 104 y z Spa edoska PESEL S2os7o82 NP 1606 K20-100 Ga ORZEKAM UZASADENE Po ppouteu pepo POUCZENaE drca Rad i 0507 2004 Urzd Gminy Warsza Wola DECYZJA ADMINISTRACYJNA wsprae umorzenu postepowania od
+  doc_00047.png  imie_nazwisko=Grzegorz Lewandowski  → BRAK_W_OCR
+    OCR[300]: S Po0ers 2021 Du y 02025 pode 104y Gg Ledo PESEL 61o04S0626 NP 3 3s 36 e 1300t Kce ORZEKAM uZASADENE Pe pu popo Seona pe POUCZENHE o gsy Zakad Lberpecze Spolecanych Oatn wsze DECYZJA ADMINISTRACYJNA Wsprae peryznanu zmu stalego
+  doc_00051.png  imie_nazwisko_nabywcy=Renata Kamińska  → BRAK_W_OCR
+    OCR[300]: Data wystaienia 2102 2021 Numer klerta KL-96968 SPRZEDAwCA GAMMA Sp zoa SKA Ades Mciewicza 1690, e5001 6aystok NP 962 840-71-25 REGON 821437o23 korta PL6816901014 37sa 38065215757 NABYWCA Renata Kamiska Ades Lesna 106, 03300 Tonu NP 493-276 62-92 La Naa usg Cena vAT N Bu 1.agra sorzu 2319 2s 6 785 2
+  doc_00063.png  imie_nazwisko=Beata Szymańska  → BRAK_W_OCR
+    OCR[300]: Sygn PTOs 1391 2024 Data wydania 11 04 2020o Na podtaie at 104 ustay z dria 14 czerca 1960t po ozpatn wiosk Beata Srymaska PESEL 69112096445 NP 870e19-37 ades p Wnoci 3,41-200 Ostyn ORZEKAM UZASADHENE Po pezeproatzeru postegowara adniistacjnegoi Organ orzekamo zniarie decy plercn z pezyczyn wskacnyh
+
+
+[ADRES POMINIĘTE] 16 encji:
+
+  doc_00002.png  adres=ul. Piaskowa 55, 41-200 Warszawa  → BRAK_W_OCR
+    OCR[300]: Syg KP08 2021 D ydia 27 11 2022 podtae pea wok Deta Grtoska PESEL 77Osso 19679 NP S83-7sM312 tes Paoa S541200 aca ORZEKAM UZASADIENE Po pragowteru poe Stonapae pe POUCZENNE ot say rca Puna dria 27 112022 Urzad Ceno Skarbowy w Gdasku DECYZJAADMINISTRACYJNA wsprasie wpisie do rejestu dralahos
+  doc_00003.png  adres=pl. Wolności 96/27, 02-200 Białystok  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Poznan Grunwald Janusz Wierzbicki Sygn akt Km 499672021 Data 1404 2023 Tadeusz Wotniak p Wolnolci 96/27 02-200 Biahtok a podstasie tyu wykonawczego komomik sadowy zaiadamia, 2e w sprie prowadzonej pod sygn Km 499672021 wsecz postepoanie Tadeusz Wotiak, PESEL S4052474197 ZAWIA
+  doc_00007.png  adres_nabywcy=ul. Słoneczna 127, 50-001 Bytom  → BRAK_W_OCR
+    OCR[300]: Data wystawienia 14.10 2020 Numer klenta KL-61364 SPRZEDAWCA Centrum Medyczne MEOYK Sp. z o.o. Adres: Krakowska 708, 80-001 Bydgoszcz NIP. 330-938-10-21 REGON: 459051217 N konta PLS22401013652251966715044622 NABYWCA Marek Manur Adres: Soneczna 127, 60-001 Bytom NIP. 600-976-44-23 Lp Nawa uskugi Cena
+  doc_00008.png  adres=ul. Wiosenna 86, 60-001 Radom  → BRAK_W_OCR
+    OCR[300]: Sygn: SA0res01 2023 Data wydania 2306 2021 a podstawie t 104 ustawy z dnia 14 carwca 1960r po ropatanu wiosk Dausz Kodows PESEL 00322835672 NP. 554-01-75-92 ades Wosenna 86 60-001 Radom ORZEKAM Organ odmaia wydania UZASADIENE Po pezproatcenu posponia adnistacegoi brani Srona speainie speia wymogi fo
+  doc_00019.png  adres=ul. Słoneczna 196/21, 85-001 Bytom  → BRAK_W_OCR
+    OCR[300]: Komomik Sadowy przy SR Warsza Mokctów Tomasz Malinowsk Sgn t K 2771020s Pl Ledosk Sneca 162 s001 Bym L a potaa ynag onn sy ane oone pod sgn Kn 277102023+ Palendosk PESEL TOsES Da a z ZAWIADOMIENIE O WSZCZĘCU EGZEKUCJ tySneca t62, 6001 Bym Konnk Soy yno 2256 PUNe 22tiey S y oaai sach mu o
+  doc_00029.png  adres=ul. Polna 42/37, 70-001 Toruń  → BRAK_W_OCR
+    OCR[300]: Komema Sdy prny SR Wocftncane Maa Kedenka EPa P PESEL SA Knnk Se ZAWADOMENE O WSZcZECU EGZEKUC e0ssrzs4640ne
+  doc_00033.png  adres=ul. Sienkiewicza 11, 70-001 Gliwice  → BRAK_W_OCR
+    OCR[300]: Komomk Sạdowy prry SR Warsza Moktow Tmasz Malinowsk Dul 16 12 223 M P PESEL sorasese Kannk Sy ZAWIADOMIENE O WSZcZEĘCIU EGZEKUCa
+  doc_00036.png  adres=ul. Norwida 73/22, 70-001 Zabrze  → BRAK_W_OCR
+    OCR[300]: Data: 03.01.2020 Sporządzila: Kami Wójcik Dotyczy: interwencji dotyczącej zadłużenia czynszowego W dniu 03,01 2020 do biura zglositalsię następująca osoba: Paweł Wieczorek PESEL: 75030386408 Adres: ul. Nonwida 73/22, 70-001 Zabrze Tel: +48510505 601 Rozmowa trwała ok 20 minut. Sprawa została zarejes
+  doc_00037.png  adres_zleceniobiorca=ul. Długa 162/37, 30-001 Gdynia  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 27.01.2021 pomiędzy: 1. Anna Wożniak zamieszkałymlą: pl. Wolności 133, 01-100 Toruń NIP: 731-053-01-50 | PESEL: 05312544257 zwanylą dalej .Zleceniodawcą" 2. Monika Kowalczyk zamieszkałym/ą: ul. Duga 162/37, 30-001 Gdynia NIP: 716-763-86-52 zwanylą dalej „Zleceniobiorcą" 1. Przedmiot umo
+  doc_00041.png  adres_nabywcy=al. Niepodległości 22/40, 00-001 Rybnik  → BRAK_W_OCR
+    OCR[300]: Duy 300 2622 SPRZEDAwCA ALFA Sts As Pzreeoseeo WCA NP S04ns RZreeoseso2 FAKTURA VAT VATI2021
+  doc_00044.png  adres=ul. Dębowa 14, 41-200 Zielona Góra  → BRAK_W_OCR
+    OCR[300]: Spozt a Dayczy skargi na wank bkaloe Maka ska PESEL SOoRZ24S154 A Dt1420 2 Gn NOTATKA SsŁuŽBOWA boch
+  doc_00046.png  adres=ul. Kolejowa 65, 20-100 Gdynia  → BRAK_W_OCR
+    OCR[300]: Du yi 060 2024 peda 104 y z Spa edoska PESEL S2os7o82 NP 1606 K20-100 Ga ORZEKAM UZASADENE Po ppouteu pepo POUCZENaE drca Rad i 0507 2004 Urzd Gminy Warsza Wola DECYZJA ADMINISTRACYJNA wsprae umorzenu postepowania od
+  doc_00047.png  adres=ul. Nowa 148, 30-001 Katowice  → BRAK_W_OCR
+    OCR[300]: S Po0ers 2021 Du y 02025 pode 104y Gg Ledo PESEL 61o04S0626 NP 3 3s 36 e 1300t Kce ORZEKAM uZASADENE Pe pu popo Seona pe POUCZENHE o gsy Zakad Lberpecze Spolecanych Oatn wsze DECYZJA ADMINISTRACYJNA Wsprae peryznanu zmu stalego
+  doc_00051.png  adres_nabywcy=ul. Leśna 105, 03-300 Toruń  → BRAK_W_OCR
+    OCR[300]: Data wystaienia 2102 2021 Numer klerta KL-96968 SPRZEDAwCA GAMMA Sp zoa SKA Ades Mciewicza 1690, e5001 6aystok NP 962 840-71-25 REGON 821437o23 korta PL6816901014 37sa 38065215757 NABYWCA Renata Kamiska Ades Lesna 106, 03300 Tonu NP 493-276 62-92 La Naa usg Cena vAT N Bu 1.agra sorzu 2319 2s 6 785 2
+  doc_00063.png  adres=pl. Wolności 38, 41-200 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Sygn PTOs 1391 2024 Data wydania 11 04 2020o Na podtaie at 104 ustay z dria 14 czerca 1960t po ozpatn wiosk Beata Srymaska PESEL 69112096445 NP 870e19-37 ades p Wnoci 3,41-200 Ostyn ORZEKAM UZASADHENE Po pezeproatzeru postegowara adniistacjnegoi Organ orzekamo zniarie decy plercn z pezyczyn wskacnyh
+  doc_00064.png  adres=ul. Norwida 90, 20-100 Białystok  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Warszawa-Mokotów Tomasz Malinowski Sygn. akt Km 64528/2019 Data: 14 05 2020 Adam Wiśniewski u. Nonwida 90 20-100 Bialystok Na podstawie tytulu wykonawczego komomik sadowy zawiadamis, 2e w sprawie prowadzonej pod sygn Km 64528/2019 wszczal postępowanie egze kucyjne prze cwko d
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00002.png  lvl=2  qs=81 ──
+  Brakujące encje:
+    pesel = 77051019879
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 593-784-03-32
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00003.png  lvl=3  qs=81 ──
+  Brakujące encje:
+    pesel = 94052474197
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00008.png  lvl=2  qs=80 ──
+  Brakujące encje:
+    nip = 594-031-75-92
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00019.png  lvl=2  qs=80 ──
+  Brakujące encje:
+    pesel = 72091503683
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL31169010141318291971785346
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00022.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    nip = 902-110-35-89
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00026.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    iban = PL47102028922002877387247623
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00029.png  lvl=2  qs=88 ──
+  Brakujące encje:
+    pesel = 58082685954
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL82169010148185597275464016
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00031.png  lvl=3  qs=86 ──
+  Brakujące encje:
+    pesel = 51051390462
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00033.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 55072845961
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL89114019873138870995259457
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00035.png  lvl=0  qs=100 ──
+  Brakujące encje:
+    nip = 740-986-94-80
+    → ✓ JEST w tekście OCR (bug silnika)
+    OCR fragment: «dotyczy):↵740-986-94 -80↵DANE NIERUCHO»
+
+  ── images/doc_00041.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    nip_sprzedawcy = 918-009-18-64
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 330-471-88-52
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL27169010145310338398211012
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00044.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 50082245194
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00046.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 52020670592
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 156-053-03-89
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00047.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 61040450626
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 399-345-24-69
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00063.png  lvl=2  qs=85 ──
+  Brakujące encje:
+    pesel = 69112095445
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 847-081-89-37
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+

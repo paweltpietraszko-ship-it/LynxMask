@@ -1,0 +1,180 @@
+BUGS / ANOMALIE — 2026-06-25 07:45:49
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 16
+
+  images/doc_00009.png  lvl=2  qs=88  nip_sprzedawcy=871-839-15-22
+  images/doc_00009.png  lvl=2  qs=88  nip_nabywcy=466-154-86-42
+  images/doc_00009.png  lvl=2  qs=88  iban=PL41169010143211876743420120
+  images/doc_00015.png  lvl=2  qs=84  iban=PL95150010138161464388977025
+  images/doc_00028.png  lvl=2  qs=82  pesel=90013035386
+  images/doc_00028.png  lvl=2  qs=82  iban=PL57169010146728442703380680
+  images/doc_00030.png  lvl=2  qs=81  nip_sprzedawcy=521-059-06-54
+  images/doc_00030.png  lvl=2  qs=81  nip_nabywcy=760-619-85-35
+  images/doc_00030.png  lvl=2  qs=81  iban=PL66150010130734892329036041
+  images/doc_00031.png  lvl=2  qs=80  pesel=87070689577
+  images/doc_00031.png  lvl=2  qs=80  iban=PL12150010133790424516321585
+  images/doc_00044.png  lvl=2  qs=83  pesel=53022640970
+  images/doc_00044.png  lvl=2  qs=83  nip=712-227-60-43
+  images/doc_00046.png  lvl=2  qs=81  pesel=93040221960
+  images/doc_00051.png  lvl=2  qs=82  nip=489-305-75-15
+  images/doc_00062.png  lvl=2  qs=84  pesel=81051188187
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  OSOBA        78,0%  (71/91)
+  ADRES        79,0%  (64/81)
+  NUMER        76,2%  (208/273)
+
+
+[OSOBA POMINIĘTE] 20 encji:
+
+  doc_00006.png  imie_nazwisko=Renata Wójcik  → BRAK_W_OCR
+    OCR[300]: Sygn.: IW.0340052022 Data wydania: 27.11 2023 Na podstawie: po rozpatrzeniu wniosku: Renata Wöjcik art 104 ustawy z dnia 14 czerwca 1960 r. - Kodeks postępowania administracyjnego (t.j Dz. U. z 2023 r. poz. 775 ze zm.) PESEL: 91 040676315 NIP: 393-241-04-36 adres: ul. Lipowa 130/30, 02-200 Olsztyn O
+  doc_00009.png  imie_nazwisko_nabywcy=Aleksandra Michalska  → BRAK_W_OCR
+    OCR[300]: Dut y ner ts KL2 SPRZEDAwCA ALFAS zee AdesKt 16s01,850 Lu 2412221 NP P4 52 EGON STeS0 ABVWCA Asd Meh Aes S os10 Ry NP654642 Wyt gt C T FAKTURA VAT FVO0210oa2517
+  doc_00015.png  imie_nazwisko_zleceniodawca=Piotr Krawczyk  → BRAK_W_OCR
+    OCR[300]: zaars dnia 0803 2022 pomiędzy 1. Plotr Kraczyk zamiescatymy NP. S17891-33-80 | PESEL 01169367 zny d Deceniodac 2 Slawomir Paatowsk zamesziatymig Lpowa 513, 45001 Seczecin NP 3214300-30 Plaskoa 122,01-10o Lodt zny daeDecenictiorca $1. Przedmiot umowy Deceniodaca rleca, a Zecenibiorca pra $2. Wynagrod
+  doc_00015.png  imie_nazwisko_zleceniobiorca=Sławomir Pawłowski  → BRAK_W_OCR
+    OCR[300]: zaars dnia 0803 2022 pomiędzy 1. Plotr Kraczyk zamiescatymy NP. S17891-33-80 | PESEL 01169367 zny d Deceniodac 2 Slawomir Paatowsk zamesziatymig Lpowa 513, 45001 Seczecin NP 3214300-30 Plaskoa 122,01-10o Lodt zny daeDecenictiorca $1. Przedmiot umowy Deceniodaca rleca, a Zecenibiorca pra $2. Wynagrod
+  doc_00020.png  imie_nazwisko_nabywcy=Marta Krawczyk  → ODMIANA_ZAMASKOWANA
+    OCR[300]: Data wystawienia 2909 2021 Numer klienta: KL-47176 SPRZEDAWCA Ushugi Informatyczne Jan Kowalski Adres: al. Niepodeglośd 193, 45-001 Zabrze NIP. 769-644-67-28 REGON: 621966147 Nr konta: PLO4 1500 1013 7834 7733t 3634 325 NABYWCA Marta Krawczyk Adres: ul Ogrodowa 196, 40-001 Rzeszów NIP, 465-534-80-16
+  doc_00021.png  imie_nazwisko=Renata Piotrowska  → BRAK_W_OCR
+    OCR[300]: Sygn: IW073737 2020 Data wydania: 10.12 2022 Na podstawie: po rozpatrzeniu wniosku: art 104 ustawy z dnia 14 czerwca 1960 r. - Kodeks postepowania administracyjnego (t.į Dz. U.z 2023 r. poz. 775 ze zm.) Renata Plotrowska PESEL: 97 102064874 NIP: 613-615-18-36 adres: al. Niepodleglości 4 1/36, 50-001
+  doc_00022.png  imie_nazwisko_zleceniodawca=Krzysztof Dąbrowski  → BRAK_W_OCR
+    OCR[300]: zanarta dna 07 07 2023 pomiędzy 1 Kzysnt Drowski zameskalymig NP. 128-217-47-75 | PESEL S3081493964 zanylą daleDeceniodmwca Plaskoa 158, 0-300 Katoalce 2 Joanna Kodowska zamiesckalymig . Pona 192, 02-200 Olstyn NP S43-756-89-50 zanyl dalDecenicbiorca $1. Przedmiot umowy $2 Wynagrodzenie i platrose I
+  doc_00022.png  imie_nazwisko_zleceniobiorca=Joanna Kozłowska  → BRAK_W_OCR
+    OCR[300]: zanarta dna 07 07 2023 pomiędzy 1 Kzysnt Drowski zameskalymig NP. 128-217-47-75 | PESEL S3081493964 zanylą daleDeceniodmwca Plaskoa 158, 0-300 Katoalce 2 Joanna Kodowska zamiesckalymig . Pona 192, 02-200 Olstyn NP S43-756-89-50 zanyl dalDecenicbiorca $1. Przedmiot umowy $2 Wynagrodzenie i platrose I
+  doc_00028.png  imie_nazwisko=Zbigniew Kowalczyk  → BRAK_W_OCR
+    OCR[300]: Komomik Sgdowy przy SR Panan Gnunwald Janus Werztic Sygn akt Km 88202s Dat 1303 2021 Digpiew Kowalcayk Wosenna 252 3-300 Ldt Dipie Kocak PESEL 900130363e zmeay Wosenna 2502,03-300 LaE Lna o zaderia wyos 62.372 PUN (one S2 tyiecy 372 dty) uk a pra ZAWIADOMIENIE O WSszcZĘCIU EGZEKUCJI Komomk Sdoy oiac
+  doc_00030.png  imie_nazwisko_nabywcy=Barbara Wójcik  → BRAK_W_OCR
+    OCR[300]: Data wytaia 2511223 umr er KL6346 SPRZEDACA Za heeca POLUSASA Ade Kpenka 184 3300 G NP S2105s 06s4 REGoN SPs3o3 kota Pse1s001013orssosos ABYWCA Bat Wk Ades Skna 16 8s001 Oktyn P 7N061s636 5Ng &Cen AT Nags S5 22% 25 2s 2 Oga paT4 o1 AGE DO ZAPATY 64oN Pu p P1s001013034ss203004 Tm pd S4 i od dy wtia t
+  doc_00031.png  imie_nazwisko=Beata Mazur  → BRAK_W_OCR
+    OCR[300]: Komomik Sedoy przy SR Kakow tlowa Ha Potr owack Syg t K Ga030 Dat 22 12 2020 Kopena t28 44 100 Rasae a potae y yonag Beta M PESEL 87Oocessrr owy zyaKopena 1244100Ra ZAWIADOMIENIE O WSZCZĘCU EGZEKUCJ wpton pod nG40220 w La zai ynt 7803 PUNe t7tiey 03yd Kannk Sạoy Daap y oaan sach mueTo od a dreaeis S
+  doc_00034.png  imie_nazwisko_nabywcy=Łukasz Kwiatkowski  → BRAK_W_OCR
+    OCR[300]: Data wystawienia 25012021 Numer kdienta KL-69101 SPRZEDAWCA Hutownia Materiabw BUDMAT Sp. zoo. Adres: u. Kolejpwa 102/24,03-300 Olsztyn NIP. 389-821-85-20 REGON: 901242929 Nr konta: PL621140 1987 8698503658832094 NABYWCA Lukasz Kiatkowski Adres: al. Jana Pawia lI 97, 31-001 Szaczecin NIP: 951-397-91
+  doc_00042.png  osoba=Andrzej Wójcik  → BRAK_W_OCR
+    OCR[300]: Data: 09.02.2021 Sporządziltla: Łukasz Kowalczyk Dotyczy: prośby o udostępnienie informacji publicznej W dniu 09,02.2021 do biura zglosiła/się następująca osoba: Andrzej Wöjcik PESEL: 02262817246 Adres: ul. Kolejowa 122,31-001 Gdańsk Tel.: +48 693 898 504 Rozmowa trwała ok. 20 minut. Sprawa została 
+  doc_00044.png  imie_nazwisko=Beata Kamińska  → BRAK_W_OCR
+    OCR[300]: Sg. OwooT 2004 Det ydia 2906 2020 a podtaie t 104 uty z dia 14 ca peopatn wiosk Beta Kanska PESEL SIzzs40S70 NP 72-227 4043 aes Skicaa 34 00-001 ORZEKAM Ogan ormowpin UZASADIENE Po pezproaeu poteo Stone pe e POUCZENaE drcan Zer a 2906 2020 Urzd Skarbowy w Wrszaie DECYZJA ADMINISTRACYJNA wspre wpise 
+  doc_00046.png  imie_nazwisko=Justyna Jabłońska  → BRAK_W_OCR
+    OCR[300]: Syg OWo6r2 2023 Dat wydania 2506 202 a podtaie t 104 uty z dia S4 carw poopatan wiosku Jtyna Jloka PESEL S9o0221960 NP 605807 56-23 aes Snecana 87, 65001 Gdatsk ORZEKAM Organ orzekamowpisa UZASADENE Po przgowateu pospowaia adn Srona speae pe wyog POUCZENHE Od iesej deoy sty n dorecana Cręstchowa dni
+  doc_00049.png  imie_nazwisko=Edyta Jabłońska  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Poznań-Grunwald Janusz Wierzbicki Sygn. akt Km 77724/2019 Data: 01.12 2022 Edyta Jabloriska ul. Kopernika 182 60-001 Giwice Na podstawie tytuu wykonawczego komomik sądowy zawiadamia, 2e w sprawie prowadzonej pod sygn. Km 77724/2019 wszcza postępowanie egzekucyjne przeciwko dh
+  doc_00051.png  imie_nazwisko=Tomasz Nowakowski  → BRAK_W_OCR
+    OCR[300]: Sygn OW OR2731 2025 Dat wydania 1611 202 a podtaie t 104 utay z dia 14 crwca 1960 po opatan wiosk Tomas owakowa PESEL 74011701247 NP 4-3os-7515 ades oa 184,60-001 Resabe ORZEKAM Ogan ozka UZASADIHENE Po pezepronadceru popo Stona pae pe POUCZENaE dorecan Radom, dia 1611 2021 Uzd Reguacj Energetyk DEC
+  doc_00060.png  imie_nazwisko_zleceniodawca=Iwona Mazur  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 2705 2024 pomiędzy 1. lwona Manut zamieszkalymig u. Szkoina 16225,40-001 Częstodhowa NP: 806-012 04-23 | PESEL 73051578521 zwanylą dalej Zleceniodaw 2. Jakub Szymafski zamieszkalymią u. Warszawska 162, 85-001 Sosnowiec NNP 677549-78-66 zwanylą dale Zlecenicbiorca $1. Przedmiot umowy $2.
+  doc_00060.png  imie_nazwisko_zleceniobiorca=Jakub Szymański  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 2705 2024 pomiędzy 1. lwona Manut zamieszkalymig u. Szkoina 16225,40-001 Częstodhowa NP: 806-012 04-23 | PESEL 73051578521 zwanylą dalej Zleceniodaw 2. Jakub Szymafski zamieszkalymią u. Warszawska 162, 85-001 Sosnowiec NNP 677549-78-66 zwanylą dale Zlecenicbiorca $1. Przedmiot umowy $2.
+  doc_00062.png  imie_nazwisko=Mateusz Piotrowski  → BRAK_W_OCR
+    OCR[300]: Urząd Skarbowy w Warszawie Sygn akt HC 693/2016 Mateusz Plotowsk Zelona 166/2 31-001 Warszaa Deiag na podstasie at 155 $s1 Kodksu postpoaia adninatacyjngo &j Dz U. z 2023 poz T75 zm). Uzd Skarbowy w Waszie ya PaigPara Mateusz Plotosk, PESEL 81061188187 do zeenla plemnych wjasnie w teminie 14 dni od 
+
+
+[EMAIL POMINIĘTE] 1 encji:
+
+  doc_00004.png  email=dorota_wozniak17@o2.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imie i nazwisko: Dorota Wożniak Data urodzenia: 26.07.1971 PESEL: 55033049445 Nr dowodu osobistego: YZY352056 DANE KONTAKTOWE Adres zamieszkania: ul. Polna 12/48. 00-001 Wrocław Telefon: +48 609 002 675 Adres email: dorota wozniak17@02.pl DANE PODATKOWE NIP (jeśli dotyczy):
+
+
+[ADRES POMINIĘTE] 17 encji:
+
+  doc_00009.png  adres_nabywcy=ul. Kwiatowa 54/42, 01-100 Rybnik  → BRAK_W_OCR
+    OCR[300]: Dut y ner ts KL2 SPRZEDAwCA ALFAS zee AdesKt 16s01,850 Lu 2412221 NP P4 52 EGON STeS0 ABVWCA Asd Meh Aes S os10 Ry NP654642 Wyt gt C T FAKTURA VAT FVO0210oa2517
+  doc_00014.png  adres=ul. Szkolna 35, 10-100 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Sygn: SA026838 2020 Data wydania 15 04 2020 Na podstawie: po rozpatrzeniu wniosku Krzysztof Kwiatkowski art 104 ustawy z dnia 14 czerwca 1960r.- Kodeks postepowania administracynego (tị Dz. U. z 2023 r. poz. 775 ze zm) PESEL: 96041235912 NIP. 731-571-22-00 adres: ul. Skolna 35, 10-100 Olsztyn ORZEKA
+  doc_00015.png  adres_zleceniodawca=ul. Piaskowa 122, 01-100 Łódź  → BRAK_W_OCR
+    OCR[300]: zaars dnia 0803 2022 pomiędzy 1. Plotr Kraczyk zamiescatymy NP. S17891-33-80 | PESEL 01169367 zny d Deceniodac 2 Slawomir Paatowsk zamesziatymig Lpowa 513, 45001 Seczecin NP 3214300-30 Plaskoa 122,01-10o Lodt zny daeDecenictiorca $1. Przedmiot umowy Deceniodaca rleca, a Zecenibiorca pra $2. Wynagrod
+  doc_00015.png  adres_zleceniobiorca=ul. Lipowa 59/13, 45-001 Szczecin  → BRAK_W_OCR
+    OCR[300]: zaars dnia 0803 2022 pomiędzy 1. Plotr Kraczyk zamiescatymy NP. S17891-33-80 | PESEL 01169367 zny d Deceniodac 2 Slawomir Paatowsk zamesziatymig Lpowa 513, 45001 Seczecin NP 3214300-30 Plaskoa 122,01-10o Lodt zny daeDecenictiorca $1. Przedmiot umowy Deceniodaca rleca, a Zecenibiorca pra $2. Wynagrod
+  doc_00022.png  adres_zleceniodawca=ul. Piaskowa 158, 03-300 Katowice  → BRAK_W_OCR
+    OCR[300]: zanarta dna 07 07 2023 pomiędzy 1 Kzysnt Drowski zameskalymig NP. 128-217-47-75 | PESEL S3081493964 zanylą daleDeceniodmwca Plaskoa 158, 0-300 Katoalce 2 Joanna Kodowska zamiesckalymig . Pona 192, 02-200 Olstyn NP S43-756-89-50 zanyl dalDecenicbiorca $1. Przedmiot umowy $2 Wynagrodzenie i platrose I
+  doc_00022.png  adres_zleceniobiorca=ul. Polna 192, 02-200 Olsztyn  → BRAK_W_OCR
+    OCR[300]: zanarta dna 07 07 2023 pomiędzy 1 Kzysnt Drowski zameskalymig NP. 128-217-47-75 | PESEL S3081493964 zanylą daleDeceniodmwca Plaskoa 158, 0-300 Katoalce 2 Joanna Kodowska zamiesckalymig . Pona 192, 02-200 Olstyn NP S43-756-89-50 zanyl dalDecenicbiorca $1. Przedmiot umowy $2 Wynagrodzenie i platrose I
+  doc_00027.png  adres=pl. Wolności 96, 03-300 Kraków  → BRAK_W_OCR
+    OCR[300]: Zakład Ubezpieczeń Społecznych Oddzial w Warszawie Sygn. aktIK5915/2015 Agnieszka Mazur pl. WolnoŚci 96 03-300 Kraków Agnieszka Mazur, PESEL: 56061497622 Działając na podstawie art 155 S 1 Kodeksu postepowanía administracyínego (tj. Dz U. z 2023 r. poz 775 ze zm.). Zakład Ubezpieczeń Społecznych Odd
+  doc_00028.png  adres=ul. Wiosenna 25/32, 03-300 Łódź  → BRAK_W_OCR
+    OCR[300]: Komomik Sgdowy przy SR Panan Gnunwald Janus Werztic Sygn akt Km 88202s Dat 1303 2021 Digpiew Kowalcayk Wosenna 252 3-300 Ldt Dipie Kocak PESEL 900130363e zmeay Wosenna 2502,03-300 LaE Lna o zaderia wyos 62.372 PUN (one S2 tyiecy 372 dty) uk a pra ZAWIADOMIENIE O WSszcZĘCIU EGZEKUCJI Komomk Sdoy oiac
+  doc_00030.png  adres_nabywcy=ul. Szkolna 186, 85-001 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Data wytaia 2511223 umr er KL6346 SPRZEDACA Za heeca POLUSASA Ade Kpenka 184 3300 G NP S2105s 06s4 REGoN SPs3o3 kota Pse1s001013orssosos ABYWCA Bat Wk Ades Skna 16 8s001 Oktyn P 7N061s636 5Ng &Cen AT Nags S5 22% 25 2s 2 Oga paT4 o1 AGE DO ZAPATY 64oN Pu p P1s001013034ss203004 Tm pd S4 i od dy wtia t
+  doc_00031.png  adres=ul. Kopernika 128, 44-100 Rzeszów  → BRAK_W_OCR
+    OCR[300]: Komomik Sedoy przy SR Kakow tlowa Ha Potr owack Syg t K Ga030 Dat 22 12 2020 Kopena t28 44 100 Rasae a potae y yonag Beta M PESEL 87Oocessrr owy zyaKopena 1244100Ra ZAWIADOMIENIE O WSZCZĘCU EGZEKUCJ wpton pod nG40220 w La zai ynt 7803 PUNe t7tiey 03yd Kannk Sạoy Daap y oaan sach mueTo od a dreaeis S
+  doc_00034.png  adres_nabywcy=al. Jana Pawła II 97, 31-001 Szczecin  → BRAK_W_OCR
+    OCR[300]: Data wystawienia 25012021 Numer kdienta KL-69101 SPRZEDAWCA Hutownia Materiabw BUDMAT Sp. zoo. Adres: u. Kolejpwa 102/24,03-300 Olsztyn NIP. 389-821-85-20 REGON: 901242929 Nr konta: PL621140 1987 8698503658832094 NABYWCA Lukasz Kiatkowski Adres: al. Jana Pawia lI 97, 31-001 Szaczecin NIP: 951-397-91
+  doc_00044.png  adres=ul. Sienkiewicza 34, 00-001 Kraków  → BRAK_W_OCR
+    OCR[300]: Sg. OwooT 2004 Det ydia 2906 2020 a podtaie t 104 uty z dia 14 ca peopatn wiosk Beta Kanska PESEL SIzzs40S70 NP 72-227 4043 aes Skicaa 34 00-001 ORZEKAM Ogan ormowpin UZASADIENE Po pezproaeu poteo Stone pe e POUCZENaE drcan Zer a 2906 2020 Urzd Skarbowy w Wrszaie DECYZJA ADMINISTRACYJNA wspre wpise 
+  doc_00046.png  adres=ul. Słoneczna 87, 65-001 Gdańsk  → BRAK_W_OCR
+    OCR[300]: Syg OWo6r2 2023 Dat wydania 2506 202 a podtaie t 104 uty z dia S4 carw poopatan wiosku Jtyna Jloka PESEL S9o0221960 NP 605807 56-23 aes Snecana 87, 65001 Gdatsk ORZEKAM Organ orzekamowpisa UZASADENE Po przgowateu pospowaia adn Srona speae pe wyog POUCZENHE Od iesej deoy sty n dorecana Cręstchowa dni
+  doc_00051.png  adres=ul. Nowa 184, 60-001 Rzeszów  → BRAK_W_OCR
+    OCR[300]: Sygn OW OR2731 2025 Dat wydania 1611 202 a podtaie t 104 utay z dia 14 crwca 1960 po opatan wiosk Tomas owakowa PESEL 74011701247 NP 4-3os-7515 ades oa 184,60-001 Resabe ORZEKAM Ogan ozka UZASADIHENE Po pezepronadceru popo Stona pae pe POUCZENaE dorecan Radom, dia 1611 2021 Uzd Reguacj Energetyk DEC
+  doc_00060.png  adres_zleceniodawca=ul. Szkolna 162/25, 40-001 Częstochowa  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 2705 2024 pomiędzy 1. lwona Manut zamieszkalymig u. Szkoina 16225,40-001 Częstodhowa NP: 806-012 04-23 | PESEL 73051578521 zwanylą dalej Zleceniodaw 2. Jakub Szymafski zamieszkalymią u. Warszawska 162, 85-001 Sosnowiec NNP 677549-78-66 zwanylą dale Zlecenicbiorca $1. Przedmiot umowy $2.
+  doc_00062.png  adres=ul. Zielona 165/2, 31-001 Warszawa  → BRAK_W_OCR
+    OCR[300]: Urząd Skarbowy w Warszawie Sygn akt HC 693/2016 Mateusz Plotowsk Zelona 166/2 31-001 Warszaa Deiag na podstasie at 155 $s1 Kodksu postpoaia adninatacyjngo &j Dz U. z 2023 poz T75 zm). Uzd Skarbowy w Waszie ya PaigPara Mateusz Plotosk, PESEL 81061188187 do zeenla plemnych wjasnie w teminie 14 dni od 
+  doc_00063.png  adres=ul. Mickiewicza 157, 02-200 Wrocław  → BRAK_W_OCR
+    OCR[300]: Data: 06.12 2024 Sporządzila: Plotr Kowalski Dotyczy: interwencji dotyczącej zadużenia czynszowego W dniu 06.12 2024 do biura zglosila'się następująca osoba: Malgorzata Dudek PESEL: 56111854722 Adres: ul. Mckiewicza 157, 02-200 Wroclaw Tel: +48 733 808 048 Rozmowa trwala ok 20 minut. Sprawa zostala 
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00009.png  lvl=2  qs=88 ──
+  Brakujące encje:
+    nip_sprzedawcy = 871-839-15-22
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 466-154-86-42
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL41169010143211876743420120
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00015.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    iban = PL95150010138161464388977025
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00028.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    pesel = 90013035386
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL57169010146728442703380680
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00030.png  lvl=2  qs=81 ──
+  Brakujące encje:
+    nip_sprzedawcy = 521-059-06-54
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 760-619-85-35
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL66150010130734892329036041
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00031.png  lvl=2  qs=80 ──
+  Brakujące encje:
+    pesel = 87070689577
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL12150010133790424516321585
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00044.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 53022640970
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 712-227-60-43
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00046.png  lvl=2  qs=81 ──
+  Brakujące encje:
+    pesel = 93040221960
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00051.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    nip = 489-305-75-15
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00062.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    pesel = 81051188187
+    → ≈ OCR zniekształcony (bug silnika / normalizer)
+    OCR fragment: «sk, PESEL 81061188187↵do zeenla plem»
+

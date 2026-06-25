@@ -1,0 +1,27 @@
+BENCHMARK LYNXMASK MOBILE — RAPORT
+Data:  2026-06-25 07:05:47
+════════════════════════════════════════════════════════════
+
+OGÓLNE
+  Dokumentów:                    68
+  Encji w ground truth:          443
+  Wykrytych i zamaskowanych:     360
+  Pominiętych:                   83
+  False positives:               170
+  RECALL:    81,3%
+  PRECISION: 67,9%
+  F1:        74,0%
+  Krytyczne braki:               13
+  Błędy:                         0
+
+RECALL PER TYP ENCJI
+  ADRES        86,3%  [█████████████░░░]  (69/80)
+  EMAIL        50,0%  [████████░░░░░░░░]  (3/6)
+  NUMER        80,3%  [████████████░░░░]  (212/264)
+  OSOBA        81,7%  [█████████████░░░]  (76/93)
+
+RECALL PER POZIOM DEGRADACJI
+  Lvl 0 perfect scan   [██████████████████░░] 90,8%  docs=17 ent=109
+  Lvl 1 light noise    [███████████████████░] 96,0%  docs=17 ent=100
+  Lvl 2 noise+blur     [████████████░░░░░░░░] 63,2%  docs=17 ent=114
+  Lvl 3 phone (good)   [███████████████░░░░░] 77,5%  docs=17 ent=120

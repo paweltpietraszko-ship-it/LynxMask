@@ -1,0 +1,173 @@
+BUGS / ANOMALIE — 2026-06-23 10:58:31
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 16
+
+  images/doc_00008.png  lvl=2  qs=80  pesel=69082529430
+  images/doc_00010.png  lvl=3  qs=76  iban=PL69325000035841988910617086
+  images/doc_00018.png  lvl=2  qs=89  nip_nabywcy=899-385-30-99
+  images/doc_00018.png  lvl=2  qs=89  iban=PL27240101351241262042578051
+  images/doc_00024.png  lvl=2  qs=84  dowod_osobisty=LNU116660
+  images/doc_00024.png  lvl=2  qs=84  nip=305-839-47-69
+  images/doc_00027.png  lvl=3  qs=77  pesel=99032082889
+  images/doc_00027.png  lvl=3  qs=77  nip=926-292-57-32
+  images/doc_00031.png  lvl=2  qs=88  pesel=80030591831
+  images/doc_00033.png  lvl=3  qs=81  iban=PL65109010141684892868754557
+  images/doc_00040.png  lvl=3  qs=77  pesel=97060677266
+  images/doc_00042.png  lvl=1  qs=98  dowod_osobisty=OOO395180
+  images/doc_00049.png  lvl=2  qs=79  nip_sprzedawcy=438-559-97-01
+  images/doc_00049.png  lvl=2  qs=79  nip_nabywcy=174-885-88-66
+  images/doc_00049.png  lvl=2  qs=79  iban=PL49240101359462399475137452
+  images/doc_00060.png  lvl=2  qs=79  pesel=01291435652
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  EMAIL        37,5%  (3/8)
+
+
+[OSOBA POMINIĘTE] 15 encji:
+
+  doc_00008.png  autor=Beata Kowalczyk  → BRAK_W_OCR
+    OCR[300]: Da 30 2024 Spok beKrk Dotyczy wiosku O mang adresu zameldowanis wa 01203o Buta Koc PESEL BoS290 Ae S 184 31o01Ohty NOTATKA sŁuŽBOWA
+  doc_00008.png  osoba=Barbara Kowalczyk  → BRAK_W_OCR
+    OCR[300]: Da 30 2024 Spok beKrk Dotyczy wiosku O mang adresu zameldowanis wa 01203o Buta Koc PESEL BoS290 Ae S 184 31o01Ohty NOTATKA sŁuŽBOWA
+  doc_00009.png  imie_nazwisko=Łukasz Pawłowski  → BRAK_W_OCR
+    OCR[300]: Komomik Sądowy przy Sądzie Rejonowym Anna Zelriska Sygn, akt Km 82833/2025 Data 1907 2024 Lukasz Padowskd Krakowska 138 31-001 Gdaisk tNa podstaie tyuu wykonawczego komonik sadoey zawiadamis, 2e w spraie prowadzone pod sygn Km 82833/2025wzz postepowanie egzekucyjne przecisko dhtnikow Lukasz Paowski,
+  doc_00018.png  imie_nazwisko_nabywcy=Beata Woźniak  → BRAK_W_OCR
+    OCR[300]: Dut wyaienia 0904 2025 Numer keta KL-7618 SPRZEDAWCA Zaad bezieca POusASA Ades anzawska 11646,45001 Sosnoiec P 393-17847-03 REGoN 7027677oe korta P2raoron512412042578061 ABYWCA Beata Wotnak Ades Rtana 3, 10 100 Gdnia P -36-30-99 2 Wynm so biowgo 7 1217 2% 859 1o4rs 4Uga nsgortoa 2 m9 2% 2s 2900 S in
+  doc_00020.png  imie_nazwisko=Kamil Wójcik  → BRAK_W_OCR
+    OCR[300]: Sygn.: PD.073098.2019 Data wydania: 10.08.2020 Na podstawie: po rozpatrzeniu wniosku: Kamil Wöjcik art. 104 ustawy z dnia 14 czerwca 1960 r.- Kodeks postepowania administracyjnego (t.j Dz..U. z 2023 r. poz. 775 ze zm.) PESEL:55082453194 NIP: 657-787-23-29 adres: ul. Leśna 69/13, 80-001 Poznań ORZEKA
+  doc_00023.png  imie_nazwisko=Krzysztof Krawczyk  → BRAK_W_OCR
+    OCR[300]: Komomik Sądowy przy SR Paenan. Grunwald Janusz Werzbick Sygn akt Km 7795/2019 Data 2608 2020 Kzysnof Kawczk &Jana Paua 59/13 44100 Katouice ta podstaie tyu wykonawczego komomik sadowy zaaadamia, wspraaie prowadzone pod sygn Km 7795/2019 wszz postepow Kizysztof Krawczk, PESEL 7908125 1775 ZAWIADOMIEN
+  doc_00024.png  imie_nazwisko=Joanna Krawczyk  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WIOsKOOAWCY lnięi nak Joarna Kraczk Data urodzenia 19 12 1977 PESEL 550 70362237 dowodu cbistega DANE KOTAKTOWE Ades zamiesania g Wolnocs 184,65001 Sosnowlec Teleon +8 794 740 207 Ades emal joanna krcagmal com DANE PODATKOWE NP doyay 306-8394749 DANE MERUCHOMOSC ksieg wieczys GO1G00084s
+  doc_00027.png  imie_nazwisko=Sylwia Kamińska  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazisko Data urodzeria 06.07.1955 PESEL Syaia Kamiska 99032082Be9 N dowodu osobistego ZCD4377 17 DANE KONTAKTOWE Adres zamileszkania Telefo d Rótana 118/12,40-001 Krakow +48 575 714 746 Adres email Data syaia kaminska 19@poczta pl DANE PODATKOWE NP Gesl dotyczy) 926-
+  doc_00031.png  autor=Beata Wieczorek  → BRAK_W_OCR
+    OCR[300]: Dat s40 2022 Sporz Datyczy prosby o udostepnienie nfomaci publczne wa 40 2022 4 braginastaob Beta Weczoek Maus Wiewsk PESEL 800sose1 Aaes T 48 S10 001 s46 wniosk Mciicza& 10 100 Csutyn Roamowa the aa Zlecone Beta ezork NOTATKA sŁUZBOWA 7oibocych min eia
+  doc_00031.png  osoba=Mariusz Wiśniewski  → BRAK_W_OCR
+    OCR[300]: Dat s40 2022 Sporz Datyczy prosby o udostepnienie nfomaci publczne wa 40 2022 4 braginastaob Beta Weczoek Maus Wiewsk PESEL 800sose1 Aaes T 48 S10 001 s46 wniosk Mciicza& 10 100 Csutyn Roamowa the aa Zlecone Beta ezork NOTATKA sŁUZBOWA 7oibocych min eia
+  doc_00033.png  imie_nazwisko=Łukasz Wiśniewski  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy SR Kraków-Nowa Huta Piotr Nowacki Sygn, akt Km 37868/2021 Data 14.02 2021 Lkasz Winiews d Sienkieicza 74 40-001 Pozna a podstawie tyu wykonawczego komomik sadowy zawiadarnia, 2ew sprawie prowadzonej pod sygn Km 37868/2021 wszcz postpowanie egze kucyjne przeciako dhtikow Lukasz W
+  doc_00040.png  imie_nazwisko=Sławomir Szymański  → BRAK_W_OCR
+    OCR[300]: Urząd Mejski w Krakowie, Wydzial Spraw Administracyjnych Sygn. aktiC2956/2023 Sawoir Symask Rátana 83 30-00t Ládt Slasomir Szymask, PESEL 97080677266 Deialajac na podstae at 156$ 1 Kodeksu postepowania adintracyjnego tị Dz U.z 2023 r poz 775 2e 2m . Uzad Mejie Kakowie, Wydsal Spraw Adninistracyinych
+  doc_00049.png  imie_nazwisko_nabywcy=Agnieszka Wieczorek  → BRAK_W_OCR
+    OCR[300]: SPRZTDANCA ALSASen Paeomeor ewCA Agia FAKTURA VAT VATI02o4s4S
+  doc_00060.png  imie_nazwisko=Aleksandra Kwiatkowska  → BRAK_W_OCR
+    OCR[300]: Urząd Skartowy Krakow Srodmiescie S tK O8019 Alkandia Kaoa Lena9303 20 100 Lutn Dri napoie a 156$1Kodpostpo Aksanda Kaiowa PESEL O129s3662 d ipiyd wih w mie 14 di od aty Wie pyta proiny o kortalt S12 753 429 Z pouaie WEZWANIE DO 2OŽENIAWYJAŠNIEN oda da os 102020 y PariPra
+  doc_00061.png  imie_nazwisko=Renata Jabłońska  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Renata Jabłlońska Data urodzenia: 14.08.1950 PESEL: 03302596747 Nr dowodu osobistego: PEI932185 Nr paszportu: JFO478616 DANE KONTAKTOWE Adres zamieszkania: pl. Wolności 33, 00-001 Rzeszów Telefon: +48 726 324 302 Adres e-mail: renata jablo nska@gmail.com DA
+
+
+[EMAIL POMINIĘTE] 5 encji:
+
+  doc_00024.png  email=joanna.krawczyk@gmail.com  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WIOsKOOAWCY lnięi nak Joarna Kraczk Data urodzenia 19 12 1977 PESEL 550 70362237 dowodu cbistega DANE KOTAKTOWE Ades zamiesania g Wolnocs 184,65001 Sosnowlec Teleon +8 794 740 207 Ades emal joanna krcagmal com DANE PODATKOWE NP doyay 306-8394749 DANE MERUCHOMOSC ksieg wieczys GO1G00084s
+  doc_00027.png  email=sylwia_kaminska19@poczta.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazisko Data urodzeria 06.07.1955 PESEL Syaia Kamiska 99032082Be9 N dowodu osobistego ZCD4377 17 DANE KONTAKTOWE Adres zamileszkania Telefo d Rótana 118/12,40-001 Krakow +48 575 714 746 Adres email Data syaia kaminska 19@poczta pl DANE PODATKOWE NP Gesl dotyczy) 926-
+  doc_00042.png  email=wojciech.wieczorek@interia.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Wojciech Wieczorek Data urodzenia: 28.11.1951 PESEL: 68041881776 Nr dowodu osobistego: 000395180 Nr paszportu: DZ4245832 DANE KONTAKTOWE Adres zamieszkania ul. Nowa 45/34, 45-001 Kraköw Telefon: +48 517 872 170 Adres e-mail: wojciech.wieczoreka@interia. pl 
+  doc_00053.png  email=wojciech_lewandowski@onet.pl  → BRAK_W_OCR
+    OCR[300]: DANE OsOBOWE WNIOSKODAWCY Imię i nazwisko: Wojciech Lewand owski Data urodzenia: 14.10.1987 PESEL: 66122985780 Nr dowodu osobistego HIM310315 DANE KONTAKTOWE Adres zamieszkania: ul. Wolności 150, 20-100 Kraków Telefon: +48 663 763 765 Adres e-mail: wojdiech_ lewandowski@onet pl DANE PODATKOWE Data: 
+  doc_00061.png  email=renata_jablonska@gmail.com  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Renata Jabłlońska Data urodzenia: 14.08.1950 PESEL: 03302596747 Nr dowodu osobistego: PEI932185 Nr paszportu: JFO478616 DANE KONTAKTOWE Adres zamieszkania: pl. Wolności 33, 00-001 Rzeszów Telefon: +48 726 324 302 Adres e-mail: renata jablo nska@gmail.com DA
+
+
+[ADRES POMINIĘTE] 13 encji:
+
+  doc_00008.png  adres=ul. Szkolna 184, 31-001 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Da 30 2024 Spok beKrk Dotyczy wiosku O mang adresu zameldowanis wa 01203o Buta Koc PESEL BoS290 Ae S 184 31o01Ohty NOTATKA sŁuŽBOWA
+  doc_00010.png  adres_zleceniodawca=ul. Kwiatowa 48, 60-001 Radom  → BRAK_W_OCR
+    OCR[300]: zawarta dnia 19 06 2021 pomiędy 1. wona Kaminska zamieszkalyma . Kaiatowa 48, 60-001 Radom NP. 437-468-76-72 | PESEL 87050245762 zwanylą dalej,Zleceniodawca 2 Marusz Zając zamie szkalym u. Sienkiewicza 76/14, 31-001 Toruh NIP. 197-838-90-79 zwanyl dalej Dleceniobiorca $1. Przedmiot umowy $2. Wynagro
+  doc_00018.png  adres_nabywcy=ul. Różana 3, 10-100 Gdynia  → BRAK_W_OCR
+    OCR[300]: Dut wyaienia 0904 2025 Numer keta KL-7618 SPRZEDAWCA Zaad bezieca POusASA Ades anzawska 11646,45001 Sosnoiec P 393-17847-03 REGoN 7027677oe korta P2raoron512412042578061 ABYWCA Beata Wotnak Ades Rtana 3, 10 100 Gdnia P -36-30-99 2 Wynm so biowgo 7 1217 2% 859 1o4rs 4Uga nsgortoa 2 m9 2% 2s 2900 S in
+  doc_00024.png  adres=pl. Wolności 184, 65-001 Sosnowiec  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WIOsKOOAWCY lnięi nak Joarna Kraczk Data urodzenia 19 12 1977 PESEL 550 70362237 dowodu cbistega DANE KOTAKTOWE Ades zamiesania g Wolnocs 184,65001 Sosnowlec Teleon +8 794 740 207 Ades emal joanna krcagmal com DANE PODATKOWE NP doyay 306-8394749 DANE MERUCHOMOSC ksieg wieczys GO1G00084s
+  doc_00027.png  adres=ul. Różana 118/12, 40-001 Kraków  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazisko Data urodzeria 06.07.1955 PESEL Syaia Kamiska 99032082Be9 N dowodu osobistego ZCD4377 17 DANE KONTAKTOWE Adres zamileszkania Telefo d Rótana 118/12,40-001 Krakow +48 575 714 746 Adres email Data syaia kaminska 19@poczta pl DANE PODATKOWE NP Gesl dotyczy) 926-
+  doc_00031.png  adres=ul. Mickiewicza 6, 10-100 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Dat s40 2022 Sporz Datyczy prosby o udostepnienie nfomaci publczne wa 40 2022 4 braginastaob Beta Weczoek Maus Wiewsk PESEL 800sose1 Aaes T 48 S10 001 s46 wniosk Mciicza& 10 100 Csutyn Roamowa the aa Zlecone Beta ezork NOTATKA sŁUZBOWA 7oibocych min eia
+  doc_00032.png  adres=ul. Mickiewicza 153, 80-001 Szczecin  → BRAK_W_OCR
+    OCR[300]: Sygn PD 087005 2020 Data wydania 17.12 2023 Na podstawie po rozpatrzeniu wniosku Justyna Kowalska art 104 ustawy z dnia 14 czerwca 1960 r - Kodeks postepowania administracynego (tj Dz. U z 2023 r. poz T75 ze zm) PESEL: 550807 23112 NIP: 308-360-29-95 adres: ul. Midkiewicza 153, 80-001 Szczecin ORZEK
+  doc_00036.png  adres=al. Niepodległości 164/41, 45-001 Gdańsk  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Dorota Dabrowska Data urodzenia: 17.05.1992 PESEL: 52031103841 Nr dowodu osobistego: PWP920006 DANE KONTAKTOWE Adres zamieszkania: al. Niepodleglości 164/41, 45-001 Gdaisk Telefon +48 666 722 643 Adres email: dorota dabrowska@onet pl DANE PODATKOWE NP Geśli
+  doc_00040.png  adres=ul. Różana 83, 30-001 Łódź  → BRAK_W_OCR
+    OCR[300]: Urząd Mejski w Krakowie, Wydzial Spraw Administracyjnych Sygn. aktiC2956/2023 Sawoir Symask Rátana 83 30-00t Ládt Slasomir Szymask, PESEL 97080677266 Deialajac na podstae at 156$ 1 Kodeksu postepowania adintracyjnego tị Dz U.z 2023 r poz 775 2e 2m . Uzad Mejie Kakowie, Wydsal Spraw Adninistracyinych
+  doc_00045.png  adres=ul. Różana 36, 65-001 Bielsko-Biała  → BRAK_W_OCR
+    OCR[300]: Data 11.03.2020 Sporządzila Beata Grabowska Dotyczy: interwencji dotyczącej zadkużenia czynszowego W dniu 11.03 2020 do biura zglosiłasię następujaca osoba Sylia Krawczyk PESEL 800604 14911 Adres . Rózana 36, 65-001 Biesko-Biala Tel: +48 482 3 10 172 Rozmowa treala ok 20 mihu. Sprawa zostaia zarejps
+  doc_00049.png  adres_nabywcy=ul. Polna 10/20, 20-100 Gdynia  → BRAK_W_OCR
+    OCR[300]: SPRZTDANCA ALSASen Paeomeor ewCA Agia FAKTURA VAT VATI02o4s4S
+  doc_00055.png  adres_zleceniobiorca=al. Niepodległości 84, 40-001 Gdańsk  → BRAK_W_OCR
+    OCR[300]: zawarta dn ia 22.09.2023 pomiędzy: 1. Małgorzata Dąbrowska zamie szkalymlą; ul. Wiosenna 81, 00-001 Rybnik NIP: 862-574-34-02 | PESEL: 83040279841 zwanylą dalej Zleceniodawca" 2. Marta Kowalska zamieszkalymlą: al. Niepodlegości 84, 40-001 Gdańsk NIP: 695-613-40-38 zwanylą dalej .Zleceniobiorca" S1. 
+  doc_00060.png  adres=ul. Leśna 93/33, 20-100 Lublin  → BRAK_W_OCR
+    OCR[300]: Urząd Skartowy Krakow Srodmiescie S tK O8019 Alkandia Kaoa Lena9303 20 100 Lutn Dri napoie a 156$1Kodpostpo Aksanda Kaiowa PESEL O129s3662 d ipiyd wih w mie 14 di od aty Wie pyta proiny o kortalt S12 753 429 Z pouaie WEZWANIE DO 2OŽENIAWYJAŠNIEN oda da os 102020 y PariPra
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00008.png  lvl=2  qs=80 ──
+  Brakujące encje:
+    pesel = 69082529430
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00010.png  lvl=3  qs=76 ──
+  Brakujące encje:
+    iban = PL69325000035841988910617086
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00018.png  lvl=2  qs=89 ──
+  Brakujące encje:
+    nip_nabywcy = 899-385-30-99
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL27240101351241262042578051
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00024.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    dowod_osobisty = LNU116660
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 305-839-47-69
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00027.png  lvl=3  qs=77 ──
+  Brakujące encje:
+    pesel = 99032082889
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 926-292-57-32
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00031.png  lvl=2  qs=88 ──
+  Brakujące encje:
+    pesel = 80030591831
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00033.png  lvl=3  qs=81 ──
+  Brakujące encje:
+    iban = PL65109010141684892868754557
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00040.png  lvl=3  qs=77 ──
+  Brakujące encje:
+    pesel = 97060677266
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00042.png  lvl=1  qs=98 ──
+  Brakujące encje:
+    dowod_osobisty = OOO395180
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00049.png  lvl=2  qs=79 ──
+  Brakujące encje:
+    nip_sprzedawcy = 438-559-97-01
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 174-885-88-66
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL49240101359462399475137452
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00060.png  lvl=2  qs=79 ──
+  Brakujące encje:
+    pesel = 01291435652
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+

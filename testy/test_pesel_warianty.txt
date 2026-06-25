@@ -1,0 +1,265 @@
+=============================================================
+TEST PESEL — WSZYSTKIE WARIANTY ZAPISU
+Cel: sprawdzić czy silnik maskuje / nie maskuje poprawnie.
+Użyte prawidłowe PESELe (S5 OK): 73051649957, 55091961277,
+  90010155382, 85032204563, 66111503816
+Błędny PESEL (zły checksum): 55091961275, 73051649950
+=============================================================
+
+--- SEKCJA 1: STANDARDOWE ZAPISY Z KEYWORDEM ---
+Silnik ZAWSZE powinien maskować — keyword "PESEL" zwalnia z S5.
+
+Pismo z dnia 10.01.2024 r. do Urzędu Skarbowego Kraków-Śródmieście.
+Dotyczy: Korekta zeznania rocznego.
+Dane podatnika: Jan Kowalski, PESEL: 73051649957, ul. Długa 12, Kraków.
+Proszę o przyjęcie korekty formularza PIT-37.
+
+Umowa najmu lokalu mieszkalnego zawarta dnia 15.03.2024 w Warszawie.
+Wynajmujący: Maria Nowak, PESEL: 55091961277, zam. ul. Kwiatowa 3/5, Warszawa.
+Najemca: Piotr Wiśniewski, PESEL: 90010155382, zam. ul. Zielona 8, Gdańsk.
+Strony ustalają czynsz miesięczny w wysokości 2 500,00 PLN.
+
+Zaświadczenie wydane przez Gminę Wrocław dnia 22.04.2024.
+Imię i nazwisko: Anna Zając, nr PESEL: 85032204563.
+Adres zamieszkania: al. Różana 44/2, 50-001 Wrocław.
+Dokument wystawiony na potrzeby urzędu pracy.
+
+Wezwanie do zapłaty nr WZ/2024/0084.
+Dłużnik: Tomasz Malinowski, PESEL 66111503816, ul. Leśna 7, Poznań.
+Kwota zaległości: 4 320,00 PLN. Termin: 30 dni od doręczenia.
+
+Oświadczenie majątkowe złożone dnia 01.02.2024.
+Składający: Krzysztof Jabłoński. Numer PESEL: 73051649957.
+Łączny dochód w roku poprzednim: 84 000 PLN brutto.
+
+--- SEKCJA 2: PESEL BEZ SPACJI PO DWUKROPKU ---
+
+Formularz rejestracji pacjenta.
+Pacjent: Zofia Dąbrowska, PESEL:55091961277, data ur. 1955-09-19.
+Rozpoznanie: J45.0. Lekarz prowadzący: dr Andrzej Nowak.
+
+Wniosek o zasiłek opiekuńczy.
+Wnioskodawca: Marcin Krawczyk. PESEL:90010155382. Okres opieki: 14 dni.
+
+--- SEKCJA 3: PESEL MAŁYMI LITERAMI ---
+
+Protokół przyjęcia zgłoszenia. Sporządziła: insp. Barbara Kowalczyk.
+Zgłaszający: Ryszard Wiktor, pesel: 85032204563, tel. 604 123 456.
+Treść zgłoszenia: hałas w godzinach nocnych.
+
+Decyzja administracyjna nr DA/2024/1122.
+Strona: Henryk Ostrowski, Pesel: 66111503816.
+Na podstawie art. 104 k.p.a. orzekam jak w sentencji.
+
+--- SEKCJA 4: OCR-ARTEFAKT W SŁOWIE KLUCZOWYM ---
+OcrNormalizer powinien naprawić keyword, silnik powinien zamaskować.
+
+Wyciąg z rejestru. Osoba: Jadwiga Włodarska.
+PE5EL: 73051649957. Adres: ul. Piękna 18, Łódź.
+
+Zaświadczenie o zatrudnieniu.
+Pracownik: Sławomir Górecki, PESE1: 55091961277.
+Zatrudniony od: 01.09.2018 r., stanowisko: specjalista.
+
+Dokumentacja medyczna — dane pacjenta.
+P E S E L: 90010155382. Imię: Elżbieta. Nazwisko: Kamińska.
+Oddział: chirurgia. Sala: 14B.
+
+Protokół wywiadu środowiskowego.
+Nr PESE L: 85032204563. Osoba: Stanisław Wróbel.
+Wywiad przeprowadzono dnia 10.03.2024.
+
+Pismo procesowe. Pozwany: Irena Kwiatkowska.
+Pe3eL: 66111503816. Sprawa sądowa sygn. akt I C 334/2024.
+
+--- SEKCJA 5: OCR-SPACJA / SPLIT W NUMERZE ---
+Numer rozbity spacją lub znakiem przez OCR. Silnik powinien skleić i zamaskować.
+
+Zaświadczenie ZUS. Ubezpieczony: Grzegorz Marek.
+PESEL: 730516 49957. Data wydania: 20.02.2024.
+
+Umowa zlecenia nr UZ/2024/0055.
+Zleceniobiorca: Hanna Pietrzak, PESEL: 55091 961277, ul. Słoneczna 5, Bydgoszcz.
+
+Wniosek o dowód osobisty.
+Wnioskodawca: Władysław Lis, PESEL: 9001 0155382.
+Złożono w Wydziale Spraw Obywatelskich UM Szczecin.
+
+Faktura VAT 2024/03/0190.
+Nabywca: Agnieszka Duda, PESEL: 85032 204563, NIP: 678-901-23-45.
+
+Skarga do Rzecznika Praw Obywatelskich.
+Skarżący: Józef Kalinowski. PESEL: 6611150 3816.
+Przedmiot skargi: naruszenie prawa do prywatności.
+
+--- SEKCJA 6: OCR — LITERA "l" i "O" ZAMIAST CYFR ---
+
+Dane z systemu kadrowego.
+Pracownik: Natalia Kwiecień. PESEL: 73O51649957 (O zamiast 0).
+Dział: księgowość. Staż: 8 lat.
+
+Akta sprawy komorniczej Km 4401/2024.
+Dłużnik: Kazimierz Piotrowski. PESEL: 55O91961277.
+Kwota egzekucji: 12 450,00 PLN plus odsetki.
+
+Karta informacyjna leczenia szpitalnego.
+Pacjent: Wiesława Kaczmarek. PESEL: 9OO1O155382.
+Oddział neurologii. Pobyt: 12.01–18.01.2024.
+
+Formularz ZUS ZUA. Płatnik: FHU Marek Sp. z o.o.
+Ubezpieczony: Rafał Adamski. PESEL: 85O32204563.
+
+Akt notarialny Rep. A nr 2244/2024.
+Stawający: Danuta Szymańska, PESEL: 66l1l5O3816 (l zamiast 1, O zamiast 0).
+Notariusz: Andrzej Jabłoński, kancelaria ul. Grodzka 5, Kraków.
+
+--- SEKCJA 7: PESEL BEZ SŁOWA KLUCZOWEGO (S5 DECYDUJE) ---
+Poprawny checksum → silnik POWINIEN zamaskować.
+Błędny checksum → silnik NIE POWINIEN zamaskować.
+
+Raport systemowy. Eksport z bazy danych ewidencji.
+Rekord 001: Jan Kowalski | 73051649957 | M | ur. 1973-05-16
+Rekord 002: Anna Nowak   | 55091961277 | K | ur. 1955-09-19
+Rekord 003: Piotr Wiśni  | 90010155382 | M | ur. 1990-01-01
+Rekord 004: Maria Zając  | 85032204563 | K | ur. 1985-03-22
+Rekord 005: Tomek Górski | 66111503816 | M | ur. 1966-11-15
+
+Poniższe numery mają błędny checksum — NIE powinny być zamaskowane:
+  Numer A: 55091961275  (ostatnia cyfra 5 zamiast 7)
+  Numer B: 73051649950  (ostatnia cyfra 0 zamiast 7)
+  Numer C: 90010155389  (ostatnia cyfra 9 zamiast 2)
+  Numer D: 12345678901  (losowy — błędny checksum)
+  Numer E: 11111111111  (same jedynki — błędny checksum)
+
+--- SEKCJA 8: PESEL W RÓŻNYCH KONTEKSTACH DOKUMENTU ---
+
+Kancelaria Komornicza przy SR Wrocław-Śródmieście
+Sygn. akt Km 8812/2024
+Wrocław, dnia 15 maja 2024 r.
+
+Grzegorz Okoń
+ul. Parkowa 12/3
+50-001 Wrocław
+
+Na podstawie tytułu wykonawczego komornik sądowy zawiadamia, że w sprawie
+prowadzonej pod sygn. Km 8812/2024 wszczęto postępowanie egzekucyjne
+przeciwko dłużnikowi Grzegorzowi Okoniowi, PESEL: 73051649957,
+zamieszkałemu przy ul. Parkowej 12/3, 50-001 Wrocław.
+Wierzytelność: 8 750,00 PLN. Wierzyciel: Bank PKO BP S.A.
+Komornik: Janusz Wierzbicki, tel. 71 344 55 66.
+
+=============================================================
+
+Decyzja o przyznaniu świadczenia pielęgnacyjnego nr DP/2024/0341
+Miejscowość: Gdynia, dnia 3 marca 2024 r.
+
+Wnioskodawca: Beata Olszewska, zamieszkała ul. Morska 88, Gdynia.
+PESEL wnioskodawcy: 55091961277.
+PESEL podopiecznego: 90010155382.
+
+Orzekam o przyznaniu świadczenia pielęgnacyjnego w kwocie 2 988,40 PLN
+miesięcznie, od dnia 01.03.2024 r., na czas nieokreślony.
+Decyzja podlega natychmiastowemu wykonaniu.
+
+=============================================================
+
+DANE OSOBOWE WNIOSKODAWCY
+Imię i nazwisko: Zbigniew Karaś
+Data urodzenia:  22.04.1985
+PESEL:           85032204563
+Nr dowodu:       AZG 124890
+DANE KONTAKTOWE
+Adres zamieszkania: ul. Chopina 17/4, 44-100 Gliwice
+Telefon: +48 512 834 711
+Adres e-mail: z.karas@onet.pl
+DANE PODATKOWE
+NIP (jeśli dotyczy): 678-234-56-78
+
+=============================================================
+
+Zlecenie przelewu bankowego.
+Nadawca: Wanda Orzechowska, PESEL 66111503816.
+Nr rachunku nadawcy: PL 61 1090 1014 0000 0712 1981 2874.
+Odbiorca: ZUS Wrocław. Nr rachunku: PL 83 1010 1023 0000 2613 9510 0000.
+Tytuł: składki za 02/2024.
+Kwota: 1 457,80 PLN.
+
+--- SEKCJA 9: PESEL W TABELI (OCR MOŻE SKLEIĆ KOLUMNY) ---
+
+Ewidencja pracowników — dział IT:
+
+Lp | Nazwisko        | Imię     | PESEL         | Stanowisko
+---|-----------------|----------|---------------|-------------------
+1  | Kowalski        | Jan      | 73051649957   | Kierownik projektu
+2  | Nowak           | Anna     | 55091961277   | Analityk systemów
+3  | Wiśniewski      | Piotr    | 90010155382   | Programista senior
+4  | Zając           | Maria    | 85032204563   | Tester oprogramowania
+5  | Górski          | Tomasz   | 66111503816   | Administrator sieci
+
+Powyższa lista zawiera dane osobowe objęte ochroną RODO.
+Dostęp wyłącznie dla upoważnionych pracowników działu kadr.
+
+--- SEKCJA 10: PESEL SKLEJONY Z KONTEKSTEM (OCR ARTIFACT) ---
+Silnik powinien wyciąć numer mimo braku separatora.
+
+Akta sprawy sądowej.
+DaneosobyJan KowalskiPESEL73051649957zamieszkałyWarszawa.
+(sklejony tekst OCR — silnik powinien wychwycić 73051649957)
+
+Wydruk z systemu ewidencji:
+NazwiskoNowakImieAnna55091961277Ulica KwiatowaNumer3.
+(PESEL bez keywordu — S5 decyduje)
+
+Formularz uproszczony:
+PESEL90010155382DataUrodzenia19900101PlecMeski.
+
+--- SEKCJA 11: WIELE PESEL W JEDNYM ZDANIU ---
+
+Umowa pożyczki zawarta między: Ryszardem Kotem (PESEL: 73051649957)
+a Jadwigą Kot (PESEL: 55091961277) z dnia 10.04.2024 r.
+Poręczyciel: Marek Kot, PESEL 90010155382, zam. ul. Wiejska 4, Radom.
+Kwota pożyczki: 15 000,00 PLN, oprocentowanie: 5% w skali roku.
+Spłata w 24 ratach miesięcznych po 656,25 PLN.
+
+W tej samej sprawie jako świadkowie wystąpili:
+1. Hanna Sowa, PESEL: 85032204563, ul. Ogrodowa 2, Lublin,
+2. Zbigniew Sowa, PESEL: 66111503816, ul. Ogrodowa 2, Lublin.
+
+--- SEKCJA 12: PESEL Z RÓŻNYMI SEPARATORAMI PRZED NUMEREM ---
+
+Pismo urzędowe nr PU/2024/8821.
+Osoba: Krystyna Bielak; PESEL — 73051649957; adres: Opole.
+
+Informacja z rejestru: nr pesel = 55091961277, imię = Bronisław.
+
+Dane ze skanu: PESEL/ 90010155382 /data wystawienia 01.01.2024.
+
+System kadrowy: [PESEL] 85032204563 [Imię] Celina [Nazwisko] Wrona.
+
+Wydruk ZUS: PESEL: 66111503816 | Podstawa: 4 200,00 PLN | Składka: 577,38 PLN.
+
+--- SEKCJA 13: GRANICZNE I TRUDNE PRZYPADKI ---
+
+Liczba bliska PESEL ale za krótka — NIE maskować:
+  Numer rachunku fragment: 7305164995
+  Ciąg 10-cyfrowy: 5509196127
+
+Liczba bliska PESEL ale za długa — NIE maskować:
+  123456789012  (12 cyfr)
+  730516499570  (12 cyfr — PESEL + dodatkowa cyfra)
+
+PESEL na początku linii bez kontekstu (S5 decyduje):
+73051649957 — dane z rejestru PESEL dotyczące osoby fizycznej.
+55091961277 — zapis historyczny z akt archiwalnych.
+
+PESEL na końcu linii:
+Dane identyfikacyjne osoby objętej decyzją: 85032204563
+Numer ewidencyjny ubezpieczonego w systemie ZUS: 66111503816
+
+PESEL w nawiasie:
+Osoba fizyczna (PESEL: 73051649957) wyraża zgodę na przetwarzanie danych.
+Pełnomocnik (nr PESEL 90010155382) działa w imieniu mocodawcy.
+
+--- KONIEC DOKUMENTU TESTOWEGO ---
+Łączna liczba poprawnych PESEL do zamaskowania: ok. 60+
+Łączna liczba błędnych numerów (nie maskować bez keywordu): 5

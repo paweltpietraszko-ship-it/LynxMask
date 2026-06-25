@@ -1,0 +1,210 @@
+BUGS / ANOMALIE — 2026-06-23 17:20:34
+════════════════════════════════════════════════════════════
+
+[KRYTYCZNE] Pominięte encje wysokiego ryzyka: 26
+
+  images/doc_00002.png  lvl=2  qs=78  pesel=02291590253
+  images/doc_00002.png  lvl=2  qs=78  nip=180-242-81-58
+  images/doc_00003.png  lvl=2  qs=83  pesel=97110974644
+  images/doc_00003.png  lvl=2  qs=83  dowod_osobisty=LPW810194
+  images/doc_00003.png  lvl=2  qs=83  nip=140-028-65-61
+  images/doc_00006.png  lvl=2  qs=77  nip_sprzedawcy=589-740-90-35
+  images/doc_00006.png  lvl=2  qs=77  nip_nabywcy=607-607-24-63
+  images/doc_00006.png  lvl=2  qs=77  iban=PL64150010139926858185077094
+  images/doc_00007.png  lvl=1  qs=99  pesel=57020860130
+  images/doc_00008.png  lvl=3  qs=76  nip_nabywcy=114-961-69-67
+  images/doc_00013.png  lvl=2  qs=84  pesel=00262884004
+  images/doc_00013.png  lvl=2  qs=84  iban=PL51109010146933581532756930
+  images/doc_00019.png  lvl=2  qs=82  nip_sprzedawcy=378-525-88-60
+  images/doc_00019.png  lvl=2  qs=82  nip_nabywcy=299-142-21-56
+  images/doc_00019.png  lvl=2  qs=82  iban=PL78325000030997956857303408
+  images/doc_00024.png  lvl=1  qs=95  iban=PL09240101353573309841129174
+  images/doc_00043.png  lvl=2  qs=81  nip_sprzedawcy=789-600-76-20
+  images/doc_00043.png  lvl=2  qs=81  nip_nabywcy=199-346-30-41
+  images/doc_00043.png  lvl=2  qs=81  iban=PL11102028924309142924895162
+  images/doc_00053.png  lvl=2  qs=84  nip_sprzedawcy=494-460-54-94
+  images/doc_00053.png  lvl=2  qs=84  nip_nabywcy=314-549-22-68
+  images/doc_00053.png  lvl=2  qs=84  iban=PL87240101351843938869899161
+  images/doc_00057.png  lvl=2  qs=90  pesel=90053103133
+  images/doc_00057.png  lvl=2  qs=90  iban=PL25150010131973320482448859
+  images/doc_00061.png  lvl=3  qs=77  pesel=95123139805
+  images/doc_00062.png  lvl=2  qs=82  iban=PL14114019879085262576510124
+
+[RECALL<80%] Typy z niskim recall (min. 5 próbek):
+
+  NUMER        75,3%  (207/275)
+  EMAIL        45,5%  (5/11)
+
+
+[OSOBA POMINIĘTE] 14 encji:
+
+  doc_00002.png  imie_nazwisko=Dorota Pawłowska  → BRAK_W_OCR
+    OCR[300]: Sg POrsses 2034 Du y 1s5 2022 apoae Deta P PESEL 6Z22S3 NP 03a eepd 123s os00 Caho ORZEKAM UZASADIaENE P papoau popo POUCZENE og sty Urzd Skabowy w Warszae DECYZJAADMINISTRACYJNA Wspraae wpise do rjestu dralahosci
+  doc_00003.png  imie_nazwisko=Robert Dąbrowski  → BRAK_W_OCR
+    OCR[300]: DNIE OSOBoWE WOSKOOANCY PESEL od ig DIE KONTAKTOWE A DNE POOATKOWE P s400864 zGŁOSZENE DO REJESTRU
+  doc_00006.png  imie_nazwisko_nabywcy=Paweł Krawczyk  → BRAK_W_OCR
+    OCR[300]: Du y 2201 2021 SPRZEDANCA BETA SA A g d t00 Cay AVWCA PaK As Gpa 3001 Ra NP 0740r as gt C vT NE D0ZAPAY se P P p PResooo sasros FAKTURA VAT FV0063o0s/2020
+  doc_00008.png  imie_nazwisko_nabywcy=Zbigniew Woźniak  → BRAK_W_OCR
+    OCR[300]: Data wystaaienia 2307 2023 Numer ienta KL-27974 SPRZEDAWCA Doradztwo Biznesowe EXPERT Sp. zo0 Adres: Chopina 18248, 87-100 Gdynia NP. 949692-21-54 REGON: 877678154 konta PLA8102028927112796525613970 NABYWCA Zbigniew Watniak Adres Kopemika 116, 20-100 Osztyn NIP. t1496t69-67 La Nawa uugi Cena VAT Net
+  doc_00013.png  imie_nazwisko=Michał Wieczorek  → BRAK_W_OCR
+    OCR[300]: Komomik Sqdowy przy SR Krakowliowa Hta Potr owack Sg t Km 47292004 Dats 005 2020 Mdul eaok Skicaa 27 8100 Byo a pota y onaag konn sạoy am Mda Wecao PESEL 00884004 ZAWIADOMIENIE O WSZczĘCIU EGZEKUCJ ey Sekcaa 27, 87.400 ym Komnk Soy wwspe pton pod sgn Kn 472904w Sptamos n korto komna PSoseosAs331S279
+  doc_00019.png  imie_nazwisko_nabywcy=Mariusz Nowakowski  → BRAK_W_OCR
+    OCR[300]: Data wytaienia 2205 2021 umer kenta KL-52673 SPRZEDAWCA Agecja Rklamoa KREACIA Ades Sportoa 160 20-100 Bytom NP 37862s 8860 REGON 81182728 korta PLES000030srsses7303406 ABYWCA Mause owakowsk Ades Koscusk 96, 02-200 Ryna NP 299-42-21-56 La Naa usg & Cen vAT Nt Brto Uga prgtoa7 399z7 300 2 Wyn sornt b
+  doc_00038.png  imie_nazwisko=Andrzej Pawłowski  → BRAK_W_OCR
+    OCR[300]: Sygn: O 020836 2018 Data wydania 03. 10 2023 la podtawie po rozparzenu wniosku Andrzej Pawowski art 104 ustawy 2 dnia 14 czerwca 1960 -Kodeks postepowania administracynego t Dz Uz 2023t por. 775 ze mj PESEL 81122749965 NIP: 760-364-90-55 adres: Zielona 45, 45-001 Warszawa ORZEKAM UZASADNIENIE: Urząd
+  doc_00043.png  imie_nazwisko_nabywcy=Dorota Piotrowska  → BRAK_W_OCR
+    OCR[300]: Dut wytaia 0 1220g ner ta K816 SPRZEDAWCA Seis AGOEBCTRO Sp zo Ades Pako 850 2 100 Raesbe NP T9-4007620 REGON SO6260 Nkorta PI2040942934s s2 ABYWCA Deta Poska Ades g wod 103 30001 Bydges NP 199-36-3041 Ng Cen vAT B 1Uenso S67 22% 313s 402 so 3344 2 UM enso&7e GZNE D0 ZAPTY SeQ PUN Polt paee P0952 Te
+  doc_00053.png  imie_nazwisko_nabywcy=Karolina Zając  → BRAK_W_OCR
+    OCR[300]: Duy0622 SRZEDACA Kc n EG sC Pserso AWCA P RTosses FAKTURA VAT e1S022
+  doc_00055.png  autor=Michał Wójcik  → BRAK_W_OCR
+    OCR[300]: Data: 26.11,2020 Sporządzila: Michal Wöjcik Dotyczy: skargi na warunki lokalowe W dniu 26.11.2020 do biura zgłosila/się następująca osoba: Aleksandra Grabowska PESEL: 61120667225 Adres: ul. Kościuszki 192/7, 02-200 Toruń Tel.: +48 664 496 470 Rozmowa trwała ok. 20 minut. Sprawa zostala zareje strowa
+  doc_00057.png  imie_nazwisko=Beata Dąbrowska  → BRAK_W_OCR
+    OCR[300]: Komomk Sdowy przy SR Paman Gnunwad Janusz Werztick D 2707 2004 Norid 0001 Caho L a ped nag komn sy aan e pon pod gn Kn s2 Beta Dro, PESEL 0os310313 ZAWIADOMIENE O WSZCZĘCU EGZEKUca eyaon 1, 4500s Cacho ace w 21,270 PUN (e 21 iy 270 ayd Dak ma pe y oiadaio saach me7 a Spltamosna korto kmrna PR2S15001
+  doc_00061.png  imie_nazwisko=Sylwia Kozłowska  → BRAK_W_OCR
+    OCR[300]: Komornik Sądowy przy Sądzie Rejonowym Anna Zelinska Sygn. akt Km 61564/2025 Dal 19 11.2020 Sytaia Karbwska Sportbwa 37 85-001 Kraków Na podstawie tyuu wykonawczego komonik sadowy zawiadamia, 2e w sprawie prowadzonej pod sygn. Km 61 564/2025 wszzal postepowanie egzekucyfne przecako dhuznikowi Sylaia 
+  doc_00062.png  imie_nazwisko_zleceniodawca=Bartosz Wójcik  → BRAK_W_OCR
+    OCR[300]: 2 Ret NP 62Ns 4PESEL GO97T4 25 062020 py $1 Pzeit umowy Sa 13,s0er Gy $2 Wynagodzenie i patno $3 Czas trnia umowy $4 Poutose Sy Dec UMOWAO SwIADCZENIE USŁUG UMWOOZse15 20yy
+  doc_00062.png  imie_nazwisko_zleceniobiorca=Robert Nowakowski  → BRAK_W_OCR
+    OCR[300]: 2 Ret NP 62Ns 4PESEL GO97T4 25 062020 py $1 Pzeit umowy Sa 13,s0er Gy $2 Wynagodzenie i patno $3 Czas trnia umowy $4 Poutose Sy Dec UMOWAO SwIADCZENIE USŁUG UMWOOZse15 20yy
+
+
+[EMAIL POMINIĘTE] 6 encji:
+
+  doc_00003.png  email=robert.dabrowski@interia.pl  → BRAK_W_OCR
+    OCR[300]: DNIE OSOBoWE WOSKOOANCY PESEL od ig DIE KONTAKTOWE A DNE POOATKOWE P s400864 zGŁOSZENE DO REJESTRU
+  doc_00007.png  email=dariusz_dabrowski@poczta.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Dariusz Dabrowski Data urodzenia: 13.05.1966 PESEL: 67020860130 Nr dowodu osobistego: FLR785289 Nr paszportu: HH8161452 DANE KONTAKTOWE Adres zamieszkania: ul. Slone czna 193, 30-001 Toruń Telefon: +48 515 389 867 Adres e-mail: dariusz dabrowski@poczta. pl 
+  doc_00012.png  email=joanna.michalska@gmail.com  → BRAK_W_OCR
+    OCR[300]: DANE OsOBOWE WNIOSKODAWCY Imię i nazwisko: Joanna Michalska Data urodzenia: 06.03.1997 PESEL: 66090191116 Nr dowodu osobistego: OYY180255 DANE KONTAKTOWE Adres zamieszkania: ul. Chopina 122/31, 65-001 Zabrze Telefon: +48 516 379 951 Adres e-mail: joan na.michalska@gmail.com DANE PODATKOWE NIP (jeśli
+  doc_00023.png  email=zofia_grabowska@interia.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Zofia Grabowska Data urodzenia 09, 02.1951 PESEL 92121823264 Nr dowodu osobistego MAY972143 DANE KONTAKTOWE Adres zamieszkania . Rózana 81, 44-100 Lódź Telefon +48 503 729 579 Adres e-mail zofa_grabowska@interia pl DANE PODATKOWE NP (esl dotyczy) 760-304-21
+  doc_00046.png  email=renata.nowakowska@onet.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Renata Nowakowska Data urOdzenia: 04.09.1997 PESEL: 8804184 3637 Nr dowodu osobistego UPD403440 DANE KONTAKTOWE Adres zamieszkania: ul. Kolejowa 172, 01-100 Poznań Telefon: +48 532 463 304 Adres e-mail: renata.n owa kowska@onetpl DANE PODATKOWE NIP jeśli do
+  doc_00060.png  email=ewa.wozniak20@interia.pl  → BRAK_W_OCR
+    OCR[300]: DANE OsOBOWE WNIOSKODAWCY Imię i nazwisko: Ewa Wożniak Data urodzenia: 09.07.1970 PESEL: 61092544085 Nr dowodu osobistego: LFM460955 Nr paszportu: OZ8434300 DANE KONTAKTOWE Adres zamieszkania: ul. Polna 200, 41-200 Kielce Telefon: +48 780 028 705 Adres e-mail: ewawozniak20@interia pl Data DANE PODAT
+
+
+[ADRES POMINIĘTE] 13 encji:
+
+  doc_00002.png  adres=al. Niepodległości 123/14, 01-100 Częstochowa  → BRAK_W_OCR
+    OCR[300]: Sg POrsses 2034 Du y 1s5 2022 apoae Deta P PESEL 6Z22S3 NP 03a eepd 123s os00 Caho ORZEKAM UZASADIaENE P papoau popo POUCZENE og sty Urzd Skabowy w Warszae DECYZJAADMINISTRACYJNA Wspraae wpise do rjestu dralahosci
+  doc_00003.png  adres=ul. Ogrodowa 10, 20-100 Szczecin  → BRAK_W_OCR
+    OCR[300]: DNIE OSOBoWE WOSKOOANCY PESEL od ig DIE KONTAKTOWE A DNE POOATKOWE P s400864 zGŁOSZENE DO REJESTRU
+  doc_00006.png  adres_nabywcy=ul. Chopina 84/13, 30-001 Radom  → BRAK_W_OCR
+    OCR[300]: Du y 2201 2021 SPRZEDANCA BETA SA A g d t00 Cay AVWCA PaK As Gpa 3001 Ra NP 0740r as gt C vT NE D0ZAPAY se P P p PResooo sasros FAKTURA VAT FV0063o0s/2020
+  doc_00008.png  adres_nabywcy=ul. Kopernika 116, 20-100 Olsztyn  → BRAK_W_OCR
+    OCR[300]: Data wystaaienia 2307 2023 Numer ienta KL-27974 SPRZEDAWCA Doradztwo Biznesowe EXPERT Sp. zo0 Adres: Chopina 18248, 87-100 Gdynia NP. 949692-21-54 REGON: 877678154 konta PLA8102028927112796525613970 NABYWCA Zbigniew Watniak Adres Kopemika 116, 20-100 Osztyn NIP. t1496t69-67 La Nawa uugi Cena VAT Net
+  doc_00013.png  adres=ul. Sienkiewicza 27, 87-100 Bytom  → BRAK_W_OCR
+    OCR[300]: Komomik Sqdowy przy SR Krakowliowa Hta Potr owack Sg t Km 47292004 Dats 005 2020 Mdul eaok Skicaa 27 8100 Byo a pota y onaag konn sạoy am Mda Wecao PESEL 00884004 ZAWIADOMIENIE O WSZczĘCIU EGZEKUCJ ey Sekcaa 27, 87.400 ym Komnk Soy wwspe pton pod sgn Kn 472904w Sptamos n korto komna PSoseosAs331S279
+  doc_00019.png  adres_nabywcy=ul. Kościuszki 98, 02-200 Rybnik  → BRAK_W_OCR
+    OCR[300]: Data wytaienia 2205 2021 umer kenta KL-52673 SPRZEDAWCA Agecja Rklamoa KREACIA Ades Sportoa 160 20-100 Bytom NP 37862s 8860 REGON 81182728 korta PLES000030srsses7303406 ABYWCA Mause owakowsk Ades Koscusk 96, 02-200 Ryna NP 299-42-21-56 La Naa usg & Cen vAT Nt Brto Uga prgtoa7 399z7 300 2 Wyn sornt b
+  doc_00043.png  adres_nabywcy=pl. Wolności 103, 30-001 Bydgoszcz  → BRAK_W_OCR
+    OCR[300]: Dut wytaia 0 1220g ner ta K816 SPRZEDAWCA Seis AGOEBCTRO Sp zo Ades Pako 850 2 100 Raesbe NP T9-4007620 REGON SO6260 Nkorta PI2040942934s s2 ABYWCA Deta Poska Ades g wod 103 30001 Bydges NP 199-36-3041 Ng Cen vAT B 1Uenso S67 22% 313s 402 so 3344 2 UM enso&7e GZNE D0 ZAPTY SeQ PUN Polt paee P0952 Te
+  doc_00044.png  adres=ul. Norwida 136, 30-001 Łódź  → BRAK_W_OCR
+    OCR[300]: Data: 19.03. 2022 Sporządzila: Maciej Wieczorek Dotyczy wniosku0 zmianę adresu zameldowania w dniu 19.03 2022 do biura zglosilasię następująca osoba Jan Szymański PESEL: 850823 78829 Adres: ul.L Nonwida 136, 30-001 Lódź Tel: +48 485 393 708 Rozmowa trwala ok 20 minut. Sprawa zostala zareje strowana 
+  doc_00047.png  adres=ul. Piaskowa 111, 85-001 Lublin  → BRAK_W_OCR
+    OCR[300]: Data 0507 2021 Spoządzla Dorota Grabowska Dtyczy interwencji dotyczącej zadkuzenia czynszowego W driu 06.07 2021 do biura zgloslabię nastepujaca oscba Justyna Szymańska PESEL: 01301970597 Adres: u Plaskowa t11, 85-001 Lubin Tel: +48 732 789 017 Rozmowa tre ala ok 20 minut Sprawa zostals zare wniosku
+  doc_00053.png  adres_nabywcy=ul. Mickiewicza 24/9, 31-001 Radom  → BRAK_W_OCR
+    OCR[300]: Duy0622 SRZEDACA Kc n EG sC Pserso AWCA P RTosses FAKTURA VAT e1S022
+  doc_00057.png  adres=ul. Norwida 192/11, 40-001 Częstochowa  → BRAK_W_OCR
+    OCR[300]: Komomk Sdowy przy SR Paman Gnunwad Janusz Werztick D 2707 2004 Norid 0001 Caho L a ped nag komn sy aan e pon pod gn Kn s2 Beta Dro, PESEL 0os310313 ZAWIADOMIENE O WSZCZĘCU EGZEKUca eyaon 1, 4500s Cacho ace w 21,270 PUN (e 21 iy 270 ayd Dak ma pe y oiadaio saach me7 a Spltamosna korto kmrna PR2S15001
+  doc_00062.png  adres_zleceniodawca=ul. Sienkiewicza 193, 50-001 Gdynia  → BRAK_W_OCR
+    OCR[300]: 2 Ret NP 62Ns 4PESEL GO97T4 25 062020 py $1 Pzeit umowy Sa 13,s0er Gy $2 Wynagodzenie i patno $3 Czas trnia umowy $4 Poutose Sy Dec UMOWAO SwIADCZENIE USŁUG UMWOOZse15 20yy
+  doc_00062.png  adres_zleceniobiorca=ul. Mickiewicza 6/19, 60-001 Poznań  → BRAK_W_OCR
+    OCR[300]: 2 Ret NP 62Ns 4PESEL GO97T4 25 062020 py $1 Pzeit umowy Sa 13,s0er Gy $2 Wynagodzenie i patno $3 Czas trnia umowy $4 Poutose Sy Dec UMOWAO SwIADCZENIE USŁUG UMWOOZse15 20yy
+
+
+[DIAGNOSTYKA OCR] Tekst OCR dla wszystkich dokumentów z brakami krytycznymi:
+Pozwala odróżnić: OCR zgubił encję vs silnik jej nie wykrył.
+
+  ── images/doc_00002.png  lvl=2  qs=78 ──
+  Brakujące encje:
+    pesel = 02291590253
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 180-242-81-58
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00003.png  lvl=2  qs=83 ──
+  Brakujące encje:
+    pesel = 97110974644
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    dowod_osobisty = LPW810194
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip = 140-028-65-61
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00006.png  lvl=2  qs=77 ──
+  Brakujące encje:
+    nip_sprzedawcy = 589-740-90-35
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 607-607-24-63
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL64150010139926858185077094
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00007.png  lvl=1  qs=99 ──
+  Brakujące encje:
+    pesel = 57020860130
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00008.png  lvl=3  qs=76 ──
+  Brakujące encje:
+    nip_nabywcy = 114-961-69-67
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00013.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    pesel = 00262884004
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL51109010146933581532756930
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00019.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    nip_sprzedawcy = 378-525-88-60
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 299-142-21-56
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL78325000030997956857303408
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00024.png  lvl=1  qs=95 ──
+  Brakujące encje:
+    iban = PL09240101353573309841129174
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00043.png  lvl=2  qs=81 ──
+  Brakujące encje:
+    nip_sprzedawcy = 789-600-76-20
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 199-346-30-41
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL11102028924309142924895162
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00053.png  lvl=2  qs=84 ──
+  Brakujące encje:
+    nip_sprzedawcy = 494-460-54-94
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    nip_nabywcy = 314-549-22-68
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL87240101351843938869899161
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00057.png  lvl=2  qs=90 ──
+  Brakujące encje:
+    pesel = 90053103133
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+    iban = PL25150010131973320482448859
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00061.png  lvl=3  qs=77 ──
+  Brakujące encje:
+    pesel = 95123139805
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
+  ── images/doc_00062.png  lvl=2  qs=82 ──
+  Brakujące encje:
+    iban = PL14114019879085262576510124
+    → ✗ BRAK w tekście OCR (bug OCR lub zbyt zdegradowany obraz)
+
