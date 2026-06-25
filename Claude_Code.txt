@@ -1,3 +1,168 @@
+ === SESJA 2026-06-25 (kontynuacja) ===
+
+  COMMITY TEJ SESJI:
+  16e6812 — fix: code review Cursor — IBAN ICU lookbehind, garbled IBAN/dowód, sesjaId
+  2cad096 — feat: Benchmark v2 — sekcje A-D, bramka OCR, klasyfikacja miss + AUD-M06
+
+  CO ZROBIONO:
+  ✅ Code review zmian Cursora (niezcommitowane z poprzedniej sesji):
+     - OcrNormalizer: OCR_IBAN_DIGITS lookbehind → group capture (crash ICU fix!)
+     - OcrNormalizer: OCR_IBAN_PL_LOOSE + fixPlIbanLoose; 'z'→'2'; OCR_DOWOD rozszerzony
+     - StructuralEngine: PL[A-Z0-9]{20,40} + [A-Z0-9]{3}\d{6} (dowód compact)
+     - OutputGuard: RED tolerancyjny IBAN garbled + dowód z cyfrą OCR
+     - DepseudonymizationScreen: record.sessionId → record.sesjaId (fix kompilacji)
+     - Testy: OcrNormalizerDowodTest @Before +2; IbanSplitTest +2 garbled; OutputGuardTest +2 RED
+  ✅ AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0
+  ✅ Benchmark v2 — BenchmarkInstrumentedTest.kt przepisany:
+     - regexSmokeTest() — smoke ICU przed benchmarkiem (incydent crash 2026-06-25 naprawiony)
+     - Sekcja B = in-scope accepted (lvl 0/1/3 + bramka OK) → GŁÓWNY KPI
+     - Sekcja C = rejected (bramka odrzuciła) → 100% oczekiwane
+     - Sekcja D = out-of-scope (lvl2 accepted) → informacyjnie
+     - Klasyfikacja miss: BUG_SILNIKA / OCR_ZNIEKSZTAŁCONY / BRAK_W_OCR
+     - Guard RED hits per doc
+  ✅ run_benchmark_v2.bat — nowy skrypt dla fixed core + wypisuje raport
+  ✅ MASTER sekcja 1a — filozofia v2, progi release (sekcje A-D)
+  ✅ MASTER sekcja 11 — run_benchmark_v2.bat jako główny skrypt
+
+  TESTY: odpal OcrNormalizerDowodTest + OcrNormalizerIbanSplitTest + OutputGuardTest
+         — wszystkie powinny być zielone.
+
+  ZASADA: tylko Claude Code commituje po sprawdzeniu Cursora (Paweł potwierdził 25.06)
+
+  === POZOSTAŁE DO ZROBIENIA ===
+
+  🔲 BENCHMARK v2 — PIERWSZY RUN: odpal run_benchmark_v2.bat, wklej wynik
+     → zapisać baseline v2 w MASTER (sekcja 1 — wiersz "Benchmark v2 baseline TBD")
+  🔲 Testy 6.2 — JUnit SessionStore + Deanonymizer
+  🔲 C1 — OcrQuality hard reject — propozycja w docs/PROPOZYCJA_OcrQuality_HardReject.md (decyzja Pawła)
+  🔲 BUG-PESEL-OCR-SILNIK — wymaga tekstu OCR z telefonu (dok. doc_00006) — niskie
+  🔲 BUG-LOG-OCR / BUG-BENCH-PUBLIC — OCR w RAM + benchmark ext. storage — niskie
+
+ === SESJA 2026-06-25 ===
+
+  COMMITY TEJ SESJI:
+  456fcbf — fix: AUDIT-03 — usuń CATCHALL z PESEL/NIP_PATTERN_STRINGS (FN naprawiony)
+  ad5c452 — test: S11 — regresja email z imieniem w local-part (nie maskowany jako OSOBA)
+  0d756ac — fix: OutputGuard — usuń ghost token types po migracji taksonomii
+  9f87fdb — fix: audyt RODO — logi PII, depseudo export warning, regex cache
+  8641604 — fix: benchmark czyści GuardAllowlist przed runem (A2 cichy bug)
+  f8add1c — fix: code review po Cursorze — deleteRedactedUri za wcześnie + test no-op
+  044bd00 — feat: S10 + S4 — OcrNormalizer krok 14a (telefon OCR) + krok 11c2 (NIP homoglify)
+  9b274ab — fix: ClipSafety — isClipboardClean + clipSafeMaskedText [UKRYTE]
+  400b6c3 — fix: ImageRedactionPipeline — purge stale JPEG + deleteRedactedUri
+  099dd51 — test: NipFormatMatrixTest — aktualizacja oczekiwań po AUDIT-03/CATCHALL
+
+  CO ZROBIONO:
+  ✅ AUDIT-03 — CATCHALL usunięty z PESEL_PATTERN_STRINGS i NIP_PATTERN_STRINGS
+     11-cyfrowe z błędną sumą PESEL + 10-cyfrowe z błędną sumą NIP bez kontekstu
+     → teraz maskowane przez CATCHALL jako NUMER (wcześniej FN)
+     S5 sprawdza tylko \d{11} i wzorce NIP z separatorami — jak powinno być.
+     +2 testy audit03 | 3 testy S5 przepisane
+  ✅ S11 — email z imieniem w local-part — zamknięty (rozwiązany architekturą)
+     EMAIL w STRUCTURAL_PATTERNS[0] wyprzedza NameEngine — brak konfliktu OSOBA
+     +2 testy regresji
+  ✅ OutputGuard ghost types — usunięto ORGANIZACJA/TELEFON/SYGNATURA/DATA z tokenRe
+  ✅ ShareTargetActivity logi — rawText usunięty; słowa → długości (RODO)
+  ✅ BUG-EXPORT-DEPSEUDO — AlertDialog przed eksportem odkrytego tekstu
+  ✅ BUG-28 — resetRegexCache() po LookupTables.initialize() w 3 Activity
+  ✅ LynxMaskLogger.kt — usunięty (martwy kod z pełnym PII logging)
+  ✅ A2 benchmark — GuardAllowlist.clear() przed runem
+  ✅ S10/BUG-TEL-PREFIX — OcrNormalizer krok 14a; @Ignore usunięty
+  ✅ S4 — NIP bare homoglify (cyrylica, lOI) — OcrNormalizer krok 11c2
+  ✅ ClipSafety — isClipboardClean + clipSafeMaskedText [UKRYTE]
+  ✅ ImageRedactionPipeline — purge 5 min TTL (deleteRedactedUri NIE po startActivity)
+  ✅ NipFormatMatrixTest — oczekiwania po AUDIT-03
+  ✅ DoubleMissTest — 7 scenariuszy (telefon, NIP×3, PESEL, schowek)
+  ✅ Code review po Cursorze — deleteRedactedUri async race naprawiony; test no-op naprawiony
+
+  TESTY: ~455 testów, 2 skipped, BUILD SUCCESSFUL (wg raportu Cursora)
+
+  WERSJE PLIKÓW:
+  - OcrNormalizer: v2.6+ (krok 14a, 11c2) | ClipSafety.kt: nowy
+  - ClipboardCheckActivity: v1.5+ | ImageRedactionPipeline: v1.x+
+
+  === POZOSTAŁE DO ZROBIENIA ===
+
+  🔲 Testy 6.2 — JUnit SessionStore + Deanonymizer
+  🔲 C1 — OcrQuality hard reject — propozycja w PROPOZYCJA_OcrQuality_HardReject.md (decyzja Pawła)
+  🔲 BUG-PESEL-OCR-SILNIK — wymaga tekstu OCR z telefonu (dok. doc_00006) — niskie
+  🔲 BUG-LOG-OCR / BUG-BENCH-PUBLIC — OCR w RAM + benchmark ext. storage — niskie
+  🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0 — niskie
+  🔲 Benchmark v2 — po zamknięciu silnika
+
+ === SESJE 2026-06-23 (4+) / 2026-06-24/25 — (Cursor + Claude Code) ===
+
+  COMMITY TEJ SESJI (26 commitów po ostatniej notatce 40976ce):
+
+  Blok A — IMAGE-REDACT F0 (Cursor):
+  129ac97 — feat: IMAGE-REDACT F0 — face detection + blur + podgląd + share JPEG (ShareTargetActivity v2.7)
+  3c03954 — fix: IMAGE-REDACT podgląd — faktyczny pixelate blur zamiast czarnego overlay
+  eaf186d — refactor: onboarding 6 slajdów → 1 ekran powitalny
+  2fb4155 — fix: IMAGE-REDACT — instrukcja UI mówi wprost o podpisie i pieczątce
+  0b11bf8 — feat: IMAGE-REDACT — OCR zaznaczonego obszaru → sugestia do UserDictionary
+
+  Blok B — silnik + biblioteka (Claude Code / Cursor):
+  34d94c7 — fix: BUG-LIB-6 — Pobierz plik działa na Android 11+ (Scoped Storage / MediaStore)
+  192e940 — fix: N3 OCR_EMAIL_LOCALSPACE — pętla do-while + {1,} dla multi-spacji
+  1da53e9 — feat: S6 — OCR sklejanie nazwisk (Kowal ski → Kowalski, OcrNormalizer)
+  f248a08 — feat: S4 — kwoty słowne (dwadzieścia tysięcy złotych → KWOTA_nnn)
+  3ba7b66 — feat: stary dowód — KOWALSKI solo CAPS (NameEngine) + ID_CARD_PARENT/FIRSTNAME + S4 FP fix
+  644ddbd — feat: eksport/import słownika użytkownika (.lynxdict) — backup przed reinstalacją
+  4537858 — fix: eksport słownika wprost do Pobrane bez dialogu SAF
+  27c7907 — feat: zmiana hasła bez utraty danych + ostrzeżenie przy resecie (LoginScreen + MainActivity)
+  cf21b73 — docs: BUG-SCAN-P1 i UL z BACKLOG — naprawione w v2.4, wyczyszczone
+
+  Blok C — OCR hard tests + email recall:
+  fe20a07 — fix: email recall — cyfry w TLD + spacja w SLD domeny (StructuralEngine)
+  611a302 — test: test_hard_v2.txt — twardy skan z artefaktami OCR L2/L3
+  7a2d58b — fix: NlP/N1P i PESE1 nie maskowały — rozszerzenie wzorców kontekstowych
+
+  Blok D — Cursor: keyword norm + paszport + guard + IBAN/postal + N2 + F1:
+  f4d598b — feat: keyword canonicalization krok 0 — OcrNormalizer v2.6 (PESEL/NIP/REGON z OCR-artefaktami)
+  fe7943f — feat: OCR_PASZPORT_DIGITS — naprawa cyfr w numerze paszportu po słowie kluczowym
+  ff0780b — fix: Guard SYGNATURA FP — zawężenie wzorca d{1,6}/d{1,6} → d{2,6}/(d{4}|d{2,6})
+  49648eb — feat: OCR_KW_IBAN + OCR_POSTAL_CODE — krok 0 IBAN i kod pocztowy
+  0e9ddda — fix: N2 — OCR-split NIP reformatted to canonical hyphen groups
+  63bd388 — docs: IMAGE-REDACT F1 zamknięty, TODO-10 onboarding anulowany (MASTER + BACKLOG)
+  e8ca00a — feat: OCR email/adres tolerance — krok 0b spaces + ul[.,]/u. prefix (OcrNormalizer + StructuralEngine)
+
+  CO ZROBIONO:
+  ✅ IMAGE-REDACT F0 — face detection + blur + podgląd + share JPEG (ShareTargetActivity v2.7)
+  ✅ IMAGE-REDACT F1 — ręczny prostokąt (ImageRedactionScreen.kt) + OCR sugestia do UserDictionary
+  ✅ BUG-LIB-6 — Pobierz plik Android 11+ (Scoped Storage / MediaStore)
+  ✅ N3 — OCR_EMAIL_LOCALSPACE pętla do-while (multi-spacje w local-part emaila)
+  ✅ S4 — kwoty słowne (dwadzieścia tysięcy złotych → TOKEN_KWOTA)
+  ✅ S6 — OCR sklejanie nazwisk (Kowal ski → Kowalski)
+  ✅ Stary dowód — KOWALSKI solo CAPS + ID_CARD_PARENT/FIRSTNAME (Imię ojca/matki: → TOKEN_OSOBA)
+  ✅ UserDictionary eksport/import (.lynxdict) + MediaStore export bez SAF-dialogu
+  ✅ Zmiana hasła bez utraty danych (LoginScreen + MainActivity)
+  ✅ Onboarding skrócony: 6 slajdów → 1 ekran powitalny
+  ✅ Email recall — cyfry w TLD + spacja w SLD (StructuralEngine)
+  ✅ NlP/N1P + PESE1 — rozszerzenie wzorców kontekstowych (literal artefakty OCR)
+  ✅ Keyword canonicalization krok 0 — OcrNormalizer v2.6 (PESE1/N1P/REGON → czyste słowa kluczowe)
+  ✅ OCR_PASZPORT_DIGITS — naprawa cyfr w num. paszportu po słowie kluczowym
+  ✅ Guard SYGNATURA FP — zawężony wzorzec eliminuje FP na krótkich numerach
+  ✅ OCR_KW_IBAN + OCR_POSTAL_CODE — krok 0 (normalizacja spacji w IBAN/kodzie pocz.)
+  ✅ N2 — OCR-split NIP reformatted to canonical hyphen groups (OcrNormalizer)
+  ✅ OCR email/adres tolerance krok 0b — spacje + ul[.,]/u. prefix fix (OcrNormalizer + StructuralEngine)
+
+  WERSJE PLIKÓW (stan 25.06):
+  - OcrNormalizer: v2.6 (+ krok 0 IBAN/postal i krok 0b email/adres niezwersjonowane)
+  - StructuralEngine: v2.3 | NameEngine: v1.12
+  - ShareTargetActivity: v2.7 | LoginScreen: v2.x (zmiana hasła)
+  - ImageRedactionPipeline.kt: nowy | ImageRedactionScreen.kt: nowy
+
+  === POZOSTAŁE DO ZROBIENIA ===
+
+  🔲 S11 — email z imieniem w local-part (StructuralEngine + NameEngine, kolejność warstw)
+  🔲 AUDIT-03 — CATCHALL w PESEL/NIP_PATTERN_STRINGS → S5 na wszystkich \d{8,} (ryzyko FN)
+  🔲 Testy 6.2: JUnit SessionStore + Deanonymizer
+  🔲 BUG-PESEL-OCR-SILNIK — wymaga tekstu OCR z telefonu (dok. doc_00006) — niskie
+  🔲 BUG-LOG-OCR / BUG-BENCH-PUBLIC — OCR w RAM + benchmark ext. storage — niskie
+  🔲 BUG-EXPORT-DEPSEUDO — depseudo eksport bez ostrzeżenia — niskie
+  🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0 — niskie
+  🔲 Benchmark v2 — plan w BRIEF_Wlasciciel_Benchmark_v2.md (nie zaczęty)
+
  === SESJA 2026-06-23 ===
 
   COMMITY TEJ SESJI:
