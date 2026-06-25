@@ -81,8 +81,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val context = LocalContext.current
-    var onboardingDone by remember         { mutableStateOf(isOnboardingDone(context)) }
-    var authenticated  by rememberSaveable { mutableStateOf(false) }
+    var onboardingDone   by remember         { mutableStateOf(isOnboardingDone(context)) }
+    var authenticated    by rememberSaveable { mutableStateOf(false) }
+    var showCrashDialog  by remember         { mutableStateOf(CrashHandler.hasPendingCrash(context)) }
+
     when {
         !onboardingDone -> OnboardingScreen(onFinished = { onboardingDone = true })
         !authenticated  -> LoginScreen(
@@ -91,6 +93,46 @@ fun AppNavigation() {
         )
         else -> MainTabNav()
     }
+
+    if (showCrashDialog) {
+        CrashReportDialog(
+            onSend = {
+                val intent = CrashHandler.buildEmailIntent(context)
+                context.startActivity(Intent.createChooser(intent, "Wyślij raport błędu"))
+                CrashHandler.clearPendingCrash(context)
+                showCrashDialog = false
+            },
+            onDismiss = {
+                CrashHandler.clearPendingCrash(context)
+                showCrashDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nieoczekiwany błąd", fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                "Aplikacja napotkała nieoczekiwany błąd podczas poprzedniego uruchomienia.\n\n" +
+                "Raport nie zawiera żadnych danych osobowych — tylko informacje techniczne o urządzeniu.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(onClick = onSend, modifier = Modifier.fillMaxWidth()) {
+                Text("Wyślij raport")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text("Pomiń", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
 }
 
 @Composable
