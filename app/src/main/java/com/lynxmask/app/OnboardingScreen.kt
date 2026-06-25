@@ -13,15 +13,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private const val PREFS_NAME = "lynxmask_prefs"
 private const val KEY_ONBOARDING_DONE = "onboarding_done"
 
 fun isOnboardingDone(context: Context): Boolean =
-    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    context.getSharedPreferences(APP_PREFS_NAME, Context.MODE_PRIVATE)
         .getBoolean(KEY_ONBOARDING_DONE, false)
 
 private fun markOnboardingDone(context: Context) =
-    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    context.getSharedPreferences(APP_PREFS_NAME, Context.MODE_PRIVATE)
         .edit().putBoolean(KEY_ONBOARDING_DONE, true).apply()
 
 @Composable

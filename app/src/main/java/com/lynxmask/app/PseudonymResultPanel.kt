@@ -17,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.ui.theme.LynxColors
@@ -39,6 +41,10 @@ fun PseudonymResultPanel(
     onDebugLog: (() -> Unit)? = null,
     onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null
 ) {
+    val context = LocalContext.current
+    var showDisclaimer by remember { mutableStateOf(false) }
+    var pendingCopyAction by remember { mutableStateOf(false) }
+
     val flagDecisions = remember(result.flags) {
         mutableStateMapOf<String, EntityDecision>().also { map ->
             result.flags.forEach { map[it.fragment] = EntityDecision.PENDING }
@@ -196,7 +202,14 @@ fun PseudonymResultPanel(
             canAct = canAct,
             canSend = canSend,
             copied = copiedDone,
-            onCopy = { onCopy(outputText); copiedDone = true },
+            onCopy = {
+                if (isDisclaimerAccepted(context)) {
+                    onCopy(outputText); copiedDone = true
+                } else {
+                    pendingCopyAction = true
+                    showDisclaimer = true
+                }
+            },
             onCancel = onCancel,
             onDebugLog = onDebugLog
         )
@@ -233,6 +246,20 @@ fun PseudonymResultPanel(
                 onValueChange = { descText = it; librarySaved = false }
             )
         }
+    }
+
+    if (showDisclaimer) {
+        DisclaimerDialog(
+            onAccepted = {
+                markDisclaimerAccepted(context)
+                showDisclaimer = false
+                if (pendingCopyAction) {
+                    onCopy(outputText)
+                    copiedDone = true
+                    pendingCopyAction = false
+                }
+            }
+        )
     }
 
     if (showTextPreview) {
@@ -413,4 +440,43 @@ private fun ActionSection(
             }
         }
     }
+}
+
+@Composable
+private fun DisclaimerDialog(onAccepted: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},  // celowo zablokowane — wymaga świadomej akceptacji
+        title = {
+            // AUDYT-PRAWNIK: tytuł do zatwierdzenia przez prawnika
+            Text("Sprawdź wynik przed wysłaniem", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // AUDYT-PRAWNIK: treść do zatwierdzenia przez prawnika przed wdrożeniem produkcyjnym.
+                // Obecny tekst to placeholder — może nie spełniać wymogów RODO art. 5 ust. 1 lit. f.
+                Text(
+                    "LynxMask automatycznie maskuje dane osobowe, lecz nie gwarantuje wykrycia każdego elementu.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Przed skopiowaniem lub wysłaniem przeczytaj zamaskowany tekst i upewnij się, że nie zawiera danych osobowych.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Klikając \"Rozumiem\" potwierdzasz, że zapoznałeś/-aś się z wynikiem.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Start
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccepted,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Rozumiem — sprawdziłem/-am wynik")
+            }
+        }
+    )
 }
