@@ -40,8 +40,8 @@ object ImageRedactionPipeline {
 
     suspend fun detectFacesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
         val options = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            .setMinFaceSize(0.05f)
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setMinFaceSize(0.01f)
             .build()
         val detector = FaceDetection.getClient(options)
         return try {
@@ -58,21 +58,33 @@ object ImageRedactionPipeline {
         }
     }
 
-    // Wykryj linie tekstu i zwróć jako zakryte regiony (isBlurred=true).
-    // User może tapnąć żeby odsłonić linię która nie jest PII.
+    // Wykryj linie tekstu zawierające PII (PESEL, nr doc, data, imię/nazwisko, etc.)
+    // ALL-CAPS linie konwertowane na Title Case przed PseudonymEngine — NameEngine wymaga Caps.
     suspend fun detectTextLinesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         return try {
             val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-            result.textBlocks.flatMap { block ->
+            val piiLines = result.textBlocks.flatMap { block ->
                 block.lines.mapNotNull { line ->
                     val box = line.boundingBox ?: return@mapNotNull null
-                    if (line.text.trim().length < 3) return@mapNotNull null
-                    RedactionRegion(rect = RectF(box), type = RegionType.MANUAL, isBlurred = true)
+                    val raw = line.text.trim()
+                    if (raw.length < 3) return@mapNotNull null
+                    // Dowody osobiste: tekst CAPS → Title Case żeby NameEngine wykrył imię/nazwisko
+                    val textForEngine = if (raw.length > 3 && raw == raw.uppercase()) {
+                        raw.split(" ").joinToString(" ") { w ->
+                            if (w.isEmpty()) w else w[0] + w.drop(1).lowercase()
+                        }
+                    } else raw
+                    val norm = OcrNormalizer.normalize(textForEngine)
+                    val engineResult = PseudonymEngine.pseudonymize(norm.normalizedText)
+                    if (engineResult.tokenMap.isNotEmpty()) {
+                        DebugLogBuffer.log("TextPii", "PII: \"$raw\" → ${engineResult.tokenMap.keys}")
+                        RedactionRegion(rect = RectF(box), type = RegionType.MANUAL, isBlurred = true)
+                    } else null
                 }
-            }.also {
-                DebugLogBuffer.log("TextDetect", "Wykryto ${it.size} linii tekstu")
             }
+            DebugLogBuffer.log("TextDetect", "PII linii: ${piiLines.size}/${result.textBlocks.sumOf { it.lines.size }}")
+            piiLines
         } catch (e: Exception) {
             DebugLogBuffer.log("TextDetect", "BŁĄD: ${e.message}")
             emptyList()

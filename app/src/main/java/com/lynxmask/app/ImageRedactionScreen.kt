@@ -86,8 +86,7 @@ fun ImageRedactionScreen(
             Text("Sprawdź i wyślij", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                "Twarze i tekst zakryte automatycznie. Stuknij zakryty obszar żeby go odsłonić. " +
-                "Przeciągnij palcem żeby zakryć coś co pominięto.",
+                "Dane osobiste i twarz zakryte automatycznie. Stuknij by odsłonić. Przeciągnij by zakryć coś dodatkowego.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
@@ -110,7 +109,7 @@ fun ImageRedactionScreen(
                         onDrag = { change, dragAmount ->
                             change.consume()
                             dragCurrentBitmap = screenToBitmap(change.position.x, change.position.y)
-                            val threshold = 8f
+                            val threshold = 30f
                             if (!isDragging &&
                                 dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y > threshold * threshold) {
                                 isDragging = true
@@ -120,8 +119,12 @@ fun ImageRedactionScreen(
                             val start = dragStartBitmap ?: return@detectDragGestures
                             val end   = dragCurrentBitmap ?: start
                             if (!isDragging) {
-                                // Tap — toggle blur/odkryj
-                                val hit = regions.firstOrNull { r -> r.rect.contains(start.x, start.y) }
+                                // Tap — toggle blur/odkryj (padding 24px dla precyzji palca)
+                                val PAD = 24f
+                                val hit = regions.firstOrNull { r ->
+                                    val p = RectF(r.rect.left - PAD, r.rect.top - PAD, r.rect.right + PAD, r.rect.bottom + PAD)
+                                    p.contains(start.x, start.y)
+                                }
                                 if (hit != null) {
                                     regions = regions.map {
                                         if (it.id == hit.id) it.copy(isBlurred = !it.isBlurred) else it
