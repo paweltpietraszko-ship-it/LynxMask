@@ -414,6 +414,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
     var showChangePassword    by remember { mutableStateOf(false) }
     var showDictManager       by remember { mutableStateOf(false) }
     var dictEntries           by remember { mutableStateOf(UserDictionary.load(context)) }
+    var dictSearch            by remember { mutableStateOf("") }
     var oldPassword         by remember { mutableStateOf("") }
     var newPassword         by remember { mutableStateOf("") }
     var newPasswordConfirm  by remember { mutableStateOf("") }
@@ -618,17 +619,38 @@ private fun SecurityModal(onDismiss: () -> Unit) {
     // Dialog słownika własnego — przeglądaj i usuwaj wpisy
     if (showDictManager) {
         AlertDialog(
-            onDismissRequest = { showDictManager = false },
+            onDismissRequest = { showDictManager = false; dictSearch = "" },
             title = { Text("Słownik własny") },
             text = {
                 if (dictEntries.isEmpty()) {
                     Text("Słownik jest pusty.", fontSize = 13.sp, color = LynxColors.TextSecondary)
                 } else {
+                    val filtered = remember(dictEntries, dictSearch) {
+                        if (dictSearch.isBlank()) dictEntries
+                        else dictEntries.filter { (value, type) ->
+                            value.contains(dictSearch, ignoreCase = true) ||
+                            type.contains(dictSearch, ignoreCase = true)
+                        }
+                    }
+                    Column {
+                    OutlinedTextField(
+                        value = dictSearch,
+                        onValueChange = { dictSearch = it },
+                        placeholder = { Text("Szukaj…", fontSize = 13.sp) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                    if (filtered.isEmpty()) {
+                        Text("Brak wyników dla \"$dictSearch\".", fontSize = 13.sp,
+                            color = LynxColors.TextSecondary)
+                    } else {
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = 340.dp),
+                        modifier = Modifier.heightIn(max = 280.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        items(dictEntries, key = { "${it.first}|${it.second}" }) { (value, type) ->
+                        items(filtered, key = { "${it.first}|${it.second}" }) { (value, type) ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -665,10 +687,12 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                             }
                         }
                     }
+                    } // else filtered
+                    } // Column
                 }
             },
             confirmButton = {
-                LynxGhostButton(onClick = { showDictManager = false }) { Text("Zamknij") }
+                LynxGhostButton(onClick = { showDictManager = false; dictSearch = "" }) { Text("Zamknij") }
             },
             containerColor = LynxColors.Surface
         )
