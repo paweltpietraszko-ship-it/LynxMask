@@ -50,6 +50,8 @@ import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -407,9 +409,11 @@ private fun NavButton(
 private fun SecurityModal(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
-    var showDeleteConfirm   by remember { mutableStateOf(false) }
-    var deleteInProgress    by remember { mutableStateOf(false) }
-    var showChangePassword  by remember { mutableStateOf(false) }
+    var showDeleteConfirm     by remember { mutableStateOf(false) }
+    var deleteInProgress      by remember { mutableStateOf(false) }
+    var showChangePassword    by remember { mutableStateOf(false) }
+    var showDictManager       by remember { mutableStateOf(false) }
+    var dictEntries           by remember { mutableStateOf(UserDictionary.load(context)) }
     var oldPassword         by remember { mutableStateOf("") }
     var newPassword         by remember { mutableStateOf("") }
     var newPasswordConfirm  by remember { mutableStateOf("") }
@@ -611,6 +615,65 @@ private fun SecurityModal(onDismiss: () -> Unit) {
         )
     }
 
+    // Dialog słownika własnego — przeglądaj i usuwaj wpisy
+    if (showDictManager) {
+        AlertDialog(
+            onDismissRequest = { showDictManager = false },
+            title = { Text("Słownik własny") },
+            text = {
+                if (dictEntries.isEmpty()) {
+                    Text("Słownik jest pusty.", fontSize = 13.sp, color = LynxColors.TextSecondary)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 340.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(dictEntries, key = { "${it.first}|${it.second}" }) { (value, type) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    type,
+                                    fontSize   = 10.sp,
+                                    color      = LynxColors.Blue,
+                                    fontFamily = LynxTypography.Mono,
+                                    modifier   = Modifier.width(52.dp)
+                                )
+                                Text(
+                                    value,
+                                    fontSize = 13.sp,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(
+                                    onClick = {
+                                        scope.launch(Dispatchers.IO) {
+                                            UserDictionary.remove(context, value, type)
+                                            val updated = UserDictionary.entries
+                                            withContext(Dispatchers.Main) {
+                                                dictEntries = updated
+                                            }
+                                        }
+                                    },
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text("×", fontSize = 18.sp, color = LynxColors.Red)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                LynxGhostButton(onClick = { showDictManager = false }) { Text("Zamknij") }
+            },
+            containerColor = LynxColors.Surface
+        )
+    }
+
     // Krok 1 — główny modal Zabezpieczenia
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -697,6 +760,17 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         ) {
                             Text("Importuj", fontSize = 13.sp, color = LynxColors.Blue)
                         }
+                    }
+                    LynxSecondaryButton(
+                        onClick = { showDictManager = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val n = dictEntries.size
+                        Text(
+                            if (n > 0) "Przeglądaj słownik ($n wpisów)"
+                            else "Słownik jest pusty",
+                            fontSize = 13.sp
+                        )
                     }
                 }
 
