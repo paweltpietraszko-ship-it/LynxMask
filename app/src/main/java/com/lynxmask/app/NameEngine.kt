@@ -686,7 +686,6 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
-            if (LookupTables.cityForms.contains(word.lowercase())) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
 
@@ -699,7 +698,6 @@ internal fun applyContextualBlacklist(
             if (isOnWhiteList(word)) return@replace match.value
             if (isAdjective(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
-            if (LookupTables.cityForms.contains(word.lowercase())) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
 
@@ -731,7 +729,6 @@ internal fun applyContextualBlacklist(
                 if (!LookupTables.surnamesForms.contains(lower)) return@replace match.value
                 if (isOnWhiteList(word)) return@replace match.value
                 if (lower in OSOBA_DENYLIST) return@replace match.value
-                if (LookupTables.cityForms.contains(lower)) return@replace match.value
                 assignToken(word, TOKEN_OSOBA)
             }
     }
