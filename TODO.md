@@ -25,7 +25,7 @@
 | W3 | **IMAGE-REDACT F2** — kolejność obraz → OCR tekstu | F2 dopiero po tym jak UI jest gotowe (R3 najpierw) | Cursor |
 | W4 | **Audyt RODO/security** (10 punktów z BRIEF_Cursor) | S10 (TELEFON), logi PII, SessionStore crypto — Cursor ma brief | Cursor |
 | ~~W5~~ | ~~**Smoke E2E automated**~~ | ✅ SmokeE2ETest.kt — 3 testy instrumented (roundtrip, izolacja sesji, polskie znaki) | ~~Claude Code~~ |
-| W6 | **BUG-SS-1/SS-3** — SessionStore init na Main thread | Potencjalny ANR na starszych telefonach | Claude Code |
+| ~~W6~~ | ~~**BUG-SS-1/SS-3**~~ | ✅ b65d560 (UPSERT), b9eae1c (IO thread) — już zamknięte | ~~Claude Code~~ |
 
 ---
 
