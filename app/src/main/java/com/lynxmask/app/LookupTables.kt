@@ -1,6 +1,7 @@
 package com.lynxmask.app
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -31,34 +32,43 @@ object LookupTables {
     private var _namesForms: Set<String> = emptySet()
     private var _surnamesForms: Set<String> = emptySet()
     private var _streetForms: Set<String> = emptySet()
+    private var _cityForms: Set<String> = emptySet()
+    private var _medForms: Set<String> = emptySet()
     private var _initialized = false
 
     val initialized: Boolean get() = _initialized
     val namesForms: Set<String> get() = _namesForms
     val surnamesForms: Set<String> get() = _surnamesForms
     val streetForms: Set<String> get() = _streetForms
+    val cityForms: Set<String> get() = _cityForms
+    val medForms: Set<String> get() = _medForms
 
     fun initialize(context: Context) {
         if (_initialized) return
         val names = loadFormsFromAsset(context, "names_inflected.json")
         val baseSurnames = loadFormsFromAsset(context, "surnames_top1000.json")
         val streets = loadFormsFromAsset(context, "street_names.json")
+        val cities = loadFlatListFromAsset(context, "cities.json") { s ->
+            s.length >= 4 && s.none { it.isDigit() }
+        }
+        val med = loadFlatListFromAsset(context, "medical_facilities.json")
 
-        _namesForms   = names.withAsciiVariants()
+        _namesForms    = names.withAsciiVariants()
         _surnamesForms = (baseSurnames + generateFeminineVariants(baseSurnames)).withAsciiVariants()
-        _streetForms  = streets.withAsciiVariants()
+        _streetForms   = streets.withAsciiVariants()
+        _cityForms     = cities.withAsciiVariants()
+        _medForms      = med.withAsciiVariants()
 
         // INIT-FIX v1.1: initialized tylko gdy krytyczne pliki załadowane.
-        // Street może być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
+        // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
         _initialized  = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
 
         android.util.Log.d("LookupTables",
             "Załadowano: ${_namesForms.size} form imion, " +
             "${_surnamesForms.size} form nazwisk, " +
-            "${_streetForms.size} nazw ulic (z wariantami ASCII). " +
-            "Przykład: arkadiuszem=${_namesForms.contains("arkadiuszem")}, " +
-            "szymanski=${_surnamesForms.contains("szymanski")}, " +
-            "lipowa=${_streetForms.contains("lipowa")}"
+            "${_streetForms.size} nazw ulic, " +
+            "${_cityForms.size} form miast, " +
+            "${_medForms.size} terminów medycznych (z wariantami ASCII)."
         )
     }
 
@@ -93,12 +103,21 @@ object LookupTables {
             "marszałkowska", "marszałkowskiej",
             "długa", "długiej", "krótka", "krótkiej",
             "słoneczna", "słonecznej"
+        ),
+        cities: Set<String> = setOf(
+            "warszawa", "krakow", "gdansk", "wroclaw", "poznan",
+            "lodz", "katowice", "lublin", "bydgoszcz", "gdynia"
+        ),
+        med: Set<String> = setOf(
+            "szpital", "klinika", "przychodnia", "poradnia", "ambulatorium"
         )
     ) {
-        _namesForms   = names
+        _namesForms    = names
         _surnamesForms = surnames
-        _streetForms  = streets
-        _initialized  = true
+        _streetForms   = streets
+        _cityForms     = cities
+        _medForms      = med
+        _initialized   = true
     }
 
     /** Ładuje pełny słownik z classpath (src/test/resources/) — dla unit testów na JVM. */
@@ -108,9 +127,15 @@ object LookupTables {
         val names    = loadFormsFromClasspath("names_inflected.json")
         val surnames = loadFormsFromClasspath("surnames_top1000.json")
         val streets  = loadFormsFromClasspath("street_names.json")
+        val cities   = loadFlatListFromClasspath("cities.json") { s ->
+            s.length >= 4 && s.none { it.isDigit() }
+        }
+        val med      = loadFlatListFromClasspath("medical_facilities.json")
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
+        _cityForms     = cities.withAsciiVariants()
+        _medForms      = med.withAsciiVariants()
         _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
     }
 
@@ -138,10 +163,12 @@ object LookupTables {
     /** Resetuje stan — używany między testami jeśli potrzeba czystego slate. */
     @Suppress("unused")
     fun resetForTesting() {
-        _namesForms   = emptySet()
+        _namesForms    = emptySet()
         _surnamesForms = emptySet()
-        _streetForms  = emptySet()
-        _initialized  = false
+        _streetForms   = emptySet()
+        _cityForms     = emptySet()
+        _medForms      = emptySet()
+        _initialized   = false
     }
 
     // Rozszerza set o wersje bez polskich znaków diakrytycznych.
@@ -161,6 +188,44 @@ object LookupTables {
             // Ł/ł ma kreską (stroke, U+0141/U+0142) — nie jest combining mark,
             // NFD jej nie rozkłada. Ręczna konwersja żeby "łukasz" → "lukasz".
             .replace('ł', 'l').replace('Ł', 'L')
+
+    private fun loadFlatListFromAsset(
+        context: Context,
+        filename: String,
+        filter: (String) -> Boolean = { true }
+    ): Set<String> {
+        return try {
+            val json = context.assets.open(filename).bufferedReader().readText()
+            val arr = org.json.JSONArray(json)
+            val forms = mutableSetOf<String>()
+            for (i in 0 until arr.length()) {
+                val s = arr.getString(i).lowercase()
+                if (filter(s)) forms.add(s)
+            }
+            forms
+        } catch (e: Exception) {
+            android.util.Log.e("LookupTables", "Błąd ładowania $filename: ${e.message}")
+            emptySet()
+        }
+    }
+
+    private fun loadFlatListFromClasspath(
+        filename: String,
+        filter: (String) -> Boolean = { true }
+    ): Set<String> {
+        return try {
+            val text = LookupTables::class.java.classLoader
+                ?.getResourceAsStream(filename)?.bufferedReader()?.readText()
+                ?: return emptySet()
+            val arr = org.json.JSONArray(text)
+            val forms = mutableSetOf<String>()
+            for (i in 0 until arr.length()) {
+                val s = arr.getString(i).lowercase()
+                if (filter(s)) forms.add(s)
+            }
+            forms
+        } catch (e: Exception) { emptySet() }
+    }
 
     private fun loadFormsFromAsset(context: Context, filename: String): Set<String> {
         return try {

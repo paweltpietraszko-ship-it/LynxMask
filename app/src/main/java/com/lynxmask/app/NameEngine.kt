@@ -478,9 +478,42 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
+internal val CITY_POSTAL_REGEX = Regex(
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+(\d{2}-\d{3,4})\b"""
+)
+internal val CITY_PREP_REGEX = Regex(
+    """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
+)
 internal val STREET_CANDIDATE_REGEX = Regex(
     """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
+
+private fun applyCityLookup(
+    text: String,
+    assignToken: (String, String) -> String
+): String {
+    if (!LookupTables.initialized || LookupTables.cityForms.isEmpty()) return text
+    var result = text
+
+    // Miasto przed kodem pocztowym: "Warszawa, 00-001" → CityName=ADRES, kod zostaje
+    result = CITY_POSTAL_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val city = match.groupValues[1]
+        if (!LookupTables.cityForms.contains(city.lowercase())) return@replace match.value
+        val rest = match.value.drop(city.length)
+        assignToken(city, TOKEN_ADRES) + rest
+    }
+
+    // Miasto po przyimku: "w Warszawie", "z Gdańska" → ADRES
+    result = CITY_PREP_REGEX.replace(result) { match ->
+        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+        val city = match.value.trim()
+        if (!LookupTables.cityForms.contains(city.lowercase())) return@replace match.value
+        assignToken(city, TOKEN_ADRES)
+    }
+
+    return result
+}
 
 private fun applyStreetLookup(
     text: String,
@@ -551,6 +584,7 @@ internal fun applyContextualBlacklist(
 
     // TODO-2: Adresy z bazy GUS TERYT — przed detekcją imion
     result = applyStreetLookup(result, assignToken)
+    result = applyCityLookup(result, assignToken)
 
     // 3a — Firmy z formą prawną
     // KLUCZOWE: forma prawna (Sp. z o.o., S.A., LLC...) jest silniejszym sygnałem
@@ -652,6 +686,7 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
+            if (LookupTables.cityForms.contains(word.lowercase())) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
 
@@ -664,6 +699,7 @@ internal fun applyContextualBlacklist(
             if (isOnWhiteList(word)) return@replace match.value
             if (isAdjective(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
+            if (LookupTables.cityForms.contains(word.lowercase())) return@replace match.value
             assignToken(word, TOKEN_OSOBA)
         }
 
@@ -695,6 +731,7 @@ internal fun applyContextualBlacklist(
                 if (!LookupTables.surnamesForms.contains(lower)) return@replace match.value
                 if (isOnWhiteList(word)) return@replace match.value
                 if (lower in OSOBA_DENYLIST) return@replace match.value
+                if (LookupTables.cityForms.contains(lower)) return@replace match.value
                 assignToken(word, TOKEN_OSOBA)
             }
     }
