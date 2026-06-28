@@ -10,6 +10,7 @@ package com.lynxmask.app
 //   Dodane importy: rememberCoroutineScope, Dispatchers, launch.
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
@@ -672,6 +673,8 @@ private fun NavButton(
     brandPalette = brandPalette
 )
 
+private const val PRIVACY_POLICY_URL = "https://lynxmask.app/privacy"
+
 // ── Zabezpieczenia — modal Art. 17 RODO ──────────────────────────────────────
 @Composable
 private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
@@ -1044,6 +1047,31 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         lineHeight = 19.sp,
                         color      = LynxColors.TextSecondary
                     )
+                }
+
+                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
+                // Polityka prywatności
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "POLITYKA PRYWATNOŚCI",
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        "Dowiedz się, co LynxMask przechowuje na urządzeniu i jak chroni Twoje dane.",
+                        fontSize   = 12.sp,
+                        lineHeight = 17.sp,
+                        color      = LynxColors.TextSecondary
+                    )
+                    LynxSecondaryButton(
+                        onClick  = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Otwórz politykę prywatności")
+                    }
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
