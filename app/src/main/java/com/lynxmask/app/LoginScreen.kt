@@ -357,6 +357,18 @@ fun LoginScreen(
                         ) {
                             Text("Użyj hasła", fontSize = 12.sp, color = LynxColors.TextDim)
                         }
+                        if (onExpressMode != null) {
+                            LynxGhostButton(
+                                onClick  = onExpressMode,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    "⚡ Tryb Express — bez logowania",
+                                    fontSize = 12.sp,
+                                    color    = LynxColors.Amber
+                                )
+                            }
+                        }
                     } else {
 
                     if (migrationNeeded) {

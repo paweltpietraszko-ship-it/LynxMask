@@ -103,7 +103,10 @@ fun AppNavigation() {
 
     when {
         !onboardingDone                    -> OnboardingScreen(onFinished = { onboardingDone = true })
-        !authenticated && showExpressMode  -> ExpressModeScreen(onExit = { showExpressMode = false })
+        !authenticated && showExpressMode  -> MainTabNav(
+            isExpress     = true,
+            onExitExpress = { showExpressMode = false }
+        )
         !authenticated                     -> LoginScreen(
             isFirstRun      = !isPasswordSet(context),
             onAuthenticated = { authenticated = true },
@@ -154,7 +157,10 @@ private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun MainTabNav() {
+private fun MainTabNav(
+    isExpress: Boolean = false,
+    onExitExpress: () -> Unit = {}
+) {
     val context = LocalContext.current
     var appScreen            by rememberSaveable { mutableStateOf(AppScreen.MAIN) }
     var selectedSessionId    by rememberSaveable { mutableStateOf<String?>(null) }
@@ -204,28 +210,38 @@ private fun MainTabNav() {
                     }
                 )
 
-                AppScreen.LIBRARY -> LibraryScreen(
-                    onBack     = { appScreen = AppScreen.MAIN },
-                    onDepseudo = { id, mode ->
-                        selectedSessionId    = id
-                        selectedDepseudoMode = mode
-                        appScreen = AppScreen.DEPSEUDO
-                    }
-                )
+                AppScreen.LIBRARY -> if (isExpress) {
+                    ExpressLockedTab(onLogin = onExitExpress)
+                } else {
+                    LibraryScreen(
+                        onBack     = { appScreen = AppScreen.MAIN },
+                        onDepseudo = { id, mode ->
+                            selectedSessionId    = id
+                            selectedDepseudoMode = mode
+                            appScreen = AppScreen.DEPSEUDO
+                        }
+                    )
+                }
 
-                AppScreen.DEPSEUDO -> DepseudonymizationScreen(
-                    preselectedSessionId = selectedSessionId,
-                    initialMode          = selectedDepseudoMode,
-                    onBack = {
-                        selectedSessionId    = null
-                        appScreen = AppScreen.MAIN
-                    }
-                )
+                AppScreen.DEPSEUDO -> if (isExpress) {
+                    ExpressLockedTab(onLogin = onExitExpress)
+                } else {
+                    DepseudonymizationScreen(
+                        preselectedSessionId = selectedSessionId,
+                        initialMode          = selectedDepseudoMode,
+                        onBack = {
+                            selectedSessionId    = null
+                            appScreen = AppScreen.MAIN
+                        }
+                    )
+                }
             }
         }
         BottomNavBar(
-            current    = appScreen,
-            onNavigate = { screen ->
+            current       = appScreen,
+            isExpress     = isExpress,
+            onExitExpress = onExitExpress,
+            onNavigate    = { screen ->
                 if (screen == AppScreen.DEPSEUDO) {
                     selectedSessionId    = null
                     selectedDepseudoMode = DepseudoMode.AI_RESPONSE
@@ -362,13 +378,73 @@ private fun HubScreen(
     }
 }
 
+// ── Express Mode — zablokowana zakładka ───────────────────────────────────────
+@Composable
+private fun ExpressLockedTab(onLogin: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LynxColors.Background)
+            .statusBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("🔒", fontSize = 40.sp)
+        Spacer(Modifier.height(LynxSpacing.md))
+        Text(
+            "Dostępne po zalogowaniu",
+            fontSize = 16.sp,
+            color = LynxColors.TextSecondary,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(LynxSpacing.xs))
+        Text(
+            "Tryb Express nie obejmuje tej sekcji.",
+            fontSize = 13.sp,
+            color = LynxColors.TextDim,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(LynxSpacing.lg))
+        LynxPrimaryButton(
+            onClick  = onLogin,
+            modifier = Modifier.fillMaxWidth(0.6f)
+        ) {
+            Text("Zaloguj się", fontSize = 14.sp)
+        }
+    }
+}
+
 // ── Dolna nawigacja (hub = treść powyżej, bez osobnej zakładki) ───────────────
 @Composable
-private fun BottomNavBar(current: AppScreen, onNavigate: (AppScreen) -> Unit) {
-    var showSecurity by remember { mutableStateOf(false) }
+private fun BottomNavBar(
+    current: AppScreen,
+    isExpress: Boolean = false,
+    onExitExpress: () -> Unit = {},
+    onNavigate: (AppScreen) -> Unit
+) {
+    var showSecurity      by remember { mutableStateOf(false) }
+    var showExpressLocked by remember { mutableStateOf(false) }
 
     if (showSecurity) {
         SecurityModal(onDismiss = { showSecurity = false })
+    }
+
+    if (showExpressLocked) {
+        AlertDialog(
+            onDismissRequest = { showExpressLocked = false },
+            title   = { Text("Funkcja niedostępna", color = LynxColors.TextPrimary) },
+            text    = { Text("Ta sekcja wymaga pełnej wersji. Zaloguj się, aby odblokować zabezpieczenia.", color = LynxColors.TextSecondary) },
+            confirmButton = {
+                LynxPrimaryButton(onClick = { showExpressLocked = false; onExitExpress() }) {
+                    Text("Zaloguj się")
+                }
+            },
+            dismissButton = {
+                LynxGhostButton(onClick = { showExpressLocked = false }) { Text("Anuluj") }
+            },
+            containerColor = LynxColors.Surface,
+            shape = RoundedCornerShape(LynxShapes.CardRadius)
+        )
     }
 
     Column(modifier = Modifier.fillMaxWidth().background(LynxColors.Sidebar)) {
@@ -401,7 +477,7 @@ private fun BottomNavBar(current: AppScreen, onNavigate: (AppScreen) -> Unit) {
                 label    = "Zabezp.",
                 selected = false,
                 modifier = Modifier.weight(1f),
-                onClick  = { showSecurity = true }
+                onClick  = { if (isExpress) showExpressLocked = true else showSecurity = true }
             )
         }
     }
