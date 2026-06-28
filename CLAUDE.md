@@ -43,6 +43,8 @@ Właściciel projektu nie jest programistą — pisze kod przez Claude Code w te
 
 **Cursor do diagnozy:** Gdy problem rozsiana po wielu plikach — zaproponuj użycie Cursora. Cursor dostarcza diagnozę → Claude wdraża i commituje.
 
+**Nowe pliki/moduły:** Nie twórz nowego pliku ani nie dodawaj zależności bez konieczności. Jeśli masz wybór między rozszerzeniem istniejącego pliku a nowym — wybierz istniejący. Nowy plik tylko gdy: (a) przekracza granicę odpowiedzialności (patrz "Pliki molochów"), (b) byłby importowany z wielu innych plików, lub (c) właściciel wprost prosił.
+
 ---
 
 ## Stan projektu Mobile (stan: 25.06.2026)
