@@ -104,7 +104,7 @@ object UserDictionary {
                     _entries.add(value to type)
                 }
             }
-            Log.d(TAG, "Załadowano ${_entries.size} wpisów z $FILENAME")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Załadowano ${_entries.size} wpisów z $FILENAME")
         } catch (e: Exception) {
             Log.e(TAG, "Błąd ładowania słownika: ${e.message}")
             // Nie ustawiaj _loaded = true przy błędzie — pozwól na retry przy

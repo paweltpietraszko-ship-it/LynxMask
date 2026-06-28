@@ -63,7 +63,7 @@ object LookupTables {
         // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
         _initialized  = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
 
-        android.util.Log.d("LookupTables",
+        if (BuildConfig.DEBUG) android.util.Log.d("LookupTables",
             "Załadowano: ${_namesForms.size} form imion, " +
             "${_surnamesForms.size} form nazwisk, " +
             "${_streetForms.size} nazw ulic, " +

@@ -68,7 +68,7 @@ object GuardAllowlist {
                     _entries.add(value to ruleType)
                 }
             }
-            Log.d(TAG, "Załadowano ${_entries.size} wpisów z $FILENAME")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Załadowano ${_entries.size} wpisów z $FILENAME")
         } catch (e: Exception) {
             Log.e(TAG, "Błąd ładowania allowlisty: ${e.message}")
             return _entries
