@@ -592,14 +592,14 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             DebugLogBuffer.log("SessionStore", "Zapisano sesję ${s.result.sessionId} z opisem: '$description'")
                         }
                     },
-                    onDebugLog = {
+                    onDebugLog = if (BuildConfig.DEBUG) ({
                         scope.launch {
                             clipboard.setClipEntry(
                                 ClipEntry(ClipData.newPlainText("debug_log", DebugLogBuffer.getAll()))
                             )
                         }
                         Toast.makeText(context, "Logi skopiowane (${DebugLogBuffer.size()} wpisów)", Toast.LENGTH_SHORT).show()
-                    },
+                    }) else null,
                     onOpenLibrary = {
                         context.openMainToLibrary(s.result.sessionId)
                         onFinished()
