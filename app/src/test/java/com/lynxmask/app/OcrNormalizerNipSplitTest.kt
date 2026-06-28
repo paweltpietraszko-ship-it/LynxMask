@@ -51,6 +51,48 @@ class OcrNormalizerNipSplitTest {
         assertEquals("nie powinno zmieniac poza kontekstem NIP", input, result.normalizedText)
     }
 
+    // ── Testy NIP z modyfikatorem słownym (sesja 28.06) ────────────────────────
+
+    @Test
+    fun `garbled NIP nabywcy naprawiany — I→1 O→0 S→5`() {
+        val input = "NIP nabywcy: 45I-OS2-35-26"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "45I-OS2 nie naprawione: ${result.normalizedText}",
+            result.normalizedText.contains("451-052-35-26")
+        )
+    }
+
+    @Test
+    fun `garbled NIP swiadka naprawiany — II2→112`() {
+        val input = "NIP świadka: 415-II2-22-69"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "II2 nie naprawione: ${result.normalizedText}",
+            result.normalizedText.contains("415-112-22-69")
+        )
+    }
+
+    @Test
+    fun `garbled NIP sprzedawcy naprawiany — O→0`() {
+        val input = "NIP sprzedawcy: 526-030-O6-38"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "O6 nie naprawione: ${result.normalizedText}",
+            result.normalizedText.contains("526-030-06-38")
+        )
+    }
+
+    @Test
+    fun `modyfikator zachowany po naprawie`() {
+        val input = "NIP nabywcy: 45I-OS2-35-26"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "Prefix 'NIP nabywcy:' powinien byc zachowany: ${result.normalizedText}",
+            result.normalizedText.startsWith("NIP nabywcy:")
+        )
+    }
+
     @Test
     fun `naprawa NIP z newline w srodku segmentu`() {
         val input = "NIP: 740-617\n82-26"

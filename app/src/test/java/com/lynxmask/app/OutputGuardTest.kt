@@ -80,4 +80,34 @@ class OutputGuardTest {
             red.isEmpty()
         )
     }
+
+    // ── OSOBA_NIEZAMASKOWANE (sesja 28.06) ──────────────────────────────────
+
+    @Test
+    fun `garbled imie nazwisko po etykiecie flagowane jako YELLOW`() {
+        val hits = guard("Imię i nazwisko: Monka Nowakosa")
+        assertTrue(
+            "Monka Nowakosa powinna byc flagowana YELLOW OSOBA_NIEZAMASKOWANE",
+            hits.any { it.label == "OSOBA_NIEZAMASKOWANE" && it.level == "YELLOW" }
+        )
+    }
+
+    @Test
+    fun `garbled nazwisko po ZLECENIOBIORCA flagowane`() {
+        val hits = guard("ZLECENIOBIORCA:\nImię i nazwisko: Monka Nowakosa")
+        assertTrue(
+            "Monka Nowakosa po ZLECENIOBIORCA powinna byc flagowana",
+            hits.any { it.label == "OSOBA_NIEZAMASKOWANE" && it.level == "YELLOW" }
+        )
+    }
+
+    @Test
+    fun `imie nazwisko bez etykiety nie flagowane`() {
+        // Brak kontekstu osobowego — "Umowa Zlecenia" nie powinno triggerować
+        val hits = guard("Umowa Zlecenia nr 017 zawarta dnia")
+        assertFalse(
+            "Umowa Zlecenia nie jest imieniem — nie powinna byc flagowana",
+            hits.any { it.label == "OSOBA_NIEZAMASKOWANE" }
+        )
+    }
 }

@@ -209,9 +209,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
     // Wzorce NIE są w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
-    // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX) — bez tego wzorca "NIP:" zostawało w tekście.
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
+    // (?:[^\S\n]+\w+)? — opcjonalny modyfikator: "NIP nabywcy:", "NIP świadka:", "NIP sprzedawcy:"
+    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
+    // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX)
+    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:

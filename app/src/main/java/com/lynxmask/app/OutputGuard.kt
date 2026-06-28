@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 // OutputGuard.kt — Warstwa 6: Output Guard
-// Wersja: 2.0
+// Wersja: 2.1
 //
 // Zwraca List<GuardHit> z poziomami RED (pewne PII) i YELLOW (podejrzane z kontekstem).
 // Tokeny własne (format TYP_NNN) zastępowane przez ⟦TOKEN⟧ przed skanowaniem.
@@ -94,6 +94,17 @@ internal fun runOutputGuard(
     Regex("""\b(?!(?:19|20)\d{2}\b)\d{7,10}\b""").findAll(text).forEach { m ->
         if (CTX_LICZBA.containsMatchIn(before(m.range.first)))
             hits += hit("LICZBA", "YELLOW", m)
+    }
+
+    // ── YELLOW: niezamaskowane imię+nazwisko po etykiecie danych osobowych ─────
+    // Wykrywa "Słowo Słowo" (każde 3+ znaków) gdy w pobliżu jest etykieta osobowa.
+    // Okno 80 znaków — obejmuje "ZLECENIOBIORCA:\nImię i nazwisko: Monka Nowakosa".
+    val CTX_OSOBA_LABEL = Regex("""(?i)(?:imię[^\S\n]+i[^\S\n]+nazwisko|zlecenio(?:biorca|dawca)|podpisano\s*:|pracownik|wykonawca|zamawiaj[aą]c\w|pełnomocnik|uprawnion\w|pesel\s*:)""")
+    fun before80(pos: Int) = text.substring(maxOf(0, pos - 80), pos)
+    Regex("""\b[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,}\s+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,}\b""").findAll(text).forEach { m ->
+        val words = m.value.lowercase().split(Regex("""\s+"""))
+        if (words.none { it in NAMES_GUARD_CITY_SKIP } && CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first)))
+            hits += hit("OSOBA_NIEZAMASKOWANE", "YELLOW", m)
     }
 
     // ── YELLOW bezwarunkowe (kontekst wbudowany w regex) ─────────────────────

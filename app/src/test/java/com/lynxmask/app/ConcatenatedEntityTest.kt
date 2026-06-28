@@ -90,6 +90,46 @@ class ConcatenatedEntityTest {
         )
     }
 
+    // OCR_HOUSE_NUM: I→1, O→0 w numerze budynku po ul./al. (sesja 28.06)
+    @Test
+    fun `garbled numer budynku I35 normalizowany do 135`() {
+        val input = "ul. Niepodleglości I35, 20-100 Rybnik"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "I35 nie naprawiony: ${result.normalizedText}",
+            result.normalizedText.contains("135,")
+        )
+        assertFalse("I35 nadal widoczny", result.normalizedText.contains("I35"))
+    }
+
+    @Test
+    fun `garbled numer budynku I9 normalizowany do 19`() {
+        val input = "ul. Sloneczna I9"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "I9 nie naprawiony: ${result.normalizedText}",
+            result.normalizedText.contains("19")
+        )
+        assertFalse("I9 nadal widoczny", result.normalizedText.contains(" I9"))
+    }
+
+    @Test
+    fun `garbled numer budynku I2O normalizowany do 120`() {
+        val input = "ul. Kopernka I2O,"
+        val result = OcrNormalizer.normalize(input)
+        assertTrue(
+            "I2O nie naprawiony: ${result.normalizedText}",
+            result.normalizedText.contains("120")
+        )
+    }
+
+    @Test
+    fun `poprawny numer budynku nie jest modyfikowany`() {
+        val input = "ul. Kwiatowa 15A"
+        val result = OcrNormalizer.normalize(input)
+        assertEquals("Poprawny adres nie powinien byc zmieniany", input, result.normalizedText)
+    }
+
     // Dwa różne numery na tej samej linii bez separatora — oba powinny być flagowane lub zamaskowane
     @Test
     fun `dwa sklejone numery na jednej linii sa wykrywane`() {

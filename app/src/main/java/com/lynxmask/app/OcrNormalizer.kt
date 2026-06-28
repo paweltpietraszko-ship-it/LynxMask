@@ -362,19 +362,31 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
-    // OCR_NIP_DIGITS: NIP z kreskami (XXX-XXX-XX-XX) lub bez (10 cyfr)
-    // Keyword już zcanonicalizowany w kroku 0 — lookbehind tylko na NIP.
+    // OCR_NIP_DIGITS: NIP z kreskami (XXX-XXX-XX-XX) lub bez (10 cyfr).
+    // Obsługuje "NIP:" i "NIP modyfikator:" (nabywcy, świadka, sprzedawcy itp.).
+    // Gr. 1 = keyword + opcjonalny modyfikator + separator; Gr. 2 = garbled cyfry.
     // ----------------------------------------------------------
     private val OCR_NIP_DIGITS = Regex(
-        """(?i)(?<=NIP\s{0,3}:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+        """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
     )
 
     // ----------------------------------------------------------
-    // OCR_NIP_SPLIT: spacja wstawiona przez OCR wewnątrz NIP
-    // Przykład: "NIP: 740-61 7-82-26" → "NIP: 740-617-82-26"
+    // OCR_NIP_SPLIT: spacja wstawiona przez OCR wewnątrz NIP.
+    // Obsługuje "NIP:" i "NIP modyfikator:".
+    // Przykład: "NIP nabywcy: 740-61 7-82-26" → "NIP nabywcy: 740-617-82-26"
     // ----------------------------------------------------------
     private val OCR_NIP_SPLIT = Regex(
-        """(?i)(NIP\s{0,3}:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
+        """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([0-9][0-9\-\s]{10,16}[0-9])"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_HOUSE_NUM: I→1, O→0 w numerze budynku po ul./al./pl./os. + nazwa ulicy.
+    // Gr. 1 = prefiks ul./al. + nazwa ulicy + spacja; Gr. 2 = garbled numer budynku.
+    // Obsługuje 1 lub 2-człowe nazwy ulic.
+    // "ul. Słoneczna I9" → "ul. Słoneczna 19", "ul. Niepodległości I35" → "ul. Niepodległości 135"
+    // ----------------------------------------------------------
+    private val OCR_HOUSE_NUM = Regex(
+        """((?i:ul[.,]?|al[.,]?|pl[.,]?|os\.)[^\S\n]+(?:[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\-]{2,50}[^\S\n]+){1,2})([IO][0-9IO]{0,3})(?=[,\s\n/]|$)"""
     )
 
     /** Wyciąga 10 cyfr NIP z fragmentu OCR (z mapą liter→cyfry). */
@@ -687,6 +699,13 @@ object OcrNormalizer {
             "ul. "
         }
 
+        // 9b. OCR: I→1, O→0 w numerze budynku po ul./al./pl./os. — po OCR_UL_PREFIX
+        text = OCR_HOUSE_NUM.replace(text) { m ->
+            val fixed = m.groupValues[2].map { when(it) { 'I', 'l' -> '1'; 'O', 'o' -> '0'; else -> it } }.joinToString("")
+            if (fixed != m.groupValues[2]) corrections++
+            "${m.groupValues[1]}$fixed"
+        }
+
         // 10. OCR: litery zamienione na cyfry w numerze PESEL
         text = OCR_PESEL_WORD.replace(text) { m ->
             val fixed = m.groupValues[1].map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
@@ -702,11 +721,12 @@ object OcrNormalizer {
             m.groupValues[1] + converted
         }
 
-        // 11. OCR: litery zamienione na cyfry w NIP (z kreskami lub bez)
+        // 11. OCR: litery zamienione na cyfry w NIP — "NIP nabywcy: 45I-OS2-35-26" → czyste cyfry
+        // Gr.1 = keyword+modyfikator+separator (zachowane), Gr.2 = garbled cyfry (naprawiane)
         text = OCR_NIP_DIGITS.replace(text) { m ->
-            val fixed = m.groupValues[1].map { if (it == '-') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
-            if (fixed != m.groupValues[1]) corrections++
-            fixed
+            val fixed = m.groupValues[2].map { if (it == '-') it else OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
+            if (fixed != m.groupValues[2]) corrections++
+            "${m.groupValues[1]}$fixed"
         }
 
         // 11b. OCR: spacja/newline wewnątrz NIP → 10 cyfr → XXX-XXX-XX-XX (lub 3-2-2-3)
