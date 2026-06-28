@@ -112,7 +112,7 @@ fun AppNavigation() {
             onAuthenticated = { authenticated = true },
             onExpressMode   = { showExpressMode = true }
         )
-        else -> MainTabNav()
+        else -> MainTabNav(onLogout = { authenticated = false })
     }
 
     if (showCrashDialog) {
@@ -159,7 +159,8 @@ private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
 @Composable
 private fun MainTabNav(
     isExpress: Boolean = false,
-    onExitExpress: () -> Unit = {}
+    onExitExpress: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var appScreen            by rememberSaveable { mutableStateOf(AppScreen.MAIN) }
@@ -241,6 +242,7 @@ private fun MainTabNav(
             current       = appScreen,
             isExpress     = isExpress,
             onExitExpress = onExitExpress,
+            onLogout      = onLogout,
             onNavigate    = { screen ->
                 if (screen == AppScreen.DEPSEUDO) {
                     selectedSessionId    = null
@@ -420,13 +422,14 @@ private fun BottomNavBar(
     current: AppScreen,
     isExpress: Boolean = false,
     onExitExpress: () -> Unit = {},
+    onLogout: () -> Unit = {},
     onNavigate: (AppScreen) -> Unit
 ) {
     var showSecurity      by remember { mutableStateOf(false) }
     var showExpressLocked by remember { mutableStateOf(false) }
 
     if (showSecurity) {
-        SecurityModal(onDismiss = { showSecurity = false })
+        SecurityModal(onDismiss = { showSecurity = false }, onLogout = onLogout)
     }
 
     if (showExpressLocked) {
@@ -493,7 +496,7 @@ private fun NavButton(
 
 // ── Zabezpieczenia — modal Art. 17 RODO ──────────────────────────────────────
 @Composable
-private fun SecurityModal(onDismiss: () -> Unit) {
+private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
     var showDeleteConfirm     by remember { mutableStateOf(false) }
@@ -882,6 +885,25 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                             else "Słownik jest pusty",
                             fontSize = 13.sp
                         )
+                    }
+                }
+
+                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
+                // Wylogowanie
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "SESJA",
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    LynxSecondaryButton(
+                        onClick  = { onDismiss(); onLogout() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Wyloguj się", fontSize = 13.sp)
                     }
                 }
 

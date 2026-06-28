@@ -526,8 +526,10 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_IBAN_DIGITS: IBAN / Nr konta — 26–32 znaków (może mieć spacje)
     // Bez lookbehind — Android ICU wymaga bounded lookbehind; \w* / \s* w (?<=…) crashuje test.
+    // {24,32} = max middle dla PL IBAN z spacjami (P + 32 + last = 34 znaków total).
+    // Bez (?!\w): regex matchuje nawet gdy IBAN przylega bez separatora do kolejnego tokenu.
     private val OCR_IBAN_DIGITS = Regex(
-        """(?i)((?:IBAN|Nr\s{0,1}kont\w{0,6}|kont\w{0,4}|N\s+kort\w{0,6})\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,36}[TIlOSBGZ0-9A-Z])(?!\w)"""
+        """(?i)((?:IBAN|Nr\s{0,1}kont\w{0,6}|kont\w{0,4}|N\s+kort\w{0,6})\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,32}[TIlOSBGZ0-9A-Z])"""
     )
 
     // OCR_IBAN_PL_LOOSE: zdeformowany PL… bez poprawnej struktury (benchmark lvl 1–2)

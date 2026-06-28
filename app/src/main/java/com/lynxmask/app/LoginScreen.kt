@@ -157,10 +157,10 @@ fun LoginScreen(
                     checkKeyThenAuthenticate()
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
-                        errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
+                    if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
                         showPasswordForm = true
                     }
+                    // ERROR_USER_CANCELED → zostaje karta biometryczna z przyciskiem Express
                 }
             }
         )
