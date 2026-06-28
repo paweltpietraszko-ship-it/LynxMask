@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
@@ -303,15 +306,10 @@ fun DepseudonymizationScreen(
                 }
 
                 // Przycisk Odkryj — zachowany styl zaokrąglony jako wzorzec
-                Button(
+                LynxPrimaryButton(
                     onClick  = { /* LaunchedEffect wyzwala automatycznie po zmianie stanu */ },
                     enabled  = activeSessionId != null && (inputText.isNotBlank() || currentMode == DepseudoMode.SOURCE_DOCUMENT || currentMode == DepseudoMode.MASKED_VIEW),
-                    modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                    shape    = RoundedCornerShape(50),  // zaokrąglony — wzorzec dla następcy
-                    colors   = ButtonDefaults.buttonColors(
-                        containerColor         = LynxColors.Blue,
-                        disabledContainerColor = LynxColors.Surface
-                    )
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Odkryj dane", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 }
@@ -352,47 +350,38 @@ fun DepseudonymizationScreen(
                     verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
                 ) {
                     // Zapisz w bibliotece
-                    Button(
+                    LynxPrimaryButton(
                         onClick  = {
-                            val sesId = activeSessionId ?: return@Button
+                            val sesId = activeSessionId ?: return@LynxPrimaryButton
                             coroutineScope.launch(Dispatchers.IO) {
                                 SessionStore.saveResponse(context, sesId, restoredText)
                                 withContext(Dispatchers.Main) {
                                     savedDone = true
                                     Toast.makeText(context,
-                                        "Zapisano w bibliotece pod sesj\u0105 $sesId",
+                                        "Zapisano w bibliotece pod sesją $sesId",
                                         Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
                         enabled  = !savedDone && activeSessionId != null,
-                        modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                        shape    = RoundedCornerShape(50),
-                        colors   = ButtonDefaults.buttonColors(
-                            containerColor         = LynxColors.Blue,
-                            disabledContainerColor = LynxColors.ActiveNav
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            if (savedDone) "\u2713 Zapisano" else "Zapisz w bibliotece",
+                            if (savedDone) "Zapisano" else "Zapisz w bibliotece",
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color      = if (savedDone) LynxColors.Green else LynxColors.TextPrimary
                         )
                     }
 
-                    // Pobierz plik
-                    OutlinedButton(
+                    LynxSecondaryButton(
                         onClick  = { showDownloadWarning = true },
-                        modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                        shape    = RoundedCornerShape(50),
-                        colors   = ButtonDefaults.outlinedButtonColors(contentColor = LynxColors.TextMuted)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Pobierz plik", fontSize = 14.sp)
                     }
 
-                    // Nowe odkrycie
-                    TextButton(
+                    LynxGhostButton(
                         onClick  = { restoredText = ""; inputText = ""; savedDone = false; errorMessage = "" },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -409,7 +398,7 @@ fun DepseudonymizationScreen(
             title = { Text("Pobierasz odkryty tekst") },
             text  = { Text("Plik będzie zawierał oryginalne dane osobowe w formie jawnej (PII plaintext). Upewnij się, że zapisujesz go w bezpiecznym miejscu.") },
             confirmButton = {
-                TextButton(onClick = {
+                LynxPrimaryButton(onClick = {
                     showDownloadWarning = false
                     val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
                     pendingDownloadText = restoredText
@@ -417,7 +406,7 @@ fun DepseudonymizationScreen(
                 }) { Text("Pobierz") }
             },
             dismissButton = {
-                TextButton(onClick = { showDownloadWarning = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showDownloadWarning = false }) { Text("Anuluj") }
             }
         )
     }

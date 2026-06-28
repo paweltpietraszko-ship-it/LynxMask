@@ -25,12 +25,17 @@ data class RedactionRegion(
     val id: String = UUID.randomUUID().toString(),
     val rect: RectF,
     val type: RegionType,
-    val isBlurred: Boolean = true
+    val isBlurred: Boolean = true,
+    val label: String = "Pole"
 )
 
 object ImageRedactionPipeline {
 
-    // Pixelate blur — zachowane na przyszłość; twarze maskowane fillBlackRegion (Compose)
+    /** Ostatnia średnia pewność OCR (ML Kit) — do bannera w UI. */
+    var lastDetectionOcrConfidence: Float? = null
+        private set
+
+    private const val LINE_OCR_CONF_MIN = 0.52f
     @Suppress("unused")
     private const val BLUR_PASSES = 3
     @Suppress("unused")
@@ -51,7 +56,7 @@ object ImageRedactionPipeline {
             val result = detector.process(InputImage.fromBitmap(bitmap, 0)).await()
             DebugLogBuffer.log("FaceDetect", "Wykryto ${result.size} twarzy")
             result.map { face ->
-                RedactionRegion(rect = RectF(face.boundingBox), type = RegionType.FACE)
+                RedactionRegion(rect = RectF(face.boundingBox), type = RegionType.FACE, label = "Twarz")
             }
         } catch (e: Exception) {
             DebugLogBuffer.log("FaceDetect", "BŁĄD: ${e.message}")
@@ -70,22 +75,54 @@ object ImageRedactionPipeline {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         return try {
             val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+            lastDetectionOcrConfidence = calcOcrConfidence(result).takeIf { it > 0f }
+
             val piiLines = result.textBlocks.flatMap { block ->
                 block.lines.flatMap { line ->
                     val raw = line.text.trim()
+                    if (raw.length < 3) return@flatMap emptyList()
+
+                    val lineConf = lineConfidence(line)
+                    if (lineConf != null && lineConf < LINE_OCR_CONF_MIN) {
+                        DebugLogBuffer.log("TextPii", "SKIP conf ${"%.0f%%".format(lineConf * 100)}: \"$raw\"")
+                        return@flatMap emptyList()
+                    }
+
                     val textForEngine = extractPiiCheckText(raw) ?: return@flatMap emptyList()
                     val norm = OcrNormalizer.normalize(textForEngine)
                     val engineResult = PseudonymEngine.pseudonymize(norm.normalizedText, userDictionary = userDict)
                     if (engineResult.tokenMap.isEmpty()) return@flatMap emptyList()
+
+                    if (!shouldMaskLine(textForEngine, engineResult)) {
+                        DebugLogBuffer.log("TextPii", "SKIP FP: \"$raw\" → ${engineResult.tokenMap.keys}")
+                        return@flatMap emptyList()
+                    }
+
                     DebugLogBuffer.log("TextPii", "PII: \"$raw\" → ${engineResult.tokenMap.keys}")
                     val tokenValues = engineResult.tokenMap.values.map { it.trim() }.filter { it.length >= 2 }
+                    val label = normalizeDisplayLabel(guessFieldLabel(raw, textForEngine, engineResult))
                     maskBoxesForLine(line, tokenValues).map { rect ->
-                        RedactionRegion(rect = rect, type = RegionType.MANUAL, isBlurred = true)
+                        RedactionRegion(rect = rect, type = RegionType.MANUAL, isBlurred = true, label = label)
                     }
                 }
             }
-            DebugLogBuffer.log("TextDetect", "PII linii: ${piiLines.size}/${result.textBlocks.sumOf { it.lines.size }}")
-            piiLines
+            val refined = filterTinyRegions(
+                dedupeOverlapping(
+                    mergeAdjacentSameLabel(
+                        consolidateSameRowRegions(piiLines, bitmap.height),
+                        bitmap.height
+                    )
+                ),
+                bitmap.width,
+                bitmap.height
+            )
+            DebugLogBuffer.log(
+                "TextDetect",
+                "PII regionów: ${refined.size} (z ${piiLines.size} linii, OCR conf=${
+                    lastDetectionOcrConfidence?.let { "%.0f%%".format(it * 100) } ?: "?"
+                })"
+            )
+            refined
         } catch (e: Exception) {
             DebugLogBuffer.log("TextDetect", "BŁĄD: ${e.message}")
             emptyList()
@@ -139,7 +176,7 @@ object ImageRedactionPipeline {
         return trimmed
     }
 
-    /** Maskuje tylko elementy OCR z danymi — nie całą linię (etykiety zostają widoczne). */
+    /** Jeden prostokąt na linię PII (unia elementów z danymi — bez 14 drobnych pasków). */
     private fun maskBoxesForLine(
         line: com.google.mlkit.vision.text.Text.Line,
         tokenValues: List<String>
@@ -148,9 +185,6 @@ object ImageRedactionPipeline {
         if (elements.isEmpty()) {
             return line.boundingBox?.let { listOf(padRect(RectF(it))) } ?: emptyList()
         }
-
-        val labelElements = elements.filter { isLabelElement(it.text) }
-        val dataElements = elements.filter { !isLabelElement(it.text) }
 
         fun elemMatchesPii(text: String): Boolean {
             val et = text.trim()
@@ -162,26 +196,250 @@ object ImageRedactionPipeline {
             }
         }
 
-        val matched = (if (dataElements.isNotEmpty()) dataElements else elements)
-            .filter { elemMatchesPii(it.text) }
-
-        if (matched.isNotEmpty()) {
-            return matched.mapNotNull { it.boundingBox?.let { b -> padRect(RectF(b)) } }
+        val dataElements = elements.filter { !isLabelElement(it.text) }
+        val candidates = when {
+            dataElements.isNotEmpty() -> {
+                val matched = dataElements.filter { elemMatchesPii(it.text) }
+                when {
+                    matched.isNotEmpty() -> matched
+                    dataElements.any { it.text.any { ch -> ch.isDigit() } } ->
+                        dataElements.filter { it.text.any { ch -> ch.isDigit() } }
+                    else -> dataElements
+                }
+            }
+            else -> elements.filter { elemMatchesPii(it.text) || it.text.any { ch -> ch.isDigit() } }
         }
 
-        // Imię/nazwisko w kilku elementach — tylko gdy linia ma max 4 elementy danych
-        if (dataElements.isNotEmpty() && dataElements.size <= 4) {
-            return dataElements.mapNotNull { it.boundingBox?.let { b -> padRect(RectF(b)) } }
-        }
-
-        // Ostatnia deska: elementy z cyframi (PESEL, data, nr dowodu)
-        val numeric = elements.filter { it.text.any { ch -> ch.isDigit() } }
-        if (numeric.isNotEmpty()) {
-            return numeric.mapNotNull { it.boundingBox?.let { b -> padRect(RectF(b)) } }
-        }
-
-        return emptyList()
+        val boxes = candidates.mapNotNull { it.boundingBox?.let { b -> RectF(b) } }
+        if (boxes.isEmpty()) return emptyList()
+        return listOf(padRect(unionRects(boxes)))
     }
+
+    private fun unionRects(boxes: List<RectF>): RectF {
+        var left = boxes[0].left
+        var top = boxes[0].top
+        var right = boxes[0].right
+        var bottom = boxes[0].bottom
+        for (i in 1 until boxes.size) {
+            left = minOf(left, boxes[i].left)
+            top = minOf(top, boxes[i].top)
+            right = maxOf(right, boxes[i].right)
+            bottom = maxOf(bottom, boxes[i].bottom)
+        }
+        return RectF(left, top, right, bottom)
+    }
+
+    /** Scal regiony w tej samej linii (OCR czasem rozbija jedno pole na kilka). */
+    private fun consolidateSameRowRegions(regions: List<RedactionRegion>, imageHeight: Int): List<RedactionRegion> {
+        if (regions.size <= 1) return regions
+        val threshold = imageHeight * 0.018f
+        val sorted = regions.sortedBy { it.rect.top }
+        val out = mutableListOf<RedactionRegion>()
+        for (r in sorted) {
+            val cy = (r.rect.top + r.rect.bottom) / 2f
+            val last = out.lastOrNull()
+            if (last != null) {
+                val lcy = (last.rect.top + last.rect.bottom) / 2f
+                if (kotlin.math.abs(cy - lcy) <= threshold) {
+                    out[out.lastIndex] = last.copy(
+                        rect = unionRects(listOf(last.rect, r.rect)),
+                        label = pickBetterLabel(last.label, r.label)
+                    )
+                    continue
+                }
+            }
+            out.add(r)
+        }
+        return out
+    }
+
+    private fun pickBetterLabel(a: String, b: String): String {
+        fun score(s: String) = when {
+            s in setOf("Pole", "Numer", "Maska ręczna") -> 0
+            s.length <= 4 -> 1
+            else -> 2
+        }
+        return if (score(b) > score(a)) b else a
+    }
+
+    private fun lineConfidence(line: com.google.mlkit.vision.text.Text.Line): Float? {
+        val confs = line.elements.mapNotNull { it.confidence }
+        return if (confs.isEmpty()) null else confs.average().toFloat()
+    }
+
+    /** Offline: strukturalne PII zawsze; imiona tylko gdy wyglądają jak prawdziwe (nie śmieci OCR). */
+    private fun shouldMaskLine(textForEngine: String, engineResult: PseudonymResult): Boolean {
+        val text = textForEngine.trim()
+        if (text.length < 3) return false
+
+        val tokenTypes = engineResult.tokenMap.keys.map { it.substringBefore('_') }.toSet()
+        if (tokenTypes.any { it in STRUCTURAL_TOKEN_TYPES }) return true
+
+        if (text.matches(Regex("""[A-HJ-NPR-Z0-9]{17}""", RegexOption.IGNORE_CASE))) return true
+        if (text.matches(Regex("""\d{11}"""))) return true
+        if (text.matches(Regex("""[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}""", RegexOption.IGNORE_CASE))) return true
+
+        if (tokenTypes.contains("OSOBA") || tokenTypes.contains("FIRMA")) {
+            return looksLikePlausiblePersonName(text)
+        }
+        return false
+    }
+
+    private val STRUCTURAL_TOKEN_TYPES = setOf("NUMER", "EMAIL", "ADRES", "KWOTA")
+
+    private fun looksLikePlausiblePersonName(text: String): Boolean {
+        val t = text.trim()
+        if (t.length < 4) return false
+        if (t.any { it.isDigit() }) return false
+        val letters = t.count { it.isLetter() }
+        if (letters.toFloat() / t.length < 0.65f) return false
+        val words = t.split(Regex("""\s+""")).filter { w -> w.any { it.isLetter() } }
+        if (words.isEmpty()) return false
+        // OCR-śmieci: jedno „słowo” same wielkie bez sensu (< 5 znaków)
+        if (words.size == 1 && words[0].length < 5 && words[0] == words[0].uppercase()) return false
+        // Zbyt mało samogłosek → losowy OCR
+        val vowels = t.lowercase().count { it in "aeiouyąęó" }
+        if (vowels.toFloat() / letters < 0.15f) return false
+        return true
+    }
+
+    private fun normalizeDisplayLabel(label: String): String {
+        if (label.equals("vin", ignoreCase = true) || label.equals("ViN", ignoreCase = true)) return "VIN"
+        if (label.equals("pesel", ignoreCase = true)) return "PESEL"
+        return label
+    }
+
+    private fun mergeAdjacentSameLabel(regions: List<RedactionRegion>, imageHeight: Int): List<RedactionRegion> {
+        if (regions.size <= 1) return regions
+        val threshold = imageHeight * 0.028f
+        val sorted = regions.sortedBy { it.rect.top }
+        val out = mutableListOf<RedactionRegion>()
+        for (r in sorted) {
+            val last = out.lastOrNull()
+            if (last != null && last.label == r.label) {
+                val gap = r.rect.top - last.rect.bottom
+                if (gap <= threshold) {
+                    out[out.lastIndex] = last.copy(rect = unionRects(listOf(last.rect, r.rect)))
+                    continue
+                }
+            }
+            out.add(r)
+        }
+        return out
+    }
+
+    private fun dedupeOverlapping(regions: List<RedactionRegion>): List<RedactionRegion> {
+        val out = mutableListOf<RedactionRegion>()
+        for (r in regions.sortedByDescending { it.rect.width() * it.rect.height() }) {
+            if (out.none { regionIoU(it.rect, r.rect) > 0.55f }) out.add(r)
+        }
+        return out.sortedBy { it.rect.top }
+    }
+
+    private fun filterTinyRegions(
+        regions: List<RedactionRegion>,
+        imageWidth: Int,
+        imageHeight: Int
+    ): List<RedactionRegion> {
+        val minW = imageWidth * 0.025f
+        val minH = imageHeight * 0.006f
+        return regions.filter { r ->
+            r.rect.width() >= minW && r.rect.height() >= minH
+        }
+    }
+
+    /** Krótka etykieta pola do listy przełączników (VIN, PESEL, nr rej. …). */
+    private fun guessFieldLabel(
+        rawLine: String,
+        checkedText: String,
+        engineResult: PseudonymResult
+    ): String {
+        val rawFolded = foldLabel(rawLine)
+        if (rawFolded.contains("vin")) return "VIN"
+
+        val colonSide = Regex("""^(.+?)[:：]\s*""").find(rawLine.trim())?.groupValues?.get(1)?.trim()
+        colonSide?.let { side ->
+            foldLabel(side).let { folded ->
+                FIELD_DISPLAY_PHRASES[folded]?.let { return it }
+                FIELD_DISPLAY_PHRASES.entries.firstOrNull { (k, _) -> folded.startsWith(k) }?.value?.let { return it }
+            }
+        }
+
+        val text = checkedText.replace(Regex("""\s+"""), " ").trim()
+        if (text.matches(Regex("""[A-HJ-NPR-Z0-9]{17}""", RegexOption.IGNORE_CASE))) return "VIN"
+        if (text.matches(Regex("""\d{11}"""))) return "PESEL"
+        if (text.matches(Regex("""[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}""", RegexOption.IGNORE_CASE))) return "Nr rejestracyjny"
+
+        val tokenPrefix = engineResult.tokenMap.keys.firstOrNull()?.substringBefore('_')
+        when (tokenPrefix) {
+            "ADRES" -> return "Adres"
+            "FIRMA" -> return "Firma"
+            "EMAIL" -> return "E-mail"
+            "KWOTA" -> return "Kwota"
+            "NUMER" -> return if (text.length == 17) "VIN" else "Numer"
+            "OSOBA" -> {
+                colonSide?.let { foldLabel(it) }?.let { f ->
+                    when {
+                        f.contains("nazwisko") -> return "Nazwisko"
+                        f.contains("imie") || f.contains("imiona") -> return "Imię"
+                        f.contains("wlasciciel") -> return "Właściciel"
+                    }
+                }
+                return if (looksLikePlausiblePersonName(text)) "Imię/nazwisko" else "Pole"
+            }
+        }
+
+        return text.take(18).trim().ifEmpty { "Pole" }
+    }
+
+    private val FIELD_DISPLAY_PHRASES = mapOf(
+        "vin" to "VIN",
+        "numer vin" to "VIN",
+        "n numer vin" to "VIN",
+        "e" to "VIN",
+        "e vin" to "VIN",
+        "numer identyfikacyjny pojazdu" to "VIN",
+        "pesel" to "PESEL",
+        "numer pesel" to "PESEL",
+        "numer rejestracyjny" to "Nr rejestracyjny",
+        "nr rejestracyjny" to "Nr rejestracyjny",
+        "nr rej" to "Nr rejestracyjny",
+        "n rej" to "Nr rejestracyjny",
+        "a" to "Nr rejestracyjny",
+        "tablica rejestracyjna" to "Nr rejestracyjny",
+        "nazwisko" to "Nazwisko",
+        "c1.1" to "Nazwisko",
+        "c.1.1" to "Nazwisko",
+        "nazwisko surname" to "Nazwisko",
+        "imie" to "Imię",
+        "imiona" to "Imię",
+        "c1.2" to "Imię",
+        "c.1.2" to "Imię",
+        "imie i nazwisko" to "Imię/nazwisko",
+        "adres" to "Adres",
+        "c1.3" to "Adres",
+        "c.1.3" to "Adres",
+        "adres zamieszkania" to "Adres",
+        "data urodzenia" to "Data urodzenia",
+        "data pierwszej rejestracji" to "Data rej.",
+        "marka" to "Marka",
+        "d.1" to "Marka",
+        "d1" to "Marka",
+        "model" to "Model",
+        "d.3" to "Model",
+        "d3" to "Model",
+        "marka model" to "Marka/model",
+        "numer dowodu" to "Nr dokumentu",
+        "seria i numer" to "Seria i numer",
+        "wlasciciel" to "Właściciel",
+        "wlaściciel" to "Właściciel",
+        "nip" to "NIP",
+        "regon" to "REGON",
+        "rok produkcji" to "Rok prod.",
+        "pojemnosc silnika" to "Poj. silnika",
+        "moc" to "Moc",
+        "masa" to "Masa",
+    )
 
     private fun isLabelElement(text: String): Boolean {
         val t = text.trim().trimEnd(':', '：', '.')
@@ -380,6 +638,13 @@ object ImageRedactionPipeline {
     fun saveToCache(bitmap: Bitmap, context: Context): Uri {
         val file = writeRedactedJpeg(bitmap, context)
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    fun encodeJpeg(bitmap: Bitmap, quality: Int = 90): ByteArray {
+        java.io.ByteArrayOutputStream().use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+            return out.toByteArray()
+        }
     }
 
     private fun redactedDir(context: Context): File =

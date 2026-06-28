@@ -13,7 +13,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -39,6 +39,11 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.core.view.WindowCompat
+import com.lynxmask.app.ui.components.LynxNavButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxDangerTextButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxMaskTheme
 import com.lynxmask.app.ui.theme.LynxShapes
@@ -51,7 +56,7 @@ import kotlinx.coroutines.withContext
 
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -123,12 +128,12 @@ private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
             )
         },
         confirmButton = {
-            Button(onClick = onSend, modifier = Modifier.fillMaxWidth()) {
+            LynxPrimaryButton(onClick = onSend, modifier = Modifier.fillMaxWidth()) {
                 Text("Wyślij raport")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            LynxGhostButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text("Pomiń", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -161,22 +166,19 @@ private fun MainTabNav() {
         appScreen = AppScreen.MAIN
     }
 
-    when (appScreen) {
-        AppScreen.MAIN -> Column(
-            modifier = Modifier.fillMaxSize().background(LynxColors.Background)
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                HubScreen(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LynxColors.Background)
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            when (appScreen) {
+                AppScreen.MAIN -> HubScreen(
                     onFileClick = {
                         filePickerLauncher.launch(arrayOf(
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             "application/pdf", "text/plain", "image/*"
                         ))
-                    },
-                    onDepseudoClick = {
-                        selectedSessionId    = null
-                        selectedDepseudoMode = DepseudoMode.AI_RESPONSE
-                        appScreen = AppScreen.DEPSEUDO
                     },
                     onTextSubmit = { text ->
                         context.startActivity(
@@ -188,32 +190,38 @@ private fun MainTabNav() {
                         )
                     }
                 )
-            }
-            BottomNavBar(
-                current    = appScreen,
-                onNavigate = { screen ->
-                    if (screen == AppScreen.DEPSEUDO) {
-                        selectedSessionId    = null
-                        selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+
+                AppScreen.LIBRARY -> LibraryScreen(
+                    onBack     = { appScreen = AppScreen.MAIN },
+                    onDepseudo = { id, mode ->
+                        selectedSessionId    = id
+                        selectedDepseudoMode = mode
+                        appScreen = AppScreen.DEPSEUDO
                     }
-                    appScreen = screen
-                }
-            )
-        }
+                )
 
-        AppScreen.LIBRARY -> LibraryScreen(
-            onBack     = { appScreen = AppScreen.MAIN },
-            onDepseudo = { id, mode ->
-                selectedSessionId    = id
-                selectedDepseudoMode = mode
-                appScreen = AppScreen.DEPSEUDO
+                AppScreen.DEPSEUDO -> DepseudonymizationScreen(
+                    preselectedSessionId = selectedSessionId,
+                    initialMode          = selectedDepseudoMode,
+                    onBack = {
+                        selectedSessionId    = null
+                        appScreen = AppScreen.MAIN
+                    }
+                )
             }
-        )
-
-        AppScreen.DEPSEUDO -> DepseudonymizationScreen(
-            preselectedSessionId = selectedSessionId,
-            initialMode          = selectedDepseudoMode,
-            onBack = { selectedSessionId = null; appScreen = AppScreen.MAIN }
+        }
+        BottomNavBar(
+            current    = appScreen,
+            onNavigate = { screen ->
+                if (screen == AppScreen.DEPSEUDO) {
+                    selectedSessionId    = null
+                    selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+                }
+                if (screen == AppScreen.MAIN) {
+                    selectedSessionId = null
+                }
+                appScreen = screen
+            }
         )
     }
 }
@@ -222,7 +230,6 @@ private fun MainTabNav() {
 @Composable
 private fun HubScreen(
     onFileClick: () -> Unit,
-    onDepseudoClick: () -> Unit,
     onTextSubmit: (String) -> Unit
 ) {
     var pastedText by remember { mutableStateOf("") }
@@ -234,26 +241,31 @@ private fun HubScreen(
             .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Wersja — górny prawy
-        Box(modifier = Modifier.fillMaxWidth().padding(end = LynxSpacing.md, top = LynxSpacing.sm)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = LynxSpacing.md, top = LynxSpacing.sm, start = LynxSpacing.md)
+        ) {
             Text(
                 "${BuildConfig.VERSION_NAME}  LynxMask Mobile",
-                modifier   = Modifier.align(Alignment.CenterEnd),
-                fontSize   = 10.sp,
-                color      = LynxColors.TextDim
+                modifier = Modifier.align(Alignment.CenterEnd),
+                fontSize = 10.sp,
+                color = LynxColors.TextDim
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.weight(0.42f))
 
-        // Logo
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = LynxSpacing.lg)
+        ) {
             Text(
                 "PSE",
                 fontFamily = LynxTypography.Mono,
-                fontSize   = 9.sp,
-                color      = LynxColors.Blue,
-                modifier   = Modifier
+                fontSize = 9.sp,
+                color = LynxColors.Blue,
+                modifier = Modifier
                     .border(1.dp, LynxColors.BorderActive, RoundedCornerShape(2.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             )
@@ -261,68 +273,83 @@ private fun HubScreen(
             Text(
                 "LynxMask",
                 fontFamily = LynxTypography.Sans,
-                fontSize   = 42.sp,
+                fontSize = 42.sp,
                 fontWeight = FontWeight.Light,
-                color      = LynxColors.TextPrimary
+                color = LynxColors.TextPrimary
             )
             Text(
                 "Mobile",
-                fontFamily    = LynxTypography.Mono,
-                fontSize      = 13.sp,
-                color         = LynxColors.TextDim,
+                fontFamily = LynxTypography.Mono,
+                fontSize = 13.sp,
+                color = LynxColors.TextDim,
                 letterSpacing = 3.sp
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Pseudonimizacja dokumentów",
+                fontSize = 13.sp,
+                color = LynxColors.TextSecondary,
+                textAlign = TextAlign.Center
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.weight(0.58f))
 
-        // Akcje
-        Column(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = LynxSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            shape = RoundedCornerShape(LynxShapes.CardRadius),
+            colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            // Wybierz plik
-            Button(
-                onClick  = onFileClick,
-                modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                colors   = ButtonDefaults.buttonColors(containerColor = LynxColors.Blue)
+            Column(
+                modifier = Modifier.padding(LynxSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
             ) {
-                Text("Wybierz plik", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            }
-
-            // Wklej tekst
-            OutlinedTextField(
-                value         = pastedText,
-                onValueChange = { pastedText = it },
-                modifier      = Modifier.fillMaxWidth().heightIn(min = LynxSpacing.TouchTarget, max = 120.dp),
-                placeholder   = {
-                    Text("Wklej tekst...", color = LynxColors.TextDim, fontSize = 14.sp)
-                },
-                shape  = RoundedCornerShape(LynxShapes.CardRadius),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor   = LynxColors.Blue,
-                    unfocusedBorderColor = LynxColors.Border
+                LynxPrimaryButton(
+                    onClick = onFileClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Wybierz plik", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
+                Text(
+                    "PDF · DOCX · TXT · obraz",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 11.sp,
+                    color = LynxColors.TextDim,
+                    textAlign = TextAlign.Center
                 )
-            )
-            Button(
-                onClick  = { onTextSubmit(pastedText) },
-                enabled  = pastedText.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                colors   = ButtonDefaults.buttonColors(containerColor = LynxColors.Blue)
-            ) {
-                Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                OutlinedTextField(
+                    value = pastedText,
+                    onValueChange = { pastedText = it },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = LynxSpacing.TouchTarget, max = 120.dp),
+                    placeholder = {
+                        Text("Wklej tekst...", color = LynxColors.TextDim, fontSize = 14.sp)
+                    },
+                    shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = LynxColors.ActiveNav,
+                        unfocusedContainerColor = LynxColors.ActiveNav,
+                        focusedBorderColor = LynxColors.Blue,
+                        unfocusedBorderColor = LynxColors.Border
+                    )
+                )
+                LynxPrimaryButton(
+                    onClick = { onTextSubmit(pastedText) },
+                    enabled = pastedText.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
             }
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(LynxSpacing.md))
     }
 }
 
-// ── Dolna nawigacja 2+2 ───────────────────────────────────────────────────────
+// ── Dolna nawigacja (hub = treść powyżej, bez osobnej zakładki) ───────────────
 @Composable
 private fun BottomNavBar(current: AppScreen, onNavigate: (AppScreen) -> Unit) {
     var showSecurity by remember { mutableStateOf(false) }
@@ -334,42 +361,31 @@ private fun BottomNavBar(current: AppScreen, onNavigate: (AppScreen) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().background(LynxColors.Sidebar)) {
         HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
-        // Górny rząd: Ukryj dane | Odkryj dane
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = LynxSpacing.sm, vertical = LynxSpacing.xs),
-            horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-        ) {
-            NavButton(
-                label    = "Ukryj dane",
-                selected = current == AppScreen.MAIN,
-                modifier = Modifier.weight(1f),
-                onClick  = { onNavigate(AppScreen.MAIN) }
-            )
-            NavButton(
-                label    = "Odkryj dane",
-                selected = current == AppScreen.DEPSEUDO,
-                modifier = Modifier.weight(1f),
-                onClick  = { onNavigate(AppScreen.DEPSEUDO) }
-            )
-        }
-
-        // Dolny rząd: Biblioteka | Zabezpieczenia
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = LynxSpacing.sm)
-                .padding(bottom = LynxSpacing.xs),
+                .padding(horizontal = LynxSpacing.sm, vertical = LynxSpacing.xs),
             horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
+            NavButton(
+                label    = "Odkryj",
+                selected = current == AppScreen.DEPSEUDO,
+                modifier = Modifier.weight(1f),
+                onClick  = {
+                    if (current != AppScreen.DEPSEUDO) onNavigate(AppScreen.DEPSEUDO)
+                }
+            )
             NavButton(
                 label    = "Biblioteka",
                 selected = current == AppScreen.LIBRARY,
                 modifier = Modifier.weight(1f),
-                onClick  = { onNavigate(AppScreen.LIBRARY) }
+                onClick  = {
+                    if (current != AppScreen.LIBRARY) onNavigate(AppScreen.LIBRARY)
+                }
             )
             NavButton(
-                label    = "Zabezpieczenia",
+                label    = "Zabezp.",
                 selected = false,
                 modifier = Modifier.weight(1f),
                 onClick  = { showSecurity = true }
@@ -384,24 +400,7 @@ private fun NavButton(
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
-) {
-    Button(
-        onClick  = onClick,
-        modifier = modifier.height(LynxSpacing.TouchTarget),
-        shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-        colors   = ButtonDefaults.buttonColors(
-            containerColor = if (selected) LynxColors.Blue else LynxColors.ActiveNav
-        )
-    ) {
-        Text(
-            label,
-            fontSize   = 13.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color      = if (selected) LynxColors.TextPrimary else LynxColors.TextMuted,
-            maxLines   = 1
-        )
-    }
-}
+) = LynxNavButton(label = label, selected = selected, onClick = onClick, modifier = modifier)
 
 // ── Zabezpieczenia — modal Art. 17 RODO ──────────────────────────────────────
 @Composable
@@ -502,7 +501,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                 )
             },
             confirmButton = {
-                TextButton(
+                LynxGhostButton(
                     onClick = {
                         deleteInProgress = true
                         scope.launch(Dispatchers.IO) {
@@ -534,7 +533,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                 }
             },
             dismissButton = {
-                TextButton(
+                LynxGhostButton(
                     onClick  = { showDeleteConfirm = false },
                     enabled  = !deleteInProgress
                 ) { Text("Anuluj") }
@@ -583,7 +582,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
+                LynxPrimaryButton(onClick = {
                     when {
                         !verifyLoginPassword(context, oldPassword) ->
                             changePasswordError = "Nieprawidłowe aktualne hasło"
@@ -599,11 +598,11 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         }
                     }
                 }) {
-                    Text("Zmień", color = LynxColors.Blue, fontWeight = FontWeight.Bold)
+                    Text("Zmień", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
+                LynxGhostButton(onClick = {
                     showChangePassword = false
                     oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
                 }) { Text("Anuluj") }
@@ -656,13 +655,11 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    OutlinedButton(
+                    LynxSecondaryButton(
                         onClick  = { showChangePassword = true },
-                        modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-                        shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                        border   = BorderStroke(1.dp, LynxColors.Border)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Zmień hasło", fontSize = 13.sp, color = LynxColors.TextPrimary)
+                        Text("Zmień hasło", fontSize = 13.sp)
                     }
                 }
 
@@ -687,19 +684,16 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
                     ) {
-                        OutlinedButton(
+                        LynxSecondaryButton(
                             onClick  = { exportDictionary() },
-                            modifier = Modifier.weight(1f).height(LynxSpacing.TouchTarget),
-                            shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                            border   = BorderStroke(1.dp, LynxColors.Border)
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Text("Eksportuj", fontSize = 13.sp, color = LynxColors.TextPrimary)
+                            Text("Eksportuj", fontSize = 13.sp)
                         }
-                        OutlinedButton(
+                        LynxSecondaryButton(
                             onClick  = { importLauncher.launch(arrayOf("application/json", "*/*")) },
-                            modifier = Modifier.weight(1f).height(LynxSpacing.TouchTarget),
-                            shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-                            border   = BorderStroke(1.dp, LynxColors.Blue)
+                            modifier = Modifier.weight(1f),
+                            accent = LynxColors.Blue
                         ) {
                             Text("Importuj", fontSize = 13.sp, color = LynxColors.Blue)
                         }
@@ -723,16 +717,10 @@ private fun SecurityModal(onDismiss: () -> Unit) {
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    Button(
+                    LynxSecondaryButton(
                         onClick  = { showDeleteConfirm = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(LynxSpacing.TouchTarget),
-                        shape  = androidx.compose.foundation.shape.RoundedCornerShape(LynxShapes.ButtonRadius),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = LynxColors.Surface
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, LynxColors.Red)
+                        modifier = Modifier.fillMaxWidth(),
+                        accent = LynxColors.Red
                     ) {
                         Text(
                             "Usu\u0144 wszystkie dane",
@@ -745,7 +733,7 @@ private fun SecurityModal(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            LynxGhostButton(onClick = onDismiss) {
                 Text("Zamknij", color = LynxColors.Blue)
             }
         },
@@ -755,5 +743,5 @@ private fun SecurityModal(onDismiss: () -> Unit) {
 
 @Composable
 fun MainScreen(onFileClick: () -> Unit) {
-    HubScreen(onFileClick = onFileClick, onDepseudoClick = {}, onTextSubmit = {})
+    HubScreen(onFileClick = onFileClick, onTextSubmit = {})
 }

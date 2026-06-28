@@ -1,14 +1,22 @@
 package com.lynxmask.app
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
+import com.lynxmask.app.ui.theme.LynxShapes
+import com.lynxmask.app.ui.theme.LynxSpacing
 
 /** Mapowanie label Guard YELLOW → typ tokenu (MASTER sekcja 17). */
 internal fun guardLabelToTokenType(label: String): String = when (label) {
@@ -23,8 +31,6 @@ internal fun guardRedLabelToTokenType(label: String): String = when (label) {
     else -> TOKEN_NUMER
 }
 
-// ── RED hity — tylko poziom RED ─────────────────────────────────────────────
-
 @Composable
 internal fun RedHitsSection(
     hits: List<GuardHit>,
@@ -33,12 +39,13 @@ internal fun RedHitsSection(
     if (hits.isEmpty()) return
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LynxColors.Red.copy(alpha = 0.08f))
+        shape = RoundedCornerShape(LynxShapes.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = LynxColors.RedBg.copy(alpha = 0.65f)),
+        border = BorderStroke(1.dp, LynxColors.RedBorder.copy(alpha = 0.5f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 "Wykryto możliwy wyciek — zamaskuj przed wysłaniem",
@@ -47,30 +54,38 @@ internal fun RedHitsSection(
                 color = LynxColors.Red
             )
             hits.forEach { hit ->
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "⚠ ${hit.label} — ${hit.matchedText}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LynxColors.Red
-                    )
-                    OutlinedButton(
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.WarningAmber,
+                            contentDescription = null,
+                            tint = LynxColors.Red,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${hit.label} — ${hit.matchedText}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LynxColors.Red
+                        )
+                    }
+                    LynxSecondaryButton(
                         onClick = { onMask(hit) },
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.height(32.dp)
+                        modifier = Modifier.heightIn(min = 36.dp),
+                        accent = LynxColors.Red
                     ) {
                         Text("Maskuj", fontSize = 12.sp, color = LynxColors.Red)
                     }
                 }
                 if (hit != hits.last()) {
-                    HorizontalDivider(color = LynxColors.Red.copy(alpha = 0.12f))
+                    HorizontalDivider(color = LynxColors.Red.copy(alpha = 0.15f))
                 }
             }
         }
     }
 }
-
-// ── YELLOW — Guard YELLOW + flagi NameEngine (jedna lista) ───────────────────
 
 @Composable
 internal fun YellowAlertsSection(
@@ -84,12 +99,13 @@ internal fun YellowAlertsSection(
     if (guardHits.isEmpty() && flags.isEmpty()) return
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LynxColors.Amber.copy(alpha = 0.07f))
+        shape = RoundedCornerShape(LynxShapes.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = LynxColors.Amber.copy(alpha = 0.08f)),
+        border = BorderStroke(1.dp, LynxColors.Amber.copy(alpha = 0.28f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 "Do sprawdzenia",
@@ -130,7 +146,7 @@ private fun YellowAlertRow(
     onMask: () -> Unit,
     onDismiss: (() -> Unit)?
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = title.take(60) + if (title.length > 60) "…" else "",
             style = MaterialTheme.typography.bodySmall,
@@ -142,20 +158,18 @@ private fun YellowAlertRow(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
+        Row(horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)) {
+            LynxSecondaryButton(
                 onClick = onMask,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(28.dp)
+                modifier = Modifier.heightIn(min = 36.dp),
+                accent = LynxColors.Amber
             ) {
                 Text("Maskuj", fontSize = 11.sp, color = LynxColors.Amber)
             }
             if (onDismiss != null) {
-                TextButton(
+                LynxGhostButton(
                     onClick = onDismiss,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
+                    modifier = Modifier.heightIn(min = 36.dp)
                 ) {
                     Text("Nie maskuj", fontSize = 11.sp, color = LynxColors.TextMuted)
                 }

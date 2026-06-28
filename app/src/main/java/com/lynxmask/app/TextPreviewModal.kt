@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 
 private const val TOKEN_ANNOTATION = "TOKEN"
@@ -50,8 +53,12 @@ internal fun TextPreviewModal(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("← Zamknij", style = MaterialTheme.typography.labelLarge)
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            Icons.Outlined.Close,
+                            contentDescription = "Zamknij",
+                            tint = LynxColors.TextSecondary
+                        )
                     }
                     Text(
                         "Podgląd tekstu",
@@ -208,7 +215,7 @@ internal fun ManualTokenSection(
                     )
                 }
             }
-            Button(
+            LynxPrimaryButton(
                 onClick = {
                     if (inputText.isNotBlank()) {
                         onMask(inputText.trim(), selectedType)
@@ -216,12 +223,7 @@ internal fun ManualTokenSection(
                     }
                 },
                 enabled = inputText.isNotBlank(),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LynxColors.Blue,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Maskuj", fontSize = 15.sp)
             }

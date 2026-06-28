@@ -64,6 +64,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -82,6 +83,9 @@ dependencies {
     // Coroutines — potrzebne dla .await() na zadaniach ML Kit (Tasks API)
     // Używane w ShareTargetActivity przy OCR obrazów i PDF
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Biometria — odcisk palca na ekranie logowania
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // Jetpack Security Crypto — EncryptedFile dla UserDictionary (AES-256-GCM, AndroidKeyStore)
     implementation("androidx.security:security-crypto:1.1.0-alpha06")

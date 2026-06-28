@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lynxmask.app.ui.components.LynxPrimaryButton
 
 private const val KEY_ONBOARDING_DONE = "onboarding_done"
 
@@ -86,14 +87,12 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            Button(
+            LynxPrimaryButton(
                 onClick = {
                     markOnboardingDone(context)
                     onFinished()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Zacznij", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }

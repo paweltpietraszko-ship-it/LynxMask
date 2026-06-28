@@ -69,6 +69,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.ui.theme.LynxMaskTheme
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import kotlinx.coroutines.Dispatchers
@@ -283,20 +286,15 @@ private fun ClipPiiDialog(
         confirmButton = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 // Główny przycisk — zastąp schowek
-                Button(
+                LynxPrimaryButton(
                     onClick = onReplaceClipboard,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Zastąp bezpieczną wersją")
                 }
-                // Nowy przycisk — zastąp I zapisz sesję do biblioteki
-                Button(
+                LynxSecondaryButton(
                     onClick = onReplaceAndSave,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = LynxColors.BlueBg,
-                        contentColor   = LynxColors.BlueLight
-                    )
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Zamaskuj i zapisz do biblioteki")
                 }
@@ -304,8 +302,8 @@ private fun ClipPiiDialog(
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onClearClipboard) { Text("Wyczyść schowek") }
-                TextButton(onClick = onDismiss) {
+                LynxGhostButton(onClick = onClearClipboard) { Text("Wyczyść schowek") }
+                LynxGhostButton(onClick = onDismiss) {
                     Text("Ignoruj", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

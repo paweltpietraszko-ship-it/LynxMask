@@ -1,9 +1,10 @@
 package com.lynxmask.app
 
 // PseudonymResultPanel.kt — UI-2 (MASTER sekcja 17)
-// Układ scrollowalny: RED → Podgląd → YELLOW → Kopiuj → Biblioteka → Opis.
-// TextPreviewModal.kt + AlertListSection.kt — osobne pliki.
+// Sticky STATUS → scroll (alerty + podgląd + opis) → dolny pasek (biblioteka + akcje).
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -11,18 +12,34 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
+import com.lynxmask.app.ui.components.LynxSuccessButton
 import com.lynxmask.app.ui.theme.LynxColors
+import com.lynxmask.app.ui.theme.LynxShapes
+import com.lynxmask.app.ui.theme.LynxSpacing
+import kotlinx.coroutines.launch
 
 enum class PanelMode { SHARE_SHEET }
 
@@ -44,6 +61,7 @@ fun PseudonymResultPanel(
     val context = LocalContext.current
     var showDisclaimer by remember { mutableStateOf(false) }
     var pendingCopyAction by remember { mutableStateOf(false) }
+    var pendingForwardAction by remember { mutableStateOf(false) }
 
     val flagDecisions = remember(result.flags) {
         mutableStateMapOf<String, EntityDecision>().also { map ->
@@ -117,133 +135,182 @@ fun PseudonymResultPanel(
         }
     }
 
-    val canAct = (result.flags.isEmpty() && result.riskScore == RiskScore.GREEN) || allFlagsHandled
-    val canSend = canAct && redHits.isEmpty()
+    val hasYellowAlerts = yellowGuardHits.isNotEmpty() || pendingFlags.isNotEmpty()
+    val panelStatus = resolvePanelStatus(redHits.isNotEmpty(), hasYellowAlerts)
+    val maskedTokenCount = result.tokenMap.size + manualMasks.size
+
+    val exportBlockReason = resolveExportBlockReason(
+        hasRedHits = redHits.isNotEmpty(),
+        hasYellowAlerts = hasYellowAlerts,
+        allFlagsHandled = allFlagsHandled
+    )
+    val canExport = exportBlockReason == ExportBlockReason.NONE
 
     var copiedDone by remember { mutableStateOf(false) }
     var librarySaved by remember { mutableStateOf(false) }
     var descText by remember { mutableStateOf("") }
     var showTextPreview by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarScope = rememberCoroutineScope()
 
-    val pendingCount = flagDecisions.values.count { it == EntityDecision.PENDING }
+    fun showBlockedHint() {
+        val msg = exportBlockReason.userMessage()
+        if (msg.isNotBlank()) {
+            snackbarScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = msg,
+                    duration = SnackbarDuration.Long
+                )
+            }
+        }
+    }
 
+    BackHandler(enabled = showTextPreview) {
+        showTextPreview = false
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
+            .fillMaxSize()
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        RiskBanner(
-            riskScore = result.riskScore,
-            pendingCount = pendingCount,
-            hasRedHits = redHits.isNotEmpty()
+        StatusBanner(
+            status = panelStatus,
+            maskedTokenCount = maskedTokenCount,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.sm)
         )
 
-        result.qualityWarning?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            QualityWarningCard(it)
-        }
-
-        if (redHits.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            RedHitsSection(
-                hits = redHits,
-                onMask = { hit ->
-                    val type = guardRedLabelToTokenType(hit.label)
-                    val token = nextToken(type)
-                    manualMasks = manualMasks + (token to hit.matchedText)
-                    onAddToDict?.invoke(hit.matchedText, type)
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = { showTextPreview = true },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = LynxSpacing.md)
         ) {
-            Text("Podgląd tekstu", fontSize = 14.sp)
-        }
+            result.qualityWarning?.let {
+                QualityWarningCard(it)
+                Spacer(modifier = Modifier.height(LynxSpacing.sm))
+            }
 
-        if (yellowGuardHits.isNotEmpty() || pendingFlags.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            YellowAlertsSection(
-                guardHits = yellowGuardHits,
-                flags = pendingFlags,
-                onMaskGuard = { hit ->
-                    val type = guardLabelToTokenType(hit.label)
-                    val token = nextToken(type)
-                    manualMasks = manualMasks + (token to hit.matchedText)
-                    onAddToDict?.invoke(hit.matchedText, type)
-                },
-                onAllowlistGuard = if (onAddToAllowlist != null) { hit ->
-                    dismissedHits = dismissedHits + hit.matchedText
-                    onAddToAllowlist(hit.matchedText, hit.label)
-                } else null,
-                onMaskFlag = { flag ->
-                    val token = nextToken(TOKEN_OSOBA)
-                    manualMasks = manualMasks + (token to flag.fragment)
-                    flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
-                    onAddToDict?.invoke(flag.fragment, TOKEN_OSOBA)
-                },
-                onDismissFlag = { flag ->
-                    flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
-                    onAddToAllowlist?.invoke(flag.fragment, TOKEN_OSOBA)
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ActionSection(
-            canAct = canAct,
-            canSend = canSend,
-            copied = copiedDone,
-            onCopy = {
-                if (isDisclaimerAccepted(context)) {
-                    onCopy(outputText); copiedDone = true
-                } else {
-                    pendingCopyAction = true
-                    showDisclaimer = true
-                }
-            },
-            onCancel = onCancel,
-            onDebugLog = onDebugLog
-        )
-
-        if (onSaveDescription != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    onSaveDescription(maskedOutputText, descText)
-                    librarySaved = true
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = canSend,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (canSend) LynxColors.Green
-                    else MaterialTheme.colorScheme.surfaceVariant
+            if (redHits.isNotEmpty()) {
+                RedHitsSection(
+                    hits = redHits,
+                    onMask = { hit ->
+                        val type = guardRedLabelToTokenType(hit.label)
+                        val token = nextToken(type)
+                        manualMasks = manualMasks + (token to hit.matchedText)
+                        onAddToDict?.invoke(hit.matchedText, type)
+                    }
                 )
+                Spacer(modifier = Modifier.height(LynxSpacing.sm))
+            }
+
+            if (hasYellowAlerts) {
+                YellowAlertsSection(
+                    guardHits = yellowGuardHits,
+                    flags = pendingFlags,
+                    onMaskGuard = { hit ->
+                        val type = guardLabelToTokenType(hit.label)
+                        val token = nextToken(type)
+                        manualMasks = manualMasks + (token to hit.matchedText)
+                        onAddToDict?.invoke(hit.matchedText, type)
+                    },
+                    onAllowlistGuard = if (onAddToAllowlist != null) { hit ->
+                        dismissedHits = dismissedHits + hit.matchedText
+                        onAddToAllowlist(hit.matchedText, hit.label)
+                    } else null,
+                    onMaskFlag = { flag ->
+                        val token = nextToken(TOKEN_OSOBA)
+                        manualMasks = manualMasks + (token to flag.fragment)
+                        flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
+                        onAddToDict?.invoke(flag.fragment, TOKEN_OSOBA)
+                    },
+                    onDismissFlag = { flag ->
+                        flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
+                        onAddToAllowlist?.invoke(flag.fragment, TOKEN_OSOBA)
+                    }
+                )
+                Spacer(modifier = Modifier.height(LynxSpacing.sm))
+            }
+
+            if (
+                panelStatus == PanelStatusKind.GREEN &&
+                maskedTokenCount > 0 &&
+                !hasYellowAlerts &&
+                redHits.isEmpty()
             ) {
-                Text(if (librarySaved) "✓ Dodano do biblioteki" else "Dodaj do biblioteki")
-            }
-            if (librarySaved) {
-                Text(
-                    "Zapisano — widoczny w Bibliotece",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = LynxColors.Green,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                MaskedSummaryCard(tokenCount = maskedTokenCount)
+                Spacer(modifier = Modifier.height(LynxSpacing.sm))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            LynxTonalButton(
+                onClick = { showTextPreview = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Podgląd tekstu", fontSize = 14.sp)
+            }
+
+            Spacer(modifier = Modifier.height(LynxSpacing.md))
+
             DescriptionSection(
                 value = descText,
                 onValueChange = { descText = it; librarySaved = false }
+            )
+
+            Spacer(modifier = Modifier.height(LynxSpacing.md))
+        }
+
+        BottomActionBar(
+            canExport = canExport,
+            copied = copiedDone,
+            librarySaved = librarySaved,
+            showLibrary = onSaveDescription != null,
+            showForward = onForward != null,
+            onBlockedClick = { showBlockedHint() },
+            onLibrary = {
+                onSaveDescription?.invoke(maskedOutputText, descText)
+                librarySaved = true
+            },
+            onCopy = {
+                if (isDisclaimerAccepted(context)) {
+                    onCopy(outputText)
+                    copiedDone = true
+                } else {
+                    pendingCopyAction = true
+                    pendingForwardAction = false
+                    showDisclaimer = true
+                }
+            },
+            onForward = onForward?.let { forward ->
+                {
+                    if (isDisclaimerAccepted(context)) {
+                        forward(outputText)
+                    } else {
+                        pendingForwardAction = true
+                        pendingCopyAction = false
+                        showDisclaimer = true
+                    }
+                }
+            },
+            onDebugLog = onDebugLog
+        )
+    }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 200.dp, start = LynxSpacing.md, end = LynxSpacing.md)
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+                containerColor = LynxColors.ActiveNav,
+                contentColor = LynxColors.TextPrimary
             )
         }
     }
@@ -257,6 +324,10 @@ fun PseudonymResultPanel(
                     onCopy(outputText)
                     copiedDone = true
                     pendingCopyAction = false
+                }
+                if (pendingForwardAction) {
+                    onForward?.invoke(outputText)
+                    pendingForwardAction = false
                 }
             }
         )
@@ -279,49 +350,46 @@ fun PseudonymResultPanel(
 }
 
 @Composable
-private fun RiskBanner(riskScore: RiskScore, pendingCount: Int, hasRedHits: Boolean = false) {
+private fun StatusBanner(
+    status: PanelStatusKind,
+    maskedTokenCount: Int,
+    modifier: Modifier = Modifier
+) {
     val color: Color
-    val emoji: String
+    val icon: ImageVector
     val title: String
     val subtitle: String
 
-    when {
-        hasRedHits -> {
+    when (status) {
+        PanelStatusKind.RED -> {
             color = LynxColors.Red
-            emoji = "✕"
+            icon = Icons.Outlined.ErrorOutline
             title = "Wykryto możliwy wyciek danych"
-            subtitle = "Zamaskuj czerwone pozycje poniżej przed wysłaniem"
+            subtitle = "Zamaskuj czerwone pozycje przed wysłaniem"
         }
-        pendingCount > 0 -> {
+        PanelStatusKind.YELLOW -> {
             color = LynxColors.Amber
-            emoji = "⚠️"
-            title = "Sprawdź $pendingCount ${pendingCount.flagWord()} przed wysłaniem"
-            subtitle = "Przejrzyj żółte alerty poniżej"
+            icon = Icons.Outlined.WarningAmber
+            title = "Sprawdź alerty przed wysłaniem"
+            subtitle = "Przejrzyj żółte pozycje poniżej"
         }
-        riskScore == RiskScore.GREEN -> {
+        PanelStatusKind.GREEN -> {
             color = LynxColors.Green
-            emoji = "✓"
+            icon = Icons.Outlined.CheckCircle
             title = "Dokument gotowy do wysłania"
-            subtitle = "Nie wykryto danych wymagających uwagi"
-        }
-        riskScore == RiskScore.YELLOW -> {
-            color = LynxColors.Amber
-            emoji = "⚠️"
-            title = "Znaleziono dane wrażliwe"
-            subtitle = "Przejrzyj żółte alerty poniżej"
-        }
-        else -> {
-            color = LynxColors.Red
-            emoji = "✕"
-            title = "Dokument zawiera dane osobowe"
-            subtitle = "Upewnij się że chcesz wysłać tę wersję"
+            subtitle = if (maskedTokenCount > 0) {
+                "Dane zamaskowane — zweryfikuj podgląd przed wysłaniem"
+            } else {
+                "Nie wykryto danych wymagających uwagi"
+            }
         }
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.10f))
+        modifier = modifier,
+        shape = RoundedCornerShape(LynxShapes.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.28f))
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
@@ -330,40 +398,35 @@ private fun RiskBanner(riskScore: RiskScore, pendingCount: Int, hasRedHits: Bool
         ) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(color.copy(alpha = 0.15f)),
+                    .background(color.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(emoji, fontSize = 16.sp)
+                Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = color)
-                Text(subtitle, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.75f))
+                Text(subtitle, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.85f))
             }
         }
     }
-}
-
-private fun Int.flagWord() = when (this) {
-    1       -> "miejsce"
-    in 2..4 -> "miejsca"
-    else    -> "miejsc"
 }
 
 @Composable
 private fun QualityWarningCard(warning: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LynxColors.BlueBg.copy(alpha = 0.08f))
+        shape = RoundedCornerShape(LynxShapes.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = LynxColors.BlueBg.copy(alpha = 0.35f)),
+        border = BorderStroke(1.dp, LynxColors.Blue.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
         ) {
-            Text("⚠", fontSize = 14.sp, color = LynxColors.Blue)
+            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = LynxColors.BlueLight, modifier = Modifier.size(16.dp))
             Text(warning, style = MaterialTheme.typography.labelMedium, color = LynxColors.TextSecondary)
         }
     }
@@ -374,7 +437,7 @@ private fun DescriptionSection(
     value: String,
     onValueChange: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             "Opis dokumentu (opcjonalnie)",
             style = MaterialTheme.typography.labelSmall,
@@ -387,56 +450,115 @@ private fun DescriptionSection(
             placeholder = { Text("np. Umowa najmu, Sąd — pozwoli znaleźć sesję w bibliotece") },
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall,
-            shape = RoundedCornerShape(2.dp),
+            shape = RoundedCornerShape(LynxShapes.ButtonRadius),
             colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = LynxColors.Surface,
+                unfocusedContainerColor = LynxColors.Surface,
                 focusedBorderColor = LynxColors.Blue,
-                unfocusedBorderColor = LynxColors.Border
+                unfocusedBorderColor = LynxColors.Border.copy(alpha = 0.7f)
             )
         )
     }
 }
 
 @Composable
-private fun ActionSection(
-    canAct: Boolean,
-    canSend: Boolean = canAct,
+private fun BottomActionBar(
+    canExport: Boolean,
     copied: Boolean,
+    librarySaved: Boolean,
+    showLibrary: Boolean,
+    showForward: Boolean,
+    onBlockedClick: () -> Unit,
+    onLibrary: () -> Unit,
     onCopy: () -> Unit,
-    onCancel: (() -> Unit)?,
+    onForward: (() -> Unit)?,
     onDebugLog: (() -> Unit)?
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(
-            onClick = onCopy,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = canSend,
-            shape = RoundedCornerShape(12.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = LynxColors.Surface,
+        tonalElevation = 6.dp,
+        shadowElevation = 12.dp,
+        shape = RoundedCornerShape(topStart = LynxShapes.CardRadius, topEnd = LynxShapes.CardRadius)
+    ) {
+        Column(
+            modifier = Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
-            Text(if (copied) "✓ Skopiowano" else "Kopiuj dokument")
-        }
-
-        if (!canAct) {
-            Text(
-                "Obsłuż oznaczone pozycje aby odblokować",
-                style = MaterialTheme.typography.labelSmall,
-                color = LynxColors.Amber,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        }
-
-        if (onCancel != null) {
-            TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                Text("Anuluj", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (showLibrary) {
+                BlockedActionSlot(
+                    enabled = canExport,
+                    onBlockedClick = onBlockedClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LynxSuccessButton(
+                        onClick = onLibrary,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canExport
+                    ) {
+                        Icon(Icons.Outlined.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (librarySaved) "Dodano do biblioteki" else "Dodaj do biblioteki")
+                    }
+                }
+                if (librarySaved) {
+                    Text(
+                        "Zapisano — widoczny w Bibliotece",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LynxColors.Green,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             }
-        }
 
-        if (onDebugLog != null) {
-            TextButton(onClick = onDebugLog, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    "Kopiuj logi diagnostyczne",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            ) {
+                BlockedActionSlot(
+                    enabled = canExport,
+                    onBlockedClick = onBlockedClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    LynxSecondaryButton(
+                        onClick = onCopy,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canExport
+                    ) {
+                        Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (copied) "Skopiowano" else "Kopiuj", fontSize = 13.sp, maxLines = 1)
+                    }
+                }
+                if (showForward && onForward != null) {
+                    BlockedActionSlot(
+                        enabled = canExport,
+                        onBlockedClick = onBlockedClick,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        LynxSecondaryButton(
+                            onClick = onForward,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = canExport
+                        ) {
+                            Icon(Icons.Outlined.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Wyślij do AI", fontSize = 13.sp, maxLines = 1)
+                        }
+                    }
+                }
+            }
+
+            if (onDebugLog != null) {
+                LynxGhostButton(onClick = onDebugLog, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Kopiuj logi diagnostyczne",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LynxColors.TextDim
+                    )
+                }
             }
         }
     }
@@ -445,15 +567,11 @@ private fun ActionSection(
 @Composable
 private fun DisclaimerDialog(onAccepted: () -> Unit) {
     AlertDialog(
-        onDismissRequest = {},  // celowo zablokowane — wymaga świadomej akceptacji
-        title = {
-            // AUDYT-PRAWNIK: tytuł do zatwierdzenia przez prawnika
-            Text("Sprawdź wynik przed wysłaniem", fontWeight = FontWeight.Bold)
-        },
+        onDismissRequest = {},
+        shape = RoundedCornerShape(LynxShapes.CardRadius),
+        title = { Text("Sprawdź wynik przed wysłaniem", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // AUDYT-PRAWNIK: treść do zatwierdzenia przez prawnika przed wdrożeniem produkcyjnym.
-                // Obecny tekst to placeholder — może nie spełniać wymogów RODO art. 5 ust. 1 lit. f.
                 Text(
                     "LynxMask automatycznie maskuje dane osobowe, lecz nie gwarantuje wykrycia każdego elementu.",
                     style = MaterialTheme.typography.bodyMedium
@@ -471,10 +589,7 @@ private fun DisclaimerDialog(onAccepted: () -> Unit) {
             }
         },
         confirmButton = {
-            Button(
-                onClick = onAccepted,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            LynxPrimaryButton(onClick = onAccepted, modifier = Modifier.fillMaxWidth()) {
                 Text("Rozumiem — sprawdziłem/-am wynik")
             }
         }

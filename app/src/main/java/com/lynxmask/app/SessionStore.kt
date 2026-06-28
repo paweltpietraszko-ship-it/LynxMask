@@ -70,6 +70,9 @@ private const val GCM_IV_LENGTH = 12
 
 object SessionStore {
 
+    const val CONTENT_KIND_TEXT = "text"
+    const val CONTENT_KIND_IMAGE = "image"
+
     @Volatile private var initialized = false
     @Volatile private var cachedDb: SQLiteDatabase? = null
 
@@ -112,6 +115,13 @@ object SessionStore {
                 // MIGRACJA v1.3: zamaskowany tekst dokumentu
                 try {
                     db.execSQL("ALTER TABLE sessions ADD COLUMN masked_text_enc BLOB")
+                } catch (_: Exception) { /* kolumna już istnieje */ }
+                // MIGRACJA v1.6: zamaskowane obrazy (Image Redact)
+                try {
+                    db.execSQL("ALTER TABLE sessions ADD COLUMN content_kind TEXT NOT NULL DEFAULT 'text'")
+                } catch (_: Exception) { /* kolumna już istnieje */ }
+                try {
+                    db.execSQL("ALTER TABLE sessions ADD COLUMN redacted_image_enc BLOB")
                 } catch (_: Exception) { /* kolumna już istnieje */ }
                 cachedDb = db
                 initialized = true
@@ -215,12 +225,71 @@ object SessionStore {
         }
     }
 
+    /**
+     * Zapisuje zamaskowany obraz JPEG (szyfrowany) — sesja bez mapy tokenów.
+     */
+    fun saveRedactedImage(
+        context: Context,
+        sesjaId: String,
+        jpegBytes: ByteArray,
+        description: String = ""
+    ): Boolean {
+        return try {
+            ensureInit(context)
+            val key = getOrCreateKey()
+            val emptyMapEnc = encryptBytes(key, "{}".toByteArray(Charsets.UTF_8))
+            val imageEnc = encryptBytes(key, jpegBytes)
+            val now = Instant.now().toString()
+            val desc = description.trim()
+            getDb(context).execSQL(
+                """INSERT INTO sessions
+                   (sesja_id, token_map_enc, token_count, created_at, description, content_kind, redacted_image_enc)
+                   VALUES (?, ?, 0, ?, ?, ?, ?)
+                   ON CONFLICT(sesja_id) DO UPDATE SET
+                       token_map_enc      = excluded.token_map_enc,
+                       token_count        = excluded.token_count,
+                       created_at         = excluded.created_at,
+                       description        = excluded.description,
+                       content_kind       = excluded.content_kind,
+                       redacted_image_enc = excluded.redacted_image_enc""",
+                arrayOf(sesjaId, emptyMapEnc, now, desc, CONTENT_KIND_IMAGE, imageEnc)
+            )
+            Log.i(TAG, "Obraz zapisany: $sesjaId (${jpegBytes.size} B)")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd saveRedactedImage() [$sesjaId]: ${e.message}", e)
+            false
+        }
+    }
+
+    /** Ładuje bajty JPEG zamaskowanego obrazu. Null gdy brak lub błąd. */
+    fun loadRedactedImage(context: Context, sesjaId: String): ByteArray? {
+        return try {
+            ensureInit(context)
+            val key = getOrCreateKey()
+            getDb(context).rawQuery(
+                "SELECT redacted_image_enc FROM sessions WHERE sesja_id = ? AND content_kind = ?",
+                arrayOf(sesjaId, CONTENT_KIND_IMAGE)
+            ).use { cursor ->
+                if (!cursor.moveToFirst()) return null
+                val blob = cursor.getBlob(0) ?: return null
+                decryptBytes(key, blob)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd loadRedactedImage() [$sesjaId]: ${e.message}", e)
+            null
+        }
+    }
+
     data class SessionRecord(
         val sesjaId: String,
         val tokenCount: Int,
         val createdAt: String,
-        val description: String = ""
-    )
+        val description: String = "",
+        val contentKind: String = CONTENT_KIND_TEXT
+    ) {
+        val isImage: Boolean get() = contentKind == CONTENT_KIND_IMAGE
+    }
 
     /**
      * Zwraca listę sesji posortowaną od najnowszej.
@@ -229,7 +298,7 @@ object SessionStore {
         return try {
             ensureInit(context)
             getDb(context).rawQuery(
-                "SELECT sesja_id, token_count, created_at, description FROM sessions ORDER BY created_at DESC",
+                "SELECT sesja_id, token_count, created_at, description, content_kind FROM sessions ORDER BY created_at DESC",
                 null
             ).use { cursor ->
                 val list = mutableListOf<SessionRecord>()
@@ -239,7 +308,8 @@ object SessionStore {
                             sesjaId     = cursor.getString(0),
                             tokenCount  = cursor.getInt(1),
                             createdAt   = cursor.getString(2),
-                            description = cursor.getString(3)
+                            description = cursor.getString(3),
+                            contentKind = cursor.getString(4) ?: CONTENT_KIND_TEXT
                         )
                     )
                 }

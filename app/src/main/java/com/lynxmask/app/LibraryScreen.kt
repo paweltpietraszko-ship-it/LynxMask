@@ -12,8 +12,10 @@ package com.lynxmask.app
 // ZMIANA v2.3: brak (tylko korekta komentarzy)
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +29,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -41,6 +45,10 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
+import com.lynxmask.app.ui.components.LynxDangerTextButton
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
 import kotlinx.coroutines.Dispatchers
@@ -137,7 +145,7 @@ private fun SessionListScreen(
 
             sessions.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Text(
-                    "Brak sesji.\nUkryj dokument aby go zapisa\u0107.",
+                    "Brak sesji.\nUkryj dokument lub zapisz zamaskowany obraz.",
                     color     = LynxColors.TextMuted,
                     fontSize  = 14.sp,
                     lineHeight = 22.sp,
@@ -188,10 +196,16 @@ private fun SessionListItem(
                     fontSize   = 11.sp,
                     color      = LynxColors.TextDim
                 )
+            } else if (session.isImage) {
+                Text(
+                    text     = "Obraz",
+                    fontSize = 11.sp,
+                    color    = LynxColors.TextDim
+                )
             }
         }
         Text(
-            text     = session.createdAt.take(10),
+            text     = session.createdAt.take(10) + if (session.isImage) " · obraz" else "",
             fontSize = 12.sp,
             color    = LynxColors.TextSecondary
         )
@@ -218,9 +232,18 @@ private fun SessionDetailScreen(
     var renameText      by remember(session.description) { mutableStateOf(session.description) }
     var previewText     by remember { mutableStateOf<String?>(null) }
     var showPreview     by remember { mutableStateOf(false) }
+    var imageBitmap     by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     LaunchedEffect(session.sesjaId) {
-        responses = withContext(Dispatchers.IO) { SessionStore.listResponses(context, session.sesjaId) }
+        if (session.isImage) {
+            imageBitmap = withContext(Dispatchers.IO) {
+                SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                }
+            }
+        } else {
+            responses = withContext(Dispatchers.IO) { SessionStore.listResponses(context, session.sesjaId) }
+        }
     }
 
     // Dialog: zmień nazwę
@@ -242,7 +265,7 @@ private fun SessionDetailScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                LynxPrimaryButton(onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
                         SessionStore.updateDescription(context, session.sesjaId, renameText)
                         withContext(Dispatchers.Main) {
@@ -250,10 +273,10 @@ private fun SessionDetailScreen(
                             showRenameDialog = false
                         }
                     }
-                }) { Text("Zapisz", color = LynxColors.Blue, fontWeight = FontWeight.Bold) }
+                }) { Text("Zapisz", fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showRenameDialog = false }) { Text("Anuluj") }
             },
             containerColor = LynxColors.Surface
         )
@@ -271,7 +294,7 @@ private fun SessionDetailScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                LynxDangerTextButton(onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
                         SessionStore.deleteSession(context, session.sesjaId)
                         withContext(Dispatchers.Main) {
@@ -279,10 +302,10 @@ private fun SessionDetailScreen(
                             onSessionDeleted()
                         }
                     }
-                }) { Text("Usu\u0144", color = LynxColors.Red, fontWeight = FontWeight.Bold) }
+                }, label = "Usuń")
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showDeleteDialog = false }) { Text("Anuluj") }
             },
             containerColor = LynxColors.Surface
         )
@@ -357,16 +380,46 @@ private fun SessionDetailScreen(
                 .padding(LynxSpacing.md),
             verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
-            // BUG-LIB-EDIT: MASKED_VIEW pokazuje zamaskowany tekst (tokeny OSOBA_1 itp.)
-            SessionActionButton(label = "Edytuj dokument") {
-                onDepseudo(DepseudoMode.MASKED_VIEW)
-            }
-            // SOURCE_DOCUMENT: auto-restore z sesji → oryginalne dane bez wklejania
-            SessionActionButton(label = "Odkryj dane") {
-                onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
-            }
-            SessionActionButton(label = "Dodaj odpowied\u017a AI") {
-                onDepseudo(DepseudoMode.AI_RESPONSE)
+            if (session.isImage) {
+                imageBitmap?.let { bmp ->
+                    Image(
+                        bitmap = bmp.asImageBitmap(),
+                        contentDescription = "Podgląd zamaskowanego obrazu",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 320.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Spacer(Modifier.height(LynxSpacing.sm))
+                }
+                SessionActionButton(label = "Udostępnij do innej aplikacji") {
+                    coroutineScope.launch {
+                        val bmp = imageBitmap ?: withContext(Dispatchers.IO) {
+                            SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            }
+                        } ?: return@launch
+                        val uri = withContext(Dispatchers.IO) {
+                            ImageRedactionPipeline.saveToCache(bmp, context)
+                        }
+                        val fwd = Intent(Intent.ACTION_SEND).apply {
+                            type = "image/jpeg"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
+                    }
+                }
+            } else {
+                SessionActionButton(label = "Edytuj dokument") {
+                    onDepseudo(DepseudoMode.MASKED_VIEW)
+                }
+                SessionActionButton(label = "Odkryj dane") {
+                    onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
+                }
+                SessionActionButton(label = "Dodaj odpowied\u017a AI") {
+                    onDepseudo(DepseudoMode.AI_RESPONSE)
+                }
             }
             SessionActionButton(label = "Zmie\u0144 nazw\u0119") {
                 showRenameDialog = true
@@ -378,8 +431,8 @@ private fun SessionDetailScreen(
                 showDeleteDialog = true
             }
 
-            // Odpowiedzi AI
-            if (responses.isNotEmpty()) {
+            // Odpowiedzi AI (tylko sesje tekstowe)
+            if (!session.isImage && responses.isNotEmpty()) {
                 Spacer(Modifier.height(LynxSpacing.sm))
                 Text(
                     "ODPOWIEDZI AI (${responses.size})",
@@ -420,20 +473,14 @@ private fun SessionActionButton(
     isDestructive: Boolean = false,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick  = onClick,
-        modifier = Modifier.fillMaxWidth().height(LynxSpacing.TouchTarget),
-        shape    = RoundedCornerShape(LynxShapes.ButtonRadius),
-        colors   = ButtonDefaults.buttonColors(
-            containerColor = if (isDestructive) LynxColors.Surface else LynxColors.Blue
-        )
-    ) {
-        Text(
-            label,
-            fontSize   = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color      = if (isDestructive) LynxColors.Red else LynxColors.TextPrimary
-        )
+    if (isDestructive) {
+        LynxSecondaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), accent = LynxColors.Red) {
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = LynxColors.Red)
+        }
+    } else {
+        LynxPrimaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
     }
 }
 
@@ -464,10 +511,10 @@ private fun ResponseItem(
                 color    = LynxColors.TextDim
             )
         }
-        TextButton(onClick = onPreview) {
+        LynxGhostButton(onClick = onPreview) {
             Text("Podgl\u0105d", fontSize = 12.sp, color = LynxColors.Blue)
         }
-        TextButton(onClick = onCopy) {
+        LynxGhostButton(onClick = onCopy) {
             Text("Kopiuj", fontSize = 12.sp, color = LynxColors.TextMuted)
         }
         IconButton(onClick = onDelete, modifier = Modifier.size(LynxSpacing.TouchTarget)) {

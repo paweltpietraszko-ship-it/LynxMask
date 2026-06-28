@@ -30,6 +30,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
+import com.lynxmask.app.ui.components.LynxSuccessButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -41,6 +45,7 @@ private data class OcrSuggestion(val text: String)
 fun ImageRedactionScreen(
     bitmap: Bitmap,
     initialRegions: List<RedactionRegion>,
+    onSaveToLibrary: suspend (Bitmap, String) -> Boolean,
     onShare: (android.net.Uri) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -48,6 +53,7 @@ fun ImageRedactionScreen(
     val scope = rememberCoroutineScope()
     var regions by remember { mutableStateOf(initialRegions) }
     var isProcessing by remember { mutableStateOf(false) }
+    var descText by remember { mutableStateOf("") }
     var ocrSuggestion by remember { mutableStateOf<OcrSuggestion?>(null) }
     var showAddWordDialog by remember { mutableStateOf(false) }
     var addWordInput by remember { mutableStateOf("") }
@@ -101,14 +107,24 @@ fun ImageRedactionScreen(
     Column(modifier = Modifier.fillMaxSize()) {
 
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-            Text("Sprawdź i wyślij", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("Sprawdź i zapisz", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                "Każde pole osobno — np. zostaw VIN, resztę zakryj. Przeciągnij palcem, by dodać maskę ręcznie.",
+                "Każde pole osobno — np. zostaw VIN, resztę zakryj. Domyślnie trafia do biblioteki (szyfrowane). Udostępnij opcjonalnie.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
             )
+            val ocrConf = ImageRedactionPipeline.lastDetectionOcrConfidence
+            if (ocrConf != null && ocrConf < 0.65f) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    "Słaby skan (${(ocrConf * 100).toInt()}% pewności OCR) — sprawdź listę pól. Zbędne maski wyłącz lub usuń ręcznie.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    lineHeight = 16.sp
+                )
+            }
         }
 
         Box(
@@ -246,21 +262,21 @@ fun ImageRedactionScreen(
                 if (textOnly.size > 1) {
                     Spacer(Modifier.height(4.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(
+                        LynxGhostButton(
                             onClick = {
                                 regions = regions.map {
                                     if (it.type == RegionType.MANUAL) it.copy(isBlurred = true) else it
                                 }
                             },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                            modifier = Modifier.defaultMinSize(minHeight = 32.dp)
                         ) { Text("Zakryj wszystkie", style = MaterialTheme.typography.labelSmall) }
-                        TextButton(
+                        LynxGhostButton(
                             onClick = {
                                 regions = regions.map {
                                     if (it.type == RegionType.MANUAL) it.copy(isBlurred = false) else it
                                 }
                             },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                            modifier = Modifier.defaultMinSize(minHeight = 32.dp)
                         ) { Text("Odkryj wszystkie", style = MaterialTheme.typography.labelSmall) }
                     }
                 }
@@ -290,7 +306,7 @@ fun ImageRedactionScreen(
                 },
                 confirmButton = {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OutlinedButton(onClick = {
+                        LynxSecondaryButton(onClick = {
                             val word = addWordInput.trim()
                             showAddWordDialog = false; addWordInput = ""
                             if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
@@ -301,7 +317,7 @@ fun ImageRedactionScreen(
                                 }
                             }
                         }, enabled = addWordInput.isNotBlank()) { Text("FIRMA") }
-                        Button(onClick = {
+                        LynxPrimaryButton(onClick = {
                             val word = addWordInput.trim()
                             showAddWordDialog = false; addWordInput = ""
                             if (word.isNotEmpty()) scope.launch(Dispatchers.IO) {
@@ -315,7 +331,7 @@ fun ImageRedactionScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showAddWordDialog = false; addWordInput = "" }) { Text("Anuluj") }
+                    LynxGhostButton(onClick = { showAddWordDialog = false; addWordInput = "" }) { Text("Anuluj") }
                 }
             )
         }
@@ -333,15 +349,21 @@ fun ImageRedactionScreen(
                         Text("Wykryto: \"${suggestion.text}\"", style = MaterialTheme.typography.labelMedium)
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            OutlinedButton(onClick = { ocrSuggestion = null }, modifier = Modifier.weight(1f)) {
+                            LynxSecondaryButton(
+                                onClick = { ocrSuggestion = null },
+                                modifier = Modifier.weight(1f)
+                            ) {
                                 Text("Pomiń", style = MaterialTheme.typography.labelSmall)
                             }
-                            Button(onClick = {
-                                ocrSuggestion = null
-                                scope.launch(Dispatchers.IO) {
-                                    UserDictionary.add(context, suggestion.text, "OSOBA")
-                                }
-                            }, modifier = Modifier.weight(1f)) {
+                            LynxPrimaryButton(
+                                onClick = {
+                                    ocrSuggestion = null
+                                    scope.launch(Dispatchers.IO) {
+                                        UserDictionary.add(context, suggestion.text, "OSOBA")
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
                                 Text("Do słownika", style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -365,36 +387,71 @@ fun ImageRedactionScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            OutlinedTextField(
+                value = descText,
+                onValueChange = { descText = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Nazwa w bibliotece (opcjonalnie)") },
+                placeholder = { Text("np. Dowód rej. — VIN odkryty") },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                enabled = !isProcessing
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f), enabled = !isProcessing) {
+                LynxSecondaryButton(onClick = onCancel, modifier = Modifier.weight(1f), enabled = !isProcessing) {
                     Text("Anuluj")
                 }
-                OutlinedButton(onClick = { showAddWordDialog = true }, modifier = Modifier.weight(1f), enabled = !isProcessing) {
+                LynxSecondaryButton(onClick = { showAddWordDialog = true }, modifier = Modifier.weight(1f), enabled = !isProcessing) {
                     Text("+ Słowo")
                 }
-                Button(
-                    onClick = {
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LynxSuccessButton(
+                onClick = {
+                    scope.launch {
                         isProcessing = true
-                        scope.launch(Dispatchers.IO) {
-                            val uri = ImageRedactionPipeline.saveToCache(
+                        val redacted = withContext(Dispatchers.Default) {
+                            ImageRedactionPipeline.applyRedactions(bitmap, regions)
+                        }
+                        onSaveToLibrary(redacted, descText)
+                        isProcessing = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isProcessing && !isPreviewGenerating
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Zapisz do biblioteki")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LynxSecondaryButton(
+                onClick = {
+                    scope.launch {
+                        isProcessing = true
+                        val uri = withContext(Dispatchers.IO) {
+                            ImageRedactionPipeline.saveToCache(
                                 ImageRedactionPipeline.applyRedactions(bitmap, regions),
                                 context
                             )
-                            withContext(Dispatchers.Main) { onShare(uri) }
                         }
-                    },
-                    modifier = Modifier.weight(2f),
-                    enabled = !isProcessing && !isPreviewGenerating
-                ) {
-                    if (isProcessing) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(if (blurredCount > 0) "Udostępnij zamaskowany" else "Udostępnij")
+                        isProcessing = false
+                        onShare(uri)
                     }
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isProcessing && !isPreviewGenerating
+            ) {
+                Text(if (blurredCount > 0) "Udostępnij do innej aplikacji" else "Udostępnij do innej aplikacji")
             }
         }
     }

@@ -56,6 +56,7 @@ import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -66,6 +67,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxMaskTheme
 import androidx.compose.runtime.*
@@ -95,6 +98,46 @@ import kotlinx.coroutines.withContext
 import java.util.zip.ZipInputStream
 
 private const val TAG = "LynxMask_ShareTarget"
+
+/** Skan / zdjęcie dokumentu — OCR → Review. Poniżej progu → IMAGE-REDACT (zdjęcie bez tekstu). */
+internal const val MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE = 15
+
+internal fun shouldRouteImageToTextPipeline(
+    ocrCharCount: Int,
+    forceImageRedact: Boolean,
+    faceCount: Int = 0,
+    identityDocument: Boolean = false
+): Boolean =
+    !forceImageRedact &&
+        faceCount == 0 &&
+        !identityDocument &&
+        ocrCharCount >= MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE
+
+/** Dowód, legitymacja, PJ — obraz + tekst → maskowanie pikseli (MASTER §9). */
+internal fun looksLikeIdentityDocument(ocrText: String): Boolean {
+    if (ocrText.isBlank()) return false
+    val folded = ocrText.lowercase()
+        .replace('ł', 'l').replace('ó', 'o').replace('ą', 'a')
+        .replace('ę', 'e').replace('ś', 's').replace('ź', 'z')
+        .replace('ż', 'z').replace('ć', 'c').replace('ń', 'n')
+    val markers = listOf(
+        "dowod osobist", "d.o.", "dow. os", "dowod os",
+        "legitymac", "legitymacj", "school id", "student id", "student card",
+        "identity card", "id card", "document no", "document number",
+        "numer dowodu", "seria i numer", "nr dowodu",
+        "rzeczpospolita polska", "republic of poland",
+        "prawo jazdy", "driving licence", "driving license",
+        "dowod rejestracyjny", "dowod rej", "certyfikat rejestracji",
+        "karta pobytu", "paszport", "passport", "residence permit"
+    )
+    if (markers.any { folded.contains(it) }) return true
+    val compact = ocrText.replace(Regex("""[\s\-]"""), "")
+    return Regex("""pesel""", RegexOption.IGNORE_CASE).containsMatchIn(ocrText) &&
+        Regex("""\d{11}""").containsMatchIn(compact)
+}
+
+/** Wymusza maskowanie pikseli (udostępnij zdjęcie), pomija OCR. */
+const val EXTRA_FORCE_IMAGE_REDACT = "com.lynxmask.app.FORCE_IMAGE_REDACT"
 
 class ShareTargetActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,7 +198,11 @@ private sealed class ShareScreenState {
         val bitmap: android.graphics.Bitmap,
         val regions: List<RedactionRegion>
     ) : ShareScreenState()
-    data class Scanned(val result: PseudonymResult) : ShareScreenState()
+    data class Scanned(
+        val result: PseudonymResult,
+        val sourceText: String,
+        val ocrConfidence: Float? = null
+    ) : ShareScreenState()
     data class Error(val message: String) : ShareScreenState()
     data class OcrRejected(val conf: Float?) : ShareScreenState()
 }
@@ -225,20 +272,16 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     ?: "application/octet-stream"
                 DebugLogBuffer.log("ShareTarget", "ACTION_VIEW: $uri MIME: $mime")
                 if (mime.startsWith("image/")) {
-                    progressLabel = "Wczytuję obraz..."
-                    val bmp = withContext(Dispatchers.IO) {
-                        loadBitmapExifAware(context, uri)
+                    withContext(Dispatchers.IO) {
+                        routeImageInput(
+                            uri = uri,
+                            context = context,
+                            forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
+                            onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
+                            userDictionary = UserDictionary.entries,
+                            setState = { state = it }
+                        )
                     }
-                    if (bmp == null) {
-                        state = ShareScreenState.Error("Nie udało się wczytać obrazu")
-                        return@LaunchedEffect
-                    }
-                    progressLabel = "Wykrywam twarze i tekst..."
-                    withContext(Dispatchers.IO) { UserDictionary.load(context) }
-                    val regions = withContext(Dispatchers.Default) {
-                        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
-                    }
-                    state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                     return@LaunchedEffect
                 }
                 val syntheticIntent = Intent(Intent.ACTION_SEND).apply {
@@ -267,7 +310,6 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             }
 
             if (intent.type?.startsWith("image/") == true) {
-                progressLabel = "Analizuję obraz..."
                 val imageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                     intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
                 else @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM)
@@ -275,19 +317,16 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     state = ShareScreenState.Error("Brak obrazu do przetworzenia")
                     return@LaunchedEffect
                 }
-                val bmp = withContext(Dispatchers.IO) {
-                    loadBitmapExifAware(context, imageUri)
+                withContext(Dispatchers.IO) {
+                    routeImageInput(
+                        uri = imageUri,
+                        context = context,
+                        forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
+                        onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
+                        userDictionary = UserDictionary.entries,
+                        setState = { state = it }
+                    )
                 }
-                if (bmp == null) {
-                    state = ShareScreenState.Error("Nie udało się wczytać obrazu")
-                    return@LaunchedEffect
-                }
-                progressLabel = "Wykrywam twarze i tekst..."
-                withContext(Dispatchers.IO) { UserDictionary.load(context) }
-                val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
-                }
-                state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
                 return@LaunchedEffect
             }
             val (rawText, isOcr, ocrConf) = withContext(Dispatchers.IO) {
@@ -307,20 +346,16 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
         try {
             val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
             if (mimeType.startsWith("image/")) {
-                progressLabel = "Wczytuję obraz..."
-                val bmp = withContext(Dispatchers.IO) {
-                    loadBitmapExifAware(context, uri)
+                withContext(Dispatchers.IO) {
+                    routeImageInput(
+                        uri = uri,
+                        context = context,
+                        forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
+                        onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
+                        userDictionary = UserDictionary.entries,
+                        setState = { state = it }
+                    )
                 }
-                if (bmp == null) {
-                    state = ShareScreenState.Error("Nie udało się wczytać obrazu")
-                    return@LaunchedEffect
-                }
-                progressLabel = "Wykrywam twarze i tekst..."
-                withContext(Dispatchers.IO) { UserDictionary.load(context) }
-                val regions = withContext(Dispatchers.Default) {
-                    ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
-                }
-                state = ShareScreenState.ImageRedact(bitmap = bmp, regions = regions)
             } else {
                 progressLabel = "Wczytuję plik..."
                 val syntheticIntent = Intent(Intent.ACTION_SEND).apply {
@@ -384,6 +419,14 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     }
 
     // ── Renderowanie stanu ───────────────────────────────────────────────────
+    BackHandler(enabled = state is ShareScreenState.Scanned) {
+        val scanned = state as ShareScreenState.Scanned
+        state = ShareScreenState.Review(
+            rawText = scanned.sourceText,
+            ocrConfidence = scanned.ocrConfidence
+        )
+    }
+
     Surface(modifier = Modifier.fillMaxSize().navigationBarsPadding(),
             color = MaterialTheme.colorScheme.background) {
         when (val s = state) {
@@ -408,7 +451,11 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             DebugLogBuffer.log("Review", "Pseudonimizacja po korekcie: ${correctedText.length} znaków")
                             DebugLogBuffer.logOcrAnalysis(correctedText, result)
                             withContext(Dispatchers.Main) {
-                                state = ShareScreenState.Scanned(result = result)
+                                state = ShareScreenState.Scanned(
+                                    result = result,
+                                    sourceText = correctedText,
+                                    ocrConfidence = s.ocrConfidence
+                                )
                             }
                         }
                     },
@@ -419,6 +466,34 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                 ImageRedactionScreen(
                     bitmap         = s.bitmap,
                     initialRegions = s.regions,
+                    onSaveToLibrary = { redactedBitmap, description ->
+                        withContext(Dispatchers.IO) {
+                            val sesjaId = java.util.UUID.randomUUID().toString()
+                            val jpeg = ImageRedactionPipeline.encodeJpeg(redactedBitmap)
+                            val saved = SessionStore.saveRedactedImage(
+                                context = context,
+                                sesjaId = sesjaId,
+                                jpegBytes = jpeg,
+                                description = description.ifBlank { "Zamaskowany obraz" }
+                            )
+                            if (saved) {
+                                SessionStore.recordAudit(context, sesjaId, "image_saved")
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Zapisano do biblioteki", Toast.LENGTH_SHORT).show()
+                                    onFinished()
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        context,
+                                        "Błąd zapisu — spróbuj ponownie",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                            saved
+                        }
+                    },
                     onShare        = { uri ->
                         val fwd = Intent(Intent.ACTION_SEND).apply {
                             type = "image/jpeg"
@@ -500,8 +575,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             )
                         }
                         Toast.makeText(context, "Logi skopiowane (${DebugLogBuffer.size()} wpisów)", Toast.LENGTH_SHORT).show()
-                    },
-                    onCancel = onFinished
+                    }
                 )
         }
     }
@@ -588,13 +662,13 @@ private fun ShareReviewContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(
+            LynxSecondaryButton(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Anuluj")
             }
-            Button(
+            LynxPrimaryButton(
                 onClick = { onConfirm(editableText) },
                 modifier = Modifier.weight(2f)
             ) {
@@ -638,7 +712,102 @@ private suspend fun finishWithText(
         )
     }
     DebugLogBuffer.logOcrAnalysis(rawText, result)
-    setState(ShareScreenState.Scanned(result = result))
+    setState(ShareScreenState.Scanned(
+        result = result,
+        sourceText = rawText,
+        ocrConfidence = mlKitConfidence
+    ))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Obraz: skan papieru → OCR tekst; dowód/legitymacja/zdjęcie → IMAGE-REDACT
+// ─────────────────────────────────────────────────────────────────────────────
+
+private suspend fun routeImageInput(
+    uri: Uri,
+    context: android.content.Context,
+    forceImageRedact: Boolean,
+    onProgress: (String) -> Unit,
+    userDictionary: List<Pair<String, String>>,
+    setState: (ShareScreenState) -> Unit
+) {
+    if (forceImageRedact) {
+        DebugLogBuffer.log("ShareTarget", "Obraz: wymuszone maskowanie pikseli (EXTRA_FORCE_IMAGE_REDACT)")
+        openImageRedactScreen(uri, context, onProgress, userDictionary, setState)
+        return
+    }
+
+    onProgress("Analizuję obraz...")
+    val bmp = loadBitmapExifAware(context, uri)
+    if (bmp == null) {
+        setState(ShareScreenState.Error("Nie udało się wczytać obrazu"))
+        return
+    }
+
+    try {
+        val (text, conf) = ocrFromBitmap(bmp)
+        val trimmedLen = text.trim().length
+        val faces = ImageRedactionPipeline.detectFacesAsRegions(bmp)
+        val identityDoc = looksLikeIdentityDocument(text)
+        val useTextPipeline = shouldRouteImageToTextPipeline(
+            ocrCharCount = trimmedLen,
+            forceImageRedact = false,
+            faceCount = faces.size,
+            identityDocument = identityDoc
+        )
+
+        DebugLogBuffer.log(
+            "ShareTarget",
+            "Obraz: OCR=$trimmedLen zn., twarze=${faces.size}, dowód/legitymacja=$identityDoc → " +
+                if (useTextPipeline) "ścieżka tekstowa" else "maskowanie obrazu"
+        )
+
+        if (useTextPipeline) {
+            bmp.recycle()
+            setState(
+                if (isOcrQualityAcceptable(conf, trimmedLen))
+                    ShareScreenState.Review(text.trim(), ocrConfidence = conf)
+                else
+                    ShareScreenState.OcrRejected(conf)
+            )
+            return
+        }
+
+        onProgress(
+            if (faces.isNotEmpty() || identityDoc)
+                "Przygotowuję maskowanie dokumentu ze zdjęciem..."
+            else
+                "Wykrywam twarze i tekst..."
+        )
+        UserDictionary.load(context)
+        val regions = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = userDictionary)
+        }
+        setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = regions))
+    } catch (e: Exception) {
+        bmp.recycle()
+        throw e
+    }
+}
+
+private suspend fun openImageRedactScreen(
+    uri: Uri,
+    context: android.content.Context,
+    onProgress: (String) -> Unit,
+    userDictionary: List<Pair<String, String>>,
+    setState: (ShareScreenState) -> Unit
+) {
+    onProgress("Wykrywam twarze i tekst...")
+    UserDictionary.load(context)
+    val bmp = loadBitmapExifAware(context, uri)
+    if (bmp == null) {
+        setState(ShareScreenState.Error("Nie udało się wczytać obrazu"))
+        return
+    }
+    val regions = withContext(Dispatchers.Default) {
+        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = userDictionary)
+    }
+    setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = regions))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -760,14 +929,9 @@ private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context):
             val bitmap: Bitmap = context.contentResolver.openInputStream(uri)?.use {
                 BitmapFactory.decodeStream(it)
             } ?: return@withContext "" to null
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
             try {
-                val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-                val conf = calcOcrConfidence(result).takeIf { it > 0f }
-                DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków, conf=${conf?.let { "%.0f%%".format(it * 100) } ?: "N/A"}")
-                result.text to conf
+                ocrFromBitmap(bitmap)
             } finally {
-                recognizer.close()
                 bitmap.recycle()
             }
         } catch (e: Exception) {
@@ -775,6 +939,18 @@ private suspend fun ocrFromImageUri(uri: Uri, context: android.content.Context):
             "" to null
         }
     }
+
+private suspend fun ocrFromBitmap(bitmap: Bitmap): Pair<String, Float?> {
+    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    return try {
+        val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+        val conf = calcOcrConfidence(result).takeIf { it > 0f }
+        DebugLogBuffer.log("OCR", "Obraz — ${result.text.length} znaków, conf=${conf?.let { "%.0f%%".format(it * 100) } ?: "N/A"}")
+        result.text to conf
+    } finally {
+        recognizer.close()
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OCR z PDF — BEZ ZMIAN
@@ -886,7 +1062,7 @@ private fun ShareErrorContent(message: String, onDismiss: () -> Unit) {
         Text(message, style = MaterialTheme.typography.bodySmall,
              color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onDismiss) { Text("Zamknij") }
+        LynxPrimaryButton(onClick = onDismiss) { Text("Zamknij") }
     }
 }
 
@@ -938,7 +1114,7 @@ private fun ShareOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+        LynxPrimaryButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
             Text("Zamknij i zrób nowe zdjęcie")
         }
     }

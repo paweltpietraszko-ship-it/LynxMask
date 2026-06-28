@@ -90,9 +90,8 @@ object LynxSpacing {
 // ─────────────────────────────────────────────────────────────────────────────
 
 object LynxShapes {
-    // Desktop: borderRadius 2–3px – celowo ostre narożniki, "narzędzie nie aplikacja"
-    // Mobile: zachowujemy ten sam charakter – LynxMask to narzędzie profesjonalne
-    val ButtonRadius = 2.dp
-    val CardRadius   = 3.dp
-    val ChipRadius   = 2.dp
+    // Mobile UI-2: zaokrąglenia czytelne na telefonie (desktop theme.ts zostaje ostrzejszy)
+    val ButtonRadius = 12.dp
+    val CardRadius   = 14.dp
+    val ChipRadius   = 8.dp
 }
