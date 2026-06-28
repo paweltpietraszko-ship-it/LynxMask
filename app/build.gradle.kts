@@ -90,6 +90,9 @@ dependencies {
     // Jetpack Security Crypto — EncryptedFile dla UserDictionary (AES-256-GCM, AndroidKeyStore)
     implementation("androidx.security:security-crypto:1.0.0")
 
+    // SplashScreen — ikona aplikacji podczas inicjalizacji (zamiast białego ekranu)
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     // Morfologik — POS tagging dla polskiego (offline, Java natywna, ~5 MB)
     // Zastępuje ręczne listy końcówek i OSOBA_DENYLIST przez zapytanie do słownika morfologicznego.
     implementation("org.carrot2:morfologik-polish:2.1.9")

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Bazowy temat aplikacji (używany po splash screen) -->
     <style name="Theme.LynxMask" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Splash screen — ikona aplikacji na ciemnym tle zamiast białego ekranu -->
+    <style name="Theme.LynxMask.Starting" parent="Theme.SplashScreen">
+        <!-- Tło splash screen = główne tło LynxMask (#0F1117) -->
+        <item name="windowSplashScreenBackground">#0F1117</item>
+        <!-- Ikona aplikacji (warstwa foreground z adaptiveIcon) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Tło za ikoną (kółko) = to samo ciemne tło -->
+        <item name="windowSplashScreenIconBackgroundColor">#0F1117</item>
+        <!-- Po załadowaniu przełącz na normalny temat -->
+        <item name="postSplashScreenTheme">@style/Theme.LynxMask</item>
+    </style>
+
 </resources>

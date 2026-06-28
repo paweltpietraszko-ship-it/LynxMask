@@ -49,6 +49,7 @@ import com.lynxmask.app.ui.theme.LynxMaskTheme
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -60,12 +61,18 @@ enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // installSplashScreen musi być przed super.onCreate() — utrzymuje splash
+        // do czasu gdy setKeepOnScreenCondition zwróci false (inicjalizacja gotowa)
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (!BuildConfig.DEBUG) window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
+        var appReady = false
+        splashScreen.setKeepOnScreenCondition { !appReady }
+
         // [BUG-SS-3 fix] init() wykonuje I/O (Keystore + SQLite + ALTER TABLE) — musi być poza Main thread
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -74,6 +81,7 @@ class MainActivity : FragmentActivity() {
                 EngineSmoke.runOnce()
                 SessionStore.init(this@MainActivity)
             }
+            appReady = true   // splash znika przy następnej klatce
             getExternalFilesDir("bench")?.mkdirs()
             setContent { LynxMaskTheme { AppNavigation() } }
         }
