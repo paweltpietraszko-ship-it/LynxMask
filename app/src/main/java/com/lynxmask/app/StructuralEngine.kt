@@ -319,9 +319,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // v1.8: stare wzorce zastąpione — były zduplikowane i niekompletne.
     // Polski IBAN: PL + \s? (spacja opcjonalna po PL) + 2 cyfry kontrolne + 6 grup po 4 cyfry
     // Obsługuje: PL41169010149375012387120644 i PL41 1690 1014 9375 0123 8712 0644
-    TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}\b"""),
+    // \b na końcu usunięte: gdy IBAN przylega bezpośrednio do następnego tokenu (sklejone),
+    // \b failuje (cyfra→cyfra). {6} jest precyzyjne więc regex nie przejada sąsiednich tokenów.
+    TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}"""),
     // IBAN z kontekstem "IBAN:" — dla polskich i zagranicznych numerów UE
-    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){3,7}\b"""),
+    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){3,7}"""),
     // IBAN z kontekstem "konto" — fallback gdy OCR wstawia spacje w nieregularnych miejscach
     // Łapie: "konto komornika: PL41 169010 14937..." niezależnie od podziału na grupy
     TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}\s+\S{0,20}\s*[:–\-]\s*(PL[\d\s]{24,34})\b"""),

@@ -184,14 +184,13 @@ fun LoginScreen(
                 migrationNeeded = true
             }
         }
-        if (!isFirstRun && !migrationNeeded && canBiometric) {
-            biometricPrompt.authenticate(promptInfo)
-        } else if (migrationNeeded) {
+        if (migrationNeeded) {
             showPasswordForm = true
             try { focusRequester.requestFocus() } catch (_: Exception) {}
-        } else {
+        } else if (isFirstRun || !canBiometric) {
             try { focusRequester.requestFocus() } catch (_: Exception) {}
         }
+        // canBiometric && !isFirstRun → karta biometryczna, użytkownik sam naciska "Odblokuj"
     }
 
     val effectiveIsFirstRun = isFirstRun || migrationNeeded
@@ -607,7 +606,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
-            if (onExpressMode != null && recoveryStep == RecoveryStep.NONE) {
+            if (onExpressMode != null && recoveryStep == RecoveryStep.NONE && !showBiometricCard) {
                 LynxGhostButton(
                     onClick  = onExpressMode,
                     modifier = Modifier.fillMaxWidth(0.88f)
