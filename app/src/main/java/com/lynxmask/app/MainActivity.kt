@@ -10,7 +10,6 @@ package com.lynxmask.app
 //   Dodane importy: rememberCoroutineScope, Dispatchers, launch.
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
@@ -673,7 +672,56 @@ private fun NavButton(
     brandPalette = brandPalette
 )
 
-private const val PRIVACY_POLICY_URL = "https://lynxmask.app/privacy"
+// ── Polityka prywatności — dialog wbudowany ───────────────────────────────────
+@Composable
+internal fun PrivacyPolicyDialog(onDismiss: () -> Unit) {
+    val scrollMax = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.72f).dp
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Polityka prywatności", fontFamily = LynxTypography.Sans) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = scrollMax)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            ) {
+                listOf(
+                    "DANE NA URZĄDZENIU" to
+                        "LynxMask przechowuje zaszyfrowane sesje wyłącznie lokalnie na Twoim urządzeniu (SQLCipher, AES-256-GCM). Aplikacja nie wysyła żadnych danych do zewnętrznych serwerów.",
+                    "SZYFROWANIE" to
+                        "Hasło zabezpiecza dostęp do sesji. Klucz szyfrowania pochodzi z Twojego hasła (PBKDF2-HMAC-SHA256) i jest przechowywany w Android Keystore. Bez hasła dane są niedostępne.",
+                    "DANE OSOBOWE" to
+                        "Aplikacja przetwarza dokumenty lokalnie. Treść dokumentów nie opuszcza urządzenia. Nie zbieramy danych analitycznych, nie wymagamy konta, nie łączymy się z internetem w trakcie pseudonimizacji.",
+                    "UPRAWNIENIA" to
+                        "Aplikacja może poprosić o dostęp do plików (wybór dokumentu) i aparatu (skanowanie). Uprawnienia są używane wyłącznie na Twoje żądanie.",
+                    "KONTAKT" to
+                        "Pytania dotyczące prywatności: kontakt@lynxmask.app"
+                ).forEach { (header, body) ->
+                    Text(
+                        header,
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        body,
+                        fontSize   = 12.sp,
+                        lineHeight = 17.sp,
+                        color      = LynxColors.TextSecondary
+                    )
+                    Spacer(Modifier.height(LynxSpacing.xs))
+                }
+            }
+        },
+        confirmButton = {
+            LynxGhostButton(onClick = onDismiss) {
+                Text("Zamknij", color = LynxColors.Blue)
+            }
+        }
+    )
+}
 
 // ── Zabezpieczenia — modal Art. 17 RODO ──────────────────────────────────────
 @Composable
@@ -683,6 +731,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
     var showDeleteConfirm     by remember { mutableStateOf(false) }
     var deleteInProgress      by remember { mutableStateOf(false) }
     var showChangePassword    by remember { mutableStateOf(false) }
+    var showPrivacyPolicy     by remember { mutableStateOf(false) }
     var showDictManager       by remember { mutableStateOf(false) }
     var dictEntries           by remember { mutableStateOf(UserDictionary.load(context)) }
     var dictSearch            by remember { mutableStateOf("") }
@@ -1067,10 +1116,13 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         color      = LynxColors.TextSecondary
                     )
                     LynxSecondaryButton(
-                        onClick  = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) },
+                        onClick  = { showPrivacyPolicy = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Otwórz politykę prywatności")
+                    }
+                    if (showPrivacyPolicy) {
+                        PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
                     }
                 }
 

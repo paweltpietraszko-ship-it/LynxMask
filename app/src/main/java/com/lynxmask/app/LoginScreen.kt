@@ -3,8 +3,6 @@ package com.lynxmask.app
 // LoginScreen.kt — v2.1 UI: wspólne przyciski Lynx, forma podniesiona pod klawiaturę (imePadding).
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.util.Base64
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -59,7 +57,6 @@ private val LoginFormOffset = 38.dp
 
 private enum class RecoveryStep { NONE, SHOW_KEY, ENTER_KEY, NEW_PASSWORD }
 
-private const val PRIVACY_POLICY_URL  = "https://lynxmask.app/privacy"
 private const val PREFS_LOGIN        = "lynxmask_login"
 private const val KEY_PASSWORD_HASH  = "password_hash"
 private const val KEY_PASSWORD_SALT  = "password_salt"
@@ -129,7 +126,8 @@ fun LoginScreen(
     var keySaved      by remember { mutableStateOf(false) }
     var recoveryInput by rememberSaveable { mutableStateOf("") }
     var recoveryError by remember { mutableStateOf("") }
-    var showRecoveryChoice by remember { mutableStateOf(false) }
+    var showRecoveryChoice  by remember { mutableStateOf(false) }
+    var showPrivacyPolicy   by remember { mutableStateOf(false) }
 
     // Dla istniejących użytkowników bez klucza: sprawdź po logowaniu i wygeneruj klucz
     fun checkKeyThenAuthenticate() {
@@ -591,9 +589,8 @@ fun LoginScreen(
                     )
                 }
             }
-            val ctx = LocalContext.current
             LynxGhostButton(
-                onClick  = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) },
+                onClick  = { showPrivacyPolicy = true },
                 modifier = Modifier.fillMaxWidth(0.88f)
             ) {
                 Text(
@@ -601,6 +598,9 @@ fun LoginScreen(
                     fontSize = 11.sp,
                     color    = LynxColors.TextDim
                 )
+            }
+            if (showPrivacyPolicy) {
+                PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
             }
             Text(
                 BuildConfig.VERSION_NAME + " — lynxmask.app",
