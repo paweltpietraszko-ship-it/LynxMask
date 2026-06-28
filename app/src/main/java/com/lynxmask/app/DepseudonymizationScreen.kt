@@ -118,6 +118,23 @@ fun DepseudonymizationScreen(
         sessionList = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
     }
 
+    // Auto-wybór: gdy brak SESJA_ i brak preselect → domyślnie najnowsza sesja
+    LaunchedEffect(sessionList) {
+        if (currentMode == DepseudoMode.AI_RESPONSE &&
+            preselectedSessionId == null &&
+            selectedSessionId.isEmpty() &&
+            sessionList.isNotEmpty()
+        ) {
+            selectedSessionId = sessionList.first().sesjaId
+        }
+    }
+
+    // Sync dropdown z fingerprint gdy tokeny znalezione w tekście
+    LaunchedEffect(fingerprintSessionId) {
+        val fid = fingerprintSessionId ?: return@LaunchedEffect
+        selectedSessionId = fid
+    }
+
     // Tryb AI_RESPONSE — debounce + przywracanie
     LaunchedEffect(activeSessionId, inputText, currentMode) {
         if (currentMode != DepseudoMode.AI_RESPONSE) return@LaunchedEffect

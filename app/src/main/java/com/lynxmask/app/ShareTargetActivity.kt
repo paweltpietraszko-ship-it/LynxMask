@@ -122,10 +122,7 @@ internal fun looksLikeIdentityDocument(ocrText: String): Boolean {
         "dowod rejestracyjny", "dowod rej", "certyfikat rejestracji",
         "karta pobytu", "paszport", "passport", "residence permit"
     )
-    if (markers.any { folded.contains(it) }) return true
-    val compact = ocrText.replace(Regex("""[\s\-]"""), "")
-    return Regex("""pesel""", RegexOption.IGNORE_CASE).containsMatchIn(ocrText) &&
-        Regex("""\d{11}""").containsMatchIn(compact)
+    return markers.any { folded.contains(it) }
 }
 
 /** Wymusza maskowanie pikseli (udostępnij zdjęcie), pomija OCR. */

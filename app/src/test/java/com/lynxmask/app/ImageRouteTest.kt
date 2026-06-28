@@ -71,4 +71,23 @@ class ImageRouteTest {
             looksLikeIdentityDocument("UMOWA NAJMU LOKALU\nStrony umowy postanawiają...")
         )
     }
+
+    @Test
+    fun invoiceWithPeselField_notIdentityDoc() {
+        // Faktura z polem PESEL nie jest dokumentem tożsamości — ma iść przez OCR, nie ImageRedact
+        assertFalse(
+            looksLikeIdentityDocument(
+                "FAKTURA VAT\nNIP sprzedawcy: 123-456-78-90\nPESEL nabywcy: 83100812345\nNr konta: PL61 1020 1026 0000 0422 7020 1111"
+            )
+        )
+    }
+
+    @Test
+    fun contractWithPesel_notIdentityDoc() {
+        assertFalse(
+            looksLikeIdentityDocument(
+                "UMOWA ZLECENIA\nZleceniobiorca PESEL: 90010112345\nData urodzenia: 1990-01-01"
+            )
+        )
+    }
 }
