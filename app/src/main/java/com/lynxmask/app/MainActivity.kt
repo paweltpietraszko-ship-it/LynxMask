@@ -90,13 +90,16 @@ fun AppNavigation() {
     val context = LocalContext.current
     var onboardingDone   by remember         { mutableStateOf(isOnboardingDone(context)) }
     var authenticated    by rememberSaveable { mutableStateOf(false) }
+    var showExpressMode  by rememberSaveable { mutableStateOf(false) }
     var showCrashDialog  by remember         { mutableStateOf(CrashHandler.hasPendingCrash(context)) }
 
     when {
-        !onboardingDone -> OnboardingScreen(onFinished = { onboardingDone = true })
-        !authenticated  -> LoginScreen(
+        !onboardingDone                    -> OnboardingScreen(onFinished = { onboardingDone = true })
+        !authenticated && showExpressMode  -> ExpressModeScreen(onExit = { showExpressMode = false })
+        !authenticated                     -> LoginScreen(
             isFirstRun      = !isPasswordSet(context),
-            onAuthenticated = { authenticated = true }
+            onAuthenticated = { authenticated = true },
+            onExpressMode   = { showExpressMode = true }
         )
         else -> MainTabNav()
     }

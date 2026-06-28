@@ -268,16 +268,34 @@ fun DepseudonymizationScreen(
                     Text("SESJA", fontFamily = LynxTypography.Mono,
                         fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
 
-                    if (detectedSessionId != null) {
-                        SessionStatusRow(label = detectedSessionId!!, ok = true)
-                    } else {
-                        SessionDropdown(
-                            selectedSessionId = selectedSessionId,
-                            expanded          = dropdownExpanded,
-                            sessionList       = sessionList,
-                            onExpandChange    = { dropdownExpanded = it },
-                            onSelect          = { selectedSessionId = it; dropdownExpanded = false }
-                        )
+                    when {
+                        detectedSessionId != null -> {
+                            val desc = sessionList
+                                .find { it.sesjaId == detectedSessionId }
+                                ?.description?.takeIf { it.isNotEmpty() }
+                            SessionStatusRow(
+                                label = if (desc != null) "$desc  ·  $detectedSessionId" else detectedSessionId!!,
+                                ok    = true
+                            )
+                        }
+                        fingerprintSessionId != null -> {
+                            val desc = sessionList
+                                .find { it.sesjaId == fingerprintSessionId }
+                                ?.description?.takeIf { it.isNotEmpty() }
+                            SessionStatusRow(
+                                label = "Auto: ${if (desc != null) "$desc  ·  $fingerprintSessionId" else fingerprintSessionId!!}",
+                                ok    = true
+                            )
+                        }
+                        else -> {
+                            SessionDropdown(
+                                selectedSessionId = selectedSessionId,
+                                expanded          = dropdownExpanded,
+                                sessionList       = sessionList,
+                                onExpandChange    = { dropdownExpanded = it },
+                                onSelect          = { selectedSessionId = it; dropdownExpanded = false }
+                            )
+                        }
                     }
                 }
 

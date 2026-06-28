@@ -109,7 +109,8 @@ private fun hashWithSalt(password: String, salt: ByteArray): ByteArray {
 @Composable
 fun LoginScreen(
     isFirstRun: Boolean = false,
-    onAuthenticated: () -> Unit
+    onAuthenticated: () -> Unit,
+    onExpressMode: (() -> Unit)? = null
 ) {
     val context        = LocalContext.current
     val scope          = rememberCoroutineScope()
@@ -586,15 +587,33 @@ fun LoginScreen(
             }
         }
 
-        Text(
-            BuildConfig.VERSION_NAME + " — lynxmask.app",
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = LynxSpacing.lg),
-            fontFamily = LynxTypography.Mono,
-            fontSize = 10.sp,
-            color = LynxColors.TextDim
-        )
+                .padding(bottom = LynxSpacing.lg)
+                .padding(horizontal = LynxSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+        ) {
+            if (onExpressMode != null && recoveryStep == RecoveryStep.NONE) {
+                LynxGhostButton(
+                    onClick  = onExpressMode,
+                    modifier = Modifier.fillMaxWidth(0.88f)
+                ) {
+                    Text(
+                        "⚡ Tryb Express — bez logowania",
+                        fontSize = 12.sp,
+                        color    = LynxColors.Amber
+                    )
+                }
+            }
+            Text(
+                BuildConfig.VERSION_NAME + " — lynxmask.app",
+                fontFamily = LynxTypography.Mono,
+                fontSize   = 10.sp,
+                color      = LynxColors.TextDim
+            )
+        }
     }
 }
 
