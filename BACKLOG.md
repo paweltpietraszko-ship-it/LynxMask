@@ -4,6 +4,100 @@
 
 ---
 
+## ✅ UL / UX NAWIGACJA — ZAMKNIĘTE (29.06.2026)
+
+Epik zamknięty (sesje 28–29.06): nawigacja S1–S6, spójne przyciski i czcionki, nagłówki `← Wstecz`, biblioteka czytelna, brand Yin/Yang na Bibliotece + „Otwórz bibliotekę”, słownik eksport/import w Zabezpieczeniach.
+
+**Z obszaru produktu/UI przed release publiczny zostaje:**
+- 🔲 **Polityka prywatności** (Privacy Policy) — treść prawnicza + link/ekran w aplikacji i wpis Google Play (ToS opcjonalnie osobno — patrz TODO R5)
+
+---
+
+## P1 UX — NAWIGACJA I SCENARIUSZE (decyzja 28.06.2026) — ✅ ZAMKNIĘTE
+
+**Archiwum flow** — źródło prawdy dla regresji ręcznej; nie rozwijać bez nowego epiku.
+
+**Właściciel testów ręcznych:** Paweł (~10 min po zmianie nawigacji).  
+**Agent:** Cursor (Compose + MainTabNav + Library + Depseudo + ShareTarget).
+
+### Zasada nawigacji
+
+| Reguła | Opis |
+|--------|------|
+| **Stos** | Wstecz = poprzedni krok, nie „skok na hub” |
+| **Wstecz widoczny** | Każdy poziom ma `← Etykieta` w nagłówku |
+| **Nazwa = akcja** | Przycisk mówi co zobaczysz, nie co program robi wewnętrznie |
+| **Po zapisie** | Zawsze: gdzie to jest + jak tam dojść |
+
+### Scenariusze (must pass)
+
+**S1 — Pierwszy dokument (hub → share → biblioteka)**  
+1. Zakładka Odkryj (hub) → wybierz plik / wklej tekst  
+2. Review → pseudonimizuj → wynik  
+3. „Dodaj do biblioteki” → **„Otwórz bibliotekę”** (dialog lub przycisk)  
+4. Widać sesję na liście  
+
+**S2 — Biblioteka pusta**  
+1. Zakładka Biblioteka, brak sesji  
+2. Przycisk **„Ukryj pierwszy dokument”** → hub  
+3. (dalej S1)  
+
+**S3 — Sesja tekstowa (lista → detale → akcja → wstecz)**  
+1. Biblioteka → klik sesji  
+2. Nagłówek: `← Biblioteka` + nazwa sesji  
+3. **Podgląd zamaskowanego** → ekran z tym samym tytułem, `← Sesja` → wraca do detali  
+4. **Przywróć oryginał** → jw.  
+5. **Dodaj odpowiedź AI** → wklej tekst → zapisz → `← Sesja`  
+6. Gest wstecz na detalu → lista (nie hub)  
+
+**S4 — Obraz w bibliotece**  
+1. Sesja obrazu → podgląd + udostępnij  
+2. Wstecz → lista  
+
+**S5 — Zakładka Odp. AI (wklejanie odpowiedzi z ChatGPT)**  
+1. Dolna zakładka **Odp. AI** → ekran z instrukcją + pole wklejania  
+2. **Nie** służy do depseudonimizacji całego dokumentu (to: Biblioteka → sesja)  
+3. `← Start` → hub  
+
+**S3b — Podgląd zamaskowanego (bez mylenia z Odp. AI)**  
+1. Biblioteka → sesja → Podgląd zamaskowanego  
+2. Dolna zakładka **Biblioteka** pozostaje aktywna (nie Odp. AI)  
+3. Akcje: Kopiuj / ← Wróć do sesji  
+
+**S6 — Zapis obrazu (share → redakcja → biblioteka)**  
+1. Share zdjęcia → redakcja → Zapisz do biblioteki  
+2. Dialog: Otwórz bibliotekę / Zamknij  
+3. Otwórz → sesja obrazu (lub lista)  
+
+### Mapowanie przycisków (biblioteka → ekran)
+
+| Przycisk w sesji | Ekran docelowy | Wstecz |
+|------------------|----------------|--------|
+| Podgląd zamaskowanego | Tekst z tokenami (read-only) | Sesja |
+| Przywróć oryginał | Tekst z PII (ostrożnie) | Sesja |
+| Dodaj odpowiedź AI | Wklej + zapis odpowiedzi | Sesja |
+| Zmień nazwę | Dialog (zostaje na sesji) | — |
+| Usuń sesję | Dialog → lista | — |
+
+### Stan implementacji (28.06.2026)
+
+| Element | Stan |
+|---------|------|
+| Stos nawigacji MainTabNav | ✅ sesja 28.06 |
+| LynxScreenHeader + ← Wstecz | ✅ |
+| Nazwy przycisków biblioteki | ✅ |
+| Pusta biblioteka + CTA | ✅ |
+| Depseudo kontekstowy (z biblioteki) | ✅ |
+| Po zapisie → biblioteka (tekst + obraz) | ✅ |
+| Testy Compose UI (Maestro) | 🔲 P2 |
+
+### Następne (po tym epiku)
+
+- ImageRedactionScreen — ten sam wzorzec nagłówka + sticky footer  
+- PseudonymResultPanel w trybie „z biblioteki” (pełna edycja tokenów — osobny task)  
+
+---
+
 ## P1 PRODUKT — IMAGE-REDACT (decyzja MASTER §9, 22.06.2026)
 
 **Właściciel: Cursor.** Claude Code / Sonet — **nie ten temat** (silnik tekstowy zostaje u Soneta).
@@ -42,8 +136,9 @@ Integracja z istniejącym flow ShareTargetActivity. Nie ruszaj silnika tekstoweg
 
 ## KRYTYCZNE — przed jakimkolwiek release
 
-| # | Bug | Skutek | Stan |
+| # | Zadanie | Skutek | Stan |
 |---|---|---|---|
+| LEGAL-PP | **Polityka prywatności** (Privacy Policy) | Wymagane Google Play; RODO — użytkownik musi wiedzieć co aplikacja robi z danymi | 🔲 treść prawnicza + UI/link |
 | BUG-AUTH-RESET | LoginScreen: "Zapomniałem hasła" | Reset bez kodu = wipe (fix 23.06). UX nadal słaby bez klucza odzyskiwania | ⚠️ częściowo — patrz epik poniżej |
 
 **Stan F1b (26.06.2026):** zapis obrazu do biblioteki (szyfrowany JPEG w SessionStore), share opcjonalny. Logika OK — **UI do odświeżenia** (patrz sekcja poniżej).
@@ -184,7 +279,7 @@ Silnik + otwarte bugi z KOLEJKI SILNIKA (N2, N3, S7, S11) + BUG-PESEL-OCR-SILNIK
 3. **Schowek** — wklej tekst z emailem → kafelek LynxMask → ostrzeżenie → zapis opcjonalny.
 4. **Dokument #101** — jeden **realny** skan spoza generatora (np. zdjęcie telefonem); jeśli odrzucenie OCR — OK; jeśli przyjęty — krytyczne PII zamaskowane.
 
-### Backlog techniczny — smoke E2E automatyczny (P2, przed UL)
+### Backlog techniczny — smoke E2E automatyczny (P2)
 
 Jeden plik instrumented (bez Compose), łączy warstwy które dziś są osobno:
 

@@ -58,3 +58,32 @@ LynxMask Mobile | C:\Projects\LynxMask\
 - UserDictionary.entries jest thread-safe (@Synchronized getter) — bezpieczne do przekazania
 - ImageRedactionScreen.kt był modyfikowany przez Cursora między commitami — sprawdź aktualny stan przed edycją
 ================================================================================
+
+================================================================================
+## SESJA 2026-06-28 (cd.)
+
+### Commity
+- 932b20a  fix: skany dokumentów szły do ImageRedact + depseudo auto-wybór sesji
+
+### Co zrobiono
+
+**BUG-SCAN-ROUTE** (regresja z sesji 25-28.06):
+- `looksLikeIdentityDocument()` miała warunek który łapał każdy dokument z "PESEL" jako keyword +
+  11-cyfrowym ciągiem (faktury, umowy, zlecenia z polem "PESEL nabywcy:") → routing do ImageRedact
+- Fix: usunięto warunek PESEL, zostały tylko markery fizycznych dok. tożsamości (dowód, paszport, PJ)
+- Plik: ShareTargetActivity.kt:125-128
+- Testy: +2 (ImageRouteTest — faktura i umowa z polem PESEL)
+
+**BUG-DEPSEUDO-AUTO** (link AI→sesja):
+- AI nie zwraca SESJA_ kodu bo brak instrukcji. Fingerprint (szuka tokenów w odpowiedzi AI)
+  też nie działa — AI odpowiada własnymi słowami bez cytowania tokenów.
+- Fix: auto-wybór najnowszej sesji gdy brak auto-detekcji (common case pokryty)
+- Sync `selectedSessionId` z fingerprint gdy tokeny znalezione w odpowiedzi
+- Plik: DepseudonymizationScreen.kt:119-135
+
+### Stan po sesji
+🔲 BUG-SCAN-ROUTE: naprawiony commit 932b20a
+🔲 BUG-DEPSEUDO-AUTO: naprawiony (auto-wybór), długoterminowo: instrukcja AI w kopii tekstu
+
+### Testy do odpalenia
+Odpal ImageRouteTest (10 testów) — zielone.
