@@ -887,7 +887,10 @@ private suspend fun extractTextFromDocx(uri: Uri, context: android.content.Conte
             val sb = StringBuilder()
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zip ->
-                    val textRegex = Regex("""<w:t(?:\s[^>]*)?>([^<]*)</w:t>""")
+                    // Regex wyciąga <w:t> content LUB marker końca paragrafu (PARA_BREAK).
+                    // </w:p> jest jedynym pewnym znacznikiem końca paragrafu w OOXML.
+                    val textRegex  = Regex("""<w:t(?:\s[^>]*)?>([^<]*)</w:t>|PARA_BREAK""")
+                    val breakRegex = Regex("""</w:p>|<w:br[^/]*/?>""")
                     // BUG-DOCX-PARTIAL: przetwarzaj też nagłówki i stopki (ten sam format <w:t>)
                     val docxTargetPattern = Regex("""word/(document|(header|footer)\d*)\.xml""")
                     var entry = zip.nextEntry
@@ -895,9 +898,13 @@ private suspend fun extractTextFromDocx(uri: Uri, context: android.content.Conte
                         val name = entry.name
                         if (name.matches(docxTargetPattern)) {
                             val xml = zip.readBytes().toString(Charsets.UTF_8)
-                            val withBreaks = xml.replace(Regex("""<w:p[ >]"""), "\n<w:p ")
+                            val withBreaks = breakRegex.replace(xml, "PARA_BREAK")
                             textRegex.findAll(withBreaks).forEach { match ->
-                                sb.append(match.groupValues[1])
+                                if (match.value == "PARA_BREAK") {
+                                    if (sb.isNotEmpty() && sb.last() != '\n') sb.append('\n')
+                                } else {
+                                    sb.append(match.groupValues[1])
+                                }
                             }
                             if (name != "word/document.xml") sb.append("\n")
                             DebugLogBuffer.log("DOCX", "Wyodrębniono z $name (łącznie ${sb.length} znaków)")
