@@ -8,8 +8,8 @@
 
 | # | Zadanie | Dlaczego blokuje | Agent |
 |---|---------|-----------------|-------|
-| R1 | **S10 — TELEFON nie w tokenMap** | Wyciek PII. Numer telefonu nie zawsze trafia do mapy → depseudo nie działa | Claude Code |
-| R2 | **AUD-M06 — security-crypto alpha → 1.0.0** | alpha w prodzie to odrzut w Play Store review | Claude Code |
+| ~~R1~~ | ~~**S10 — TELEFON nie w tokenMap**~~ | ✅ fix ee69719 — separator kropkowy dodany do 4 wzorców | ~~Claude Code~~ |
+| ~~R2~~ | ~~**AUD-M06 — security-crypto alpha → 1.0.0**~~ | ✅ fix 28435ca — MasterKeys API 1.0.0 stable | ~~Claude Code~~ |
 | R3 | **IMAGE-REDACT UI** — przepięcie na Lynx design system | Ekran redakcji wygląda jak inna aplikacja. Ocena oka użytkownika = brak zaufania | Cursor |
 | R4 | **Testy kamerą (E2E)** — checklist z BACKLOG §Strategia | Użytkownik sam zgłasza: "wymaga intensywnych testów przy użyciu aparatu" | Paweł |
 | R5 | **ToS + Privacy Policy** | Wymagane przez Google Play | Prawnik |
@@ -20,11 +20,11 @@
 
 | # | Zadanie | Dlaczego ważne | Agent |
 |---|---------|---------------|-------|
-| W1 | **Testy 6.2 — JUnit SessionStore + Deanonymizer** | Brak testów na roundtrip danych = brak pewności po każdej zmianie | Claude Code |
-| W2 | **S7 — email wykrywany jako NUMER** | Zły typ tokenu = zła depseudo; widoczne w realnym użyciu | Claude Code |
+| ~~W1~~ | ~~**Testy 6.2 — JUnit SessionStore + Deanonymizer**~~ | ✅ fix 22564b8 — 23 testy (DeanonymizerTest 13 + SessionStoreSerializationTest 10) | ~~Claude Code~~ |
+| ~~W2~~ | ~~**S7 — email wykrywany jako NUMER**~~ | ✅ fix a3d4cf1 (22.06) — TOKEN_EMAIL w obu wzorcach, już zamknięte | ~~Claude Code~~ |
 | W3 | **IMAGE-REDACT F2** — kolejność obraz → OCR tekstu | F2 dopiero po tym jak UI jest gotowe (R3 najpierw) | Cursor |
 | W4 | **Audyt RODO/security** (10 punktów z BRIEF_Cursor) | S10 (TELEFON), logi PII, SessionStore crypto — Cursor ma brief | Cursor |
-| W5 | **Smoke E2E automated** — 3 testy instrumented | OCR→silnik→SessionStore→depseudo roundtrip bez ręcznego klikania | Claude Code |
+| ~~W5~~ | ~~**Smoke E2E automated**~~ | ✅ SmokeE2ETest.kt — 3 testy instrumented (roundtrip, izolacja sesji, polskie znaki) | ~~Claude Code~~ |
 | W6 | **BUG-SS-1/SS-3** — SessionStore init na Main thread | Potencjalny ANR na starszych telefonach | Claude Code |
 
 ---
