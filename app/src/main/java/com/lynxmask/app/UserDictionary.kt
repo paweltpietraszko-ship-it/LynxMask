@@ -5,7 +5,7 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import androidx.security.crypto.EncryptedFile
-import androidx.security.crypto.MasterKey
+import androidx.security.crypto.MasterKeys
 
 /**
  * UserDictionary.kt — Persistent słownik wyrażeń dodanych ręcznie przez użytkownika.
@@ -150,13 +150,11 @@ object UserDictionary {
     }
 
     private fun buildEncryptedFile(context: Context): EncryptedFile {
-        val masterKey = MasterKey.Builder(context.applicationContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        val keyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         return EncryptedFile.Builder(
-            context.applicationContext,
             context.filesDir.resolve(FILENAME),
-            masterKey,
+            context.applicationContext,
+            keyAlias,
             EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
         ).build()
     }

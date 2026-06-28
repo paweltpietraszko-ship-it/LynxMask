@@ -88,7 +88,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
 
     // Jetpack Security Crypto — EncryptedFile dla UserDictionary (AES-256-GCM, AndroidKeyStore)
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.security:security-crypto:1.0.0")
 
     // Morfologik — POS tagging dla polskiego (offline, Java natywna, ~5 MB)
     // Zastępuje ręczne listy końcówek i OSOBA_DENYLIST przez zapytanie do słownika morfologicznego.
