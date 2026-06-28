@@ -608,7 +608,7 @@ object SessionStore {
 
     // ── Prywatne: parser tokenMap ─────────────────────────────────────────────
 
-    private fun parseTokenMapJson(json: String): Map<String, String> {
+    internal fun parseTokenMapJson(json: String): Map<String, String> {
         return try {
             val obj = org.json.JSONObject(json)
             val map = mutableMapOf<String, String>()
