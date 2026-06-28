@@ -20,7 +20,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import android.content.ClipData
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +32,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import com.lynxmask.app.ui.components.LynxGhostButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxScreenHeader
 import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
@@ -44,13 +48,19 @@ import kotlinx.coroutines.withContext
 fun DepseudonymizationScreen(
     preselectedSessionId: String? = null,
     initialMode: DepseudoMode    = DepseudoMode.AI_RESPONSE,
-    onBack: () -> Unit
+    fromLibrary: Boolean         = false,
+    onBack: () -> Unit,
+    onRestoreOriginal: (() -> Unit)? = null
 ) {
     val context        = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val clipboard = LocalClipboard.current
+
     // ── Stan (logika bez zmian) ───────────────────────────────────────────────
-    var currentMode       by remember { mutableStateOf(initialMode) }
+    var currentMode       by remember(initialMode, fromLibrary) {
+        mutableStateOf(if (fromLibrary) initialMode else DepseudoMode.AI_RESPONSE)
+    }
     var inputText         by remember { mutableStateOf("") }
     var selectedSessionId by remember { mutableStateOf(preselectedSessionId ?: "") }
     var dropdownExpanded  by remember { mutableStateOf(false) }
@@ -195,85 +205,67 @@ fun DepseudonymizationScreen(
         restoredText = maskedText
         isProcessing = false; savedDone = false
     }
+    val autoLoadFromLibrary = fromLibrary && preselectedSessionId != null &&
+        (initialMode == DepseudoMode.MASKED_VIEW || initialMode == DepseudoMode.SOURCE_DOCUMENT)
+    val screenTitle = currentMode.screenTitle(fromLibrary)
+
     // ── UI — dwa ekrany ───────────────────────────────────────────────────────
     Column(modifier = Modifier.fillMaxSize().background(LynxColors.Background)) {
 
-        // Nagłówek
-        Column(modifier = Modifier.fillMaxWidth().background(LynxColors.Sidebar)) {
-            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-            Text(
-                "ODKRYJ DANE",
-                fontFamily    = LynxTypography.Mono,
-                fontSize      = 12.sp,
-                color         = LynxColors.Blue,
-                letterSpacing = 1.5.sp,
-                modifier      = Modifier.padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.sm)
-            )
-        }
+        LynxScreenHeader(
+            title = screenTitle,
+            sectionLabel = when {
+                fromLibrary -> "DOKUMENT"
+                else        -> "WKLEJ ODPOWIEDŹ"
+            },
+            backLabel = if (fromLibrary) "Dokument" else "Hub",
+            onBack = onBack
+        )
 
         if (restoredText.isEmpty() && !isProcessing) {
-            // ── EKRAN 1: wklej / wybierz sesję ───────────────────────────────
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(LynxSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
-            ) {
-                // Przełącznik trybu — zachowany jako wzorzec dla następcy
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            if (autoLoadFromLibrary) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(LynxSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
                 ) {
-                    FilterChip(
-                        selected = currentMode == DepseudoMode.SOURCE_DOCUMENT,
-                        onClick  = {
-                            if (currentMode != DepseudoMode.SOURCE_DOCUMENT) {
-                                currentMode = DepseudoMode.SOURCE_DOCUMENT
-                                restoredText = ""; errorMessage = ""
-                            }
-                        },
-                        label  = { Text("Dokument \u017ar\u00f3d\u0142owy", fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = LynxColors.Blue,
-                            selectedLabelColor     = LynxColors.TextPrimary,
-                            containerColor         = LynxColors.Surface,
-                            labelColor             = LynxColors.TextDim
+                    if (errorMessage.isNotEmpty()) {
+                        Text(errorMessage, fontSize = 14.sp, color = LynxColors.Red, lineHeight = 20.sp)
+                    } else {
+                        CircularProgressIndicator(color = LynxColors.Blue, modifier = Modifier.align(Alignment.CenterHorizontally))
+                        Text(
+                            "Ładowanie…",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color = LynxColors.TextMuted,
+                            fontSize = 14.sp
                         )
-                    )
-                    FilterChip(
-                        selected = currentMode == DepseudoMode.AI_RESPONSE,
-                        onClick  = {
-                            if (currentMode != DepseudoMode.AI_RESPONSE) {
-                                currentMode = DepseudoMode.AI_RESPONSE
-                                restoredText = ""; errorMessage = ""
-                            }
-                        },
-                        label  = { Text("Odpowied\u017a AI", fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = LynxColors.Blue,
-                            selectedLabelColor     = LynxColors.TextPrimary,
-                            containerColor         = LynxColors.Surface,
-                            labelColor             = LynxColors.TextDim
-                        )
-                    )
+                    }
                 }
-
-                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
-
-                // Tryb AI_RESPONSE: pole tekstowe + sesja
-                if (currentMode == DepseudoMode.AI_RESPONSE) {
-                    Text("TEKST Z TOKENAMI", fontFamily = LynxTypography.Mono,
-                        fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
+            } else if (fromLibrary && currentMode == DepseudoMode.AI_RESPONSE) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(LynxSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
+                ) {
+                    Text(
+                        "Wklej odpowiedź z asystenta AI. Tekst musi zawierać tokeny z tej sesji.",
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        color = LynxColors.TextSecondary
+                    )
+                    SessionStatusRow(
+                        label = preselectedSessionId ?: activeSessionId ?: "—",
+                        ok = activeSessionId != null
+                    )
                     OutlinedTextField(
                         value         = inputText,
                         onValueChange = { inputText = it },
-                        modifier      = Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                        modifier      = Modifier.fillMaxWidth().heightIn(min = 160.dp),
                         placeholder   = {
-                            Text(
-                                "Wklej odpowied\u017a AI z tokenami FIRMA_001, OSOBA_001...",
-                                color = LynxColors.TextDim, fontSize = 13.sp, lineHeight = 18.sp
-                            )
+                            Text("Wklej tutaj odpowiedź AI…", color = LynxColors.TextDim, fontSize = 13.sp)
                         },
                         shape  = RoundedCornerShape(LynxShapes.CardRadius),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -281,58 +273,95 @@ fun DepseudonymizationScreen(
                             unfocusedBorderColor = LynxColors.Border
                         )
                     )
-
-                    Text("SESJA", fontFamily = LynxTypography.Mono,
-                        fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
-
-                    when {
-                        detectedSessionId != null -> {
-                            val desc = sessionList
-                                .find { it.sesjaId == detectedSessionId }
-                                ?.description?.takeIf { it.isNotEmpty() }
-                            SessionStatusRow(
-                                label = if (desc != null) "$desc  ·  $detectedSessionId" else detectedSessionId!!,
-                                ok    = true
-                            )
-                        }
-                        fingerprintSessionId != null -> {
-                            val desc = sessionList
-                                .find { it.sesjaId == fingerprintSessionId }
-                                ?.description?.takeIf { it.isNotEmpty() }
-                            SessionStatusRow(
-                                label = "Auto: ${if (desc != null) "$desc  ·  $fingerprintSessionId" else fingerprintSessionId!!}",
-                                ok    = true
-                            )
-                        }
-                        else -> {
-                            SessionDropdown(
-                                selectedSessionId = selectedSessionId,
-                                expanded          = dropdownExpanded,
-                                sessionList       = sessionList,
-                                onExpandChange    = { dropdownExpanded = it },
-                                onSelect          = { selectedSessionId = it; dropdownExpanded = false }
-                            )
-                        }
+                    if (errorMessage.isNotEmpty()) {
+                        Text(errorMessage, fontSize = 13.sp, color = LynxColors.Red)
+                    }
+                    if (inputText.isBlank()) {
+                        Text(
+                            "Po wklejeniu wynik pojawi się automatycznie.",
+                            fontSize = 13.sp,
+                            color = LynxColors.TextMuted
+                        )
+                    }
+                }
+            } else if (!fromLibrary) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(LynxSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(LynxShapes.CardRadius),
+                    colors = CardDefaults.cardColors(containerColor = LynxColors.ActiveNav.copy(alpha = 0.55f))
+                ) {
+                    Column(Modifier.padding(LynxSpacing.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Wklej odpowiedź AI z tokenami (OSOBA_001…). LynxMask odblokuje dane na telefonie.",
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp,
+                            color = LynxColors.TextPrimary
+                        )
+                        Text(
+                            "Cały dokument? Biblioteka → dokument → Podgląd zamaskowanego lub Przywróć oryginał.",
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                            color = LynxColors.TextSecondary
+                        )
                     }
                 }
 
-                // Tryb SOURCE_DOCUMENT / MASKED_VIEW: sesja
-                if (currentMode == DepseudoMode.SOURCE_DOCUMENT || currentMode == DepseudoMode.MASKED_VIEW) {
-                    Text("SESJA", fontFamily = LynxTypography.Mono,
-                        fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
-                    when {
-                        activeSessionId != null -> SessionStatusRow(label = activeSessionId, ok = true)
-                        else -> {
-                            Text("Wybierz sesj\u0119 z biblioteki.",
-                                fontSize = 13.sp, color = LynxColors.Amber)
-                            SessionDropdown(
-                                selectedSessionId = selectedSessionId,
-                                expanded          = dropdownExpanded,
-                                sessionList       = sessionList,
-                                onExpandChange    = { dropdownExpanded = it },
-                                onSelect          = { selectedSessionId = it; dropdownExpanded = false }
-                            )
-                        }
+                Text("TEKST Z TOKENAMI", fontFamily = LynxTypography.Mono,
+                    fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
+                OutlinedTextField(
+                    value         = inputText,
+                    onValueChange = { inputText = it },
+                    modifier      = Modifier.fillMaxWidth().heightIn(min = 160.dp),
+                    placeholder   = {
+                        Text(
+                            "Wklej odpowiedź z ChatGPT / Claude / Gemini…",
+                            color = LynxColors.TextDim, fontSize = 13.sp, lineHeight = 18.sp
+                        )
+                    },
+                    shape  = RoundedCornerShape(LynxShapes.CardRadius),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor   = LynxColors.Blue,
+                        unfocusedBorderColor = LynxColors.Border
+                    )
+                )
+
+                Text("SESJA", fontFamily = LynxTypography.Mono,
+                    fontSize = 10.sp, color = LynxColors.Blue, letterSpacing = 1.sp)
+
+                when {
+                    detectedSessionId != null -> {
+                        val desc = sessionList
+                            .find { it.sesjaId == detectedSessionId }
+                            ?.description?.takeIf { it.isNotEmpty() }
+                        SessionStatusRow(
+                            label = if (desc != null) "$desc  ·  $detectedSessionId" else detectedSessionId!!,
+                            ok    = true
+                        )
+                    }
+                    fingerprintSessionId != null -> {
+                        val desc = sessionList
+                            .find { it.sesjaId == fingerprintSessionId }
+                            ?.description?.takeIf { it.isNotEmpty() }
+                        SessionStatusRow(
+                            label = "Rozpoznano: ${if (desc != null) "$desc  ·  $fingerprintSessionId" else fingerprintSessionId!!}",
+                            ok    = true
+                        )
+                    }
+                    else -> {
+                        SessionDropdown(
+                            selectedSessionId = selectedSessionId,
+                            expanded          = dropdownExpanded,
+                            sessionList       = sessionList,
+                            onExpandChange    = { dropdownExpanded = it },
+                            onSelect          = { selectedSessionId = it; dropdownExpanded = false }
+                        )
                     }
                 }
 
@@ -340,13 +369,25 @@ fun DepseudonymizationScreen(
                     Text(errorMessage, fontSize = 13.sp, color = LynxColors.Red)
                 }
 
-                // Przycisk Odkryj — zachowany styl zaokrąglony jako wzorzec
-                LynxPrimaryButton(
-                    onClick  = { /* LaunchedEffect wyzwala automatycznie po zmianie stanu */ },
-                    enabled  = activeSessionId != null && (inputText.isNotBlank() || currentMode == DepseudoMode.SOURCE_DOCUMENT || currentMode == DepseudoMode.MASKED_VIEW),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Odkryj dane", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    when {
+                        inputText.isBlank() -> "Wklej tekst — wynik pojawi się automatycznie."
+                        activeSessionId == null -> "Wybierz sesję pasującą do tokenów."
+                        else -> "Przetwarzam po wklejeniu…"
+                    },
+                    fontSize = 13.sp,
+                    color = LynxColors.TextMuted
+                )
+            }
+            } else {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    LynxGhostButton(onClick = onBack) {
+                        Text(
+                            if (fromLibrary) "← Dokument" else "← Hub",
+                            fontSize = 14.sp,
+                            color = LynxColors.BlueLight
+                        )
+                    }
                 }
             }
 
@@ -384,7 +425,31 @@ fun DepseudonymizationScreen(
                         .padding(LynxSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
                 ) {
-                    // Zapisz w bibliotece
+                    if (currentMode == DepseudoMode.MASKED_VIEW && fromLibrary) {
+                        onRestoreOriginal?.let { restore ->
+                            LynxPrimaryButton(
+                                onClick = restore,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Przywróć oryginał")
+                            }
+                        }
+                        LynxSecondaryButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    clipboard.setClipEntry(
+                                        ClipEntry(ClipData.newPlainText("masked", restoredText))
+                                    )
+                                    Toast.makeText(context, "Skopiowano", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Kopiuj zamaskowany tekst")
+                        }
+                    }
+
+                    if (currentMode == DepseudoMode.AI_RESPONSE) {
                     LynxPrimaryButton(
                         onClick  = {
                             val sesId = activeSessionId ?: return@LynxPrimaryButton
@@ -402,25 +467,41 @@ fun DepseudonymizationScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            if (savedDone) "Zapisano" else "Zapisz w bibliotece",
-                            fontSize   = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color      = if (savedDone) LynxColors.Green else LynxColors.TextPrimary
+                            if (savedDone) "Zapisano" else if (fromLibrary) "Zapisz odpowiedź AI" else "Zapisz w bibliotece",
+                            color = if (savedDone) LynxColors.Green else LynxColors.TextPrimary
                         )
                     }
+                    }
 
+                    if (currentMode != DepseudoMode.MASKED_VIEW) {
                     LynxSecondaryButton(
                         onClick  = { showDownloadWarning = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Pobierz plik", fontSize = 14.sp)
+                        Text(
+                            if (currentMode == DepseudoMode.SOURCE_DOCUMENT) "Pobierz oryginał" else "Pobierz plik"
+                        )
+                    }
                     }
 
                     LynxGhostButton(
-                        onClick  = { restoredText = ""; inputText = ""; savedDone = false; errorMessage = "" },
+                        onClick  = {
+                            if (fromLibrary) {
+                                onBack()
+                            } else {
+                                restoredText = ""
+                                inputText = ""
+                                savedDone = false
+                                errorMessage = ""
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Odkryj nowy tekst", fontSize = 13.sp, color = LynxColors.TextDim)
+                        Text(
+                            if (fromLibrary) "← Dokument" else "Wklej inny tekst",
+                            fontSize = 14.sp,
+                            color = if (fromLibrary) LynxColors.BlueLight else LynxColors.TextDim
+                        )
                     }
                 }
             }

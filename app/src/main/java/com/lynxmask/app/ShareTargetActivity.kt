@@ -62,6 +62,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxBrandButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
@@ -86,7 +88,6 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 private const val TAG = "LynxMask_ShareTarget"
@@ -210,6 +211,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     // ASYNC-FIX v2.2: scope do uruchomienia pseudonymize() poza wątkiem głównym
     val scope = rememberCoroutineScope()
 
+    fun publishState(newState: ShareScreenState) {
+        scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) { state = newState }
+    }
+
     // Słowniki — ładowane raz, dostępne we wszystkich ścieżkach pseudonimizacji
     // BUG-DICT-ACTIVITY FIX v2.8: nie cachuj przez remember — entries czytane świeżo przy każdym pseudonymize.
     // remember zamiast LaunchedEffect: synchroniczne wykonanie gwarantuje załadowanie przed przetwarzaniem intentu.
@@ -219,6 +224,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
     var docScanUris by remember { mutableStateOf<List<android.net.Uri>?>(null) }
     var docScanError by remember { mutableStateOf(false) }
     var filePickerUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var savedLibrarySessionId by remember { mutableStateOf<String?>(null) }
 
     // File picker — "Wybierz plik z dysku"
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -268,7 +274,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
                             onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
                             userDictionary = UserDictionary.entries,
-                            setState = { state = it }
+                            setState = ::publishState
                         )
                     }
                     return@LaunchedEffect
@@ -281,7 +287,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
                 }
                 val (rawText, isOcr, ocrConf) = _extracted
-                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
+                finishWithText(rawText, syntheticIntent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { publishState(it) }
                 return@LaunchedEffect
             }
 
@@ -313,7 +319,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
                         onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
                         userDictionary = UserDictionary.entries,
-                        setState = { state = it }
+                        setState = ::publishState
                     )
                 }
                 return@LaunchedEffect
@@ -321,7 +327,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
             val (rawText, isOcr, ocrConf) = withContext(Dispatchers.IO) {
                 extractRawText(intent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
             }
-            finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
+            finishWithText(rawText, intent, goToReview = isOcr, userDictionary = UserDictionary.entries, guardAllowlist = GuardAllowlist.entries, mlKitConfidence = ocrConf) { publishState(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd: ${e.message}", e)
             DebugLogBuffer.log("ShareTarget", "EXCEPTION: ${e.javaClass.simpleName}: ${e.message}")
@@ -342,7 +348,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                         forceImageRedact = intent.getBooleanExtra(EXTRA_FORCE_IMAGE_REDACT, false),
                         onProgress = { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } },
                         userDictionary = UserDictionary.entries,
-                        setState = { state = it }
+                        setState = ::publishState
                     )
                 }
             } else {
@@ -355,7 +361,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                     extractRawText(syntheticIntent, context) { label -> scope.launch(Dispatchers.Main.immediate) { progressLabel = label } }
                 }
                 val (rawText, isOcr, ocrConf) = _extracted
-                finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries, mlKitConfidence = ocrConf) { state = it }
+                finishWithText(rawText, syntheticIntent, isOcr, UserDictionary.entries, GuardAllowlist.entries, mlKitConfidence = ocrConf) { publishState(it) }
             }
         } catch (e: Exception) {
             state = ShareScreenState.Error("Błąd odczytu pliku: ${e.message}")
@@ -416,6 +422,36 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
         )
     }
 
+    savedLibrarySessionId?.let { sesjaId ->
+        AlertDialog(
+            onDismissRequest = {
+                savedLibrarySessionId = null
+                onFinished()
+            },
+            title = { Text("Zapisano w bibliotece", color = LynxColors.TextPrimary) },
+            text = {
+                Text(
+                    "Sesja zapisana. Możesz ją otworzyć w Bibliotece lub zamknąć ten ekran.",
+                    color = LynxColors.TextSecondary
+                )
+            },
+            confirmButton = {
+                LynxBrandButton(onClick = {
+                    context.openMainToLibrary(sesjaId)
+                    savedLibrarySessionId = null
+                    onFinished()
+                }) { Text("Otwórz bibliotekę") }
+            },
+            dismissButton = {
+                LynxGhostButton(onClick = {
+                    savedLibrarySessionId = null
+                    onFinished()
+                }) { Text("Zamknij") }
+            },
+            containerColor = LynxColors.Surface
+        )
+    }
+
     Surface(modifier = Modifier.fillMaxSize().navigationBarsPadding(),
             color = MaterialTheme.colorScheme.background) {
         when (val s = state) {
@@ -468,8 +504,7 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             if (saved) {
                                 SessionStore.recordAudit(context, sesjaId, "image_saved")
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Zapisano do biblioteki", Toast.LENGTH_SHORT).show()
-                                    onFinished()
+                                    savedLibrarySessionId = sesjaId
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
@@ -564,6 +599,10 @@ private fun ShareTargetScreen(intent: Intent, onFinished: () -> Unit) {
                             )
                         }
                         Toast.makeText(context, "Logi skopiowane (${DebugLogBuffer.size()} wpisów)", Toast.LENGTH_SHORT).show()
+                    },
+                    onOpenLibrary = {
+                        context.openMainToLibrary(s.result.sessionId)
+                        onFinished()
                     }
                 )
         }
@@ -734,20 +773,36 @@ private suspend fun routeImageInput(
     }
 
     try {
-        val (text, conf) = ocrFromBitmap(bmp)
+        UserDictionary.load(context)
+
+        // Twarze najpierw — bez pełnego OCR gdy zdjęcie osoby/dowodu ze zdjęciem
+        val faces = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.detectFacesAsRegions(bmp)
+        }
+
+        if (faces.isNotEmpty()) {
+            DebugLogBuffer.log("ShareTarget", "Obraz: twarze=${faces.size} → maskowanie (1× OCR linii)")
+            onProgress("Przygotowuję maskowanie dokumentu ze zdjęciem...")
+            val textRegions = withContext(Dispatchers.Default) {
+                ImageRedactionPipeline.detectTextLinesAsRegions(bmp, userDictionary)
+            }
+            setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = faces + textRegions))
+            return
+        }
+
+        val (text, conf) = withContext(Dispatchers.Default) { ocrFromBitmap(bmp) }
         val trimmedLen = text.trim().length
-        val faces = ImageRedactionPipeline.detectFacesAsRegions(bmp)
         val identityDoc = looksLikeIdentityDocument(text)
         val useTextPipeline = shouldRouteImageToTextPipeline(
             ocrCharCount = trimmedLen,
             forceImageRedact = false,
-            faceCount = faces.size,
+            faceCount = 0,
             identityDocument = identityDoc
         )
 
         DebugLogBuffer.log(
             "ShareTarget",
-            "Obraz: OCR=$trimmedLen zn., twarze=${faces.size}, dowód/legitymacja=$identityDoc → " +
+            "Obraz: OCR=$trimmedLen zn., dowód/legitymacja=$identityDoc → " +
                 if (useTextPipeline) "ścieżka tekstowa" else "maskowanie obrazu"
         )
 
@@ -763,19 +818,17 @@ private suspend fun routeImageInput(
         }
 
         onProgress(
-            if (faces.isNotEmpty() || identityDoc)
-                "Przygotowuję maskowanie dokumentu ze zdjęciem..."
-            else
-                "Wykrywam twarze i tekst..."
+            if (identityDoc) "Przygotowuję maskowanie dokumentu..."
+            else "Wykrywam dane na obrazie..."
         )
-        UserDictionary.load(context)
-        val regions = withContext(Dispatchers.Default) {
-            ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = userDictionary)
+        val textRegions = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.detectTextLinesAsRegions(bmp, userDictionary)
         }
-        setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = regions))
+        setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = textRegions))
     } catch (e: Exception) {
+        DebugLogBuffer.log("ShareTarget", "routeImageInput BŁĄD: ${e.message}")
         bmp.recycle()
-        throw e
+        setState(ShareScreenState.Error("Błąd przetwarzania obrazu: ${e.message ?: "nieznany"}"))
     }
 }
 
@@ -793,10 +846,18 @@ private suspend fun openImageRedactScreen(
         setState(ShareScreenState.Error("Nie udało się wczytać obrazu"))
         return
     }
-    val regions = withContext(Dispatchers.Default) {
-        ImageRedactionPipeline.detectFacesAndTextAsRegions(bmp, userDict = userDictionary)
+    try {
+        val faces = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.detectFacesAsRegions(bmp)
+        }
+        val textRegions = withContext(Dispatchers.Default) {
+            ImageRedactionPipeline.detectTextLinesAsRegions(bmp, userDictionary)
+        }
+        setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = faces + textRegions))
+    } catch (e: Exception) {
+        bmp.recycle()
+        setState(ShareScreenState.Error("Błąd maskowania: ${e.message ?: "nieznany"}"))
     }
-    setState(ShareScreenState.ImageRedact(bitmap = bmp, regions = regions))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

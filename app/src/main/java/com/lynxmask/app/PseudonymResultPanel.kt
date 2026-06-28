@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.ui.components.LynxGhostButton
+import com.lynxmask.app.ui.components.LynxBrandButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.components.LynxSuccessButton
@@ -56,7 +57,8 @@ fun PseudonymResultPanel(
     onAddToAllowlist: ((String, String) -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
     onDebugLog: (() -> Unit)? = null,
-    onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null
+    onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null,
+    onOpenLibrary: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showDisclaimer by remember { mutableStateOf(false) }
@@ -251,7 +253,7 @@ fun PseudonymResultPanel(
             ) {
                 Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Podgląd tekstu", fontSize = 14.sp)
+                Text("Podgląd tekstu")
             }
 
             Spacer(modifier = Modifier.height(LynxSpacing.md))
@@ -296,7 +298,8 @@ fun PseudonymResultPanel(
                     }
                 }
             },
-            onDebugLog = onDebugLog
+            onDebugLog = onDebugLog,
+            onOpenLibrary = onOpenLibrary
         )
     }
 
@@ -472,7 +475,8 @@ private fun BottomActionBar(
     onLibrary: () -> Unit,
     onCopy: () -> Unit,
     onForward: (() -> Unit)?,
-    onDebugLog: (() -> Unit)?
+    onDebugLog: (() -> Unit)?,
+    onOpenLibrary: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -510,6 +514,11 @@ private fun BottomActionBar(
                         color = LynxColors.Green,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
+                    onOpenLibrary?.let { openLib ->
+                        LynxBrandButton(onClick = openLib, modifier = Modifier.fillMaxWidth()) {
+                            Text("Otwórz bibliotekę")
+                        }
+                    }
                 }
             }
 
@@ -529,7 +538,7 @@ private fun BottomActionBar(
                     ) {
                         Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (copied) "Skopiowano" else "Kopiuj", fontSize = 13.sp, maxLines = 1)
+                        Text(if (copied) "Skopiowano" else "Kopiuj", maxLines = 1)
                     }
                 }
                 if (showForward && onForward != null) {
@@ -545,7 +554,7 @@ private fun BottomActionBar(
                         ) {
                             Icon(Icons.Outlined.Send, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Wyślij do AI", fontSize = 13.sp, maxLines = 1)
+                            Text("Wyślij do AI", maxLines = 1)
                         }
                     }
                 }

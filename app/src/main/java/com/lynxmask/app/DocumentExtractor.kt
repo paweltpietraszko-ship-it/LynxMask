@@ -181,8 +181,24 @@ internal fun loadBitmapExifAware(context: Context, uri: Uri): Bitmap? {
         DebugLogBuffer.log("ImageLoad", "EXIF err: ${e.message}")
         0
     }
-    if (degrees == 0) return raw
+    if (degrees == 0) return scaleDownForMlKit(raw)
     DebugLogBuffer.log("ImageLoad", "EXIF rotate ${degrees}°")
     val m = Matrix().apply { postRotate(degrees.toFloat()) }
-    return Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true).also { raw.recycle() }
+    return Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+        .also { raw.recycle() }
+        .let { scaleDownForMlKit(it) }
+}
+
+private const val MAX_MLKIT_IMAGE_DIMENSION = 2048
+
+private fun scaleDownForMlKit(bitmap: Bitmap): Bitmap {
+    val maxSide = maxOf(bitmap.width, bitmap.height)
+    if (maxSide <= MAX_MLKIT_IMAGE_DIMENSION) return bitmap
+    val scale = MAX_MLKIT_IMAGE_DIMENSION.toFloat() / maxSide
+    val w = (bitmap.width * scale).toInt().coerceAtLeast(1)
+    val h = (bitmap.height * scale).toInt().coerceAtLeast(1)
+    DebugLogBuffer.log("ImageLoad", "Skala ${bitmap.width}x${bitmap.height} → ${w}x$h")
+    return Bitmap.createScaledBitmap(bitmap, w, h, true).also {
+        if (it !== bitmap) bitmap.recycle()
+    }
 }

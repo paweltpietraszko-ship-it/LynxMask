@@ -87,13 +87,11 @@ internal fun LynxTonalButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    accent: androidx.compose.ui.graphics.Color = LynxColors.Blue,
     content: @Composable RowScope.() -> Unit
 ) = LynxSecondaryButton(
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    accent = accent,
     content = content
 )
 

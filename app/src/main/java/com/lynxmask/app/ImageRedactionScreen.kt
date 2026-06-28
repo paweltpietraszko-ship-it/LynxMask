@@ -429,7 +429,7 @@ fun ImageRedactionScreen(
                 if (isProcessing) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Zapisz do biblioteki")
+                    Text("Dodaj do biblioteki")
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))

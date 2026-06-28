@@ -29,7 +29,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,6 +66,11 @@ import kotlinx.coroutines.withContext
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
 class MainActivity : FragmentActivity() {
+    private fun notifyLibraryOpenFromIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(LynxNavExtras.OPEN_LIBRARY, false) != true) return
+        LynxPendingNav.requestLibrary(intent.getStringExtra(LynxNavExtras.OPEN_LIBRARY_SESSION))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // installSplashScreen musi być przed super.onCreate() — utrzymuje splash
         // do czasu gdy setKeepOnScreenCondition zwróci false (inicjalizacja gotowa)
@@ -72,6 +83,7 @@ class MainActivity : FragmentActivity() {
         )
         var appReady = false
         splashScreen.setKeepOnScreenCondition { !appReady }
+        notifyLibraryOpenFromIntent(intent)
 
         // [BUG-SS-3 fix] init() wykonuje I/O (Keystore + SQLite + ALTER TABLE) — musi być poza Main thread
         lifecycleScope.launch {
@@ -90,6 +102,12 @@ class MainActivity : FragmentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         DebugLogBuffer.clearOnExit()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        notifyLibraryOpenFromIntent(intent)
     }
 }
 
@@ -112,7 +130,10 @@ fun AppNavigation() {
             onAuthenticated = { authenticated = true },
             onExpressMode   = { showExpressMode = true }
         )
-        else -> MainTabNav(onLogout = { authenticated = false })
+        else -> MainTabNav(
+            onLogout = { authenticated = false },
+            launchIntent = (context as? MainActivity)?.intent
+        )
     }
 
     if (showCrashDialog) {
@@ -160,12 +181,52 @@ private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
 private fun MainTabNav(
     isExpress: Boolean = false,
     onExitExpress: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    launchIntent: Intent? = null
 ) {
     val context = LocalContext.current
-    var appScreen            by rememberSaveable { mutableStateOf(AppScreen.MAIN) }
-    var selectedSessionId    by rememberSaveable { mutableStateOf<String?>(null) }
+    val activity = context as? MainActivity
+    val libraryNavRevision = LynxPendingNav.revision
+
+    val openLibraryOnStart = LynxPendingNav.hasPending() ||
+        launchIntent?.getBooleanExtra(LynxNavExtras.OPEN_LIBRARY, false) == true
+
+    var appScreen by rememberSaveable {
+        mutableStateOf(if (openLibraryOnStart) AppScreen.LIBRARY else AppScreen.MAIN)
+    }
+    var selectedSessionId by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedDepseudoMode by rememberSaveable { mutableStateOf(DepseudoMode.AI_RESPONSE) }
+    var openLibrarySessionId by rememberSaveable {
+        mutableStateOf(
+            LynxPendingNav.peekSessionId()?.takeIf { it.isNotEmpty() }
+                ?: launchIntent?.getStringExtra(LynxNavExtras.OPEN_LIBRARY_SESSION)
+        )
+    }
+    var libraryDepseudoMode by rememberSaveable { mutableStateOf<DepseudoMode?>(null) }
+
+    fun applyLibraryNav(intent: Intent?) {
+        when (val pending = LynxPendingNav.consumeLibraryOpen()) {
+            null -> {
+                if (intent?.getBooleanExtra(LynxNavExtras.OPEN_LIBRARY, false) != true) return
+                appScreen = AppScreen.LIBRARY
+                openLibrarySessionId = intent.getStringExtra(LynxNavExtras.OPEN_LIBRARY_SESSION)
+                libraryDepseudoMode = null
+                intent.removeExtra(LynxNavExtras.OPEN_LIBRARY)
+                intent.removeExtra(LynxNavExtras.OPEN_LIBRARY_SESSION)
+            }
+            else -> {
+                appScreen = AppScreen.LIBRARY
+                openLibrarySessionId = pending.takeIf { it.isNotEmpty() }
+                libraryDepseudoMode = null
+                intent?.removeExtra(LynxNavExtras.OPEN_LIBRARY)
+                intent?.removeExtra(LynxNavExtras.OPEN_LIBRARY_SESSION)
+            }
+        }
+    }
+
+    LaunchedEffect(libraryNavRevision, launchIntent) {
+        applyLibraryNav(activity?.intent ?: launchIntent)
+    }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -178,12 +239,26 @@ private fun MainTabNav(
         )
     }
 
-    BackHandler(enabled = appScreen != AppScreen.MAIN) {
-        if (appScreen == AppScreen.DEPSEUDO) {
-            selectedSessionId    = null
-            selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+    fun navigateBack() {
+        when (appScreen) {
+            AppScreen.DEPSEUDO -> {
+                selectedSessionId = null
+                selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+                appScreen = AppScreen.MAIN
+            }
+            AppScreen.LIBRARY -> {
+                when {
+                    libraryDepseudoMode != null -> libraryDepseudoMode = null
+                    openLibrarySessionId != null -> openLibrarySessionId = null
+                    else -> appScreen = AppScreen.MAIN
+                }
+            }
+            AppScreen.MAIN -> Unit
         }
-        appScreen = AppScreen.MAIN
+    }
+
+    BackHandler(enabled = appScreen != AppScreen.MAIN) {
+        navigateBack()
     }
 
     Column(
@@ -215,11 +290,15 @@ private fun MainTabNav(
                     ExpressLockedTab(onLogin = onExitExpress)
                 } else {
                     LibraryScreen(
-                        onBack     = { appScreen = AppScreen.MAIN },
-                        onDepseudo = { id, mode ->
-                            selectedSessionId    = id
-                            selectedDepseudoMode = mode
-                            appScreen = AppScreen.DEPSEUDO
+                        openSessionId       = openLibrarySessionId,
+                        activeDepseudoMode  = libraryDepseudoMode,
+                        onOpenSession       = { openLibrarySessionId = it },
+                        onCloseSession      = { openLibrarySessionId = null },
+                        onCloseDepseudo     = { libraryDepseudoMode = null },
+                        onGoToHub           = { appScreen = AppScreen.MAIN },
+                        onDepseudo          = { id, mode ->
+                            openLibrarySessionId = id
+                            libraryDepseudoMode = mode
                         }
                     )
                 }
@@ -229,11 +308,9 @@ private fun MainTabNav(
                 } else {
                     DepseudonymizationScreen(
                         preselectedSessionId = selectedSessionId,
-                        initialMode          = selectedDepseudoMode,
-                        onBack = {
-                            selectedSessionId    = null
-                            appScreen = AppScreen.MAIN
-                        }
+                        initialMode          = DepseudoMode.AI_RESPONSE,
+                        fromLibrary          = false,
+                        onBack               = { navigateBack() }
                     )
                 }
             }
@@ -244,14 +321,26 @@ private fun MainTabNav(
             onExitExpress = onExitExpress,
             onLogout      = onLogout,
             onNavigate    = { screen ->
-                if (screen == AppScreen.DEPSEUDO) {
-                    selectedSessionId    = null
-                    selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+                when (screen) {
+                    AppScreen.DEPSEUDO -> {
+                        if (appScreen != AppScreen.DEPSEUDO) {
+                            selectedSessionId = null
+                            selectedDepseudoMode = DepseudoMode.AI_RESPONSE
+                            libraryDepseudoMode = null
+                        }
+                        appScreen = screen
+                    }
+                    AppScreen.LIBRARY -> {
+                        libraryDepseudoMode = null
+                        appScreen = screen
+                    }
+                    AppScreen.MAIN -> {
+                        selectedSessionId = null
+                        openLibrarySessionId = null
+                        libraryDepseudoMode = null
+                        appScreen = screen
+                    }
                 }
-                if (screen == AppScreen.MAIN) {
-                    selectedSessionId = null
-                }
-                appScreen = screen
             }
         )
     }
@@ -263,13 +352,32 @@ private fun HubScreen(
     onFileClick: () -> Unit,
     onTextSubmit: (String) -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
     var pastedText by remember { mutableStateOf("") }
+    var manualEdit by remember { mutableStateOf(false) }
+
+    fun pasteFromClipboard() {
+        scope.launch {
+            val clip = clipboard.getClipEntry()?.clipData?.getItemAt(0)?.coerceToText(context)?.toString()
+            if (clip.isNullOrBlank()) {
+                Toast.makeText(context, "Schowek jest pusty", Toast.LENGTH_SHORT).show()
+            } else {
+                pastedText = clip.trim()
+                manualEdit = false
+                focusManager.clearFocus()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LynxColors.Background)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -285,11 +393,13 @@ private fun HubScreen(
             )
         }
 
-        Spacer(Modifier.weight(0.42f))
-
         Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = LynxSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = LynxSpacing.lg)
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 "PSE",
@@ -322,56 +432,116 @@ private fun HubScreen(
                 color = LynxColors.TextSecondary,
                 textAlign = TextAlign.Center
             )
-        }
 
-        Spacer(Modifier.weight(0.58f))
+            Spacer(Modifier.height(LynxSpacing.lg))
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = LynxSpacing.lg),
-            shape = RoundedCornerShape(LynxShapes.CardRadius),
-            colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(LynxSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(LynxShapes.CardRadius),
+                colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                LynxPrimaryButton(
-                    onClick = onFileClick,
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier.padding(LynxSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
                 ) {
-                    Text("Wybierz plik", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                }
-                Text(
-                    "PDF · DOCX · TXT · obraz",
-                    modifier = Modifier.fillMaxWidth(),
-                    fontSize = 11.sp,
-                    color = LynxColors.TextDim,
-                    textAlign = TextAlign.Center
-                )
-                OutlinedTextField(
-                    value = pastedText,
-                    onValueChange = { pastedText = it },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = LynxSpacing.TouchTarget, max = 120.dp),
-                    placeholder = {
-                        Text("Wklej tekst...", color = LynxColors.TextDim, fontSize = 14.sp)
-                    },
-                    shape = RoundedCornerShape(LynxShapes.ButtonRadius),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = LynxColors.ActiveNav,
-                        unfocusedContainerColor = LynxColors.ActiveNav,
-                        focusedBorderColor = LynxColors.Blue,
-                        unfocusedBorderColor = LynxColors.Border
+                    LynxPrimaryButton(
+                        onClick = onFileClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Wybierz plik")
+                    }
+                    Text(
+                        "PDF · DOCX · TXT · obraz",
+                        modifier = Modifier.fillMaxWidth(),
+                        fontSize = 11.sp,
+                        color = LynxColors.TextDim,
+                        textAlign = TextAlign.Center
                     )
-                )
-                LynxPrimaryButton(
-                    onClick = { onTextSubmit(pastedText) },
-                    enabled = pastedText.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Pseudonimizuj", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+
+                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
+                    if (pastedText.isBlank() && !manualEdit) {
+                        LynxSecondaryButton(
+                            onClick = { pasteFromClipboard() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Wklej ze schowka")
+                        }
+                        LynxSecondaryButton(
+                            onClick = { manualEdit = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Wpisz ręcznie")
+                        }
+                    } else if (manualEdit) {
+                        OutlinedTextField(
+                            value = pastedText,
+                            onValueChange = { pastedText = it },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 160.dp),
+                            placeholder = {
+                                Text("Wklej lub wpisz tekst…", color = LynxColors.TextDim, fontSize = 14.sp)
+                            },
+                            shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = LynxColors.ActiveNav,
+                                unfocusedContainerColor = LynxColors.ActiveNav,
+                                focusedBorderColor = LynxColors.Blue,
+                                unfocusedBorderColor = LynxColors.Border
+                            )
+                        )
+                        LynxGhostButton(
+                            onClick = {
+                                manualEdit = false
+                                focusManager.clearFocus()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Gotowe", fontSize = 13.sp, color = LynxColors.TextDim)
+                        }
+                    } else {
+                        Text(
+                            pastedText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 120.dp)
+                                .verticalScroll(rememberScrollState()),
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp,
+                            color = LynxColors.TextPrimary
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+                        ) {
+                            LynxGhostButton(
+                                onClick = {
+                                    pastedText = ""
+                                    manualEdit = false
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Wyczyść", fontSize = 13.sp, color = LynxColors.TextDim)
+                            }
+                            LynxGhostButton(
+                                onClick = { manualEdit = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Edytuj", fontSize = 13.sp, color = LynxColors.TextDim)
+                            }
+                        }
+                    }
+
+                    LynxPrimaryButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            onTextSubmit(pastedText)
+                        },
+                        enabled = pastedText.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Pseudonimizuj")
+                    }
                 }
             }
         }
@@ -461,7 +631,7 @@ private fun BottomNavBar(
             horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
         ) {
             NavButton(
-                label    = "Odkryj",
+                label    = "Odp. AI",
                 selected = current == AppScreen.DEPSEUDO,
                 modifier = Modifier.weight(1f),
                 onClick  = {
@@ -469,10 +639,11 @@ private fun BottomNavBar(
                 }
             )
             NavButton(
-                label    = "Biblioteka",
-                selected = current == AppScreen.LIBRARY,
-                modifier = Modifier.weight(1f),
-                onClick  = {
+                label        = "Biblioteka",
+                selected     = current == AppScreen.LIBRARY,
+                modifier     = Modifier.weight(1f),
+                brandPalette = true,
+                onClick      = {
                     if (current != AppScreen.LIBRARY) onNavigate(AppScreen.LIBRARY)
                 }
             )
@@ -491,8 +662,15 @@ private fun NavButton(
     label: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    brandPalette: Boolean = false,
     onClick: () -> Unit
-) = LynxNavButton(label = label, selected = selected, onClick = onClick, modifier = modifier)
+) = LynxNavButton(
+    label = label,
+    selected = selected,
+    onClick = onClick,
+    modifier = modifier,
+    brandPalette = brandPalette
+)
 
 // ── Zabezpieczenia — modal Art. 17 RODO ──────────────────────────────────────
 @Composable
@@ -789,11 +967,64 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
     }
 
     // Krok 1 — główny modal Zabezpieczenia
+    val securityScrollMax = (LocalConfiguration.current.screenHeightDp * 0.72f).dp
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Zabezpieczenia") },
+        title = { Text("Zabezpieczenia", fontFamily = LynxTypography.Sans) },
         text  = {
-            Column(verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = securityScrollMax)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            ) {
+
+                // Słownik — transfer Mobile ↔ Desktop (priorytet)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "SŁOWNIK",
+                        fontFamily    = LynxTypography.Mono,
+                        fontSize      = 9.sp,
+                        color         = LynxColors.Blue,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        "Eksport i import słownika własnego między telefonem a Desktop LynxMask. " +
+                        "Format: plik .lynxdict (JSON). Zalecany przed zmianą urządzenia.",
+                        fontSize   = 12.sp,
+                        lineHeight = 17.sp,
+                        color      = LynxColors.TextSecondary
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+                    ) {
+                        LynxSecondaryButton(
+                            onClick  = { exportDictionary() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Eksportuj")
+                        }
+                        LynxSecondaryButton(
+                            onClick  = { importLauncher.launch(arrayOf("application/json", "*/*")) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Importuj")
+                        }
+                    }
+                    LynxSecondaryButton(
+                        onClick = { showDictManager = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val n = dictEntries.size
+                        Text(
+                            if (n > 0) "Przeglądaj słownik ($n wpisów)"
+                            else "Słownik jest pusty"
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
                 // Informacje o szyfrowaniu
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -836,55 +1067,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         onClick  = { showChangePassword = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Zmień hasło", fontSize = 13.sp)
-                    }
-                }
-
-                HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
-
-                // Kopia zapasowa słownika użytkownika
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "SŁOWNIK",
-                        fontFamily    = LynxTypography.Mono,
-                        fontSize      = 9.sp,
-                        color         = LynxColors.Blue,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        "Kopia zapasowa słownika własnego. Zalecana przed reinstalacją lub zmianą urządzenia. Format: .lynxdict (JSON)",
-                        fontSize   = 12.sp,
-                        lineHeight = 17.sp,
-                        color      = LynxColors.TextSecondary
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-                    ) {
-                        LynxSecondaryButton(
-                            onClick  = { exportDictionary() },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Eksportuj", fontSize = 13.sp)
-                        }
-                        LynxSecondaryButton(
-                            onClick  = { importLauncher.launch(arrayOf("application/json", "*/*")) },
-                            modifier = Modifier.weight(1f),
-                            accent = LynxColors.Blue
-                        ) {
-                            Text("Importuj", fontSize = 13.sp, color = LynxColors.Blue)
-                        }
-                    }
-                    LynxSecondaryButton(
-                        onClick = { showDictManager = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val n = dictEntries.size
-                        Text(
-                            if (n > 0) "Przeglądaj słownik ($n wpisów)"
-                            else "Słownik jest pusty",
-                            fontSize = 13.sp
-                        )
+                        Text("Zmień hasło")
                     }
                 }
 
@@ -903,7 +1086,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         onClick  = { onDismiss(); onLogout() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Wyloguj się", fontSize = 13.sp)
+                        Text("Wyloguj się")
                     }
                 }
 
@@ -931,9 +1114,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     ) {
                         Text(
                             "Usu\u0144 wszystkie dane",
-                            color      = LynxColors.Red,
-                            fontSize   = 13.sp,
-                            fontWeight = FontWeight.Medium
+                            color = LynxColors.Red
                         )
                     }
                 }

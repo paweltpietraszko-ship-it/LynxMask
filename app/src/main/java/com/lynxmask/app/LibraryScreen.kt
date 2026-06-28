@@ -1,15 +1,10 @@
 package com.lynxmask.app
 
-// LibraryScreen.kt — v2.3
-// Nowa architektura: lista sesji (półka) → ekran sesji z akcjami
-// Usunięte: rozwijane wiersze, tokeny w liście, przyciski wstecz
-// Dodane: nawigacja lista→sesja, 5 przycisków akcji, odpowiedzi AI
+// LibraryScreen.kt — v2.4
+// Lista sesji → ekran sesji → akcje (nawigacja UX v1, 28.06.2026)
 //
-// ZMIANA v2.1 (BUG-LIB-5): LaunchedEffect(Unit) → LaunchedEffect(selectedSession)
-//   — lista nie odświeżała się po zamknięciu szczegółów sesji.
-// ZMIANA v2.2 (BUG-LIB-EDIT): "Edytuj dokument" miał pustą lambdę.
-//   Fix: SOURCE_DOCUMENT. "Odkryj dane" poprawiony na AI_RESPONSE (duplikat SOURCE_DOCUMENT).
-// ZMIANA v2.3: brak (tylko korekta komentarzy)
+// ZMIANA v2.4: stan sesji w MainTabNav (openSessionId); widoczny ← Wstecz;
+//   poprawione nazwy akcji; pusta biblioteka z CTA.
 
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -48,6 +43,7 @@ import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.components.LynxDangerTextButton
 import com.lynxmask.app.ui.components.LynxGhostButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxScreenHeader
 import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
@@ -57,54 +53,73 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun LibraryScreen(
-    onBack: () -> Unit,
+    openSessionId: String?,
+    activeDepseudoMode: DepseudoMode?,
+    onOpenSession: (String) -> Unit,
+    onCloseSession: () -> Unit,
+    onCloseDepseudo: () -> Unit,
+    onGoToHub: () -> Unit,
     onDepseudo: (sessionId: String, mode: DepseudoMode) -> Unit
 ) {
-    val context          = LocalContext.current
-    val coroutineScope   = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    var sessions        by remember { mutableStateOf<List<SessionStore.SessionRecord>>(emptyList()) }
+    var sessions  by remember { mutableStateOf<List<SessionStore.SessionRecord>>(emptyList()) }
     var isLoading       by remember { mutableStateOf(true) }
-    var selectedSession by remember { mutableStateOf<SessionStore.SessionRecord?>(null) }
 
-    // BUG-LIB-5: LaunchedEffect(Unit) ładował listę tylko raz — po powrocie z SessionDetailScreen
-    // lista pozostawała nieaktualna. Trigger na selectedSession: null = start lub powrót z detali.
-    LaunchedEffect(selectedSession) {
-        if (selectedSession == null) {
-            isLoading = true
-            sessions  = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
-            isLoading = false
+    val selectedSession = openSessionId?.let { id -> sessions.find { it.sesjaId == id } }
+
+    LaunchedEffect(openSessionId) {
+        isLoading = true
+        sessions  = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
+        isLoading = false
+    }
+
+    BackHandler(enabled = activeDepseudoMode != null) {
+        onCloseDepseudo()
+    }
+    BackHandler(enabled = activeDepseudoMode == null && openSessionId != null) {
+        onCloseSession()
+    }
+
+    when {
+        activeDepseudoMode != null && selectedSession != null -> {
+            key(activeDepseudoMode) {
+                DepseudonymizationScreen(
+                    preselectedSessionId = selectedSession.sesjaId,
+                    initialMode          = activeDepseudoMode,
+                    fromLibrary          = true,
+                    onBack               = onCloseDepseudo,
+                    onRestoreOriginal    = {
+                        onDepseudo(selectedSession.sesjaId, DepseudoMode.SOURCE_DOCUMENT)
+                    }
+                )
+            }
         }
-    }
-
-    // Back: jeśli sesja otwarta → wróć do listy, inaczej → wyjdź z biblioteki
-    BackHandler(enabled = selectedSession != null) {
-        selectedSession = null
-    }
-
-    if (selectedSession != null) {
-        val session = selectedSession!!
-        SessionDetailScreen(
-            session        = session,
-            onBack         = { selectedSession = null },
-            onDepseudo     = { mode -> onDepseudo(session.sesjaId, mode) },
-            onSessionUpdated = { updatedSession ->
-                selectedSession = updatedSession
-                sessions = sessions.map { if (it.sesjaId == updatedSession.sesjaId) updatedSession else it }
-            },
-            onSessionDeleted = {
-                sessions = sessions.filter { it.sesjaId != session.sesjaId }
-                selectedSession = null
-            }
-        )
-    } else {
-        SessionListScreen(
-            sessions  = sessions,
-            isLoading = isLoading,
-            onSessionClick = { session ->
-                selectedSession = session
-            }
-        )
+        selectedSession != null -> {
+            SessionDetailScreen(
+                session          = selectedSession,
+                onBack           = onCloseSession,
+                onDepseudo       = { mode -> onDepseudo(selectedSession.sesjaId, mode) },
+                onSessionUpdated = { updatedSession ->
+                    sessions = sessions.map { if (it.sesjaId == updatedSession.sesjaId) updatedSession else it }
+                },
+                onSessionDeleted = {
+                    sessions = sessions.filter { it.sesjaId != selectedSession.sesjaId }
+                    onCloseSession()
+                }
+            )
+        }
+        openSessionId != null && !isLoading && sessions.none { it.sesjaId == openSessionId } -> {
+            LaunchedEffect(openSessionId) { onCloseSession() }
+        }
+        else -> {
+            SessionListScreen(
+                sessions       = sessions,
+                isLoading      = isLoading,
+                onGoToHub      = onGoToHub,
+                onSessionClick = { session -> onOpenSession(session.sesjaId) }
+            )
+        }
     }
 }
 
@@ -114,53 +129,59 @@ fun LibraryScreen(
 private fun SessionListScreen(
     sessions: List<SessionStore.SessionRecord>,
     isLoading: Boolean,
+    onGoToHub: () -> Unit,
     onSessionClick: (SessionStore.SessionRecord) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize().background(LynxColors.Background)
     ) {
-        // Nagłówek
-        Column(modifier = Modifier.fillMaxWidth().background(LynxColors.Sidebar)) {
-            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "BIBLIOTEKA (${sessions.size})",
-                    fontFamily    = LynxTypography.Mono,
-                    fontSize      = 12.sp,
-                    color         = LynxColors.Blue,
-                    letterSpacing = 1.5.sp
-                )
-            }
-        }
+        LynxScreenHeader(
+            title = "Biblioteka",
+            sectionLabel = "BAZA SESJI",
+            subtitle = if (!isLoading) "${sessions.size} zapisanych" else null
+        )
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 CircularProgressIndicator(color = LynxColors.Blue)
             }
 
-            sessions.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+            sessions.isEmpty() -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(LynxSpacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    "Brak sesji.\nUkryj dokument lub zapisz zamaskowany obraz.",
-                    color     = LynxColors.TextMuted,
-                    fontSize  = 14.sp,
-                    lineHeight = 22.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier  = Modifier.padding(LynxSpacing.lg)
+                    "Brak zapisanych sesji",
+                    color = LynxColors.TextSecondary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
                 )
+                Spacer(Modifier.height(LynxSpacing.sm))
+                Text(
+                    "Ukryj dokument lub obraz — potem wróć tutaj.",
+                    color = LynxColors.TextMuted,
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(Modifier.height(LynxSpacing.lg))
+                LynxPrimaryButton(onClick = onGoToHub, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ukryj pierwszy dokument")
+                }
             }
 
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = LynxSpacing.xs)
+                contentPadding = PaddingValues(
+                    top = LynxSpacing.xs,
+                    bottom = LynxSpacing.xl
+                )
             ) {
                 items(sessions, key = { it.sesjaId }) { session ->
                     SessionListItem(session = session, onClick = { onSessionClick(session) })
-                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
                 }
             }
         }
@@ -172,44 +193,35 @@ private fun SessionListItem(
     session: SessionStore.SessionRecord,
     onClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = LynxSpacing.md, vertical = 14.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text       = session.description.ifEmpty { session.sesjaId },
-                fontSize   = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color      = if (session.description.isNotEmpty()) LynxColors.TextPrimary else LynxColors.BlueLight,
-                fontFamily = if (session.description.isEmpty()) LynxTypography.Mono else null,
-                maxLines   = 1
-            )
-            if (session.description.isNotEmpty()) {
-                Text(
-                    text       = session.sesjaId,
-                    fontFamily = LynxTypography.Mono,
-                    fontSize   = 11.sp,
-                    color      = LynxColors.TextDim
-                )
-            } else if (session.isImage) {
-                Text(
-                    text     = "Obraz",
-                    fontSize = 11.sp,
-                    color    = LynxColors.TextDim
-                )
-            }
-        }
         Text(
-            text     = session.createdAt.take(10) + if (session.isImage) " · obraz" else "",
+            text = session.libraryTitle(),
+            fontFamily = LynxTypography.Sans,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = LynxColors.TextPrimary,
+            lineHeight = 21.sp,
+            maxLines = 2
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = session.libraryMetaLine(),
+            fontFamily = LynxTypography.Sans,
             fontSize = 12.sp,
-            color    = LynxColors.TextSecondary
+            color = LynxColors.TextDim,
+            maxLines = 1
         )
     }
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = LynxSpacing.md),
+        color = LynxColors.Border.copy(alpha = 0.45f),
+        thickness = 0.5.dp
+    )
 }
 
 // ── Ekran sesji (akcje) ───────────────────────────────────────────────────────
@@ -286,10 +298,10 @@ private fun SessionDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Usu\u0144 sesj\u0119?") },
+            title = { Text("Usuń dokument?") },
             text  = {
                 Text(
-                    "Sesja ${session.sesjaId} zostanie trwale usuni\u0119ta wraz ze wszystkimi odpowiedziami.",
+                    "Dokument zostanie trwale usunięty wraz z odpowiedziami AI.",
                     lineHeight = 20.sp
                 )
             },
@@ -349,120 +361,161 @@ private fun SessionDetailScreen(
     // Ekran sesji
     Column(modifier = Modifier.fillMaxSize().background(LynxColors.Background)) {
 
-        // Nagłówek sesji
-        Column(modifier = Modifier.fillMaxWidth().background(LynxColors.Sidebar)) {
-            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.sm)
-            ) {
-                Text(
-                    text       = session.description.ifEmpty { session.sesjaId },
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color      = LynxColors.TextPrimary
-                )
-                Text(
-                    text       = session.sesjaId + "  \u00b7  " + session.createdAt.take(10),
-                    fontFamily = LynxTypography.Mono,
-                    fontSize   = 11.sp,
-                    color      = LynxColors.TextDim
-                )
-            }
-        }
+        LynxScreenHeader(
+            title = session.libraryTitle(),
+            sectionLabel = "DOKUMENT",
+            subtitle = session.libraryMetaLine(),
+            backLabel = "Biblioteka",
+            onBack = onBack
+        )
 
-        // Przyciski akcji
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(LynxSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
         ) {
             if (session.isImage) {
                 imageBitmap?.let { bmp ->
-                    Image(
-                        bitmap = bmp.asImageBitmap(),
-                        contentDescription = "Podgląd zamaskowanego obrazu",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 320.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    Spacer(Modifier.height(LynxSpacing.sm))
-                }
-                SessionActionButton(label = "Udostępnij do innej aplikacji") {
-                    coroutineScope.launch {
-                        val bmp = imageBitmap ?: withContext(Dispatchers.IO) {
-                            SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
-                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            }
-                        } ?: return@launch
-                        val uri = withContext(Dispatchers.IO) {
-                            ImageRedactionPipeline.saveToCache(bmp, context)
-                        }
-                        val fwd = Intent(Intent.ACTION_SEND).apply {
-                            type = "image/jpeg"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(LynxShapes.CardRadius),
+                        colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Image(
+                            bitmap = bmp.asImageBitmap(),
+                            contentDescription = "Podgląd zamaskowanego obrazu",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 280.dp)
+                                .padding(LynxSpacing.sm),
+                            contentScale = ContentScale.Fit
+                        )
                     }
                 }
-            } else {
-                SessionActionButton(label = "Edytuj dokument") {
-                    onDepseudo(DepseudoMode.MASKED_VIEW)
-                }
-                SessionActionButton(label = "Odkryj dane") {
-                    onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
-                }
-                SessionActionButton(label = "Dodaj odpowied\u017a AI") {
-                    onDepseudo(DepseudoMode.AI_RESPONSE)
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(LynxShapes.CardRadius),
+                colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(LynxSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+                ) {
+                    Text(
+                        if (session.isImage) "OBRAZ" else "DOKUMENT",
+                        fontFamily = LynxTypography.Mono,
+                        fontSize = 9.sp,
+                        color = LynxColors.Blue,
+                        letterSpacing = 1.5.sp
+                    )
+                    if (session.isImage) {
+                        SessionActionButton(label = "Udostępnij do innej aplikacji") {
+                            coroutineScope.launch {
+                                val bmp = imageBitmap ?: withContext(Dispatchers.IO) {
+                                    SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
+                                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                    }
+                                } ?: return@launch
+                                val uri = withContext(Dispatchers.IO) {
+                                    ImageRedactionPipeline.saveToCache(bmp, context)
+                                }
+                                val fwd = Intent(Intent.ACTION_SEND).apply {
+                                    type = "image/jpeg"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
+                            }
+                        }
+                    } else {
+                        SessionActionButton(label = "Podgląd zamaskowanego") {
+                            onDepseudo(DepseudoMode.MASKED_VIEW)
+                        }
+                        SessionActionButton(label = "Przywróć oryginał") {
+                            onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
+                        }
+                        SessionActionButton(label = "Dodaj odpowiedź AI") {
+                            onDepseudo(DepseudoMode.AI_RESPONSE)
+                        }
+                    }
+                    SessionActionButton(label = "Zmień nazwę") {
+                        showRenameDialog = true
+                    }
                 }
             }
-            SessionActionButton(label = "Zmie\u0144 nazw\u0119") {
-                showRenameDialog = true
-            }
+
             SessionActionButton(
-                label = "Usu\u0144 sesj\u0119",
+                label = "Usuń dokument",
                 isDestructive = true
             ) {
                 showDeleteDialog = true
             }
 
-            // Odpowiedzi AI (tylko sesje tekstowe)
-            if (!session.isImage && responses.isNotEmpty()) {
-                Spacer(Modifier.height(LynxSpacing.sm))
+            if (!session.isImage) {
                 Text(
                     "ODPOWIEDZI AI (${responses.size})",
-                    fontFamily    = LynxTypography.Mono,
-                    fontSize      = 10.sp,
-                    color         = LynxColors.Blue,
+                    fontFamily = LynxTypography.Mono,
+                    fontSize = 9.sp,
+                    color = LynxColors.Blue,
                     letterSpacing = 1.5.sp
                 )
-                Spacer(Modifier.height(LynxSpacing.xs))
-                responses.forEach { response ->
-                    ResponseItem(
-                        response = response,
-                        onCopy   = { coroutineScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("masked", response.content))) } },
-                        onPreview = {
-                            previewText = response.content
-                            showPreview = true
-                        },
-                        onDelete = {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                SessionStore.deleteResponse(context, response.id)
-                                val updated = SessionStore.listResponses(context, session.sesjaId)
-                                withContext(Dispatchers.Main) { responses = updated }
+                if (responses.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(LynxShapes.CardRadius),
+                        colors = CardDefaults.cardColors(containerColor = LynxColors.ActiveNav.copy(alpha = 0.6f))
+                    ) {
+                        Text(
+                            "Brak zapisanych odpowiedzi.\nUżyj „Dodaj odpowiedź AI” po otrzymaniu wyniku z asystenta.",
+                            modifier = Modifier.padding(LynxSpacing.md),
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                            color = LynxColors.TextSecondary
+                        )
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(LynxShapes.CardRadius),
+                        colors = CardDefaults.cardColors(containerColor = LynxColors.Surface)
+                    ) {
+                        Column(Modifier.padding(horizontal = LynxSpacing.md)) {
+                            responses.forEachIndexed { index, response ->
+                                if (index > 0) {
+                                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+                                }
+                                ResponseItem(
+                                    response = response,
+                                    onCopy = {
+                                        coroutineScope.launch {
+                                            clipboard.setClipEntry(
+                                                ClipEntry(ClipData.newPlainText("masked", response.content))
+                                            )
+                                        }
+                                    },
+                                    onPreview = {
+                                        previewText = response.content
+                                        showPreview = true
+                                    },
+                                    onDelete = {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            SessionStore.deleteResponse(context, response.id)
+                                            val updated = SessionStore.listResponses(context, session.sesjaId)
+                                            withContext(Dispatchers.Main) { responses = updated }
+                                        }
+                                    }
+                                )
                             }
                         }
-                    )
-                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+                    }
                 }
             }
-
-            Spacer(Modifier.height(LynxSpacing.xl))
         }
     }
 }
@@ -474,12 +527,19 @@ private fun SessionActionButton(
     onClick: () -> Unit
 ) {
     if (isDestructive) {
-        LynxSecondaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), accent = LynxColors.Red) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = LynxColors.Red)
+        LynxSecondaryButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            accent = LynxColors.Red
+        ) {
+            Text(label, color = LynxColors.Red)
         }
     } else {
-        LynxPrimaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        LynxSecondaryButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(label)
         }
     }
 }
@@ -521,4 +581,32 @@ private fun ResponseItem(
             Text("\u2715", fontSize = 14.sp, color = LynxColors.Red.copy(alpha = 0.7f))
         }
     }
+}
+
+/** Tytuł widoczny dla użytkownika — bez technicznego ID sesji. */
+private fun SessionStore.SessionRecord.libraryTitle(): String = when {
+    description.isNotBlank() -> description.trim()
+    isImage -> "Zamaskowany obraz"
+    else -> "Dokument tekstowy"
+}
+
+/** Jedna linia metadanych: typ + data (bez UUID). */
+private fun SessionStore.SessionRecord.libraryMetaLine(): String {
+    val kind = if (isImage) "Obraz" else "Tekst"
+    return "$kind · ${formatLibraryDate(createdAt)}"
+}
+
+private fun formatLibraryDate(iso: String): String {
+    val datePart = iso.take(10)
+    val parts = datePart.split("-")
+    if (parts.size != 3) return datePart
+    val year = parts[0]
+    val month = parts[1].toIntOrNull() ?: return datePart
+    val day = parts[2].toIntOrNull() ?: parts[2]
+    val months = listOf(
+        "", "sty", "lut", "mar", "kwi", "maj", "cze",
+        "lip", "sie", "wrz", "pa\u017a", "lis", "gru"
+    )
+    val monthLabel = months.getOrNull(month) ?: parts[1]
+    return "$day $monthLabel $year"
 }

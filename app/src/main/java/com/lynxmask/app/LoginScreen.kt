@@ -15,7 +15,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -32,6 +31,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -325,25 +325,15 @@ fun LoginScreen(
                             }
                         )
                     } else if (showBiometricCard) {
-                        Column(
+                        Text(
+                            "Odblokuj aplikację",
+                            fontSize = 14.sp,
+                            color = LynxColors.TextSecondary,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Fingerprint,
-                                contentDescription = null,
-                                modifier = Modifier.size(56.dp),
-                                tint = LynxColors.Blue
-                            )
-                            Text(
-                                "Zaloguj się odciskiem palca",
-                                fontSize = 14.sp,
-                                color = LynxColors.TextSecondary
-                            )
-                        }
+                                .padding(vertical = 4.dp),
+                            textAlign = TextAlign.Center
+                        )
                         LynxPrimaryButton(
                             onClick = { biometricPrompt.authenticate(promptInfo) },
                             modifier = Modifier.fillMaxWidth()
@@ -473,26 +463,6 @@ fun LoginScreen(
                                 },
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp
-                            )
-                        }
-                    }
-
-                    if (!effectiveIsFirstRun && canBiometric) {
-                        LynxGhostButton(
-                            onClick = { biometricPrompt.authenticate(promptInfo) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Fingerprint,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = LynxColors.TextSecondary
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                "Odblokuj odciskiem palca",
-                                fontSize = 13.sp,
-                                color = LynxColors.TextSecondary
                             )
                         }
                     }

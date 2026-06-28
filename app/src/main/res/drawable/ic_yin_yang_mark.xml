@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Znak Yin/Yang — ten sam motyw co ikona launchera, skala UI na przyciskach -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,22 A32,32 0 1,1 53.98,22"
+        android:strokeWidth="2.5"
+        android:strokeColor="#3B82F6" />
+    <path
+        android:fillColor="#2A2F38"
+        android:pathData="M54,22 A32,32 0 0,0 22,54 A32,32 0 0,0 54,86 A16,16 0 0,1 54,54 A16,16 0 0,0 54,22 Z" />
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M54,22 A32,32 0 0,1 86,54 A32,32 0 0,1 54,86 A16,16 0 0,0 54,54 A16,16 0 0,1 54,22 Z" />
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M54,38 m-5.5,0 a5.5,5.5 0 1,1 11,0 a5.5,5.5 0 1,1 -11,0" />
+    <path
+        android:fillColor="#0F1117"
+        android:pathData="M54,70 m-5.5,0 a5.5,5.5 0 1,1 11,0 a5.5,5.5 0 1,1 -11,0" />
+</vector>

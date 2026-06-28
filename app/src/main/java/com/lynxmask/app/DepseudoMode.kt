@@ -7,15 +7,18 @@ package com.lynxmask.app
 // ten sam typ bez wzajemnej zależności.
 
 enum class DepseudoMode {
-    /** Odwróć maskowanie dokumentu źródłowego.
-     *  Ładuje masked_text_enc + mapę tokenów z SessionStore automatycznie. */
+    /** Odwróć maskowanie dokumentu źródłowego. */
     SOURCE_DOCUMENT,
 
-    /** Odwróć maskowanie odpowiedzi AI.
-     *  Użytkownik wkleja tekst z tokenami ręcznie. */
+    /** Odwróć maskowanie odpowiedzi AI — użytkownik wkleja tekst z tokenami. */
     AI_RESPONSE,
 
-    /** Podgląd zamaskowanego tekstu (z tokenami OSOBA_1 itp.) bez odwracania.
-     *  Używany przez "Edytuj dokument" w bibliotece. */
-    MASKED_VIEW
+    /** Podgląd zamaskowanego tekstu bez odwracania — „Podgląd zamaskowanego” w bibliotece. */
+    MASKED_VIEW;
+
+    fun screenTitle(fromLibrary: Boolean): String = when (this) {
+        MASKED_VIEW     -> "Podgląd zamaskowanego"
+        SOURCE_DOCUMENT -> "Przywróć oryginał"
+        AI_RESPONSE     -> if (fromLibrary) "Dodaj odpowiedź AI" else "Odpowiedź AI"
+    }
 }

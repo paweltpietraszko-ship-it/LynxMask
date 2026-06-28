@@ -16,11 +16,11 @@ object LynxColors {
 
     // ── Tła ──────────────────────────────────────────────────────────────────
     // Źródło: theme.ts linie bg / surface / sidebar
-    // Paleta charcoal – na AMOLED (Galaxy A53) bg ≈ true black = brak podświetlenia
-    val Background  = Color(0xFF0F1117)   // bg:      #0f1117
-    val Surface     = Color(0xFF22252B)   // surface: #22252b
-    val Sidebar     = Color(0xFF0D0F14)   // sidebar: #0d0f14
-    val ActiveNav   = Color(0xFF1A1F2E)   // activeNav: #1a1f2e – tło aktywnej pozycji nav
+    // Paleta charcoal — lekko jaśniejsza powierzchnia i mocniejsze obwódki (czytelność w słońcu)
+    val Background  = Color(0xFF121620)   // bg
+    val Surface     = Color(0xFF2A2F38)   // surface — karty, przyciski
+    val Sidebar     = Color(0xFF0D0F14)   // sidebar
+    val ActiveNav   = Color(0xFF1E2433)   // tło nieaktywnej zakładki nav
 
     // ── Akcent niebieski ──────────────────────────────────────────────────────
     // Źródło: theme.ts linie blue / blueLight / blueBg
@@ -49,16 +49,15 @@ object LynxColors {
     // ── Tekst ─────────────────────────────────────────────────────────────────
     // Źródło: theme.ts linie textPrimary / textSecondary / textMuted / textDim
     // Celowo bez szarości – wszystkie poziomy to odcienie kremowej bieli (v2.3)
-    val TextPrimary   = Color(0xFFF5F7FA)   // textPrimary:   #F5F7FA – główna treść
-    val TextSecondary = Color(0xFFD1D5DB)   // textSecondary: #D1D5DB – metadane, daty
-    val TextMuted     = Color(0xFFB8BEC8)   // textMuted:     #B8BEC8 – placeholdery, podpisy
-    val TextDim       = Color(0xFF8899BB)   // textDim:       #8899bb – separatory, nr wersji
-                                            //                          niebieskawy, nie szary
+    val TextPrimary   = Color(0xFFFAFBFC)   // główna treść — jaśniejsza pod słońce
+    val TextSecondary = Color(0xFFDCE2EA)   // metadane
+    val TextMuted     = Color(0xFFC4CBD6)   // placeholdery
+    val TextDim       = Color(0xFF9AADCC)   // wersja, separatory
 
     // ── Ramki ─────────────────────────────────────────────────────────────────
     // Źródło: theme.ts linie border / borderActive
-    val Border        = Color(0xFF2E3138)   // border:       #2e3138
-    val BorderActive  = Color(0xFF3B82F6)   // borderActive: #3b82f6 (= Blue)
+    val Border        = Color(0xFF4A5260)   // widoczna obwódka w jasnym świetle
+    val BorderActive  = Color(0xFF5B9AFF)   // akcent — nieco jaśniejszy niż Blue
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
