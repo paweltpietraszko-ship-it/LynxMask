@@ -48,7 +48,7 @@ object LookupTables {
         val names = loadFormsFromAsset(context, "names_inflected.json")
         val baseSurnames = loadFormsFromAsset(context, "surnames_top1000.json")
         val streets = loadFormsFromAsset(context, "street_names.json")
-        val cities = loadFlatListFromAsset(context, "cities.json") { s ->
+        val cities = loadFlatListFromAsset(context, "cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med = loadFlatListFromAsset(context, "medical_facilities.json")
@@ -127,7 +127,7 @@ object LookupTables {
         val names    = loadFormsFromClasspath("names_inflected.json")
         val surnames = loadFormsFromClasspath("surnames_top1000.json")
         val streets  = loadFormsFromClasspath("street_names.json")
-        val cities   = loadFlatListFromClasspath("cities.json") { s ->
+        val cities   = loadFlatListFromClasspath("cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med      = loadFlatListFromClasspath("medical_facilities.json")
