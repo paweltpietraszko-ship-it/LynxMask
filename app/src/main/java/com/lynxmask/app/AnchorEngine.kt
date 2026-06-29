@@ -1,20 +1,33 @@
 package com.lynxmask.app
 
 /**
- * AnchorEngine.kt — Warstwa 4b: zbieracz resztek kotwicowy
+ * AnchorEngine.kt — Warstwa 4b: zbieracz resztek kotwicowy (v2)
  *
  * Filozofia: silnik widzi kotwicę → jedna myśl → maskuje zakres. Koniec.
- * Bez liczenia cyfr, bez sum kontrolnych, bez walidacji formatu.
- * Suma kontrolna = informacja debugowa, NIE warunek maskowania.
- *
- * Do AnchorEngine dochodzą tylko resztki — dane zniekształcone przez OCR które
- * StructuralEngine i NameEngine przeoczyły. Prawidłowe encje są już tokenami.
+ * Działa na tekście PO rundzie 1 — widzi tylko resztki między istniejącymi tokenami.
  *
  * Klasa cyfropodobnych D = [0-9OolIiSsBbZz] (OCR myli te znaki z cyframi).
- * Kotwica wymagana — sam kształt liczbowy bez kontekstu nie jest PII po zniszczeniu OCR.
+ * Kotwica wymagana — sam kształt bez kontekstu nie jest PII po zniszczeniu OCR.
+ * Wyjątek: standalone PESEL z poprawną sumą kontrolną (suma = kotwica).
  */
 
 private const val D = """[0-9OolIiSsBbZz]"""
+
+// Sprawdza sumę kontrolną PESEL (11 cyfropodobnych). Separator (spacja/kreska) jest pomijany.
+private fun isPeselChecksumValid(s: CharSequence): Boolean {
+    val weights = intArrayOf(1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1)
+    var n = 0; var sum = 0
+    for (c in s) {
+        val d = when (c.lowercaseChar()) {
+            'o' -> 0; 'l', 'i' -> 1; 'z' -> 2; 's' -> 5; 'b' -> 8
+            in '0'..'9' -> c - '0'
+            else -> continue
+        }
+        if (n >= 11) return false
+        sum += d * weights[n++]
+    }
+    return n == 11 && sum % 10 == 0
+}
 
 internal fun applyAnchorEngine(
     text: String,
@@ -47,17 +60,18 @@ internal fun applyAnchorEngine(
 
     // ------------------------------------------------------------------
     // A.2  EMAIL — kotwica: znak @
-    // Widzę @ → co nie jest spacją po lewej + @ + co nie jest spacją po prawej → maskuję.
-    // Nie sprawdzam TLD, nie waliduje formatu. @ w polskim dokumencie = email.
+    // Rozszerzam lewo (do spacji) + prawo (do spacji, z opcjonalnym " .domena").
+    // Obsługa OCR: "piotr @ firma.pl" (spacje wokół @), "firma .pl" (spacja w domenie).
+    // Nie waliduje formatu. @ w dokumencie = email.
     // ------------------------------------------------------------------
-    applyAll(Regex("""[^\s\n]+@[^\s\n]+"""), TOKEN_EMAIL)
+    applyAll(Regex("""[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*"""), TOKEN_EMAIL)
 
     // ------------------------------------------------------------------
     // A.3  TELEFON — kotwica twarda: +48 / 0048
     // Widzę +48 → co po nim wygląda jak cyfry (z separatorami) → maskuję.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?:\+48|0048)[0-9OolIiSsBbZz\s\-\.]{6,18}"""),
+        Regex("""(?:\+4[8Bb]|0048)[0-9OolIiSsBbZz\s\-\.]{6,18}"""),
         TOKEN_NUMER
     )
 
@@ -72,13 +86,24 @@ internal fun applyAnchorEngine(
 
     // ------------------------------------------------------------------
     // A.4  PESEL — kotwica: keyword pe[s5][e3][lL1]
-    // Widzę "PESEL" (nawet zniekształcone przez OCR) → co po nim aż do ostatniej
-    // cyfropodobnej → maskuję. Nie liczę 11 cyfr, nie sumuję.
+    // Wymagam min. 9 D-znaków po keywordzie — blokuje FP na słowach jak "PESEL kształt"
+    // gdzie 's','z' w "kształt" są w D-klasie ale to tylko 2 D-znaki, nie 9.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)pe[s5][e3][lL1]\b[^0-9OolIiSsBbZz\n]{0,15}$D[$D\s\-]*"""),
+        Regex("""(?i)pe[s5][e3][lL1]\b[^0-9OolIiSsBbZz\n]{0,15}(?:$D[\s\-]?){9,13}"""),
         TOKEN_NUMER
     )
+
+    // A.4c PESEL — standalone: suma kontrolna jest kotwicą (wyjątek od wymogu kotwicy).
+    // Ciąg 9-13 D-znaków (z opcjonalnym pojedynczym separatorem) → maskuję tylko gdy
+    // suma kontrolna PESEL dokładnie się zgadza (prawdopodobieństwo ~10% → wymagane).
+    val peselShapeRe = Regex("""(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$D[\s\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])""")
+    val peselHits = peselShapeRe.findAll(t).toList()
+    t = peselHits.asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc
+        else if (isPeselChecksumValid(m.value)) acc.replaceRange(m.range, assignToken(m.value.trim(), TOKEN_NUMER))
+        else acc
+    }
 
     // ------------------------------------------------------------------
     // A.5  NIP — kotwica: keyword N[IL1]P
