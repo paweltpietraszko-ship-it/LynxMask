@@ -8,6 +8,11 @@ import androidx.compose.runtime.mutableIntStateOf
 object LynxNavExtras {
     const val OPEN_LIBRARY = "com.lynxmask.app.OPEN_LIBRARY"
     const val OPEN_LIBRARY_SESSION = "com.lynxmask.app.OPEN_LIBRARY_SESSION"
+    /** Wymusza maskowanie pikseli (udostępnij zdjęcie), pomija OCR tekstowy. */
+    const val FORCE_IMAGE_REDACT = "com.lynxmask.app.FORCE_IMAGE_REDACT"
+    /** Tekst wklejony w hubie — nie mylić z share sheet / URI. */
+    const val ACTION_HUB_TEXT = "com.lynxmask.app.action.HUB_TEXT"
+    const val EXTRA_HUB_TEXT = "com.lynxmask.app.EXTRA_HUB_TEXT"
 }
 
 /** Otwarcie biblioteki z ShareTarget (osobny task) — intent bywa gubiony przy singleTop. */

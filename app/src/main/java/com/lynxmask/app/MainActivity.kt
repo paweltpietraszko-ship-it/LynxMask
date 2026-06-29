@@ -65,10 +65,20 @@ import kotlinx.coroutines.withContext
 
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
+/** Sygnał dla Compose: onNewIntent (share przy już otwartej apce). */
+object MainActivitySignals {
+    val newIntentTick = mutableIntStateOf(0)
+}
+
 class MainActivity : FragmentActivity() {
     private fun notifyLibraryOpenFromIntent(intent: Intent?) {
         if (intent?.getBooleanExtra(LynxNavExtras.OPEN_LIBRARY, false) != true) return
         LynxPendingNav.requestLibrary(intent.getStringExtra(LynxNavExtras.OPEN_LIBRARY_SESSION))
+    }
+
+    private fun notifyShareFromIntent(intent: Intent?) {
+        if (!isIncomingDocumentIntent(intent)) return
+        LynxPendingShare.store(intent!!)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,21 +91,30 @@ class MainActivity : FragmentActivity() {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
+        notifyLibraryOpenFromIntent(intent)
+        if (intent?.action == Intent.ACTION_MAIN &&
+            intent.categories?.contains(Intent.CATEGORY_LAUNCHER) == true
+        ) {
+            // Ikona apki — nie wznawiaj niedokończonego share z pamięci procesu.
+            LynxPendingShare.clear()
+        } else {
+            notifyShareFromIntent(intent)
+        }
+
         var appReady = false
         splashScreen.setKeepOnScreenCondition { !appReady }
-        notifyLibraryOpenFromIntent(intent)
 
-        // [BUG-SS-3 fix] init() wykonuje I/O (Keystore + SQLite + ALTER TABLE) — musi być poza Main thread
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                LookupTables.initialize(this@MainActivity)
-                resetRegexCache()
-                EngineSmoke.runOnce()
-                SessionStore.init(this@MainActivity)
+                LynxAppInit.ensureReady(applicationContext)
+                getExternalFilesDir("bench")?.mkdirs()
             }
-            appReady = true   // splash znika przy następnej klatce
-            getExternalFilesDir("bench")?.mkdirs()
-            setContent { LynxMaskTheme { AppNavigation() } }
+            appReady = true
+            setContent {
+                LynxMaskTheme {
+                    AppNavigation()
+                }
+            }
         }
     }
 
@@ -108,6 +127,8 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         notifyLibraryOpenFromIntent(intent)
+        notifyShareFromIntent(intent)
+        MainActivitySignals.newIntentTick.intValue++
     }
 }
 
@@ -115,23 +136,60 @@ class MainActivity : FragmentActivity() {
 fun AppNavigation() {
     val context = LocalContext.current
     var onboardingDone   by remember         { mutableStateOf(isOnboardingDone(context)) }
-    var authenticated    by rememberSaveable { mutableStateOf(false) }
-    var showExpressMode  by rememberSaveable { mutableStateOf(false) }
+    var sessionTick      by remember         { mutableIntStateOf(0) }
     var showCrashDialog  by remember         { mutableStateOf(CrashHandler.hasPendingCrash(context)) }
 
+    val unlocked      = remember(sessionTick) { LynxAppSession.isUnlocked }
+    val isExpressMode = remember(sessionTick) { LynxAppSession.isExpress }
+    val shareRevision = LynxPendingShare.revision
+    val newIntentTick = MainActivitySignals.newIntentTick.intValue
+    val pendingDocument = remember(shareRevision, sessionTick, newIntentTick) {
+        if (LynxAppSession.isUnlocked) LynxPendingShare.peek() else null
+    }
+
+    LaunchedEffect(unlocked) {
+        if (unlocked) {
+            try {
+                LynxAppInit.ensureReady(context.applicationContext)
+            } catch (_: Exception) {
+                // Hub / biblioteka pokażą błąd przy pierwszej akcji — nie blokujemy wejścia.
+            }
+        }
+    }
+
     when {
-        !onboardingDone                    -> OnboardingScreen(onFinished = { onboardingDone = true })
-        !authenticated && showExpressMode  -> MainTabNav(
-            isExpress     = true,
-            onExitExpress = { showExpressMode = false }
-        )
-        !authenticated                     -> LoginScreen(
+        !onboardingDone -> OnboardingScreen(onFinished = { onboardingDone = true })
+        !unlocked -> LoginScreen(
             isFirstRun      = !isPasswordSet(context),
-            onAuthenticated = { authenticated = true },
-            onExpressMode   = { showExpressMode = true }
+            onAuthenticated = {
+                LynxAppSession.unlockAuthenticated()
+                sessionTick++
+            },
+            onExpressMode   = {
+                LynxAppSession.unlockExpress()
+                sessionTick++
+            }
+        )
+        pendingDocument != null -> IncomingDocumentFlow(
+            intent = pendingDocument,
+            isExpress = isExpressMode,
+            onFinished = {
+                LynxPendingShare.clear()
+                sessionTick++
+            }
+        )
+        isExpressMode -> MainTabNav(
+            isExpress     = true,
+            onExitExpress = {
+                LynxAppSession.lock()
+                sessionTick++
+            }
         )
         else -> MainTabNav(
-            onLogout = { authenticated = false },
+            onLogout = {
+                LynxAppSession.lock()
+                sessionTick++
+            },
             launchIntent = (context as? MainActivity)?.intent
         )
     }
@@ -231,8 +289,10 @@ private fun MainTabNav(
     val filePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        if (uri != null) context.startActivity(
-            Intent(Intent.ACTION_VIEW, uri).apply {
+        if (uri == null) return@rememberLauncherForActivityResult
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, context.contentResolver.getType(uri) ?: "application/octet-stream")
                 setClass(context, ShareTargetActivity::class.java)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
@@ -279,7 +339,7 @@ private fun MainTabNav(
                         context.startActivity(
                             Intent(context, ShareTargetActivity::class.java).apply {
                                 action = Intent.ACTION_SEND
-                                type   = "text/plain"
+                                type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, text)
                             }
                         )

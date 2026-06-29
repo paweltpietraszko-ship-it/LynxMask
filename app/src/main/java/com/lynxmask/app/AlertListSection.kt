@@ -34,7 +34,8 @@ internal fun guardRedLabelToTokenType(label: String): String = when (label) {
 @Composable
 internal fun RedHitsSection(
     hits: List<GuardHit>,
-    onMask: (GuardHit) -> Unit
+    onMask: (GuardHit) -> Unit,
+    onLeaveRevealed: (GuardHit) -> Unit
 ) {
     if (hits.isEmpty()) return
     Card(
@@ -48,7 +49,7 @@ internal fun RedHitsSection(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                "Wykryto możliwy wyciek — zamaskuj przed wysłaniem",
+                "Wykryto możliwy wyciek — zamaskuj lub zostaw jawne w tym dokumencie",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = LynxColors.Red
@@ -71,13 +72,28 @@ internal fun RedHitsSection(
                             color = LynxColors.Red
                         )
                     }
-                    LynxSecondaryButton(
-                        onClick = { onMask(hit) },
-                        modifier = Modifier.heightIn(min = 36.dp),
-                        accent = LynxColors.Red
-                    ) {
-                        Text("Maskuj", fontSize = 12.sp, color = LynxColors.Red)
+                    Row(horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)) {
+                        LynxSecondaryButton(
+                            onClick = { onMask(hit) },
+                            modifier = Modifier.heightIn(min = 36.dp),
+                            accent = LynxColors.Red
+                        ) {
+                            Text("Maskuj", fontSize = 12.sp, color = LynxColors.Red)
+                        }
+                        LynxGhostButton(
+                            onClick = { onLeaveRevealed(hit) },
+                            modifier = Modifier.heightIn(min = 36.dp)
+                        ) {
+                            Text("Zostaw jawne", fontSize = 11.sp, color = LynxColors.TextMuted)
+                        }
                     }
+                    Text(
+                        "Zostaw jawne = tylko w tym dokumencie (nie zapisuje w słowniku)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp,
+                        lineHeight = 14.sp
+                    )
                 }
                 if (hit != hits.last()) {
                     HorizontalDivider(color = LynxColors.Red.copy(alpha = 0.15f))
@@ -174,6 +190,15 @@ private fun YellowAlertRow(
                     Text("Nie maskuj", fontSize = 11.sp, color = LynxColors.TextMuted)
                 }
             }
+        }
+        if (onDismiss != null) {
+            Text(
+                "Zapamiętuje w białym słowniku — Guard nie zapyta ponownie",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp,
+                lineHeight = 14.sp
+            )
         }
     }
 }

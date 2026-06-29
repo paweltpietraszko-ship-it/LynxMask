@@ -1,6 +1,6 @@
 package com.lynxmask.app
 
-// LoginScreen.kt — v2.1 UI: wspólne przyciski Lynx, forma podniesiona pod klawiaturę (imePadding).
+// LoginScreen.kt — v2.2 UI: nagłówek jak Hub, jeden Express, szybki start bez ciężkiej karty.
 
 import android.content.Context
 import android.util.Base64
@@ -51,9 +51,6 @@ import javax.crypto.spec.PBEKeySpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// Klawiatura: imePadding(); forma lekko poniżej środka (po korekcie z góry).
-private val LoginFormOffset = 38.dp
 
 private enum class RecoveryStep { NONE, SHOW_KEY, ENTER_KEY, NEW_PASSWORD }
 
@@ -237,60 +234,32 @@ fun LoginScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .offset(y = LoginFormOffset)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = LynxSpacing.lg)
-                .padding(bottom = LoginFormOffset),
+                .fillMaxSize()
+                .padding(horizontal = LynxSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(0.88f),
-                shape = RoundedCornerShape(LynxShapes.CardRadius),
-                colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = LynxSpacing.md, bottom = LynxSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
+                LynxLoginHeader()
+                Spacer(Modifier.height(LynxSpacing.lg))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(0.88f),
+                    shape = RoundedCornerShape(LynxShapes.CardRadius),
+                    color = LynxColors.Surface,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                "PSE",
-                                fontFamily = LynxTypography.Mono,
-                                fontSize = 9.sp,
-                                color = LynxColors.Blue,
-                                modifier = Modifier
-                                    .border(1.dp, LynxColors.BorderActive, RoundedCornerShape(2.dp))
-                                    .padding(horizontal = 5.dp, vertical = 2.dp)
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                "LynxMask Mobile",
-                                fontFamily = LynxTypography.Sans,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = LynxColors.TextPrimary
-                            )
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Pseudonimizacja dokumentów",
-                            fontSize = 12.sp,
-                            color = LynxColors.TextSecondary
-                        )
-                    }
-
-                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
-
                     if (recoveryStep == RecoveryStep.SHOW_KEY) {
                         ShowKeyContent(
                             key        = generatedKey,
@@ -347,20 +316,7 @@ fun LoginScreen(
                         ) {
                             Text("Użyj hasła", fontSize = 12.sp, color = LynxColors.TextDim)
                         }
-                        if (onExpressMode != null) {
-                            LynxGhostButton(
-                                onClick  = onExpressMode,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    "⚡ Tryb Express — bez logowania",
-                                    fontSize = 12.sp,
-                                    color    = LynxColors.Amber
-                                )
-                            }
-                        }
                     } else {
-
                     if (migrationNeeded) {
                         Row(
                             modifier = Modifier
@@ -567,48 +523,83 @@ fun LoginScreen(
                     } // else (password form)
                 }
             }
-        }
+            }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = LynxSpacing.lg)
-                .padding(horizontal = LynxSpacing.lg),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-        ) {
-            if (onExpressMode != null && recoveryStep == RecoveryStep.NONE && !showBiometricCard) {
+            Column(
+                modifier = Modifier
+                    .padding(bottom = LynxSpacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+            ) {
+                if (onExpressMode != null && recoveryStep == RecoveryStep.NONE) {
+                    LynxGhostButton(
+                        onClick  = onExpressMode,
+                        modifier = Modifier.fillMaxWidth(0.88f)
+                    ) {
+                        Text(
+                            "⚡ Tryb Express — bez logowania",
+                            fontSize = 12.sp,
+                            color    = LynxColors.Amber
+                        )
+                    }
+                }
                 LynxGhostButton(
-                    onClick  = onExpressMode,
+                    onClick  = { showPrivacyPolicy = true },
                     modifier = Modifier.fillMaxWidth(0.88f)
                 ) {
                     Text(
-                        "⚡ Tryb Express — bez logowania",
-                        fontSize = 12.sp,
-                        color    = LynxColors.Amber
+                        "Polityka prywatności",
+                        fontSize = 11.sp,
+                        color    = LynxColors.TextDim
                     )
                 }
-            }
-            LynxGhostButton(
-                onClick  = { showPrivacyPolicy = true },
-                modifier = Modifier.fillMaxWidth(0.88f)
-            ) {
+                if (showPrivacyPolicy) {
+                    PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
+                }
                 Text(
-                    "Polityka prywatności",
-                    fontSize = 11.sp,
-                    color    = LynxColors.TextDim
+                    BuildConfig.VERSION_NAME + " — lynxmask.app",
+                    fontFamily = LynxTypography.Mono,
+                    fontSize   = 10.sp,
+                    color      = LynxColors.TextDim
                 )
             }
-            if (showPrivacyPolicy) {
-                PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
-            }
-            Text(
-                BuildConfig.VERSION_NAME + " — lynxmask.app",
-                fontFamily = LynxTypography.Mono,
-                fontSize   = 10.sp,
-                color      = LynxColors.TextDim
-            )
         }
+    }
+}
+
+@Composable
+private fun LynxLoginHeader() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            "PSE",
+            fontFamily = LynxTypography.Mono,
+            fontSize = 9.sp,
+            color = LynxColors.Blue,
+            modifier = Modifier
+                .border(1.dp, LynxColors.BorderActive, RoundedCornerShape(2.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+        Spacer(Modifier.height(14.dp))
+        Text(
+            "LynxMask",
+            fontFamily = LynxTypography.Sans,
+            fontSize = 42.sp,
+            fontWeight = FontWeight.Light,
+            color = LynxColors.TextPrimary
+        )
+        Text(
+            "Mobile",
+            fontFamily = LynxTypography.Mono,
+            fontSize = 13.sp,
+            color = LynxColors.TextDim,
+            letterSpacing = 3.sp
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Pseudonimizacja dokumentów",
+            fontSize = 13.sp,
+            color = LynxColors.TextSecondary
+        )
     }
 }
 

@@ -93,3 +93,14 @@ Zablokuj release do momentu: pkt 1–4 bez regresji na Samsung SM-A536B (Android
 ✅ Cursor UI — nawigacja, LynxScreenHeader, LynxNavExtras, ML Kit skalowanie (fix a71b477)
 ✅ Google Play — screenshoty 6 szt. w Google_Play/, RELEASE_CHECKLIST.md
 ✅ Zweryfikowano: S10, AUD-M06, BUG-EMAIL-TLD1, N3(loop), S11 — wszystkie już zamknięte w poprzednich sesjach
+
+## Co zamknięto w sesji 29.06 — regres po refaktorze Cursora
+
+✅ BUG-PICKER-URI — filePickerLauncher: setType() kasował intent.data → setDataAndType() (MainActivity.kt)
+✅ BUG-ONADDTODICT — onAddToDict usunięte z onMask RED hitów przez Cursora (PseudonymResultPanel.kt)
+✅ BUG-ENSUREREADY — finishWithText wywoływał pseudonymize bez LynxAppInit.ensureReady → zero guard hitów przy zimnym starcie (IncomingDocumentFlow.kt)
+✅ BUG-INIT-ORDER — Cursor zmienił setContent przed initem → splash znikał za wcześnie; przywrócono starą logikę (MainActivity.kt)
+✅ BUG-SINGLETASK — ShareTargetActivity singleTask→singleTop; TXT/MD/PDF nie pokazywały LynxMask w share sheet (AndroidManifest.xml)
+✅ BUG-MIME-TEXT — dodano text/* wildcard do filtrów manifest; MD pliki nie trafiały do LynxMask (AndroidManifest.xml)
+✅ BUG-IMAGE-ROUTE — classifyImageInput zawsze zwracał CARD zamiast PAGE → zdjęcia dokumentów tekstowych szły do IMAGE-REDACT zamiast OCR (ImageDocumentRoute.kt)
+✅ BUG-PAGE-BRANCH — routeImageInput brak gałęzi PAGE → ścieżka pseudonimizacji (IncomingDocumentFlow.kt)

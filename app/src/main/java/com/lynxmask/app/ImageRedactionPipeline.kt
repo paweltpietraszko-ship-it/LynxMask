@@ -12,6 +12,7 @@ import androidx.core.content.FileProvider
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.tasks.await
@@ -36,14 +37,174 @@ object ImageRedactionPipeline {
         private set
 
     private const val LINE_OCR_CONF_MIN = 0.52f
-    @Suppress("unused")
+    /** Przy słabym skanie (średnia ML Kit < 68%) — nie odrzucaj linii z niską pewnością (odręczne). */
+    private const val WEAK_SCAN_GLOBAL_CONF = 0.68f
+    private const val LINE_OCR_CONF_MIN_WEAK = 0.45f
     private const val BLUR_PASSES = 3
-    @Suppress("unused")
     private const val BLUR_DIVISOR = 8
+
+    data class OcrScanResult(
+        val plainText: String,
+        val visionText: Text,
+        val confidence: Float?
+    )
+
+    /** Jeden przebieg OCR — współdzielony między routingiem a wykrywaniem PII. */
+    suspend fun runOcrOnce(bitmap: Bitmap): OcrScanResult {
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        return try {
+            val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+            val conf = calcOcrConfidence(result).takeIf { it > 0f }
+            lastDetectionOcrConfidence = conf
+            OcrScanResult(
+                plainText = result.text.trim(),
+                visionText = result,
+                confidence = conf
+            )
+        } finally {
+            recognizer.close()
+        }
+    }
+
+    /**
+     * Przebieg A (twarze) + B (PII w bbox elementów OCR).
+     * [ocr] opcjonalny — gdy null, OCR uruchamiany raz wewnątrz.
+     */
+    suspend fun detectRedactionRegions(
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>> = emptyList(),
+        guardAllowlist: List<Pair<String, String>> = emptyList(),
+        profile: RedactionProfile = RedactionProfile.GENERAL,
+        ocr: OcrScanResult? = null
+    ): List<RedactionRegion> {
+        val faces = detectFacesAsRegions(bitmap)
+        val scan = ocr ?: runOcrOnce(bitmap)
+        val textRegions = detectTextPiiRegions(scan, bitmap, userDict, guardAllowlist, profile)
+        val dictRegions = detectUserDictRegions(scan.visionText, userDict)
+        return mergeFaceAndTextRegions(faces, mergeRegions(textRegions, dictRegions))
+    }
+
+    private fun mergeFaceAndTextRegions(
+        faces: List<RedactionRegion>,
+        text: List<RedactionRegion>
+    ): List<RedactionRegion> {
+        val kept = text.filter { tr ->
+            faces.none { fr -> regionIoU(fr.rect, tr.rect) > 0.45f }
+        }
+        return (faces + kept).sortedBy { it.rect.top }
+    }
+
+    suspend fun detectTextLinesAsRegions(
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>> = emptyList(),
+        guardAllowlist: List<Pair<String, String>> = emptyList(),
+        profile: RedactionProfile = RedactionProfile.GENERAL
+    ): List<RedactionRegion> {
+        val scan = runOcrOnce(bitmap)
+        val pii = detectTextPiiRegions(scan, bitmap, userDict, guardAllowlist, profile)
+        val dict = detectUserDictRegions(scan.visionText, userDict)
+        return mergeRegions(pii, dict)
+    }
+
+    private fun detectTextPiiRegions(
+        scan: OcrScanResult,
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>>,
+        guardAllowlist: List<Pair<String, String>>,
+        profile: RedactionProfile
+    ): List<RedactionRegion> {
+        return try {
+            detectTextPiiFromVision(scan.visionText, bitmap, userDict, guardAllowlist, profile, scan.confidence)
+        } catch (e: Exception) {
+            DebugLogBuffer.log("TextDetect", "BŁĄD: ${e.message}")
+            emptyList()
+        }
+    }
 
     private val blackPaint = Paint().apply {
         color = Color.BLACK
         style = Paint.Style.FILL
+    }
+
+    private fun detectTextPiiFromVision(
+        result: Text,
+        bitmap: Bitmap,
+        userDict: List<Pair<String, String>>,
+        guardAllowlist: List<Pair<String, String>>,
+        profile: RedactionProfile,
+        globalOcrConf: Float? = lastDetectionOcrConfidence
+    ): List<RedactionRegion> {
+        val lineConfMin = effectiveLineConfMin(globalOcrConf)
+        val piiLines = result.textBlocks.flatMap { block ->
+            block.lines.flatMap { line ->
+                processPiiLine(line, userDict, guardAllowlist, profile, lineConfMin, globalOcrConf)
+            }
+        }
+        val refined = filterTinyRegions(
+            dedupeOverlapping(
+                if (profile == RedactionProfile.GENERAL) {
+                    consolidateSameRowRegions(piiLines, bitmap.height)
+                } else {
+                    mergeAdjacentSameLabel(
+                        consolidateSameRowRegions(piiLines, bitmap.height),
+                        bitmap.height
+                    )
+                }
+            ),
+            bitmap.width,
+            bitmap.height
+        )
+        DebugLogBuffer.log(
+            "TextDetect",
+            "PII regionów: ${refined.size} (z ${piiLines.size} linii, profil=$profile, OCR conf=${
+                lastDetectionOcrConfidence?.let { "%.0f%%".format(it * 100) } ?: "?"
+            })"
+        )
+        return refined
+    }
+
+    private fun processPiiLine(
+        line: Text.Line,
+        userDict: List<Pair<String, String>>,
+        guardAllowlist: List<Pair<String, String>>,
+        profile: RedactionProfile,
+        lineConfMin: Float = LINE_OCR_CONF_MIN,
+        globalOcrConf: Float? = lastDetectionOcrConfidence
+    ): List<RedactionRegion> {
+        val raw = line.text.trim()
+        if (raw.length < 3) return emptyList()
+
+        val lineConf = lineConfidence(line)
+        if (lineConf != null && lineConf < lineConfMin) {
+            DebugLogBuffer.log("TextPii", "SKIP conf ${"%.0f%%".format(lineConf * 100)}: \"$raw\"")
+            return emptyList()
+        }
+
+        if (profile == RedactionProfile.IDENTITY_CARD && isPureFieldLabel(raw.trimEnd(':', '：', '.'))) {
+            DebugLogBuffer.log("TextPii", "SKIP etykieta karty: \"$raw\"")
+            return emptyList()
+        }
+
+        val textForEngine = extractPiiCheckText(raw) ?: return emptyList()
+        val norm = OcrNormalizer.normalize(textForEngine)
+        val engineResult = PseudonymEngine.pseudonymize(
+            norm.normalizedText,
+            userDictionary = userDict,
+            guardAllowlist = guardAllowlist
+        )
+        if (engineResult.tokenMap.isEmpty()) return emptyList()
+
+        if (!shouldMaskLine(textForEngine, engineResult, profile, globalOcrConf = globalOcrConf)) {
+            DebugLogBuffer.log("TextPii", "SKIP FP: \"$raw\" → ${engineResult.tokenMap.keys}")
+            return emptyList()
+        }
+
+        DebugLogBuffer.log("TextPii", "PII: \"$raw\" → ${engineResult.tokenMap.keys}")
+        val tokenValues = engineResult.tokenMap.values.map { it.trim() }.filter { it.length >= 2 }
+        val label = normalizeDisplayLabel(guessFieldLabel(raw, textForEngine, engineResult))
+        return maskBoxesForLine(line, tokenValues).map { rect ->
+            RedactionRegion(rect = rect, type = RegionType.MANUAL, isBlurred = true, label = label)
+        }
     }
 
     suspend fun detectFacesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
@@ -63,71 +224,6 @@ object ImageRedactionPipeline {
             emptyList()
         } finally {
             detector.close()
-        }
-    }
-
-    // Wykryj linie tekstu zawierające PII (PESEL, nr doc, data, imię/nazwisko, etc.)
-    // Etykiety pól ("PESEL:", "Data urodzenia:") pomijane — Title Case na CAPS etykiet dawał FP w NameEngine.
-    suspend fun detectTextLinesAsRegions(
-        bitmap: Bitmap,
-        userDict: List<Pair<String, String>> = emptyList()
-    ): List<RedactionRegion> {
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        return try {
-            val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-            lastDetectionOcrConfidence = calcOcrConfidence(result).takeIf { it > 0f }
-
-            val piiLines = result.textBlocks.flatMap { block ->
-                block.lines.flatMap { line ->
-                    val raw = line.text.trim()
-                    if (raw.length < 3) return@flatMap emptyList()
-
-                    val lineConf = lineConfidence(line)
-                    if (lineConf != null && lineConf < LINE_OCR_CONF_MIN) {
-                        DebugLogBuffer.log("TextPii", "SKIP conf ${"%.0f%%".format(lineConf * 100)}: \"$raw\"")
-                        return@flatMap emptyList()
-                    }
-
-                    val textForEngine = extractPiiCheckText(raw) ?: return@flatMap emptyList()
-                    val norm = OcrNormalizer.normalize(textForEngine)
-                    val engineResult = PseudonymEngine.pseudonymize(norm.normalizedText, userDictionary = userDict)
-                    if (engineResult.tokenMap.isEmpty()) return@flatMap emptyList()
-
-                    if (!shouldMaskLine(textForEngine, engineResult)) {
-                        DebugLogBuffer.log("TextPii", "SKIP FP: \"$raw\" → ${engineResult.tokenMap.keys}")
-                        return@flatMap emptyList()
-                    }
-
-                    DebugLogBuffer.log("TextPii", "PII: \"$raw\" → ${engineResult.tokenMap.keys}")
-                    val tokenValues = engineResult.tokenMap.values.map { it.trim() }.filter { it.length >= 2 }
-                    val label = normalizeDisplayLabel(guessFieldLabel(raw, textForEngine, engineResult))
-                    maskBoxesForLine(line, tokenValues).map { rect ->
-                        RedactionRegion(rect = rect, type = RegionType.MANUAL, isBlurred = true, label = label)
-                    }
-                }
-            }
-            val refined = filterTinyRegions(
-                dedupeOverlapping(
-                    mergeAdjacentSameLabel(
-                        consolidateSameRowRegions(piiLines, bitmap.height),
-                        bitmap.height
-                    )
-                ),
-                bitmap.width,
-                bitmap.height
-            )
-            DebugLogBuffer.log(
-                "TextDetect",
-                "PII regionów: ${refined.size} (z ${piiLines.size} linii, OCR conf=${
-                    lastDetectionOcrConfidence?.let { "%.0f%%".format(it * 100) } ?: "?"
-                })"
-            )
-            refined
-        } catch (e: Exception) {
-            DebugLogBuffer.log("TextDetect", "BŁĄD: ${e.message}")
-            emptyList()
-        } finally {
-            recognizer.close()
         }
     }
 
@@ -182,9 +278,7 @@ object ImageRedactionPipeline {
         tokenValues: List<String>
     ): List<RectF> {
         val elements = line.elements
-        if (elements.isEmpty()) {
-            return line.boundingBox?.let { listOf(padRect(RectF(it))) } ?: emptyList()
-        }
+        if (elements.isEmpty()) return emptyList()
 
         fun elemMatchesPii(text: String): Boolean {
             val et = text.trim()
@@ -197,20 +291,10 @@ object ImageRedactionPipeline {
         }
 
         val dataElements = elements.filter { !isLabelElement(it.text) }
-        val candidates = when {
-            dataElements.isNotEmpty() -> {
-                val matched = dataElements.filter { elemMatchesPii(it.text) }
-                when {
-                    matched.isNotEmpty() -> matched
-                    dataElements.any { it.text.any { ch -> ch.isDigit() } } ->
-                        dataElements.filter { it.text.any { ch -> ch.isDigit() } }
-                    else -> dataElements
-                }
-            }
-            else -> elements.filter { elemMatchesPii(it.text) || it.text.any { ch -> ch.isDigit() } }
-        }
+        val matched = dataElements.filter { elemMatchesPii(it.text) }
+        if (matched.isEmpty()) return emptyList()
 
-        val boxes = candidates.mapNotNull { it.boundingBox?.let { b -> RectF(b) } }
+        val boxes = matched.mapNotNull { it.boundingBox?.let { b -> RectF(b) } }
         if (boxes.isEmpty()) return emptyList()
         return listOf(padRect(unionRects(boxes)))
     }
@@ -238,12 +322,11 @@ object ImageRedactionPipeline {
         for (r in sorted) {
             val cy = (r.rect.top + r.rect.bottom) / 2f
             val last = out.lastOrNull()
-            if (last != null) {
+            if (last != null && last.label == r.label) {
                 val lcy = (last.rect.top + last.rect.bottom) / 2f
                 if (kotlin.math.abs(cy - lcy) <= threshold) {
                     out[out.lastIndex] = last.copy(
-                        rect = unionRects(listOf(last.rect, r.rect)),
-                        label = pickBetterLabel(last.label, r.label)
+                        rect = unionRects(listOf(last.rect, r.rect))
                     )
                     continue
                 }
@@ -267,10 +350,68 @@ object ImageRedactionPipeline {
         return if (confs.isEmpty()) null else confs.average().toFloat()
     }
 
+    private fun effectiveLineConfMin(globalConf: Float?): Float =
+        if (globalConf != null && globalConf > 0f && globalConf < WEAK_SCAN_GLOBAL_CONF) {
+            LINE_OCR_CONF_MIN_WEAK
+        } else {
+            LINE_OCR_CONF_MIN
+        }
+
+    /** Słownik użytkownika — bbox z elementów OCR bez filtra pewności linii. */
+    private fun detectUserDictRegions(
+        result: Text,
+        userDict: List<Pair<String, String>>
+    ): List<RedactionRegion> {
+        if (userDict.isEmpty()) return emptyList()
+        val entries = userDict
+            .map { it.first.trim() to it.second }
+            .filter { it.first.length >= 3 }
+        if (entries.isEmpty()) return emptyList()
+
+        val regions = mutableListOf<RedactionRegion>()
+        for (block in result.textBlocks) {
+            for (line in block.lines) {
+                val lineText = line.text
+                for ((word, type) in entries) {
+                    if (!lineText.contains(word, ignoreCase = true)) continue
+                    val matched = line.elements.filter { el ->
+                        val et = el.text.trim()
+                        et.equals(word, ignoreCase = true) ||
+                            (word.length >= 4 && et.contains(word, ignoreCase = true)) ||
+                            (word.contains(' ') && lineText.contains(word, ignoreCase = true))
+                    }
+                    val boxes = if (matched.isNotEmpty()) {
+                        matched.mapNotNull { it.boundingBox?.let { b -> RectF(b) } }
+                    } else {
+                        line.boundingBox?.let { listOf(RectF(it)) } ?: emptyList()
+                    }
+                    if (boxes.isNotEmpty()) {
+                        regions.add(
+                            RedactionRegion(
+                                rect = padRect(unionRects(boxes)),
+                                type = RegionType.MANUAL,
+                                isBlurred = true,
+                                label = type
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        return dedupeOverlapping(regions)
+    }
+
     /** Offline: strukturalne PII zawsze; imiona tylko gdy wyglądają jak prawdziwe (nie śmieci OCR). */
-    private fun shouldMaskLine(textForEngine: String, engineResult: PseudonymResult): Boolean {
+    private fun shouldMaskLine(
+        textForEngine: String,
+        engineResult: PseudonymResult,
+        profile: RedactionProfile = RedactionProfile.GENERAL,
+        globalOcrConf: Float? = null
+    ): Boolean {
         val text = textForEngine.trim()
         if (text.length < 3) return false
+
+        if (profile == RedactionProfile.IDENTITY_CARD && isPureFieldLabel(text)) return false
 
         val tokenTypes = engineResult.tokenMap.keys.map { it.substringBefore('_') }.toSet()
         if (tokenTypes.any { it in STRUCTURAL_TOKEN_TYPES }) return true
@@ -279,8 +420,16 @@ object ImageRedactionPipeline {
         if (text.matches(Regex("""\d{11}"""))) return true
         if (text.matches(Regex("""[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}""", RegexOption.IGNORE_CASE))) return true
 
+        // Słaby skan + profil ogólny — nie maskuj imion/firm z OCR (tylko PESEL/NIP/… powyżej).
+        val weakGeneral = profile == RedactionProfile.GENERAL &&
+            globalOcrConf != null && globalOcrConf > 0f && globalOcrConf < WEAK_SCAN_GLOBAL_CONF
+        if (weakGeneral) return false
+
         if (tokenTypes.contains("OSOBA") || tokenTypes.contains("FIRMA")) {
-            return looksLikePlausiblePersonName(text)
+            if (profile == RedactionProfile.IDENTITY_CARD) {
+                return looksLikePlausiblePersonName(text) && text.length >= 5
+            }
+            return looksLikePlausiblePersonName(text) && text.length >= 5
         }
         return false
     }
@@ -513,6 +662,7 @@ object ImageRedactionPipeline {
         "numer can", "can", "identity card", "dowod",
         "imie ojca", "imie matki", "rodzice", "parents names",
         "rzeczpospolita polska", "republic of poland",
+        "dowod osobisty", "identity card",
     )
 
     private val FIELD_LABEL_WORDS = setOf(
@@ -540,9 +690,15 @@ object ImageRedactionPipeline {
     // Wykryj twarze + PII w tekście. EXIF rotacja naprawiona przed wywołaniem (w ShareTargetActivity).
     suspend fun detectFacesAndTextAsRegions(
         bitmap: Bitmap,
-        userDict: List<Pair<String, String>> = emptyList()
-    ): List<RedactionRegion> =
-        detectFacesAsRegions(bitmap) + detectTextLinesAsRegions(bitmap, userDict)
+        userDict: List<Pair<String, String>> = emptyList(),
+        guardAllowlist: List<Pair<String, String>> = emptyList(),
+        profile: RedactionProfile = RedactionProfile.GENERAL
+    ): List<RedactionRegion> = detectRedactionRegions(
+        bitmap = bitmap,
+        userDict = userDict,
+        guardAllowlist = guardAllowlist,
+        profile = profile
+    )
 
     fun applyRedactions(source: Bitmap, regions: List<RedactionRegion>): Bitmap {
         val result = ensureSoftwareCopy(source)
@@ -555,8 +711,7 @@ object ImageRedactionPipeline {
         regions.filter { it.isBlurred }.forEach { region ->
             try {
                 when (region.type) {
-                    // Czarny prostokąt — pixelate na części urządzeń nie renderował się w Compose
-                    RegionType.FACE   -> fillBlackRegion(canvas, expandFaceRect(region.rect, result))
+                    RegionType.FACE -> blurRegion(canvas, result, expandFaceRect(region.rect, result))
                     RegionType.MANUAL -> fillBlackRegion(canvas, region.rect)
                 }
             } catch (e: Exception) {
@@ -594,7 +749,6 @@ object ImageRedactionPipeline {
         )
     }
 
-    @Suppress("unused")
     private fun blurRegion(canvas: Canvas, bitmap: Bitmap, rect: RectF) {
         val left   = rect.left.coerceIn(0f, bitmap.width.toFloat()).toInt()
         val top    = rect.top.coerceIn(0f, bitmap.height.toFloat()).toInt()

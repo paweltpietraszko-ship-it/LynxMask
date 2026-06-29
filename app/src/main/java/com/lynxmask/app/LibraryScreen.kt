@@ -70,6 +70,7 @@ fun LibraryScreen(
 
     LaunchedEffect(openSessionId) {
         isLoading = true
+        LynxAppInit.ensureReady(context.applicationContext)
         sessions  = withContext(Dispatchers.IO) { SessionStore.listSessions(context) }
         isLoading = false
     }

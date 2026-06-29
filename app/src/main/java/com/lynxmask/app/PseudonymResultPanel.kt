@@ -204,6 +204,10 @@ fun PseudonymResultPanel(
                         val token = nextToken(type)
                         manualMasks = manualMasks + (token to hit.matchedText)
                         onAddToDict?.invoke(hit.matchedText, type)
+                    },
+                    onLeaveRevealed = { hit ->
+                        // Tylko ten dokument — bez GuardAllowlist (nie odmaskowuj na stałe).
+                        dismissedHits = dismissedHits + hit.matchedText
                     }
                 )
                 Spacer(modifier = Modifier.height(LynxSpacing.sm))
@@ -231,7 +235,7 @@ fun PseudonymResultPanel(
                     },
                     onDismissFlag = { flag ->
                         flagDecisions[flag.fragment] = EntityDecision.KEEP_HIDDEN
-                        onAddToAllowlist?.invoke(flag.fragment, TOKEN_OSOBA)
+                        onAddToAllowlist?.invoke(flag.fragment, "FLAG")
                     }
                 )
                 Spacer(modifier = Modifier.height(LynxSpacing.sm))
