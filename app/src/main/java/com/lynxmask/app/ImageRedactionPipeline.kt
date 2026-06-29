@@ -210,7 +210,7 @@ object ImageRedactionPipeline {
     suspend fun detectFacesAsRegions(bitmap: Bitmap): List<RedactionRegion> {
         val options = FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-            .setMinFaceSize(0.005f)
+            .setMinFaceSize(0.10f)
             .build()
         val detector = FaceDetection.getClient(options)
         return try {

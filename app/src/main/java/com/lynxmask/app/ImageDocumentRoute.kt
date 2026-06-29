@@ -9,18 +9,14 @@ package com.lynxmask.app
  */
 
 enum class ImageInputKind {
-    /** Dowód, paszport, legitymacja, dowód rej. — maskowanie pikseli (twarz + PII). */
+    /** Dowód, paszport, legitymacja, dowód rej., twarz — maskowanie pikseli. */
     CARD,
-    /** Skan tekstu — ≥ 80 znaków OCR, brak markerów karty/twarzy → ścieżka pseudonimizacji. */
-    PAGE,
-    /** Zdjęcie z twarzą, mało tekstu — głównie twarze. */
-    PHOTO,
-    /** OCR 15–79 znaków, brak markerów dowodu — użytkownik wybiera. */
-    AMBIGUOUS
+    /** Skan tekstu (≥ 15 znaków OCR, brak markerów karty) → ścieżka pseudonimizacji. */
+    PAGE
 }
 
-/** Poniżej tego progu (< 15 znaków OCR) obraz bez markerów karty → maskowanie pikseli. */
-internal const val MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE = 15
+/** Dokument z markerami karty, ale więcej znaków OCR niż ten próg → PAGE (fałszywy marker). */
+internal const val CARD_DOC_MAX_OCR_CHARS = 400
 
 data class ImageRouteContext(
     val ocrCharCount: Int,
@@ -31,15 +27,7 @@ data class ImageRouteContext(
 
 fun classifyImageInput(ctx: ImageRouteContext): ImageInputKind {
     if (ctx.forceImageRedact) return ImageInputKind.CARD
-
-    val cardDoc = looksLikeCardDocument(ctx.ocrText)
-
-    if (ctx.faceCount > 0 || cardDoc) return ImageInputKind.CARD
-
-    if (ctx.ocrCharCount < MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE) {
-        return ImageInputKind.CARD
-    }
-
+    if (looksLikeCardDocument(ctx.ocrText) && ctx.ocrCharCount < CARD_DOC_MAX_OCR_CHARS) return ImageInputKind.CARD
     return ImageInputKind.PAGE
 }
 
@@ -60,14 +48,13 @@ internal fun shouldRouteImageToTextPipeline(
             ocrCharCount = ocrCharCount,
             ocrText = when {
                 identityDocument -> "dowod osobisty"
-                vehicleDocument -> "VIN C.1.1 D.1 numer vin"
+                vehicleDocument -> "VIN C.1.1 numer vin"
                 else -> ""
             },
             faceCount = faceCount,
             forceImageRedact = forceImageRedact
         )
-    ) == ImageInputKind.PAGE &&
-        ocrCharCount >= MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE
+    ) == ImageInputKind.PAGE
 
 internal fun looksLikeIdentityDocument(ocrText: String): Boolean {
     if (ocrText.isBlank()) return false
@@ -75,9 +62,8 @@ internal fun looksLikeIdentityDocument(ocrText: String): Boolean {
     val markers = listOf(
         "dowod osobist", "d.o.", "dow. os", "dowod os",
         "legitymac", "legitymacj", "school id", "student id", "student card",
-        "identity card", "id card", "document no", "document number",
+        "identity card", "id card",
         "numer dowodu", "seria i numer", "nr dowodu",
-        "rzeczpospolita polska", "republic of poland",
         "prawo jazdy", "driving licence", "driving license",
         "karta pobytu", "paszport", "passport", "residence permit"
     )
@@ -92,14 +78,12 @@ internal fun looksLikeVehicleRegistration(ocrText: String): Boolean {
     val markers = listOf(
         "dowod rejestracyjny", "dowod rej", "certyfikat rejestracji",
         "registration certificate", "certificate of registration",
-        "numer vin", "numer identyfikacyjny pojazdu", "identification number",
-        "tablica rejestracyjna", "nr rejestracyjny", "nr rej", "n rej",
+        "numer vin", "numer identyfikacyjny pojazdu",
+        "tablica rejestracyjna", "nr rejestracyjny", "nr rej",
         "c.1.1", "c.1.2", "c.1.3", "c1.1", "c1.2", "c1.3",
-        "d.1", "d.2", "d.3",
         "e vin", "marka model", "rodzaj pojazdu", "kategoria pojazdu",
         "pojemnosc silnika", "masa wlasna", "dmc",
-        "data pierwszej rejestracji", "rok produkcji",
-        "wlasciciel", "wladajacy", "właściciel", "władający"
+        "data pierwszej rejestracji"
     )
     if (markers.any { folded.contains(it) }) return true
 

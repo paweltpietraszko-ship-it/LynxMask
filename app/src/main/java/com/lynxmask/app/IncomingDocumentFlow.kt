@@ -41,11 +41,7 @@ private sealed class IncomingDocState {
         val profile: RedactionProfile = RedactionProfile.GENERAL,
         val weakScan: Boolean = false
     ) : IncomingDocState()
-    data class ImageRouteChoice(
-        val bitmap: Bitmap,
-        val ocrScan: ImageRedactionPipeline.OcrScanResult,
-        val faceCount: Int
-    ) : IncomingDocState()
+
     data class Scanned(
         val result: PseudonymResult,
         val sourceText: String,
@@ -171,38 +167,6 @@ fun IncomingDocumentFlow(
                     onCancel = onFinished
                 )
 
-            is IncomingDocState.ImageRouteChoice ->
-                ImageRouteChoiceContent(
-                    onTextPipeline = {
-                        val text = s.ocrScan.plainText
-                        s.bitmap.recycle()
-                        state = if (isOcrQualityAcceptable(s.ocrScan.confidence, text.length))
-                            IncomingDocState.Review(text, ocrConfidence = s.ocrScan.confidence)
-                        else
-                            IncomingDocState.OcrRejected(s.ocrScan.confidence)
-                    },
-                    onImageRedact = {
-                        scope.launch(Dispatchers.Default) {
-                            progressLabel = "Przygotowuję maskowanie..."
-                            val profile = redactionProfileFor(ImageInputKind.CARD, s.ocrScan.plainText)
-                            val regions = ImageRedactionPipeline.detectRedactionRegions(
-                                bitmap = s.bitmap,
-                                userDict = UserDictionary.entries,
-                                guardAllowlist = GuardAllowlist.entries,
-                                profile = profile,
-                                ocr = s.ocrScan
-                            )
-                            withContext(Dispatchers.Main) {
-                                val weak = s.ocrScan.confidence != null && s.ocrScan.confidence < 0.68f
-                                state = IncomingDocState.ImageRedact(s.bitmap, regions, profile, weak)
-                            }
-                        }
-                    },
-                    onCancel = {
-                        s.bitmap.recycle()
-                        onFinished()
-                    }
-                )
 
             is IncomingDocState.ImageRedact ->
                 ImageRedactionScreen(
@@ -462,12 +426,11 @@ private suspend fun routeImageInput(
         )
 
         when (kind) {
-            ImageInputKind.AMBIGUOUS, ImageInputKind.PAGE -> {
-                // Dużo tekstu, brak twarzy i markerów karty → ścieżka pseudonimizacji
+            ImageInputKind.PAGE -> {
                 bmp.recycle()
                 finishWithText(ocrScan.plainText, goToReview = true, ocrScan.confidence, setState, context)
             }
-            ImageInputKind.CARD, ImageInputKind.PHOTO -> {
+            ImageInputKind.CARD -> {
                 onProgress("Przygotowuję maskowanie dokumentu...")
                 val regions = withContext(Dispatchers.Default) {
                     ImageRedactionPipeline.detectRedactionRegions(
@@ -638,41 +601,6 @@ private fun IncomingReviewContent(
     }
 }
 
-@Composable
-private fun ImageRouteChoiceContent(
-    onTextPipeline: () -> Unit,
-    onImageRedact: () -> Unit,
-    onCancel: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(LynxSpacing.lg),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Co to za dokument?", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = LynxColors.TextPrimary)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            "Nie jesteśmy pewni. Wybierz sposób przetwarzania.",
-            fontSize = 14.sp,
-            lineHeight = 21.sp,
-            color = LynxColors.TextSecondary,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(LynxSpacing.lg))
-        LynxPrimaryButton(onClick = onTextPipeline, modifier = Modifier.fillMaxWidth()) {
-            Text("Skan tekstu — pseudonimizuj słowa")
-        }
-        Spacer(modifier = Modifier.height(LynxSpacing.sm))
-        LynxSecondaryButton(onClick = onImageRedact, modifier = Modifier.fillMaxWidth()) {
-            Text("Dokument ze zdjęciem — maskuj pola")
-        }
-        Spacer(modifier = Modifier.height(LynxSpacing.md))
-        LynxGhostButton(onClick = onCancel) { Text("Anuluj", color = LynxColors.TextDim) }
-    }
-}
 
 @Composable
 private fun IncomingErrorContent(message: String, onDismiss: () -> Unit) {

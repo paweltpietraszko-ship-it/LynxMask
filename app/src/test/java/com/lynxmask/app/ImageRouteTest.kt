@@ -25,9 +25,11 @@ class ImageRouteTest {
     }
 
     @Test
-    fun emptyPhoto_usesImageRedact() {
-        assertFalse(
-            shouldRouteImageToTextPipeline(ocrCharCount = 0, forceImageRedact = false)
+    fun emptyPhoto_routesToPageThenErrors() {
+        // 0 znaków OCR + brak markerów karty → PAGE; finishWithText("") pokaże Error screen
+        assertEquals(
+            ImageInputKind.PAGE,
+            classifyImageInput(ImageRouteContext(ocrCharCount = 0, ocrText = "", faceCount = 0))
         )
     }
 
@@ -40,11 +42,12 @@ class ImageRouteTest {
 
     @Test
     fun idCardWithFace_usesImageRedact() {
+        // Dowód osobisty ma markery tekstowe → CARD, niezależnie od twarzy
         assertFalse(
             shouldRouteImageToTextPipeline(
                 ocrCharCount = 200,
                 forceImageRedact = false,
-                faceCount = 1,
+                faceCount = 0,
                 identityDocument = true
             )
         )
@@ -120,17 +123,11 @@ class ImageRouteTest {
     }
 
     @Test
-    fun minOcrChars_noCardMarkers_routesToTextPipeline() {
-        // Dokładnie próg MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE → PAGE
+    fun anyTextNoCardMarkers_routesToTextPipeline() {
+        // Nawet 1 znak bez markerów karty → PAGE (domyślnie OCR, nie image masking)
         assertEquals(
             ImageInputKind.PAGE,
-            classifyImageInput(
-                ImageRouteContext(
-                    ocrCharCount = MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE,
-                    ocrText = "A".repeat(MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE),
-                    faceCount = 0
-                )
-            )
+            classifyImageInput(ImageRouteContext(ocrCharCount = 1, ocrText = "A", faceCount = 0))
         )
     }
 
@@ -170,6 +167,39 @@ class ImageRouteTest {
     @Test
     fun shiftCodes_notVehicleReg() {
         assertFalse(looksLikeVehicleRegistration("N1 D1 D2 N2 SZMULIK PIOTR grafik"))
+    }
+
+    @Test
+    fun cardMarkersButLotsOfText_routesToTextPipeline() {
+        // Dokument szpitalny może zawierać "legitymacja ubezpieczeniowa" ale ma dużo tekstu → PAGE
+        val hospitalDoc = "LEGITYMACJA UBEZPIECZENIOWA NFZ\n" + "A".repeat(420)
+        assertEquals(
+            ImageInputKind.PAGE,
+            classifyImageInput(
+                ImageRouteContext(ocrCharCount = hospitalDoc.length, ocrText = hospitalDoc, faceCount = 0)
+            )
+        )
+    }
+
+    @Test
+    fun documentWithStamp_faceDetectedButRoutesToTextPipeline() {
+        // Pieczątka wykryta jako twarz (faceCount=1) nie blokuje ścieżki OCR gdy jest dużo tekstu
+        assertEquals(
+            ImageInputKind.PAGE,
+            classifyImageInput(
+                ImageRouteContext(
+                    ocrCharCount = 150,
+                    ocrText = "UMOWA NAJMU\nStrony umowy: Jan Kowalski\nData: 2024-01-15",
+                    faceCount = 1
+                )
+            )
+        )
+    }
+
+    @Test
+    fun ocrStyleScheduleWithDots_notVehicleReg() {
+        // OCR dodaje kropki: "D.1 D.2 N.2" — nie dowód rejestracyjny
+        assertFalse(looksLikeVehicleRegistration("N1 D.1 D.2 N2 SZMULIK PIOTR grafik"))
     }
 
     @Test
