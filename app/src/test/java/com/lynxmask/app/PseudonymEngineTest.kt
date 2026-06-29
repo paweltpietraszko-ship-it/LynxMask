@@ -209,13 +209,14 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("5260001320"))
     }
 
-    @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu nie maskuje czesciowo`() {
-        // Regresja: wzorzec 3-2-2 (numer wewnętrzny) łapał ogon "000-13-20" z "526-000-13-20"
-        // po tym jak S5 odrzuciło pełny NIP. Lookbehind (?<!\d{3}[\s\-]) blokuje to.
+    @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu maskowany przez AnchorEngine`() {
+        // AnchorEngine: kształt xxx-xxx-xx-xx z kreskami = kotwica strukturalna → maskuj.
+        // Poprzednie zachowanie (S5 odrzuca → zostaje w tekście) zastąpione przez AnchorEngine
+        // który woli FP niż przepuszczone PII. Im mniej pracy dla Guarda tym lepiej.
         val r = pseudonymize("Kontrahent 526-000-13-20 zalegał z płatnością.")
-        assertTrue("Błędny NIP bez kontekstu powinien zostać w tekście",
+        assertFalse("NIP z kształtem kresek powinien być zamaskowany przez AnchorEngine",
             r.pseudonymizedText.contains("526-000-13-20"))
-        assertFalse("Żaden fragment błędnego NIPu nie powinien być zamaskowany",
+        assertTrue("AnchorEngine powinien wstawić token NUMER",
             r.pseudonymizedText.contains("NUMER_"))
     }
 

@@ -19,13 +19,14 @@ package com.lynxmask.app
  *                potwierdzone martwy kod po przejrzeniu wszystkich plików silnika
  *
  * Architektura (kolejność wykonania):
- *   Warstwa 0: OcrNormalizer (normalizacja przed detekcją)
- *   Warstwa 1: Słownik użytkownika (SQLCipher) — najwyższy priorytet
- *   Warstwa 2: Regex strukturalne (przeniesione z Triangulum v4.19 + nowe) → StructuralEngine.kt
- *   Warstwa 3: Czarna lista kontekstowa (imiona PESEL + funkcje + tytuły) → NameEngine.kt
- *   Warstwa 4: Biała lista (zostaw zawsze) → NameEngine.kt
- *   Warstwa 5: Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
- *   Warstwa 6: Output Guard + Risk Score → OutputGuard.kt
+ *   Warstwa 0:  OcrNormalizer (normalizacja przed detekcją)
+ *   Warstwa 2:  Regex strukturalne → StructuralEngine.kt
+ *   Warstwa 3:  Czarna lista kontekstowa + propagacja → NameEngine.kt
+ *   Warstwa 3d: Wzorce adresów (po NameEngine)
+ *   Warstwa 4a: Słownik użytkownika (zbieracz resztek — PO silnikach strukturalnych)
+ *   Warstwa 4b: AnchorEngine (zbieracz resztek kotwicowy) → AnchorEngine.kt
+ *   Warstwa 5:  Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
+ *   Warstwa 6:  Output Guard + Risk Score → OutputGuard.kt
  *
  * Tokeny zgodne z Triangulum:
  *   FIRMA_{nnn}, OSOBA_{nnn}, NUMER_{nnn}, KWOTA_{nnn}, ADRES_{nnn}
@@ -181,25 +182,6 @@ object PseudonymEngine {
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
 
-        // --- Warstwa 1: Słownik użytkownika ---
-        // Defensywna walidacja typu — zabezpiecza przed błędnym typem z ManualTokenSection
-        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_EMAIL, TOKEN_KWOTA, TOKEN_ADRES)
-        for ((dictValue, tokenType) in userDictionary) {
-            if (dictValue.isBlank()) continue
-            val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
-            val token = assignToken(dictValue, safeType, layer = "DICT", rule = "USER_DICTIONARY")
-            // DICT-FIX v2.1: regex zamiast String.replace() — zapobiega podmiance fragmentów
-            // większych słów (np. "Jan" → "OSOBA_001" podmienia "Janusz" → "OSOBA_001usz").
-            // \b nie obsługuje polskich diakrytyków — używamy lookbehind/lookahead.
-            val escapedValue = Regex.escape(dictValue)
-            val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
-            val dictRegex = Regex(
-                "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
-                RegexOption.IGNORE_CASE
-            )
-            text = dictRegex.replace(text) { token }
-        }
-
         // --- Warstwa 2: Regex strukturalne ---
         if (BuildConfig.DEBUG) {
             android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
@@ -297,6 +279,32 @@ object PseudonymEngine {
                 if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
                 text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType))
             }
+        }
+
+        // --- Warstwa 4a: Słownik użytkownika (zbieracz resztek) ---
+        // UWAGA: przeniesiony z Warstwy 1 — musi działać PO silnikach strukturalnych.
+        // W Warstwie 1 UserDictionary kradł fragmenty emaili i nazwisk z par imię+nazwisko,
+        // powodując że StructuralEngine i NameEngine dostawały już zniszczony tekst.
+        // Jako zbieracz resztek operuje na tekście gdzie EMAIL i OSOBA są już zamaskowane.
+        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_EMAIL, TOKEN_KWOTA, TOKEN_ADRES)
+        for ((dictValue, tokenType) in userDictionary) {
+            if (dictValue.isBlank()) continue
+            val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
+            val token = assignToken(dictValue, safeType, layer = "DICT", rule = "USER_DICTIONARY")
+            val escapedValue = Regex.escape(dictValue)
+            val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
+            val dictRegex = Regex(
+                "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
+                RegexOption.IGNORE_CASE
+            )
+            text = dictRegex.replace(text) { token }
+        }
+
+        // --- Warstwa 4b: AnchorEngine (zbieracz resztek kotwicowy) ---
+        // Operuje wyłącznie na tym co Warstwy 2–4a przeoczyły.
+        // Nie może popsuć istniejących tokenów — każdy przebieg pomija TOKEN_RE.
+        text = applyAnchorEngine(text) { value, tokenType ->
+            assignToken(value, tokenType, layer = "ANCHOR", rule = tokenType)
         }
 
         // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
