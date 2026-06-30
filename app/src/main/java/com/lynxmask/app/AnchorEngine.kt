@@ -39,7 +39,7 @@ internal fun applyAnchorEngine(
     fun applyAll(re: Regex, tokenType: String) {
         val hits = re.findAll(t).toList().ifEmpty { return }
         t = hits.asReversed().fold(t) { acc, m ->
-            if (TOKEN_RE.containsMatchIn(m.value)) acc
+            if (matchOverlapsToken(acc, m.range)) acc
             else {
                 val token = assignToken(m.value.trim(), tokenType)
                 val before = acc.getOrElse(m.range.first - 1) { ' ' }

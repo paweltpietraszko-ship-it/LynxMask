@@ -630,6 +630,16 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "Warszawa")
     }
 
+    @Test fun `anchor nie konsumuje prefiksu istniejacego tokenu adres jako miasto`() {
+        // BUG: AnchorEngine A.11b dopasowuje opcjonalne miasto po kodzie.
+        // Gdy wcześniejsza warstwa stworzyła ADRES_NNN dla miasta, A.11b widzi
+        // "00-001 ADRES" i traktuje "ADRES" jako nazwę miasta → ogon "_NNN".
+        // Fix: matchOverlapsToken w applyAll blokuje dopasowanie.
+        val r = pseudonymize("zamieszkały w Warszawie ul. Marszałkowska 15/3, 00-001 Warszawa")
+        val out = r.pseudonymizedText
+        assertFalse("ogon _NNN w wyniku", Regex("""\s_\d{3}(?!\d)""").containsMatchIn(out))
+    }
+
     @Test fun `adres z ul przecinek zamiast kropki`() {
         val r = pseudonymize("ul, Wolności 99, 41-200 Sosnowiec")
         assertTokenExists(r, TOKEN_ADRES)
