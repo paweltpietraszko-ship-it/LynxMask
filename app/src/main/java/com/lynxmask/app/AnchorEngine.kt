@@ -66,6 +66,11 @@ internal fun applyAnchorEngine(
     // ------------------------------------------------------------------
     applyAll(Regex("""[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*"""), TOKEN_EMAIL)
 
+    // A.2b EMAIL — osierocona domena po istniejącym tokenie
+    // EMAIL_001@nfz.gov.pl → A.2 skipped (TOKEN_RE), tu łapiemy @nfz.gov.pl
+    // Wymaga minimum jednej kropki w domenie — nie matchuje @TOKEN_001 bez rozszerzenia.
+    applyAll(Regex("""@[^\s\n@]+(?:\.[^\s\n@]+)+"""), TOKEN_EMAIL)
+
     // ------------------------------------------------------------------
     // A.3  TELEFON — kotwica twarda: +48 / 0048
     // Widzę +48 → co po nim wygląda jak cyfry (z separatorami) → maskuję.
