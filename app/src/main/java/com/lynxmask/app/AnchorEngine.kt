@@ -71,7 +71,7 @@ internal fun applyAnchorEngine(
     // Widzę +48 → co po nim wygląda jak cyfry (z separatorami) → maskuję.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?:\+4[8Bb]|0048)[0-9OolIiSsBbZz\s\-\.]{6,18}"""),
+        Regex("""(?:\+4[8Bb]|0048)[0-9OolIiSsBbZz \t\-\.]{6,18}"""),
         TOKEN_NUMER
     )
 
@@ -120,7 +120,7 @@ internal fun applyAnchorEngine(
     // Widzę "123-4S6-78" → to wygląda jak NIP z OCR → maskuję.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?<!$D)$D{2,4}-$D{2,4}(?:-$D{2,4})+(?!$D)"""),
+        Regex("""(?<![0-9OolIiSsBbZz_])$D{2,4}-$D{2,4}(?:-$D{2,4})+(?![0-9OolIiSsBbZz_])"""),
         TOKEN_NUMER
     )
 
@@ -130,7 +130,7 @@ internal fun applyAnchorEngine(
     // Nie sprawdzam 26 cyfr, nie liczę grup, nie sumuję.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])PL[$D\s\-]{20,42}"""),
+        Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])PL[$D \t\-]{20,42}"""),
         TOKEN_NUMER
     )
 
