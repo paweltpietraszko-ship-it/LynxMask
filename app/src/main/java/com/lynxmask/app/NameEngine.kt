@@ -393,34 +393,54 @@ private fun buildNamePattern(): String =
 // resetRegexCache() zeruje go (wywoływane z teardown testów).
 private var _nameForwardRegex: Regex? = null
 private val NAME_FORWARD_REGEX: Regex
-    get() = _nameForwardRegex ?: Regex(
-        """\b(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)\b""",
-        RegexOption.IGNORE_CASE
-    ).also { _nameForwardRegex = it }
+    get() {
+        _nameForwardRegex?.let { return it }
+        val r = Regex(
+            """\b(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)\b""",
+            RegexOption.IGNORE_CASE
+        )
+        if (LookupTables.initialized) _nameForwardRegex = r
+        return r
+    }
 
 private var _nameBackwardRegex: Regex? = null
 private val NAME_BACKWARD_REGEX: Regex
-    get() = _nameBackwardRegex ?: Regex(
-        """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)(?:[^\S\n]*,?\s+)\b(${buildNamePattern()})\b""",
-        RegexOption.IGNORE_CASE
-    ).also { _nameBackwardRegex = it }
+    get() {
+        _nameBackwardRegex?.let { return it }
+        val r = Regex(
+            """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)(?:[^\S\n]*,?\s+)\b(${buildNamePattern()})\b""",
+            RegexOption.IGNORE_CASE
+        )
+        if (LookupTables.initialized) _nameBackwardRegex = r
+        return r
+    }
 
 private var _honorificRegex: Regex? = null
 private val HONORIFIC_REGEX: Regex
-    get() = _honorificRegex ?: Regex(
-        """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)""",
-        RegexOption.IGNORE_CASE
-    ).also { _honorificRegex = it }
+    get() {
+        _honorificRegex?.let { return it }
+        val r = Regex(
+            """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)""",
+            RegexOption.IGNORE_CASE
+        )
+        if (LookupTables.initialized) _honorificRegex = r
+        return r
+    }
 
 // HONORIFIC_NAME_ONLY_REGEX: Pan/Pani + samo imię — bez wymaganego nazwiska.
 // Negative lookahead zapobiega podwójnemu matchowaniu gdy po imieniu jest nazwisko
 // (tym zajmuje się HONORIFIC_REGEX powyżej).
 private var _honorificNameOnlyRegex: Regex? = null
 private val HONORIFIC_NAME_ONLY_REGEX: Regex
-    get() = _honorificNameOnlyRegex ?: Regex(
-        """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})(?![^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż])""",
-        RegexOption.IGNORE_CASE
-    ).also { _honorificNameOnlyRegex = it }
+    get() {
+        _honorificNameOnlyRegex?.let { return it }
+        val r = Regex(
+            """\b(pan(?:i(?:a|ą|e|ej|ę)?|em|u|ie|a)?)[^\S\n]+(${buildNamePattern()})(?![^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż])""",
+            RegexOption.IGNORE_CASE
+        )
+        if (LookupTables.initialized) _honorificNameOnlyRegex = r
+        return r
+    }
 
 internal fun resetRegexCache() {
     _nameForwardRegex = null
