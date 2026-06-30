@@ -266,6 +266,17 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_ABBREV_SPACE_DOT: spacja wstawiona przez OCR między skrótem a kropką
+    // "ul .Marszałkowska" → "ul.Marszałkowska"  (OCR_UL_PREFIX doda spację po kropce)
+    // "al .Grunwaldzka"   → "al.Grunwaldzka"
+    // Obsługuje: ul, al, os, pl — przed wielką literą lub spacją+wielką literą.
+    // ----------------------------------------------------------
+    private val OCR_ABBREV_SPACE_DOT = Regex(
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(ul|al|os|pl)[^\S\n]+\.(?=[^\S\n]*[A-ZŁŚŹĆŃĄĘÓŻ])""",
+        RegexOption.IGNORE_CASE
+    )
+
+    // ----------------------------------------------------------
     // OCR_UL_PREFIX v1.4: naprawa skrótu "ul." rozbitego przez OCR
     //
     // "u. Nazwa" → "ul. Nazwa"  (OCR zgubił l)
@@ -692,6 +703,12 @@ object OcrNormalizer {
                 "${m.groupValues[1]}_${m.groupValues[2]}"
             }
         } while (text != prev8)
+
+        // 8c. OCR: spacja przed kropką skrótu adresowego — "ul .Nazwa" → "ul.Nazwa"
+        text = OCR_ABBREV_SPACE_DOT.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}."
+        }
 
         // 9. OCR: "u. Nazwa" lub "u Nazwa" → "ul. Nazwa"
         text = OCR_UL_PREFIX.replace(text) { m ->

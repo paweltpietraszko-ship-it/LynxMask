@@ -225,7 +225,7 @@ internal fun applyAnchorEngine(
     // [^\S\n] zamiast \s — nie crossuje linii, nie wchodzi w cyfry tokenów.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][\d,.]*(?:[^\S\n]\d{1,3})*(?:[,.]\d{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?"""),
+        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?"""),
         TOKEN_KWOTA
     )
 
@@ -234,9 +234,11 @@ internal fun applyAnchorEngine(
     // Widzę walutę → co przed nią wygląda jak liczba → maskuję.
     // [^\S\n] zamiast \s — nie crossuje linii, nie zjada cyfr z sąsiednich tokenów.
     // z[1l] — OCR: "z1"/"zl" zamiast "zł".
+    // [0-9] na początku — wymaga prawdziwej cyfry (D-klasa FP: "o" z "sto złotych").
+    // D-klasa w grupach: "15 OOO,OO zł" — OCR zamienia 000→OOO w środku liczby.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)[0-9][\d,.]*(?:[^\S\n]\d{1,3})*(?:[,.]\d{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)"""),
+        Regex("""(?i)[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)"""),
         TOKEN_KWOTA
     )
 

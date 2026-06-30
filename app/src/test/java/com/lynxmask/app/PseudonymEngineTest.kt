@@ -209,6 +209,15 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("5260001320"))
     }
 
+    @Test fun `kwota OCR litery zamiast zer jest maskowana`() {
+        // BUG-KWOTA-OOO: "15 000" po OCR → "15 OOO" (O zamiast 0).
+        // A.9 używało [0-9]/\d — nie matchowało liter. Fix: D-klasa.
+        val r1 = pseudonymize("kwota: 15 OOO,OO zł")
+        assertFalse("'15 OOO,OO' powinno być zamaskowane", r1.pseudonymizedText.contains("OOO"))
+        val r2 = pseudonymize("23O 5OO PLN")
+        assertFalse("'23O 5OO' powinno być zamaskowane", r2.pseudonymizedText.contains("23O"))
+    }
+
     @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu maskowany przez AnchorEngine`() {
         // AnchorEngine: kształt xxx-xxx-xx-xx z kreskami = kotwica strukturalna → maskuj.
         // Poprzednie zachowanie (S5 odrzuca → zostaje w tekście) zastąpione przez AnchorEngine
@@ -621,6 +630,13 @@ class PseudonymEngineTest {
         val r = pseudonymize("u. Dębowa 19/23, 87-100 Białystok")
         assertTokenExists(r, TOKEN_ADRES)
         assertFalse(r.pseudonymizedText.contains("Dębowa 19"))
+    }
+
+    @Test fun `adres ul spacja przed kropka jest maskowany`() {
+        // OCR: "ul .Marszałkowska" — spacja przed kropką skrótu
+        val r = pseudonymize("ul .Marszałkowska 15/3, 00-001 Warszawa")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Marszałkowska")
     }
 
     @Test fun `email OCR spacja po malpce maskowany end-to-end`() {
