@@ -88,6 +88,14 @@ data class DetectionTrace(
 // ============================================================
 internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})(?!\d)""")
 
+// Sprawdza okno wokół matcha w pełnym tekście — guard TOKEN_RE.containsMatchIn(match.value)
+// nie widzi prefiksu tokenu (np. match="ADRES" przy "ADRES_004" w tekście → false).
+// Ta funkcja rozszerza okno o 1 znak w lewo i 5 w prawo, łapiąc "_NNN" za matchem.
+internal fun matchOverlapsToken(text: String, range: IntRange): Boolean {
+    val win = text.substring(maxOf(0, range.first - 1), minOf(text.length, range.last + 5))
+    return TOKEN_RE.containsMatchIn(win)
+}
+
 // ============================================================
 // Normalizacja canonical — z Triangulum [V4-2]
 // ============================================================
@@ -324,7 +332,10 @@ object PseudonymEngine {
                 "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
                 RegexOption.IGNORE_CASE
             )
-            text = dictRegex.replace(text) { token }
+            val snap = text
+            text = dictRegex.replace(snap) { m ->
+                if (matchOverlapsToken(snap, m.range)) m.value else token
+            }
         }
 
         // --- Warstwa 4b: AnchorEngine (zbieracz resztek kotwicowy) ---

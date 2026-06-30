@@ -700,6 +700,22 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "JAN KOWALSKI")
     }
 
+    @Test fun `slownik nie rozbija istniejacego tokenu na prefiks i ogon`() {
+        // Regresja BUG-OGONY: UserDictionary nie miał guarda TOKEN_RE.
+        // Wpis "Firma" matchuje "FIRMA" w "FIRMA_001" (notWordChar nie zawiera '_').
+        // Efekt bez fixa: "FIRMA_001" → "FIRMA_NNN _001" (ogon ze spacją).
+        // NameEngine tworzy FIRMA_001 dla "Sp. z o.o." PRZED W4a (UserDictionary).
+        val r = pseudonymize(
+            text = "Kowalski i Partnerzy Sp. z o.o.",
+            userDictionary = listOf("Firma" to TOKEN_FIRMA)
+        )
+        val output = r.pseudonymizedText
+        assertFalse(
+            "Ogon z spacją — UserDictionary rozbił token: '$output'",
+            Regex("""(?:ADRES|FIRMA|OSOBA|NUMER|EMAIL|KWOTA)\s+_\d{3}""").containsMatchIn(output)
+        )
+    }
+
     // =========================================================================
     // OcrNormalizer
     // =========================================================================
