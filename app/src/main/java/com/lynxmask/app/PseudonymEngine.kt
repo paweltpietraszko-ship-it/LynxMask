@@ -19,14 +19,21 @@ package com.lynxmask.app
  *                potwierdzone martwy kod po przejrzeniu wszystkich plików silnika
  *
  * Architektura (kolejność wykonania):
- *   Warstwa 0:  OcrNormalizer (normalizacja przed detekcją)
- *   Warstwa 2:  Regex strukturalne → StructuralEngine.kt
- *   Warstwa 3:  Czarna lista kontekstowa + propagacja → NameEngine.kt
- *   Warstwa 3d: Wzorce adresów (po NameEngine)
- *   Warstwa 4a: Słownik użytkownika (zbieracz resztek — PO silnikach strukturalnych)
- *   Warstwa 4b: AnchorEngine (zbieracz resztek kotwicowy) → AnchorEngine.kt
- *   Warstwa 5:  Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
- *   Warstwa 6:  Output Guard + Risk Score → OutputGuard.kt
+ *   Warstwa 0:   OcrNormalizer (normalizacja przed detekcją)
+ *   === RUNDA 1 ===
+ *   Warstwa 2:   Regex strukturalne → StructuralEngine.kt
+ *   Warstwa 3:   Czarna lista kontekstowa + propagacja → NameEngine.kt
+ *   Warstwa 3d:  Wzorce adresów (po NameEngine)
+ *   === ZBIERACZE RESZTEK ===
+ *   Warstwa 4a:  Słownik użytkownika (zbieracz resztek)
+ *   Warstwa 4b:  AnchorEngine (zbieracz resztek kotwicowy) → AnchorEngine.kt
+ *   === RUNDA 2 — ten sam assignToken, te same liczniki ===
+ *   Warstwa 2':  Regex strukturalne (runda 2 — resztki po AnchorEngine)
+ *   Warstwa 3':  Czarna lista kontekstowa (runda 2)
+ *   Warstwa 3d': Wzorce adresów (runda 2)
+ *   === FINALIZACJA ===
+ *   Warstwa 5:   Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
+ *   Warstwa 6:   Output Guard + Risk Score → OutputGuard.kt
  *
  * Tokeny zgodne z Triangulum:
  *   FIRMA_{nnn}, OSOBA_{nnn}, NUMER_{nnn}, KWOTA_{nnn}, ADRES_{nnn}
@@ -79,7 +86,7 @@ data class DetectionTrace(
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
 // ============================================================
-internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})\b""")
+internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})(?!\d)""")
 
 // ============================================================
 // Normalizacja canonical — z Triangulum [V4-2]
@@ -305,6 +312,33 @@ object PseudonymEngine {
         // Nie może popsuć istniejących tokenów — każdy przebieg pomija TOKEN_RE.
         text = applyAnchorEngine(text) { value, tokenType ->
             assignToken(value, tokenType, layer = "ANCHOR", rule = tokenType)
+        }
+
+        // --- Runda 2: Structural + Name + Address na resztkach po AnchorEngine ---
+        // Ten sam assignToken (te same liczniki, ta sama tokenMap) — zero kolizji tokenów.
+        // TOKEN_RE w każdym silniku chroni już zamaskowane fragmenty przed ponownym przetworzeniem.
+        for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
+            text = pattern.replace(text) { matchResult ->
+                val match = matchResult.value
+                if (TOKEN_RE.containsMatchIn(match)) return@replace match
+                val digits = match.filter { it.isDigit() }
+                if (pattern.pattern in PESEL_PATTERN_STRINGS && !digits.startsWith("48")) {
+                    if (digits.length == 11 && !isValidPesel(digits)) return@replace match
+                }
+                if (pattern.pattern in NIP_PATTERN_STRINGS) {
+                    if (digits.length == 10 && !isValidNip(digits)) return@replace match
+                }
+                assignToken(match, tokenType, layer = "STRUCTURAL_R2", rule = tokenType)
+            }
+        }
+        text = applyContextualBlacklist(text, { value, tokenType ->
+            assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
+        }, profileType)
+        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+            pattern.findAll(text).toList().asReversed().forEach { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType))
+            }
         }
 
         // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
