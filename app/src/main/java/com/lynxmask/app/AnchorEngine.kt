@@ -39,7 +39,14 @@ internal fun applyAnchorEngine(
         val hits = re.findAll(t).toList().ifEmpty { return }
         t = hits.asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) acc
-            else acc.replaceRange(m.range, assignToken(m.value.trim(), tokenType))
+            else {
+                val token = assignToken(m.value.trim(), tokenType)
+                val before = acc.getOrElse(m.range.first - 1) { ' ' }
+                val after = acc.getOrElse(m.range.last + 1) { ' ' }
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+                acc.replaceRange(m.range, pre + token + suf)
+            }
         }
     }
 
@@ -106,7 +113,14 @@ internal fun applyAnchorEngine(
     val peselHits = peselShapeRe.findAll(t).toList()
     t = peselHits.asReversed().fold(t) { acc, m ->
         if (TOKEN_RE.containsMatchIn(m.value)) acc
-        else if (isPeselChecksumValid(m.value)) acc.replaceRange(m.range, assignToken(m.value.trim(), TOKEN_NUMER))
+        else if (isPeselChecksumValid(m.value)) {
+            val token = assignToken(m.value.trim(), TOKEN_NUMER)
+            val before = acc.getOrElse(m.range.first - 1) { ' ' }
+            val after = acc.getOrElse(m.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            acc.replaceRange(m.range, pre + token + suf)
+        }
         else acc
     }
 
