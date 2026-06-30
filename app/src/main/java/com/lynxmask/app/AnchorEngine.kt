@@ -226,5 +226,15 @@ internal fun applyAnchorEngine(
         TOKEN_ADRES
     )
 
+    // ------------------------------------------------------------------
+    // CLEANUP: sierocące prefiksy telefoniczne przed istniejącymi tokenami
+    // Runda 1 (StructuralEngine) może zostawić: "+", "+4B", "tel.", "kom." przed tokenem.
+    // Usuwamy je — sama cyfra jest już zamaskowana, prefix nie jest PII.
+    // ------------------------------------------------------------------
+    val tok = """(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}"""
+    t = Regex("""\+4[8Bb]\s*(?=$tok)""").replace(t, "")   // "+4B NUMER_016" → "NUMER_016"
+    t = Regex("""\+\s*(?=$tok)""").replace(t, "")          // "+NUMER_013"    → "NUMER_013"
+    t = Regex("""(?i)(?:tel\.?|kom\.?|fax\.?)\s*(?=$tok)""").replace(t, "")  // "tel.NUMER_017" → "NUMER_017"
+
     return t
 }
