@@ -255,12 +255,6 @@ object OcrNormalizer {
         """([a-zA-Z0-9._%+\-]{1,})[^\S\n]([a-zA-Z0-9._%+\-]{1,})(?=@[a-zA-Z0-9.\-]+\.[a-zA-Z][a-zA-Z0-9]{1,3}\b)"""
     )
 
-    // OCR_EMAIL_CONCAT (krok 0a): rozdzielanie emaili sklejonych przez OCR
-    // "user@firma.plbiuro@nfz.gov.pl" → "user@firma.pl\nbiuro@nfz.gov.pl"
-    // Lista TLD zamiast [a-z]{2,6} — zapobiega backtrackowi na .gov.pl → .gov + plbiuro
-    private val OCR_EMAIL_CONCAT_TLDS = "pl|com|net|org|eu|gov|info|biz|de|uk|fr|it|nl|be|at|cz|sk|hu|ro|io|co|me|edu"
-    private val OCR_EMAIL_CONCAT = Regex("""\.(?:$OCR_EMAIL_CONCAT_TLDS)(?=[a-zA-Z0-9][^\s@\n]*@)""")
-
     // OCR_EMAIL_COMPACT (krok 0b): spacje wewnątrz emaila przed pozostałymi krokami email
     private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)\s+([a-zA-Z0-9])""")
     // Tylko typowe artefakty OCR — nie skleja "krzysztof nowakowski@" (→ LOCALSPACE _)
@@ -591,13 +585,6 @@ object OcrNormalizer {
         text = OCR_KW_IBAN.replace(text) {
             corrections++
             "IBAN"
-        }
-
-        // 0a. OCR: sklejone emaile bez separatora (OCR złączył wiele linii w jeden ciąg)
-        // "user@firma.plbiuro@nfz.gov.pl" → "user@firma.pl\nbiuro@nfz.gov.pl"
-        text = OCR_EMAIL_CONCAT.replace(text) { m ->
-            corrections++
-            m.value + "\n"
         }
 
         // 0b. OCR: spacje wewnątrz emaila (@ po local-part) — przed krokami 6b/7

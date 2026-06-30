@@ -131,6 +131,15 @@ object PseudonymEngine {
             }
         }
 
+        // --- Pre-processing: rozdzielanie emaili sklejonych (wielokrotne @ bez spacji) ---
+        // OcrNormalizer krok 0b może sklejać emaile z osobnych linii dokumentu.
+        // Jeśli w ciągu bez spacji/newline jest więcej niż jedno @, wstawiamy \n po TLD.
+        // Lista TLD zamiast [a-z]{2,6} — zapobiega backtrackowi na .gov → .pl split
+        run {
+            val tlds = "pl|com|net|org|eu|gov|info|biz|de|uk|fr|it|nl|be|at|cz|sk|hu|ro|io|co|me|edu"
+            text = Regex("""\.(?:$tlds)(?=[a-zA-Z0-9][^\s@\n]*@)""").replace(text) { m -> m.value + "\n" }
+        }
+
         // --- Pre-processing: naprawa emaili z błędami OCR ---
         // anna. nowak(@wp.pl  → anna.nowak@wp.pl
         // robert.jablonski@ finanse24.pl → robert.jablonski@finanse24.pl
