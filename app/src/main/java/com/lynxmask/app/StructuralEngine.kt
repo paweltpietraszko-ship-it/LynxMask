@@ -224,22 +224,15 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // (po ur w środku słowa nie ma \b bo następny znak też jest \w)
     TOKEN_NUMER to Regex("""(?i)\bdat[aą]\s+ur(?:odzen[ií][^\s:–\-\d]{0,2})?\b\.?[^\S\n]*[:–\-]?\n?[^\S\n]*\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}\b"""),
 
-    // Data polska DD.MM.YYYY — S-DATE-PL (strukturalna, różne separatory, bez kontekstu)
-    // Separatory: . , / - ; rok ograniczony do 19xx/20xx (blokuje FP: art. 10.12.98 → rok 1998 ✓, ale 10.12.34 bez 19/20 → skip)
-    // Dzień 01–31, miesiąc 01–12 — walidacja zakresu bez sprawdzania kombinacji (luty bez 29/30/31)
-    TOKEN_NUMER to Regex("""\b(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-](?:19|20)\d{2}\b"""),
+    // S-DATE-PL: data DD.MM.YYYY bez kontekstu — rok musi być 19xx lub 20xx
+    // Separatory: kropka / ukośnik / przecinek (kreska jest lapana przez A.5b NIP-shape).
+    // Rok poza zakresem (np. 1234) → brak masowania (test: "parametr 10.12.1234" → skip).
+    TOKEN_NUMER to Regex("""\b\d{1,2}[./,]\d{1,2}[./,](?:19|20)\d{2}\b"""),
 
-    // Data z kontekstem DATA/DNIA — S-DATE-CTX (kontekstowa, rok 2 lub 4 cyfry)
-    // Fallback po S-DATE-PL: obsługuje daty ze skróconym rokiem ("Dnia 10.12.26")
-    // i formaty niestandardowe. S-DATE-PL przychwyci rok 4-cyfrowy wcześniej.
-    // Maskuje cały fragment łącznie z "Dnia"/"Data:".
-    TOKEN_NUMER to Regex("""(?i)\b(?:dat[aą]|dnia|dniu)\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-]\d{2,4}\b"""),
-
-    // Data ISO YYYY-MM-DD (strukturalna) — S-DATE-ISO / BUG-DATE-PARTIAL
-    // Wzorzec strukturalny (format-only), nie wymaga kontekstu.
-    // Umieszczony PRZED blokiem "numer z kontekstem" żeby całość daty była matchowana zanim
-    // inne reguły złapią sam rok/miesiąc i zostawią fragment "-DD".
-    TOKEN_NUMER to Regex("""\b(?:19|20)\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])\b"""),
+    // S-DATE-CTX: data po słowie kluczowym Dnia/Data — akceptuje 2-cyfrowy rok
+    // Kontekst słowny ("Dnia", "Data:") jest dowodem że to data, nie losowe liczby.
+    // Separator: kropka / ukośnik / przecinek / kreska; rok 2–4 cyfry.
+    TOKEN_NUMER to Regex("""(?i)\b(?:dnia|dat[aą]\s*:?)[^\S\n]+\d{1,2}[./,\-]\d{1,2}[./,\-]\d{2,4}\b"""),
 
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)
@@ -362,12 +355,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // KOLEJNOŚĆ KRYTYCZNA: kontekstowe (tel./kom./fax) PRZED strukturalnymi.
     // Bez tego linia \b\d{3}...\d{3}\b kradnie cyfry, zostawiając "tel." / "kom." na widoku.
     //
-    // tel./telefon:/kom./fax: — łapie 7-cyfrowe lokalne i niestandardowe formaty
-    // Dodano: kom (brakowało w oryginale); usunięto jako "fallback" — teraz PRIMARY.
-    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|kom|fax|faks)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
-    // +48 / +4B (OCR: 8→B) z prefiksem — OSOBNY wzorzec żeby \b nie przeskoczył przed +
-    // \b(?:\+?48)? pozwalało \b zakotwiczoć między + a 48 → + zostawał na widoku.
-    TOKEN_NUMER to Regex("""\+4[8Bb][-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}(?!\d)"""),  // +48 PL komórkowy
+    // Rozszerzone słowa kluczowe: komórka, wew, gsm, nr tel
+    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|kom(?:órka)?|fax|faks|wew(?:nętrzny)?|gsm|nr[\s.]?tel)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
+    // +48 / +4B (OCR: 8→B) z prefiksem
+    TOKEN_NUMER to Regex("""\+4[8Bb][-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}(?!\d)"""),
+    // samo 48 jako prefix (bez +) — np. "48 601 234 567" w OCR bez znaku plusa
+    TOKEN_NUMER to Regex("""(?<!\+)(?<!\d)\b48[-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),
     // PL komórkowy/miejski bez prefiksu: "600 123 456", "22.765.43.21"
     // S10-FIX: separator [-\s.] zamiast [-\s]
     TOKEN_NUMER to Regex("""\b\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),

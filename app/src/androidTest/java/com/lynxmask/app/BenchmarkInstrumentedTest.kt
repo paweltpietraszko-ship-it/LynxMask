@@ -320,15 +320,15 @@ class BenchmarkInstrumentedTest {
         }
 
         val total = entities.size
-        var fpCount = 0
+        val fpList = mutableListOf<DetectedToken>()
         tokens.forEach { tok ->
             val on = norm(tok.original)
             val isFp = on.length >= 2 && gtNorms.none { gn ->
                 on == gn || (on.length >= 6 && (on.contains(gn) || gn.contains(on)))
             }
-            if (isFp) fpCount++
+            if (isFp) fpList.add(tok)
         }
-        val fp        = fpCount
+        val fp        = fpList.size
         val recall    = if (total > 0) detected.toDouble() / total else null
         val precision = if (detected + fp > 0) detected.toDouble() / (detected + fp) else null
         val f1        = if (recall != null && precision != null && recall + precision > 0)
@@ -353,6 +353,7 @@ class BenchmarkInstrumentedTest {
             tokens         = tokens,
             entities       = entities,
             fpCount        = fp,
+            fpTokens       = fpList,
             missLabels     = missLabels,
             guardRedHits   = guardRedHits,
             summary        = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
@@ -496,6 +497,23 @@ class BenchmarkInstrumentedTest {
         sb.appendLine("   BRAK_W_OCR (kryt.):              $bBrakWOcr   (nie blokuje — sufit OCR)")
         sb.appendLine("   FP metryczne (token vs GT):      $bFp   (nie blokuje)")
         sb.appendLine("   Błędy pipeline:                  $bErrors")
+
+        // FP per layer summary
+        val fpLayerCounts = mutableMapOf<String, Int>()
+        secB.forEach { r ->
+            val traceByToken = r.trace.associateBy { it.token }
+            r.fpTokens.forEach { tok ->
+                val layer = traceByToken[tok.token]?.layer ?: "?"
+                fpLayerCounts[layer] = (fpLayerCounts[layer] ?: 0) + 1
+            }
+        }
+        if (fpLayerCounts.isNotEmpty()) {
+            sb.appendLine()
+            sb.appendLine("   FP PER WARSTWA (sekcja B)")
+            fpLayerCounts.entries.sortedByDescending { it.value }.forEach { (layer, cnt) ->
+                sb.appendLine("   ${layer.padEnd(18)} $cnt")
+            }
+        }
         sb.appendLine()
         sb.appendLine("   RECALL PER TYP ENCJI (sekcja B)")
         perType.toSortedMap().forEach { (t, triple) ->
@@ -631,6 +649,32 @@ class BenchmarkInstrumentedTest {
             adresMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
                 bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+            }
+            bb.appendLine()
+        }
+
+        // FP breakdown by layer
+        val fpByLayer = mutableMapOf<String, MutableList<Pair<String, String>>>() // layer → [(original, docFile)]
+        secB.forEach { r ->
+            val traceByToken = r.trace.associateBy { it.token }
+            r.fpTokens.forEach { tok ->
+                val trEntry = traceByToken[tok.token]
+                val layer = trEntry?.layer ?: "?"
+                val rule  = trEntry?.rule  ?: "?"
+                val label = "$layer/$rule"
+                fpByLayer.getOrPut(label) { mutableListOf() }
+                    .add(Pair(tok.original, r.file.substringAfterLast("/")))
+            }
+        }
+        if (fpByLayer.isNotEmpty()) {
+            bb.appendLine("[FALSE POSITIVES] Podział wg warstwy (${secB.sumOf { it.fpCount }} łącznie sekcja B):")
+            bb.appendLine()
+            fpByLayer.entries.sortedByDescending { it.value.size }.forEach { (label, items) ->
+                bb.appendLine("  $label: ${items.size}")
+                items.take(5).forEach { (orig, file) ->
+                    bb.appendLine("    $file  \"${orig.take(60)}\"")
+                }
+                if (items.size > 5) bb.appendLine("    ... i ${items.size - 5} więcej")
             }
             bb.appendLine()
         }
@@ -810,6 +854,7 @@ function exportSelected() {
         val error: String?,
         val tokens: List<DetectedToken>, val entities: List<EntityResult>,
         val fpCount: Int,
+        val fpTokens: List<DetectedToken> = emptyList(),
         val missLabels: Map<String, String>,
         val guardRedHits: Int,
         val summary: Summary,

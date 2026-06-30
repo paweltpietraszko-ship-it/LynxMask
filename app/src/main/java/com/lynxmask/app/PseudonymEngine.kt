@@ -209,6 +209,7 @@ object PseudonymEngine {
                 if (TOKEN_RE.containsMatchIn(match)) return@replace match
 
                 // S5 — walidacja sumy kontrolnej PESEL i NIP
+                // pre/suf dodane poniżej — zapobiega sklejaniu tokenów
                 // Walidację stosujemy TYLKO do wzorców PESEL i NIP (lookup po pattern string),
                 // żeby nie blokować telefonów, IBAN, sygnatur ani innych wzorców.
                 //
@@ -230,7 +231,12 @@ object PseudonymEngine {
                     if (digits.length == 10 && !isValidNip(digits)) return@replace match
                 }
 
-                assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
+                val token = assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
+                val before = if (matchResult.range.first > 0) text[matchResult.range.first - 1] else ' '
+                val after  = if (matchResult.range.last + 1 < text.length) text[matchResult.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                pre + token + suf
             }
         }
 
@@ -293,7 +299,12 @@ object PseudonymEngine {
         for ((tokenType, pattern) in ADDRESS_PATTERNS) {
             pattern.findAll(text).toList().asReversed().forEach { match ->
                 if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType))
+                val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
+                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                text = text.replaceRange(match.range, pre + token + suf)
             }
         }
 
@@ -337,7 +348,12 @@ object PseudonymEngine {
                 if (pattern.pattern in NIP_PATTERN_STRINGS) {
                     if (digits.length == 10 && !isValidNip(digits)) return@replace match
                 }
-                assignToken(match, tokenType, layer = "STRUCTURAL_R2", rule = tokenType)
+                val token = assignToken(match, tokenType, layer = "STRUCTURAL_R2", rule = tokenType)
+                val before = if (matchResult.range.first > 0) text[matchResult.range.first - 1] else ' '
+                val after  = if (matchResult.range.last + 1 < text.length) text[matchResult.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                pre + token + suf
             }
         }
         text = applyContextualBlacklist(text, { value, tokenType ->
@@ -346,7 +362,12 @@ object PseudonymEngine {
         for ((tokenType, pattern) in ADDRESS_PATTERNS) {
             pattern.findAll(text).toList().asReversed().forEach { match ->
                 if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType))
+                val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
+                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                text = text.replaceRange(match.range, pre + token + suf)
             }
         }
 

@@ -220,19 +220,23 @@ internal fun applyAnchorEngine(
     )
 
     // ------------------------------------------------------------------
-    // A.9  KWOTA — kotwica: suffix walutowy zł/PLN/EUR/USD
-    // Widzę walutę → co przed nią wygląda jak liczba → maskuję.
+    // A.9b KWOTA — kotwica: prefix kwota: / suma: / wartość: / wynagrodzenie:
+    // Idzie PRZED A.9 — keyword-anchor jest precyzyjniejszy.
+    // [^\S\n] zamiast \s — nie crossuje linii, nie wchodzi w cyfry tokenów.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)[0-9][\d\s,\.]*\s*(?:zł|PLN|EUR|USD|GBP|CHF)"""),
+        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][\d,.]*(?:[^\S\n]\d{1,3})*(?:[,.]\d{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?"""),
         TOKEN_KWOTA
     )
 
     // ------------------------------------------------------------------
-    // A.9b KWOTA — kotwica: prefix kwota: / suma: / wartość: / wynagrodzenie:
+    // A.9  KWOTA — kotwica: suffix walutowy zł/PLN/EUR/USD
+    // Widzę walutę → co przed nią wygląda jak liczba → maskuję.
+    // [^\S\n] zamiast \s — nie crossuje linii, nie zjada cyfr z sąsiednich tokenów.
+    // z[1l] — OCR: "z1"/"zl" zamiast "zł".
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:kwot[aęą]\s*:?|sum[aą]\s*:?|wartości?\s*:?|wynagrodzeni\w{0,4}\s*:?)\s*[0-9][\d\s,\.]*"""),
+        Regex("""(?i)[0-9][\d,.]*(?:[^\S\n]\d{1,3})*(?:[,.]\d{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)"""),
         TOKEN_KWOTA
     )
 
@@ -245,6 +249,7 @@ internal fun applyAnchorEngine(
         Regex(
             """(?i)(?:dr\s+(?:hab\.?\s+)?|prof\.?\s+|mgr\s+(?:inż\.?\s+)?|inż\.?\s+""" +
             """|adw\.?\s+|mec\.?\s+|lek\.?\s+(?:med\.?\s+)?)""" +
+            """(?!(?:OSOBA|FIRMA|NUMER|EMAIL|KWOTA|ADRES)_)""" +
             """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,30}""" +
             """(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
         ),

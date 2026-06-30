@@ -386,7 +386,7 @@ object OcrNormalizer {
     // "ul. Słoneczna I9" → "ul. Słoneczna 19", "ul. Niepodległości I35" → "ul. Niepodległości 135"
     // ----------------------------------------------------------
     private val OCR_HOUSE_NUM = Regex(
-        """((?i:ul[.,]?|al[.,]?|pl[.,]?|os\.)[^\S\n]+(?:[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\-]{2,50}[^\S\n]+){1,2})([IO][0-9IO]{0,3})(?=[,\s\n/]|$)"""
+        """((?i:ul[.,]?|al[.,]?|pl[.,]?|os\.)[^\S\n]+(?:[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\-]{2,50}[^\S\n]+){1,2})([IOl][0-9IOl]{0,3})(?=[,\s\n/]|$)"""
     )
 
     /** Wyciąga 10 cyfr NIP z fragmentu OCR (z mapą liter→cyfry). */
@@ -431,10 +431,10 @@ object OcrNormalizer {
 
     // OCR_NIP_BARE3322 / 3223: kształt NIP bez słowa kluczowego — l/O/cyrylica w segmentach (S4)
     private val OCR_NIP_BARE3322 = Regex(
-        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})\b"""
+        """\b(\d{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})\b"""
     )
     private val OCR_NIP_BARE3223 = Regex(
-        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})\b"""
+        """\b(\d{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})\b"""
     )
 
     private fun replaceNipBareShape(m: MatchResult): String {
