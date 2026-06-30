@@ -45,38 +45,50 @@ Właściciel projektu nie jest programistą — pisze kod przez Claude Code w te
 
 **Nowe pliki/moduły:** Nie twórz nowego pliku ani nie dodawaj zależności bez konieczności. Jeśli masz wybór między rozszerzeniem istniejącego pliku a nowym — wybierz istniejący. Nowy plik tylko gdy: (a) przekracza granicę odpowiedzialności (patrz "Pliki molochów"), (b) byłby importowany z wielu innych plików, lub (c) właściciel wprost prosił.
 
+**JEDEN WŁAŚCICIEL NA ENCJĘ:** Przed dodaniem wzorca dla encji (KWOTA/OSOBA/ADRES/NUMER) — sprawdź mapę architektury (`memory/project_architecture.md`). Jeśli wzorzec już istnieje w innej warstwie — napraw go zamiast dodawać nowy. Sesja 30.06: Claude dodawał kolejne wzorce KWOTA i OSOBA do kolejnych warstw zamiast naprawić istniejące → warstwy zaczęły zawłaszczać tokeny nawzajem → tokeny fragmentowane, ogony, zagnieżdżenia. Paweł musiał testować każdy problem osobno na telefonie bez jasnej drogi powrotu.
+
+**Zmiana architektury = pytanie właściciela NAJPIERW.** Nie "naprawiam po cichu" rozgraniczenia warstw. To jest decyzja właściciela.
+
 ---
 
-## Stan projektu Mobile (stan: 25.06.2026)
+## Stan projektu Mobile (stan: 30.06.2026 wieczór)
 
 **Projekt:** `C:\Projects\LynxMask\`
 **Urządzenie:** Android 16, Samsung SM-A536B
 
-**Wersje kluczowych plików:**
-- OcrNormalizer: v2.6 | StructuralEngine: v2.3 | NameEngine: v1.12 | OutputGuard: v2.0
-- ShareTargetActivity: v2.7 | SessionStore: v1.5 | LibraryScreen: v2.3
-- UserDictionary: v1.4 | ImageRedactionPipeline/Screen: nowe (sesja 25.06)
+**Testy:** ~377 testów, 0 FAILED (sesja 30.06 wieczór). Odpalić po każdej zmianie silnika.
 
-**Testy:** ~373 testów, 0 FAILED, 3 skipped (stan 23.06)
+**Benchmark fresh (30.06 19:38):** Recall 94,1% | Krytyczny 100,0% | ADRES 98,2% | 0 BUG_SILNIKA ✓
+**Benchmark stały (30.06 19:39):** Recall 89,6% ⚠ (<90% próg!) | Krytyczny 98,0% | ADRES 87,3% | 0 BUG_SILNIKA
+**Regres NUMER stały: -0,9% (3 encje) — pre-existing, był przed tą sesją (po fix sklejań). ADRES bez regresu.**
 
-**Benchmark stały (68 dok., baseline 21.06):** Recall 78,9% | Lvl0 95,2%
-**Benchmark v2 (25.06):** Recall ogólny 90,5% | Recall krytyczny 98,0% | 0 BUG_SILNIKA
+**Gałąź aktywna:** `feature/anchor-engine` (nie mergować na main bez benchmarku i testów na telefonie)
 
-**Kolejka bugów:**
-- 🔲 ImageRedact — cały tekst maskowany zamiast tylko PII (regresja, Cursor pracuje)
-- 🔲 ImageRedact — blur twarzy niewidoczny (ramka zamiast pixelate)
-- 🔲 Testy 6.2: JUnit SessionStore + Deanonymizer
-- 🔲 S10 — TELEFON nie w tokenMap (wyciek PII)
-- 🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0
-- 🔲 BUG-PESEL-OCR-SILNIK — wymaga OCR z telefonu (niskie)
-- 🔲 Audyt RODO/security (Cursor)
-- 🔲 Prawnik: ToS, Privacy Policy
-- 🔲 Google Play: konto, screenshoty, opis
+**Zamknięte w sesji 30.06 wieczór (commity 7c39eff, ec20056, dcdeb36, 970fb07):**
+- ✅ BUG-ADRES-OGONY: matchOverlapsToken w UserDictionary (W4a) i applyAll (W4b AnchorEngine)
+- ✅ BUG-KWOTA-OOO: D-class w A.9/A.9b (O/0 interchangeable w tysiącach i groszach)
+- ✅ BUG-OCR-UL-KROPKA: OcrNormalizer krok 8c ("ul .Nazwa" → "ul.Nazwa")
+- ✅ BUG-ADRES-PODWOJON (częściowo): CITY_POSTAL_REGEX → jeden token dla "Miasto, Kod"
 
-**Zamknięte w ostatnich sesjach:**
-✅ IMAGE-REDACT F0/F1 — face detection + blur + ręczny prostokąt + OCR sugestia
-✅ OCR email/adres tolerance, postal code space, NIP split, IBAN, PESEL variants
-✅ UserDictionary eksport/import .lynxdict | EXIF rotation fix | benchmark v2
+**Otwarte bugi silnika:**
+- 🔲 BUG-STALY-NUMER: stały recall 89,6% < 90% — 3 brakujące NUMER. Sprawdź czy matchOverlapsToken w applyAll blokuje NIP/telefon sąsiadujące z ADRES/OSOBA. Porównaj bugs stały 30.06 vs 25.06.
+- 🔲 BUG-FP-ULICE-IMIENNE: "Jana Pawła II" → OSOBA, "Zielona Góra" → OSOBA w kontekście adresu. NameEngine nie ma wyłączenia dla ulic patronów. Niski priorytet (PII zakryte).
+- 🔲 BUG-ADRES-BRAK-PREFIKS: "Marszałkowska 15/3" bez "ul." → nie maskowane (sufit OCR dla większości przypadków)
+- 🔲 BUG-ADRES-MYSLNIK: "ul. Gdańska-Sopocka 3/1" → myślnik łamie wzorzec nazwy ulicy
+
+**Start następnej sesji: BUG-STALY-NUMER** — porównaj `benchmark_results/stały/2026-06-30_1939/benchmark_bugs.txt` z `benchmark_results/stały/2026-06-25_1225/benchmark_bugs.txt`. Znajdź 3 encje NUMER które były wykryte 25.06 a nie są 30.06. Sprawdź czy matchOverlapsToken jest za szeroki.
+
+**Plan refaktoru ADRES: patrz memory/refactor_anchor_engine.md — NIE robić przy otwartych bugach.**
+
+**Kolejka bugów → patrz TODO.md (jedyne źródło prawdy)**
+
+Otwarte blokery release:
+- 🔲 R4 — testy kamerą (Paweł, checklist 6 pkt w TODO.md)
+- 🔲 R5 — treść ToS + Privacy Policy od prawnika (zapytanie wysłane 28.06)
+- 🔲 GP1–GP6 — Google Play: keystore + konto + .aab (screenshoty gotowe w Google_Play/)
+
+Inne otwarte bugi techniczne:
+- 🔲 BUG-WARMSTART-CLEAR — onNewIntent brak LynxPendingShare.clear() dla ACTION_MAIN (niski priorytet)
 
 ---
 
@@ -113,6 +125,7 @@ Roadmapa desktop: CLI do automatycznego maskowania dużych zasobów + asystent n
 
 ## Źródła prawdy w projekcie
 
+- `TODO.md` — jedyne źródło prawdy co jest otwarte (blokery, GP, niskie)
 - `MASTER_LynxMask_Mobile.md` — biblia projektu Mobile, sekcje 22–24 najświeższy stan
 - `MASTER_LynxMask_Desktop.md` — biblia projektu Desktop
 - `BACKLOG.md` — aktywna kolejka zadań Mobile

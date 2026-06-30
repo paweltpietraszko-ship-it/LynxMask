@@ -1,0 +1,223 @@
+================================================================
+TEST RĘCZNY — 50 ADRESÓW (różne formaty)
+Cel: sprawdzić co silnik wykrywa, co pomija, jaki jest sufit OCR.
+Data: 2026-06-30
+Każdy blok wkleić osobno do aplikacji.
+Oczekiwane: token(y) ADRES zakrywają całą wartość PII.
+================================================================
+
+--- SEKCJA A: STANDARD — pełny adres z kodem i miastem ---
+
+[A1] ul. + kod + miasto (przecinek)
+ul. Marszałkowska 15/3, 00-001 Warszawa
+OCZEKIWANE: 1 ADRES obejmuje cały ciąg
+
+[A2] al. + kod + miasto
+al. Niepodległości 13/2, 65-001 Gliwice
+OCZEKIWANE: 1 ADRES
+
+[A3] pl. + kod + miasto
+pl. Wolności 175, 30-001 Wrocław
+OCZEKIWANE: 1 ADRES
+
+[A4] os. + kod + miasto
+os. Słoneczne 12/45, 31-001 Kraków
+OCZEKIWANE: 1 ADRES
+
+[A5] ul. + kod + miasto (bez przecinka)
+ul. Leśna 64 50-001 Gdańsk
+OCZEKIWANE: 1 ADRES
+
+[A6] al. + litera w numerze budynku
+al. Grunwaldzka 156A, 80-244 Gdańsk
+OCZEKIWANE: 1 ADRES
+
+[A7] ul. + dwuczłonowa nazwa ulicy
+ul. Kazimierza Wielkiego 14/3, 50-001 Wrocław
+OCZEKIWANE: 1 ADRES
+
+[A8] ul. + dwuczłonowa + spacja zamiast przecinka przed kodem
+ul. Jana Pawła II 10/5 20-001 Lublin
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA B: ULICA BEZ KODU POCZTOWEGO ---
+
+[B1] ul. + numer bez kodu
+ul. Długa 72
+OCZEKIWANE: 1 ADRES (sama ulica)
+
+[B2] al. + numer + litera bez kodu
+al. Różana 2/38
+OCZEKIWANE: 1 ADRES
+
+[B3] ul. + dwuczłonowa nazwa bez kodu
+ul. Nowa Huta 5/2
+OCZEKIWANE: 1 ADRES
+
+[B4] pl. bez kodu
+pl. Zamkowy 1
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA C: KOD + MIASTO (bez ulicy) ---
+
+[C1] kod przed miastem (spacja)
+00-001 Warszawa
+OCZEKIWANE: 1 ADRES
+
+[C2] kod przed miastem (przecinek)
+87-100 Lublin,
+OCZEKIWANE: 1 ADRES
+
+[C3] miasto przed kodem (spacja)
+Warszawa 00-001
+OCZEKIWANE: 1 ADRES
+
+[C4] miasto przed kodem (przecinek)
+Kraków, 30-001
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA D: ADRES W ZDANIU (kontekst) ---
+
+[D1] po "adres:"
+Adres zamieszkania: ul. Leśna 64, 50-001 Gdańsk
+OCZEKIWANE: 1 ADRES (nie zawiera "Adres zamieszkania")
+
+[D2] po "zamieszkały"
+Osoba zamieszkała ul. Kwiatowa 189, 87-100 Lublin
+OCZEKIWANE: 1 ADRES
+
+[D3] po "NABYWCA"
+NABYWCA Łukasz Nowak, ul. Dębowa 19/23, 87-100 Białystok
+OCZEKIWANE: ADRES dla ulicy + opcjonalnie OSOBA dla imienia
+
+[D4] w Warszawie + kod gdzie indziej
+Zamieszkały w Warszawie pod adresem ul. Marszałkowska 15/3, 00-001 Warszawa
+OCZEKIWANE: min. 1 ADRES dla ulicy+kodu, "w Warszawie" też może być ADRES
+
+[D5] adres sprzedawcy na fakturze
+Serwis AGD, ul. Nowa 97, 10-100 Zielona Góra
+OCZEKIWANE: ADRES dla ulicy+kodu (firma może być FIRMA lub nie)
+
+[D6] "Ades:" po OCR (brak r)
+Ades: ul. Kwiatowa 189, 87-100 Lublin
+OCZEKIWANE: 1 ADRES (bez słowa "Ades:")
+
+--- SEKCJA E: OCR — LEKKIE ZNIEKSZTAŁCENIA (silnik POWINIEN wykryć) ---
+
+[E1] O zamiast 0 w kodzie
+ul. Marszałkowska 15/3, OO-OO1 Warszawa
+OCZEKIWANE: 1 ADRES
+
+[E2] l zamiast 1 w numerze budynku
+ul. Marszałkowska l5/3, 00-001 Warszawa
+OCZEKIWANE: 1 ADRES
+
+[E3] spacja przed kropką skrótu
+ul .Marszałkowska 15/3, 00-001 Warszawa
+OCZEKIWANE: 1 ADRES (OcrNormalizer naprawia "ul .→ul.")
+
+[E4] przecinek zamiast kropki w ul.
+ul, Wolności 99, 41-200 Sosnowiec
+OCZEKIWANE: 1 ADRES
+
+[E5] u. zamiast ul.
+u. Dębowa 19/23, 87-100 Białystok
+OCZEKIWANE: 1 ADRES
+
+[E6] spacja w środku nazwy ulicy
+ul. Marszał kowska 15/3, 00-001 Warszawa
+OCZEKIWANE: 1 ADRES (OcrNormalizer łączy)
+
+[E7] O zamiast 0 w kodzie + l zamiast 1 w numerze
+ul. Marszałkowska l5/3, OO-OO1 Warszawa
+OCZEKIWANE: 1 ADRES
+
+[E8] brak przecinka między ulicą a kodem + OCR w kodzie
+ul. Leśna 110 5O-OO1 Warszawa
+OCZEKIWANE: 1 ADRES
+
+[E9] I zamiast l (wielkie I) w skrócie
+uI. Nowa 97, 10-100 Zielona Góra
+OCZEKIWANE: 1 ADRES
+
+[E10] "al." bez kropki (al bez kropki)
+al Różana 2/38, 60-001 Zabrze
+OCZEKIWANE: 1 ADRES
+
+[E11] spacja w numerze lokalu
+ul. Dębowa 19 /23, 87-100 Białystok
+OCZEKIWANE: 1 ADRES (lub min. ADRES dla ul. Dębowa)
+
+[E12] kod z O zamiast 0, miasto z literówką
+ul. Zielona 176, 8O-001 Olsztyn
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA F: OCR — CIĘŻKIE ZNIEKSZTAŁCENIA (możliwy sufit OCR) ---
+
+[F1] al. → aI. (capital I), ł → I w nazwie
+aI. NiepodIegosci 13/2, 65-001 Gliwice
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F2] ul. → d. + skrócona nazwa ulicy (z bugs doc_00064)
+d. Dga 72 70-001 Rybnik
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F3] ul. → u (bez kropki) + skrócona nazwa (z bugs doc_00050)
+u Kiatowa 189, 87-100 Lubin
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F4] pl. → pI. + wolh→ wolności + miasto obcięte (z bugs doc_00059)
+pI. Wolhoci 175 30-001 Wodaw
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F5] brak skrótu ul., nazwa skrócona, kod poprawny
+Kwiatowa 189, 87-100 Lublin
+OCZEKIWANE: BRAK (brak prefiksu ul./al.) — udokumentować
+
+[F6] brak skrótu i brak kodu — sama ulica bez prefiksu
+Wolności 99
+OCZEKIWANE: BRAK — nie możemy maskować każdej nazwy własnej
+
+--- SEKCJA G: TRUDNE PRZYPADKI (możliwe FP/FN) ---
+
+[G1] kod który wygląda jak rok (nie adres)
+Wyrok z dnia 15-2024 roku
+OCZEKIWANE: NIE ADRES — kod pocztowy ma format XX-YYY, rok XX-YYYY
+
+[G2] numer lokalu który wygląda jak adres
+Lokal 4/6 w budynku
+OCZEKIWANE: może być ADRES (numer budynku/lokalu) — akceptowalne
+
+[G3] adres zagraniczny (bez polskiego kodu)
+10 Downing Street, London SW1A 2AA
+OCZEKIWANE: prawdopodobnie BRAK (nie polski format)
+
+[G4] adres z bardzo długą nazwą ulicy
+ul. Władysława Stanisława Reymonta 45/12, 90-001 Łódź
+OCZEKIWANE: 1 ADRES (długa nazwa ulicy)
+
+[G5] adres z myślnikiem w nazwie ulicy
+ul. Gdańska-Sopocka 3/1, 81-001 Gdynia
+OCZEKIWANE: 1 ADRES
+
+[G6] kod w środku zdania z innymi liczbami
+Umowa nr 5/2023 dotyczy lokalu przy ul. Świdnickiej 12/3, 50-001 Wrocław, wartość 15 000 zł
+OCZEKIWANE: ADRES dla ulicy+kodu, KWOTA dla 15 000 zł (oddzielne tokeny)
+
+[G7] dwa adresy w jednym zdaniu
+Nadawca: ul. Prosta 1, 00-001 Warszawa. Odbiorca: ul. Leśna 5, 80-001 Gdańsk.
+OCZEKIWANE: 2 osobne tokeny ADRES
+
+[G8] adres bez numeru budynku (sama ulica)
+ul. Marszałkowska, Warszawa
+OCZEKIWANE: może NIE być ADRES (brak numeru) — dokumentować
+
+================================================================
+INSTRUKCJA ZAPISU WYNIKÓW:
+Przy każdym przypadku zapisz:
+  OK    = token ADRES zakrył całą encję (poprawnie)
+  CZĘŚCIOWO = token jest ale nie obejmuje całego adresu
+  BRAK  = silnik nie wykrył adresu
+  FP    = silnik zamaskował coś co nie powinno być ADRES
+  SUFIT = nie ma szans — OCR zniszczył tekst (akceptowalne)
+================================================================
