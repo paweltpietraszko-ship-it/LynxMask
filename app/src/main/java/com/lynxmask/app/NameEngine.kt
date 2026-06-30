@@ -515,13 +515,13 @@ private fun applyCityLookup(
     if (!LookupTables.initialized || LookupTables.cityForms.isEmpty()) return text
     var result = text
 
-    // Miasto przed kodem pocztowym: "Warszawa, 00-001" → CityName=ADRES, kod zostaje
+    // Miasto przed kodem pocztowym: "Warszawa, 00-001" → jeden token ADRES dla całości.
+    // Było: assignToken(city) + rest → kod zostawał → A.11b/R2 tworzyło drugi token.
     result = CITY_POSTAL_REGEX.replace(result) { match ->
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
         val city = match.groupValues[1]
         if (!LookupTables.cityForms.contains(city.lowercase())) return@replace match.value
-        val rest = match.value.drop(city.length)
-        assignToken(city, TOKEN_ADRES) + rest
+        assignToken(match.value.trim(), TOKEN_ADRES)
     }
 
     // Miasto po przyimku: "w Warszawie", "z Gdańska" → ADRES

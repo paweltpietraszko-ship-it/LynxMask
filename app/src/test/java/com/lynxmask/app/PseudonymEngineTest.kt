@@ -620,6 +620,16 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_ADRES)
     }
 
+    @Test fun `miasto przed kodem to jeden token nie dwa`() {
+        // BUG-ADRES-PODWOJON: CITY_POSTAL_REGEX maskowało tylko miasto, kod zostawał.
+        // Efekt: ADRES_001=Warszawa + ADRES_002=00-001 zamiast jednego tokenu.
+        val r = pseudonymize("Zamieszkały w Warszawie, 00-001")
+        val adresCount = r.tokenMap.keys.count { it.startsWith("ADRES") }
+        assertEquals("Warszawa + kod to jeden token ADRES, nie dwa", 1, adresCount)
+        assertNotInOutput(r, "00-001")
+        assertNotInOutput(r, "Warszawa")
+    }
+
     @Test fun `adres z ul przecinek zamiast kropki`() {
         val r = pseudonymize("ul, Wolności 99, 41-200 Sosnowiec")
         assertTokenExists(r, TOKEN_ADRES)
