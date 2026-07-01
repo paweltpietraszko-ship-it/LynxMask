@@ -337,10 +337,14 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "765-43-21")
     }
 
-    @Test fun `s10b zbyt krotki numer po tel nie jest maskowany`() {
-        // 3 cyfry — za krótkie, żeby być telefonem
+    // ZMIANA FILOZOFII 01.07 (właściciel): kotwica maskuje niezależnie od długości —
+    // brief sekcja 6 wprost zakazuje wymagania konkretnej liczby cyfr. Stary test
+    // zakładał że 3 cyfry po "tel." to "za krótko żeby być telefonem" — to była
+    // walidacja, nie zasada kotwicy. Test odwrócony: teraz sprawdza że JEST maskowane.
+    @Test fun `s10b krotki numer po tel jest maskowany (zasada kotwicy bez limitu dlugosci)`() {
         val r = pseudonymize("tel. 994")
-        assertNotInOutput(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "994")
     }
 
     // BUG-DATE-PARTIAL — data ISO YYYY-MM-DD nie może zostawać częściowo widoczna
@@ -1613,5 +1617,89 @@ class PseudonymEngineTest {
     @Test fun `sygnatura sad I Co bez regresu`() {
         val r = pseudonymize("sygn. akt I Co 3704/2018")
         assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NIP-3-2-2 (diagnoza Cursor 01.07): StructuralEngine.kt:452 (numer wewnętrzny
+    // 3-2-2) matchował tylko pierwsze 3 segmenty ciągu z 4 segmentami myślnikowymi,
+    // zostawiając ostatni jawny. Trzeci wariant tego samego wzorca bugu co faktura/sygnatura.
+    @Test fun `NIP shape 722-30-32-34 jeden token bez sieroty`() {
+        val r = pseudonymize("722-30-32-34")
+        assertFalse("sierota -34 w wyniku", r.pseudonymizedText.contains("-34"))
+        assertFalse("prefiks 722 jawny w wyniku", r.pseudonymizedText.contains("722"))
+        assertEquals(1, r.tokenMap.values.count { it.contains("722") })
+    }
+
+    @Test fun `numer wewnetrzny 3-2-2 bez czwartego segmentu nadal maskowany`() {
+        val r = pseudonymize("722-30-32")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DATA-SLOWNA (test ręczny na telefonie 01.07): data słowna i data z OCR-spacją
+    // urywały się na pierwszym tokenie po kotwicy, zostawiając miesiąc/rok jawny.
+    @Test fun `data urodzenia slowna nie zostawia miesiaca i roku jawnych`() {
+        val r = pseudonymize("data urodzenia: 8 kwietnia 1963")
+        assertNotInOutput(r, "kwietnia")
+        assertNotInOutput(r, "1963")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `data urodzenia z spacja OCR przed koncowka roku nie zostawia roku jawnego`() {
+        val r = pseudonymize("ur. 12.03 .1985")
+        assertNotInOutput(r, "1985")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-KW-CATCHALL (diagnoza Cursor 01.07): CATCHALL \d{8,} łapał sam środkowy ciąg
+    // cyfr osadzony w identyfikatorze z ukośnikami, zostawiając prefiks/sufiks jawne.
+    @Test fun `KW GD1M jeden token bez sierot`() {
+        val r = pseudonymize("KW GD1M/00234567/8")
+        assertFalse("prefiks GD1M jawny", r.pseudonymizedText.contains("GD1M"))
+        assertFalse("sufiks /8 jawny", r.pseudonymizedText.contains("/8"))
+        assertFalse("srodek 00234567 jawny", r.pseudonymizedText.contains("00234567"))
+    }
+
+    @Test fun `REGON 9 cyfr catchall bez regresu`() {
+        val r = pseudonymize("REGON: 557374054")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-SYGNATURA-SPACJA (test ręczny na telefonie 01.07, piąty wariant tego samego
+    // wzorca bugu): OCR-owa spacja przed ukośnikiem w sygnaturze ucinała match przed
+    // ostatnim segmentem.
+    @Test fun `sygnatura z OCR spacja przed ukosnikiem nie zostawia sieroty`() {
+        val r = pseudonymize("sygn. akt I C 234 /24")
+        assertNotInOutput(r, "/24")
+        assertNotInOutput(r, "234")
+    }
+
+    // BUG-KW-KWOTA (diagnoza Cursor 01.07): A.8 (?i)(?:KRS|KW) łapał "kw" wewnątrz słowa
+    // "kwota", zjadając kotwicę A.9b; A.9 potem matchował cyfry WEWNĄTRZ już istniejącego
+    // tokenu NUMER_xxx (bo matchOverlapsToken miał za wąskie okno w lewo), amputując go
+    // do kalekiego "NUMER_" bez cyfr.
+    // BUG-FIRMA-PRZECINEK (test ręczny na telefonie 01.07): OCR-owy przecinek zamiast
+    // kropki w formie prawnej ("S,A," / "sp,j," / "Sp. z o.o,") blokował A.1 całkowicie —
+    // NameEngine łapał tylko nazwisko, reszta nazwy firmy (z formą prawną) zostawała jawna.
+    @Test fun `firma z przecinkiem zamiast kropki w formie prawnej maskowana w calosci`() {
+        val r1 = pseudonymize("Przedsiębiorstwo Budowlane Nowak S,A,")
+        assertNotInOutput(r1, "Przedsiębiorstwo")
+        assertNotInOutput(r1, "S,A,")
+
+        val r2 = pseudonymize("Kancelaria Adwokacka Wiśniewski sp,j,")
+        assertNotInOutput(r2, "Kancelaria")
+        assertNotInOutput(r2, "sp,j,")
+
+        val r3 = pseudonymize("Kowalski i Partnerzy Sp. z o.o,")
+        assertNotInOutput(r3, "Partnerzy")
+        assertNotInOutput(r3, "o.o,")
+    }
+
+    @Test fun `A8 nie lapie kwota jako KW`() {
+        val r = pseudonymize("KRS OOOO4S6789\nkwota: 49 999,99 z1")
+        assertFalse("kwota: nie powinno zostac zjedzone przez A8 KW", r.pseudonymizedText.contains("kwota:"))
+        assertFalse(
+            "token nie powinien byc amputowany (NUMER_ bez cyfr obok KWOTA_)",
+            Regex(""".*NUMER_\s+KWOTA_.*""").containsMatchIn(r.pseudonymizedText)
+        )
+        assertTrue("kwota powinna byc w tokenMap", r.tokenMap.values.any { it.contains("49 999") })
     }
 }

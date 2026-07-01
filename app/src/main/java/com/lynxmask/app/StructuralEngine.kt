@@ -177,6 +177,59 @@ internal fun isValidNip(digits: String): Boolean {
 }
 
 // ============================================================
+// PESEL standalone (D-class tolerant) — PRZENIESIONE z AnchorEngine.kt A.4c
+// (BUG-MIGRACJA 01.07, feature/entity-migration). Wywoływane z PseudonymEngine.kt
+// Runda 1, zaraz po STRUCTURAL_PATTERNS. Zachowanie identyczne co przed migracją —
+// suma kontrolna jest jedynym wyjątkiem od wymogu kotwicy (brief AnchorEngine v2 §6.3).
+// ============================================================
+private const val PESEL_D = """[0-9OolIiSsBbZz]"""
+
+// Sprawdza sumę kontrolną PESEL (11 cyfropodobnych). Separator (spacja/kreska) jest pomijany.
+// Tolerancyjna na OCR (D-klasa: O→0, l/i→1, z→2, s→5, b→8) — inna niż isValidPesel()
+// powyżej (ta wymaga gołych cyfr, używana przez S5 bypass dla STRUCTURAL_PATTERNS).
+private fun isPeselChecksumValidTolerant(s: CharSequence): Boolean {
+    val weights = intArrayOf(1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1)
+    var n = 0; var sum = 0
+    for (c in s) {
+        val d = when (c.lowercaseChar()) {
+            'o' -> 0; 'l', 'i' -> 1; 'z' -> 2; 's' -> 5; 'b' -> 8
+            in '0'..'9' -> c - '0'
+            else -> continue
+        }
+        if (n >= 11) return false
+        sum += d * weights[n++]
+    }
+    return n == 11 && sum % 10 == 0
+}
+
+private val peselShapeRe = Regex(
+    """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$PESEL_D[\s\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])"""
+)
+
+// Ciąg 9-13 D-znaków (z opcjonalnym pojedynczym separatorem) → maskuje TYLKO gdy
+// suma kontrolna PESEL dokładnie się zgadza (prawdopodobieństwo przypadku ~10% → wymagane).
+internal fun applyPeselShapeChecksum(
+    text: String,
+    assignToken: (value: String, tokenType: String) -> String
+): String {
+    var t = text
+    val peselHits = peselShapeRe.findAll(t).toList()
+    t = peselHits.asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc
+        else if (isPeselChecksumValidTolerant(m.value)) {
+            val token = assignToken(m.value.trim(), TOKEN_NUMER)
+            val before = acc.getOrElse(m.range.first - 1) { ' ' }
+            val after = acc.getOrElse(m.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            acc.replaceRange(m.range, pre + token + suf)
+        }
+        else acc
+    }
+    return t
+}
+
+// ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
 // ============================================================
@@ -288,7 +341,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Sygnatura akt/komornicza z kontekstem "sygn." / "sygnatura akt"
     // Łapie: I Co 3704/2018, Km 4917/2018, Km 808382024 (OCR bez ukośnika)
     // Format po słowie kluczowym: 1-3 grupy liter + cyfry (z opcjonalnymi ukośnikami)
-    TOKEN_NUMER to Regex("""(?i)\bsygn(?:atura)?\.?(?:[^\S\n]+akt)?\b[^\S\n]*[:–\-]?[^\S\n]*(?:[A-Za-z]{1,4}[^\S\n]+){1,3}\d[\d/\-]{1,20}\b"""),
+    // BUG-SYGNATURA-SPACJA-FIX (01.07, sam Claude — piąty wariant tego samego wzorca
+    // bugu z dzisiejszej sesji): (?:[^\S\n]?/[^\S\n]?[\d/\-]{1,20})? na końcu — bez tego
+    // OCR-owa spacja przed ukośnikiem ("234 /24") ucinała match na "234", zostawiając
+    // " /24" jawne. AnchorEngine A.8 nie naprawiał bo matchOverlapsToken widział token.
+    TOKEN_NUMER to Regex("""(?i)\bsygn(?:atura)?\.?(?:[^\S\n]+akt)?\b[^\S\n]*[:–\-]?[^\S\n]*(?:[A-Za-z]{1,4}[^\S\n]+){1,3}\d[\d/\-]{1,20}(?:[^\S\n]?/[^\S\n]?[\d/\-]{1,20})?\b"""),
 
     // Numer umowy z kontekstem "nr umowy" / "numer umowy"
     // Łapie: UMW/2022/966, U-00615/2024, KT/0001/2022
@@ -368,7 +425,13 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}\b"""),
     // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89"
     TOKEN_NUMER to Regex("""\(\d{2}\)[^\S\n]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
-    TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d{3,15}"""),      // Międzynarodowy
+    // BUG-MIEDZYNARODOWY-FIX (01.07): stary wzorzec kończył się \d{3,15} (wymaga
+    // 3+ CIĄGŁYCH cyfr) — dla numeru z nierównym grupowaniem, np. "+48 501 23 567"
+    // (3-2-3 zamiast 3-3-3), silnik cofał się i rozbijał "48" na "4"+"8" żeby
+    // dopasować "501" jako trzycyfrową końcówkę, produkując ucięty match "+48 501"
+    // i zostawiając "23 567" jawne. Fix: powtarzalna grupa (?:sep?\d{1,4}){1,4}
+    // zamiast jednego sztywnego \d{3,15} — obsługuje dowolne grupowanie cyfr.
+    TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?(?:[\s\-.]?\d{1,4}){1,4}"""),      // Międzynarodowy
 
     // --- Kwoty z walutami (format PL i EU) ---
     // (?!00\s) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię
@@ -443,7 +506,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // (?<!\d{3}[\s\-]): nie matchuj jeśli poprzedza 3 cyfry + separator — to ogon odrzuconego NIPu.
     // Przypadek: 526-000-13-20 (zła suma S5) → wzorzec 3-2-2-3 odrzuca cały NIP,
     // ale bez lookbehind wzorzec 3-2-2 złapałby ogon "000-13-20" jako oddzielny token.
-    TOKEN_NUMER to Regex("""(?<!\d{3}[\s\-])\b\d{3}[\s\-]\d{2}[\s\-]\d{2}\b"""),
+    // BUG-NIP-3-2-2-FIX (Cursor 01.07): (?![\s\-]\d) na końcu — bez tego "722-30-32-34"
+    // (4 segmenty, nie NIP w formacie 3-3-2-2 ani 3-2-2-3) dopasowywał tylko "722-30-32",
+    // zostawiając "-34" jawne. A.5b (AnchorEngine, kształt NIP bez keywordu) bierze całość
+    // poprawnie, ale matchOverlapsToken blokował go bo token już istniał. Trzeci wariant
+    // tego samego wzorca bugu co StructuralEngine.kt:419 i :460 (fakturę/sygnatura).
+    TOKEN_NUMER to Regex("""(?<!\d{3}[\s\-])\b\d{3}[\s\-]\d{2}[\s\-]\d{2}(?![\s\-]\d)\b"""),
 
     // --- Sygnatura sądowa/notarialna z odstępem (np. II K 123/25, I C 456/26, A 4567/2026) ---
     // Musi być PRZED wzorcem budynku, żeby nie była brana za adres
@@ -475,7 +543,13 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Jeśli kiedykolwiek zmienisz tę regułę lub CATCHALL, dodaj testy dla wszystkich
     // formatów dat (patrz PseudonymEngineTest.kt TODO-7).
     // Nie łapie: lat 1900-2099, wartości z jednostkami, pozycji < 8 cyfr
-    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""),
+    // BUG-KW-CATCHALL-FIX (Cursor 01.07): (?<![A-Z0-9/]) + (?![/\d]) — bez tego CATCHALL
+    // łapał sam środkowy ciąg cyfr osadzony w identyfikatorze z ukośnikami (np.
+    // "KW GD1M/00234567/8" → CATCHALL brał tylko "00234567"), zostawiając prefiks
+    // literowy i sufiks jawne. AnchorEngine A.8 (kotwica KW) nie naprawiał bo
+    // matchOverlapsToken widział już utworzony token w oknie. Czwarty wariant tego
+    // samego wzorca bugu co StructuralEngine.kt:419/:452/:460 (faktura/sygnatura/NIP).
+    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)(?<![A-Z0-9/])\d{8,}\b(?![/\d])"""),
 
     // --- S4: Kwoty słowne ---
     //

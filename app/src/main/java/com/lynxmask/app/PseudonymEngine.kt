@@ -88,12 +88,18 @@ data class DetectionTrace(
 // ============================================================
 internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})(?!\d)""")
 
-// Sprawdza okno wokół matcha w pełnym tekście — guard TOKEN_RE.containsMatchIn(match.value)
-// nie widzi prefiksu tokenu (np. match="ADRES" przy "ADRES_004" w tekście → false).
-// Ta funkcja rozszerza okno o 1 znak w lewo i 5 w prawo, łapiąc "_NNN" za matchem.
+// Sprawdza czy dopasowanie NAPRAWDĘ nakłada się zakresem na istniejący token — nie
+// przybliżone okno znaków (to dawało false positive: token na POPRZEDNIEJ linii
+// blokował niepowiązany match na NASTĘPNEJ linii, gdy okno było szersze niż odległość
+// do najbliższego \n — BUG-TOKEN-AMPUTACJA fix v2, po tym jak proste rozszerzenie
+// okna do -10 znaków naprawiło jeden przypadek ale zepsuło sąsiedni, Cursor+Claude 01.07).
+// Właściwe sprawdzenie: znajdź WSZYSTKIE istniejące tokeny w tekście, porównaj rzeczywiste
+// zakresy. Łapie zarówno dopasowanie zaczynające się W ŚRODKU tokenu (np. "039 49 999,99
+// z1" zaczynające się w cyfrach "NUMER_039"), jak i dopasowanie będące samym PREFIKSEM
+// tokenu (np. "ADRES" przy "ADRES_004" — historyczny BUG-OGONY), bez fałszywego blokowania
+// niepowiązanych dopasowań które tylko leżą blisko (inna linia, inny fragment tekstu).
 internal fun matchOverlapsToken(text: String, range: IntRange): Boolean {
-    val win = text.substring(maxOf(0, range.first - 1), minOf(text.length, range.last + 5))
-    return TOKEN_RE.containsMatchIn(win)
+    return TOKEN_RE.findAll(text).any { it.range.first <= range.last && range.first <= it.range.last }
 }
 
 // ============================================================
@@ -246,6 +252,14 @@ object PseudonymEngine {
                 val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
                 pre + token + suf
             }
+        }
+
+        // --- Warstwa 2b: PESEL standalone D-class (suma kontrolna = kotwica) ---
+        // BUG-MIGRACJA 01.07 (feature/entity-migration): przeniesione z AnchorEngine A.4c.
+        // Musi być PO STRUCTURAL_PATTERNS (TOKEN_RE guard chroni już zamaskowane PESEL-e
+        // z gołych cyfr) ale przed NameEngine — kształt nie zależy od kontekstu osoby/adresu.
+        text = applyPeselShapeChecksum(text) { value, tokenType ->
+            assignToken(value, tokenType, layer = "STRUCTURAL", rule = "PESEL_SHAPE_CHECKSUM")
         }
 
         // --- Warstwa 3: Czarna lista kontekstowa ---

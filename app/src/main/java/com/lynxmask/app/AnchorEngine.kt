@@ -13,23 +13,6 @@ package com.lynxmask.app
 
 private const val D = """[0-9OolIiSsBbZz]"""
 
-
-// Sprawdza sumę kontrolną PESEL (11 cyfropodobnych). Separator (spacja/kreska) jest pomijany.
-private fun isPeselChecksumValid(s: CharSequence): Boolean {
-    val weights = intArrayOf(1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1)
-    var n = 0; var sum = 0
-    for (c in s) {
-        val d = when (c.lowercaseChar()) {
-            'o' -> 0; 'l', 'i' -> 1; 'z' -> 2; 's' -> 5; 'b' -> 8
-            in '0'..'9' -> c - '0'
-            else -> continue
-        }
-        if (n >= 11) return false
-        sum += d * weights[n++]
-    }
-    return n == 11 && sum % 10 == 0
-}
-
 internal fun applyAnchorEngine(
     text: String,
     assignToken: (value: String, tokenType: String) -> String
@@ -55,8 +38,14 @@ internal fun applyAnchorEngine(
     // A.1  FIRMA — kotwica: forma prawna (suffix)
     // Widzę "Sp. z o.o." → co przed tym na tej linii zaczyna się od wielkiej litery
     // to nazwa firmy → maskuję. Nie liczę słów, nie sprawdzam nazwy.
+    // BUG-FIRMA-PRZECINEK-FIX (01.07, test ręczny): [.,] zamiast \. — OCR często myli
+    // kropkę z przecinkiem ("Sp. z o.o," / "S,A," / "sp,j,"). Bez tego legalForm w ogóle
+    // nie rozpoznawał zdegradowanej formy prawnej, więc A.1 nie odpalał się wcale —
+    // NameEngine łapał tylko nazwisko (Kowalski/Nowak/Wiśniewski) jako OSOBA, a reszta
+    // nazwy firmy (włącznie z formą prawną) zostawała jawna. Ten sam Nowak z czystą
+    // kropką ("S.A.") maskował się poprawnie jako cała nazwa firmy — kontrast pokazał bug.
     // ------------------------------------------------------------------
-    val legalForm = """(?:Sp\.\s*z\s*o\.o\.\s*(?:S\.K\.A\.)?|S\.A\.|sp\.j\.|s\.c\.|Sp\.k\.|S\.K\.A\.)"""
+    val legalForm = """(?:Sp[.,]\s*z\s*o[.,]o[.,]\s*(?:S[.,]K[.,]A[.,])?|S[.,]A[.,]|sp[.,]j[.,]|s[.,]c[.,]|Sp[.,]k[.,]|S[.,]K[.,]A[.,])"""
     applyAll(
         Regex(
             """[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżŁŚŹĆŃĄĘÓŻ0-9\-"„]{0,40}""" +
@@ -80,31 +69,43 @@ internal fun applyAnchorEngine(
     applyAll(Regex("""@[^\s\n@]+(?:\.[^\s\n@]+)+"""), TOKEN_EMAIL)
 
     // ------------------------------------------------------------------
-    // A.3  TELEFON — kotwica twarda: +48 / 0048
-    // Widzę +48 → co po nim wygląda jak cyfry (z separatorami) → maskuję.
+    // A.3  TELEFON — kotwica: warianty jakie ludzie faktycznie piszą
+    // (BUG-MIGRACJA 01.07 — konsoliduje dawne A.3+A.3b, usuwa A.3c)
+    // Ogólna zasada (brief sekcja 6): kotwica → maskuj ciąg cyfropodobny z przerwami
+    // ≤1 znak (spacja/kreska/kropka/nawias — nawias dla numerów kierunkowych typu
+    // "(22) 765-43-21"), zatrzymaj się na pierwszym znaku który nie jest cyfropodobny
+    // ani separatorem. Bez limitu długości — ten sam wzorzec łapie numer z kierunkowym
+    // i bez (gdy pismo dotyczy jednej lokalizacji, kierunkowy bywa pominięty).
+    // Kształt bez kotwicy (dawne A.3c, "\b[5-8]\d{2}...") USUNIĘTY — audyt wykazał że
+    // to był martwy duplikat StructuralEngine.kt:366 ("\b\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"),
+    // które jest SZERSZE (bez ograniczenia pierwszej cyfry do 5-8). A.3c nigdy nie dodawało
+    // realnego pokrycia. Brief i tak zakazuje kształtu bez kotwicy w AnchorEngine (jedyny
+    // wyjątek: suma kontrolna PESEL) — więc nawet gdyby A.3c coś dodawał, nie tu miejsce.
+    //
+    // Kotwice świadomie POMINIĘTE — lawina FP:
+    //   "numer" (samo) — koliduje z "numer sprawy/domu/pozycji/zamówienia" (codzienność
+    //     w dokumentach urzędowych, prawie zawsze NIE telefon)
+    //   "48" (samo, bez +/00) — koliduje z kwotami "48 000 zł", wiekiem, ilościami
+    //   "t" (samo, bez dwukropka) — koliduje z oznaczeniami tabel/pomiarów ("T 25°C")
+    //
+    // \w*+ (possessive, nie \w*) na "tel"/"kom[oó]rk" — BEZ TEGO regex silnik cofa się
+    // (backtracking) W GŁĄB samego słowa-kotwicy szukając litery z klasy D (o/l/i/s/b/z),
+    // bo "telefon" zawiera "o" które jest D-klasą (OCR-zamiennik zera). Efekt: "telefon:
+    // 501..." dawało dopasowanie "telefo" (silnik cofnął \w* do "ef", potem wziął "o" z
+    // "telefon" jako pierwszą cyfrę telefonu!). Possessive blokuje to cofanie.
+    //
+    // (?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]) na końcu — ten sam problem może wystąpić gdy po
+    // kotwicy jest dodatkowe słowo opisowe zamiast cyfr od razu, np. "tel. biurowy: ..."
+    // ("biurowy" zaczyna się od 'b'/'i' — D-klasa) → bez guardu dałoby "tel. bi" śmieć.
+    // StructuralEngine R1 (linia 359, plain \d) już obsługuje ten wariant z jednym
+    // dodatkowym słowem — jeśli R1 nie złapie, wolimy brak matcha niż śmieć.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?:\+4[8Bb]|0048)[0-9OolIiSsBbZz \t\-\.]{6,18}"""),
-        TOKEN_NUMER
-    )
-
-    // ------------------------------------------------------------------
-    // A.3b TELEFON — kotwica kontekstowa: tel. / kom. / fax / mobile / gsm
-    // StructuralEngine ma tel./fax. bez kom./mobile/gsm.
-    // ------------------------------------------------------------------
-    applyAll(
-        Regex("""(?i)(?:tel\.?|kom\.?|fax\.?|mobile\s*:|gsm\s*:)\s*\+?[0-9OolIiSsBbZz\s\-\.\(\)]{7,20}"""),
-        TOKEN_NUMER
-    )
-
-    // ------------------------------------------------------------------
-    // A.3c TELEFON — kształt PL komórkowy bez kotwicy (druga linia)
-    // Prefiksy 5xx/6xx/7xx/8xx = polskie komórkowe. StructuralEngine już
-    // zabrał numery z kotwicą — tu łapiemy resztki bez kontekstu.
-    // TOKEN_RE chroni istniejące tokeny przed re-processingiem.
-    // ------------------------------------------------------------------
-    applyAll(
-        Regex("""\b[5-8]\d{2}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),
+        Regex(
+            """(?i)(?:\+4[8Bb]|0048|tel\w*+\.?|kom[oó]rk\w*+|kom\.?|fax\.?""" +
+            """|mobile\s*:?|gsm\s*:?|wew\.?|\bt\s*:)[^\S\n]*:?[^\S\n]*\(?$D(?:[\s\-.()]?$D)*""" +
+            """(?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
+        ),
         TOKEN_NUMER
     )
 
@@ -118,23 +119,9 @@ internal fun applyAnchorEngine(
         TOKEN_NUMER
     )
 
-    // A.4c PESEL — standalone: suma kontrolna jest kotwicą (wyjątek od wymogu kotwicy).
-    // Ciąg 9-13 D-znaków (z opcjonalnym pojedynczym separatorem) → maskuję tylko gdy
-    // suma kontrolna PESEL dokładnie się zgadza (prawdopodobieństwo ~10% → wymagane).
-    val peselShapeRe = Regex("""(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$D[\s\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])""")
-    val peselHits = peselShapeRe.findAll(t).toList()
-    t = peselHits.asReversed().fold(t) { acc, m ->
-        if (TOKEN_RE.containsMatchIn(m.value)) acc
-        else if (isPeselChecksumValid(m.value)) {
-            val token = assignToken(m.value.trim(), TOKEN_NUMER)
-            val before = acc.getOrElse(m.range.first - 1) { ' ' }
-            val after = acc.getOrElse(m.range.last + 1) { ' ' }
-            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
-            acc.replaceRange(m.range, pre + token + suf)
-        }
-        else acc
-    }
+    // A.4c PESEL standalone — PRZENIESIONE do StructuralEngine.kt (BUG-MIGRACJA 01.07,
+    // feature/entity-migration). Wywoływane z PseudonymEngine.kt Runda 1, zaraz po
+    // STRUCTURAL_PATTERNS. Zachowanie identyczne — patrz applyPeselShapeChecksum().
 
     // ------------------------------------------------------------------
     // A.5  NIP — kotwica: keyword N[IL1]P
@@ -170,9 +157,14 @@ internal fun applyAnchorEngine(
     // Widzę kotwicę → co po niej wygląda jak ciąg cyfr z separatorami → maskuję.
     // Nie waliduje formatu daty. "21O5.l979" po "ur." = data urodzenia.
     // Warianty OCR: u[nr]. (r→n), d.o.b., urodzony dnia XX / w dniu XX (forma prawna/notarialna).
+    // BUG-DATA-SLOWNA-FIX (01.07): (?:[^\S\n]+\S+){0,2} na końcu — bez tego jeden token
+    // po kotwicy (\S*, stop na spacji) urywał datę słowną "8 kwietnia 1963" na samym "8",
+    // zostawiając "kwietnia 1963" jawne; tak samo urywał "12.O3 .1985" (spacja od OCR
+    // przed końcówką roku) na "12.O3". Limit {0,2} dodatkowych słów zapobiega zjadaniu
+    // dalszego zdania (np. "...1963 roku zamieszkały w Krakowie" — stop po "1963").
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob\s*:?|d\.o\.b\.?|date\s+of\s+birth\s*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data\s+urodzenia\s*:?)[^\S\n]*$D\S*"""),
+        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob\s*:?|d\.o\.b\.?|date\s+of\s+birth\s*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data\s+urodzenia\s*:?)[^\S\n]*$D\S*(?:[^\S\n]+\S+){0,2}"""),
         TOKEN_NUMER
     )
 
@@ -214,8 +206,11 @@ internal fun applyAnchorEngine(
         Regex("""(?i)sygn\.?\s*(?:akt\.?)?\s*:?\s*[^\n]+"""),
         TOKEN_NUMER
     )
+    // BUG-KW-KWOTA-FIX (Cursor 01.07): \bKW\b zamiast gołego KW — bez granicy słowa,
+    // (?i) sprawiał że "kw" wewnątrz zwykłego słowa "kwota" pasował do (?:KRS|KW),
+    // zjadając kotwicę "kwota:" zanim A.9b (KWOTA prefix) dostał szansę jej użyć.
     applyAll(
-        Regex("""(?i)(?:KRS|KW)\s*:?\s*\S+"""),
+        Regex("""(?i)(?:\bKRS\b|\bKW\b)\s*:?\s*\S+"""),
         TOKEN_NUMER
     )
 
@@ -225,7 +220,7 @@ internal fun applyAnchorEngine(
     // [^\S\n] zamiast \s — nie crossuje linii, nie wchodzi w cyfry tokenów.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?(?![a-ząćęłńóśźż])"""),
+        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*(?<![A-Z0-9_])[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?(?![a-ząćęłńóśźż])"""),
         TOKEN_KWOTA
     )
 
@@ -238,9 +233,14 @@ internal fun applyAnchorEngine(
     // D-klasa w grupach: "15 OOO,OO zł" — OCR zamienia 000→OOO w środku liczby.
     // (?![a-ząćęłńóśźż]) — BUG-ZLECENIE-FIX: bez tego "z[1l]" łapał "zl" jako początek
     // słowa "zlecenie", zjadając cyfrę przed nim jako kwotę i obcinając "zl" ze słowa.
+    // (?<![A-Z0-9_]) — BUG-TOKEN-AMPUTACJA-FIX (Cursor 01.07): bez tego [0-9] na
+    // początku matchował cyfry WEWNĄTRZ istniejącego tokenu (np. "039" z "NUMER_039"),
+    // gdy token stał bezpośrednio przed liczbą wyglądającą na kwotę ("NUMER_039 49
+    // 999,99 z1") — replaceRange wycinał środek tokenu, zostawiając kalekie "NUMER_"
+    // (bez cyfr, nierozpoznawalne przez UI) obok nowego KWOTA_xxx.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)(?![a-ząćęłńóśźż])"""),
+        Regex("""(?i)(?<![A-Z0-9_])[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)(?![a-ząćęłńóśźż])"""),
         TOKEN_KWOTA
     )
 

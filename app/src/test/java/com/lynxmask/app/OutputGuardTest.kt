@@ -16,6 +16,37 @@ class OutputGuardTest {
         assertEquals("YELLOW", hit!!.level)
     }
 
+    // BUG-GUARD-DCLASS (wniosek właściciela 01.07): Guard tylko ostrzega, nie zamienia
+    // tekstu, więc powinien być tolerancyjny na OCR (D-klasa) tak jak silnik — inaczej
+    // ciąg zdegradowany przez OCR (litera zamiast cyfry) jest całkowicie niewidoczny
+    // dla Guarda, mimo że w realnym dokumencie prawie zawsze to zniekształcone PII.
+    @Test
+    fun `pesel zdegradowany przez OCR literami flagowany jako YELLOW`() {
+        val hits = guard("PESEL: 9OO4O512345")
+        assertTrue(
+            "PESEL z literami O (OCR) powinien byc wykryty",
+            hits.any { it.label == "PESEL" && it.level == "YELLOW" }
+        )
+    }
+
+    @Test
+    fun `pesel ze spacjami i literami OCR flagowany jako PESEL_SPACE`() {
+        val hits = guard("dokument zawiera 7S121867890 jako identyfikator")
+        assertTrue(
+            "PESEL-shape z literą S (OCR) powinien byc wykryty",
+            hits.any { (it.label == "PESEL" || it.label == "PESEL_SPACE") && it.level == "YELLOW" }
+        )
+    }
+
+    @Test
+    fun `nip zdegradowany przez OCR literami flagowany jako RED`() {
+        val hits = guard("NIP: S26-021-15-81")
+        assertTrue(
+            "NIP z literą S (OCR) powinien byc wykryty",
+            hits.any { it.label == "NIP" && it.level == "RED" }
+        )
+    }
+
     @Test
     fun nipFlaggedAsRed() {
         val hits = guard("NIP podatnika: 123-456-78-90")

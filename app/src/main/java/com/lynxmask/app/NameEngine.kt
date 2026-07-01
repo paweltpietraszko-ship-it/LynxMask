@@ -235,8 +235,10 @@ private val WHITE_LIST_LEGAL_FORMS: Set<String> = setOf(
 
 // P6-FIX: regex jako druga linia obrony — obsługuje dowolne kombinacje
 // spacji, wielkich liter i brakujących kropek generowanych przez OCR
+// BUG-FIRMA-PRZECINEK-FIX (01.07): [.,]? zamiast \.? — toleruje też przecinek (nie tylko
+// brak kropki) jako OCR-zamiennik kropki w formie prawnej.
 private val LEGAL_FORM_CHECK_REGEX = Regex(
-    """(?i)sp\.?\s*z\.?\s*o\.?\s*o\.|s\.?\s*a\.|sp\.?\s*j\.|sp\.?\s*k\.|s\.k\.a\.|p\.s\.a\."""
+    """(?i)sp[.,]?\s*z[.,]?\s*o[.,]?\s*o[.,]|s[.,]?\s*a[.,]|sp[.,]?\s*j[.,]|sp[.,]?\s*k[.,]|s[.,]k[.,]a[.,]|p[.,]s[.,]a[.,]"""
 )
 
 private val WHITE_LIST_COMMON_WORDS: Set<String> = setOf(
@@ -457,8 +459,14 @@ private val INITIALS_REGEX = Regex(
 
 // REGEX-FIX v1.5: [^\S\n] zamiast \s w treści nazwy — poprzednia wersja
 // mogła zszywać koniec jednego akapitu z formą prawną z następnego
+// BUG-FIRMA-PRZECINEK-FIX (01.07, test ręczny): [.,] zamiast \. w formach prawnych —
+// OCR myli kropkę z przecinkiem ("S,A," / "sp,j," / "Sp. z o.o,"). Ten regex biegnie
+// PRZED detekcją nazwisk w applyContextualBlacklist (linia ~614) — jeśli nie rozpozna
+// zdegradowanej formy prawnej, "Nowak"/"Wiśniewski" itd. wpadają dalej jako samo
+// nazwisko (OSOBA), a reszta nazwy firmy zostaje jawna. AnchorEngine A.1 ma ten sam fix,
+// ale to TEN regex (NameEngine, Runda 1) ma pierwszeństwo — bez obu fix nie działa.
 private val FIRMA_LEGAL_REGEX = Regex(
-    """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]]{2,50}[^\S\n]+(?:S\.A\.|Sp\.\s*z\s*o\.o\.|s\.c\.|Sp\.j\.|Sp\.k\.|S\.K\.A\.|P\.S\.A\.|LLC|GmbH|Ltd\.|LLP|B\.V\.)""",
+    """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]]{2,50}[^\S\n]+(?:S[.,]A[.,]|Sp[.,]\s*z\s*o[.,]o[.,]|s[.,]c[.,]|Sp[.,]j[.,]|Sp[.,]k[.,]|S[.,]K[.,]A[.,]|P[.,]S[.,]A[.,]|LLC|GmbH|Ltd[.,]|LLP|B[.,]V[.,])""",
     RegexOption.IGNORE_CASE
 )
 

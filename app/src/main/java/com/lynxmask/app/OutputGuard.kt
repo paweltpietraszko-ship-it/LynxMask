@@ -14,6 +14,16 @@ package com.lynxmask.app
 //       Usunięte: REGON, PL_PREFIX (silnik maskuje), TELEFON (superseded przez TELEFON_PELNY RED).
 //       Naprawiony token exclusion regex — aktualny format TYPE_NNN.
 
+// BUG-GUARD-DCLASS-FIX (01.07, wniosek właściciela): Guard tylko OSTRZEGA, nie zamienia
+// tekstu — więc powinien być SZERSZY niż silnik, nie tak samo wąski. Silnik maskuje
+// precyzyjnie (musi unikać FP bo faktycznie podmienia tekst), ale to co Guard skanuje
+// to już RESZTKI po silniku — jeśli tam jest 9-13-znakowy ciąg cyfr, w prawdziwym
+// dokumencie to prawie zawsze zniekształcona przez OCR prawdziwa liczba (PESEL/NIP/
+// telefon), nie przypadkowy szum. Guard z gołym \d był ślepy na dokładnie te przypadki
+// gdzie OCR podmienił cyfrę na literę (O/l/I/i/S/s/B/b/Z/z) — bez D-klasy nie widział
+// "9OO4O512345" ani "O328l512367" wcale, mimo że to oczywiste PII po degradacji.
+private const val D = """[0-9OolIiSsBbZz]"""
+
 data class GuardHit(
     val label: String,
     val level: String,
@@ -55,7 +65,7 @@ internal fun runOutputGuard(
 
     // ── RED — każde dopasowanie to wyciek ────────────────────────────────────
     val redPatterns = listOf(
-        "NIP"           to Regex("""\b\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b"""),
+        "NIP"           to Regex("""(?i)\b$D{3}[-\s]?$D{3}[-\s]?$D{2}[-\s]?$D{2}\b"""),
         "IBAN"          to Regex("""\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}\b"""),
         "EMAIL"         to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z][a-zA-Z0-9\-]*\.[a-zA-Z]{2,}\b"""),
         "DOWOD"         to Regex("""\b[A-Z]{3}\s?\d{6}\b"""),
@@ -63,7 +73,7 @@ internal fun runOutputGuard(
         // Dwie gałęzie — obszarowe (kierunkowy 2-cyfrowy + local 7-cyfrowy) lub mobilna (9 cyfr bez kierunkowego).
         // Polski kierunkowy to zawsze 2 cyfry (nie 3) — zapobiega interpretacji NIP XXX jako kierunkowy.
         // Mandatory separator blokuje 9-cyfrowy compact (REGON).
-        "TELEFON_PELNY" to Regex("""\b(?:(?:\+48|0048|48)[ \-.]?)?(?:(?:\(?\d{2}\)?[ \-.])\d{3}[ \-.](?:\d{3}[ \-.]?\d{3}|\d{2}[ \-.]?\d{2})|\d{3}[ \-.](?:\d{3}[ \-.]?\d{3}))\b"""),
+        "TELEFON_PELNY" to Regex("""(?i)\b(?:(?:\+4[8Bb]|0048|48)[ \-.]?)?(?:(?:\(?$D{2}\)?[ \-.])$D{3}[ \-.](?:$D{3}[ \-.]?$D{3}|$D{2}[ \-.]?$D{2})|$D{3}[ \-.](?:$D{3}[ \-.]?$D{3}))\b"""),
     )
     for ((label, re) in redPatterns)
         re.findAll(text).forEach { hits += hit(label, "RED", it) }
@@ -84,14 +94,14 @@ internal fun runOutputGuard(
 
     // SYGNATURA: wymaga kontekstu nr/numer/sygn/akt/sprawa/repertorium/poz w pobliżu
     val CTX_SYGN = Regex("""(?i)\b(?:nr|numer|sygn(?:atura)?|akt[auy]?|spraw[ayi]|repertorium|poz)\b""")
-    Regex("""\b\d{2,6}[/\-](?:\d{4}|\d{2,6})\b""").findAll(text).forEach { m ->
+    Regex("""(?i)\b$D{2,6}[/\-](?:$D{4}|$D{2,6})\b""").findAll(text).forEach { m ->
         if (CTX_SYGN.containsMatchIn(before(m.range.first)))
             hits += hit("SYGNATURA", "YELLOW", m)
     }
 
     // LICZBA: wymaga kontekstu nr/numer/poz/pwz/karta/id w pobliżu
     val CTX_LICZBA = Regex("""(?i)\b(?:nr|numer|poz|pwz|karta|id)\b""")
-    Regex("""\b(?!(?:19|20)\d{2}\b)\d{7,10}\b""").findAll(text).forEach { m ->
+    Regex("""(?i)\b(?!(?:19|20)\d{2}\b)$D{7,10}\b""").findAll(text).forEach { m ->
         if (CTX_LICZBA.containsMatchIn(before(m.range.first)))
             hits += hit("LICZBA", "YELLOW", m)
     }
@@ -111,8 +121,8 @@ internal fun runOutputGuard(
     val yellowPatterns = listOf(
         // PESEL — silnik z S5 waliduje sumę kontrolną; co zostaje w tekście to albo błędna suma
         // albo nieznany format. Nie blokujemy eksportu RED-em — użytkownik decyduje.
-        "PESEL"          to Regex("""\b\d{11}\b"""),
-        "PESEL_SPACE"    to Regex("""\b(?:\d[ \-]?){10}\d\b"""),
+        "PESEL"          to Regex("""(?i)\b$D{11}\b"""),
+        "PESEL_SPACE"    to Regex("""(?i)\b(?:$D[ \-]?){10}$D\b"""),
         // Data urodzenia po słowie kluczowym ur./urodzony/urodzona
         "URODZENIE"      to Regex("""(?i)\bur(?:odzony|odzona|odzeni|\.)\s+\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}\b"""),
         // Miejscowość urodzenia po ur./urodzony w
