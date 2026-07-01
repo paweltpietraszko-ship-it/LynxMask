@@ -653,6 +653,20 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
         }
 
+        // Diagnostyka NUMER — brakowało tej sekcji mimo że NUMER ma najwięcej pominięć (BUG-STALY-NUMER)
+        val numerMisses = secB.flatMap { r ->
+            r.entities.filter { !it.found && typeMap[it.key] == "NUMER" }.map { r to it }
+        }
+        if (numerMisses.isNotEmpty()) {
+            bb.appendLine("[NUMER POMINIĘTE] ${numerMisses.size} encji:")
+            bb.appendLine()
+            numerMisses.forEach { (r, e) ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
+                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+            }
+            bb.appendLine()
+        }
+
         // FP breakdown by layer
         val fpByLayer = mutableMapOf<String, MutableList<Pair<String, String>>>() // layer → [(original, docFile)]
         secB.forEach { r ->

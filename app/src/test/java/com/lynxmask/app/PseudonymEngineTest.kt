@@ -1591,4 +1591,27 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_EMAIL)
         assertNotInOutput(r, "anna.wisniewski@firma.pl")
     }
+
+    // BUG-NR-SIEROTA (diagnoza Cursor 01.07): identyfikator alfanumeryczny z 3 segmentami
+    // ukośnikowymi (prefiks-cyfry/cyfry/rok) ucinał się na 2 segmentach, zostawiając rok jawny.
+    @Test fun `numer faktury z trzema segmentami nie zostawia sieroty roku`() {
+        val r = pseudonymize("FAKTURA VAT\nNr FV-08217/08/2023")
+        assertNotInOutput(r, "/2023")
+        assertNotInOutput(r, "08217")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NR-SYGNATURA (diagnoza Cursor 01.07): "Nr" traktowane jak kod wydziału sądowego
+    // (analogicznie do "Co"/"Ns") w StructuralEngine.kt:460 — "Nr 8678/02/2023" ucinał się
+    // na "Nr 8678/02", zostawiając "/2023" jawne.
+    @Test fun `Nr cyfry slash rok jeden token bez sieroty`() {
+        val r = pseudonymize("FAKTURA VAT\nNr 8678/02/2023")
+        assertNotInOutput(r, "/2023")
+        assertNotInOutput(r, "8678")
+    }
+
+    @Test fun `sygnatura sad I Co bez regresu`() {
+        val r = pseudonymize("sygn. akt I Co 3704/2018")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
 }

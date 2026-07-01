@@ -225,7 +225,7 @@ internal fun applyAnchorEngine(
     // [^\S\n] zamiast \s — nie crossuje linii, nie wchodzi w cyfry tokenów.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?"""),
+        Regex("""(?i)(?:kwot[aęą][^\S\n]*:?|sum[aą][^\S\n]*:?|wartości?[^\S\n]*:?|wynagrodzeni\w{0,4}[^\S\n]*:?)[^\S\n]*[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)?(?![a-ząćęłńóśźż])"""),
         TOKEN_KWOTA
     )
 
@@ -236,9 +236,11 @@ internal fun applyAnchorEngine(
     // z[1l] — OCR: "z1"/"zl" zamiast "zł".
     // [0-9] na początku — wymaga prawdziwej cyfry (D-klasa FP: "o" z "sto złotych").
     // D-klasa w grupach: "15 OOO,OO zł" — OCR zamienia 000→OOO w środku liczby.
+    // (?![a-ząćęłńóśźż]) — BUG-ZLECENIE-FIX: bez tego "z[1l]" łapał "zl" jako początek
+    // słowa "zlecenie", zjadając cyfrę przed nim jako kwotę i obcinając "zl" ze słowa.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)"""),
+        Regex("""(?i)[0-9][$D,.]*(?:[^\S\n]$D{1,3})*(?:[,.]$D{1,2})?[^\S\n]*(?:zł|z[1l]|PLN|EUR|USD|GBP|CHF)(?![a-ząćęłńóśźż])"""),
         TOKEN_KWOTA
     )
 
@@ -333,6 +335,33 @@ internal fun applyAnchorEngine(
                 val suf = if (aft.isLetterOrDigit() || aft == '_') " " else ""
                 acc.replaceRange(m.range, pre + token + suf)
             } else acc
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // A.12 NUMER dokumentu (faktura/umowa) — kotwica: "Nr"/"nr" + sygnał dokumentu wstecz
+    // StructuralEngine wymaga dokładnej frazy "nr faktury"/"numer umowy" (fraza-kotwica).
+    // Realne dokumenty piszą tytuł osobno od numeru: "FAKTURA VAT" \n "Nr FV-08217/08/2023"
+    // albo "UMOWA O ŚWIADCZENIE USŁUG" \n "nr U-00284/2023" — słowo "faktury"/"umowy"
+    // nigdy nie styka się z samym numerem, więc fraza-kotwica nigdy nie trafia (BUG_SILNIKA).
+    // Tu: widzę "Nr X" → sprawdzam WSTECZ (60 zn.) czy jest słowo-sygnał dokumentu → maskuję.
+    // Nie waliduje formatu numeru — kształt dokumentu bywa dowolny (cyfry/litery/ukośniki).
+    // ------------------------------------------------------------------
+    val docNumberRe = Regex("""(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ])[Nn]r\.?[^\S\n]*:?[^\S\n]*\S+""")
+    val docSignalRe = Regex("""(?i)faktur|umow|zlecen|kontrahent|\bvat\b|uproszczon""")
+    t = docNumberRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (matchOverlapsToken(acc, m.range)) acc
+        else {
+            val lookback = acc.substring(maxOf(0, m.range.first - 60), m.range.first)
+            if (!docSignalRe.containsMatchIn(lookback)) acc
+            else {
+                val token = assignToken(m.value.trim(), TOKEN_NUMER)
+                val before = acc.getOrElse(m.range.first - 1) { ' ' }
+                val after  = acc.getOrElse(m.range.last + 1) { ' ' }
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                acc.replaceRange(m.range, pre + token + suf)
+            }
         }
     }
 

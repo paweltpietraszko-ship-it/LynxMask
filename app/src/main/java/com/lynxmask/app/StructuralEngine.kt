@@ -416,7 +416,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""(?i)(?:działki?|nr działki)\s+\d+(?:/\d+)?"""),
 
     // --- Identyfikatory alfanumeryczne (ID-UZ-77412, CERT-8841, ZW-PS-0336) ---
-    TOKEN_NUMER to Regex("""\b[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10})?\b"""),
+    // BUG-NR-SIEROTA-FIX (Cursor 01.07): trzeci opcjonalny segment — bez niego
+    // "FV-08217/08/2023" ucinał się na "FV-08217/08", zostawiając "/2023" jawne.
+    // A.12 (AnchorEngine) nie mógł tego naprawić — matchOverlapsToken blokował
+    // cały jego match bo widział już utworzony token NUMER_xxx w oknie.
+    TOKEN_NUMER to Regex("""\b[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10}){0,2}\b"""),
 
     // --- Sygnatura akt ---
     // BUG-06-FIX v1.5: usunięto RegexOption.IGNORE_CASE.
@@ -453,7 +457,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // bez prefiksu cyfr rzymskich.
     // Zabezpieczenie przed FP: wymaga uppercase pierwszej litery, tj. "do 5/2020"
     // (przyimek) nie pasuje bo 'd' jest małe.
-    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
+    // BUG-NR-SYGNATURA-FIX (Cursor 01.07): (?![Nn]r\b) wyklucza "Nr" jako fałszywy kod
+    // wydziału. Bez tego "Nr 8678/02/2023" matchował "Nr 8678/02" (Nr jak "Co"/"Ns"),
+    // zostawiając "/2023" jawne — A.12 (AnchorEngine) nie mógł naprawić bo widział
+    // już utworzony token w oknie matchOverlapsToken. "Nr" + numer faktury/umowy
+    // obsługuje teraz A.12 w całości.
+    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
 
     // --- CATCHALL: ciągi cyfr 8+ (przepisany z negatywnym lookahead) ---
     // TODO-7 (sesja 10): Daty NIE mają osobnej jawnej reguły ochrony — są chronione
