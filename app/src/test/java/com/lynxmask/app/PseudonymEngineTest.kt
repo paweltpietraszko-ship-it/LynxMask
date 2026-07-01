@@ -209,13 +209,23 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("5260001320"))
     }
 
-    @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu nie maskuje czesciowo`() {
-        // Regresja: wzorzec 3-2-2 (numer wewnętrzny) łapał ogon "000-13-20" z "526-000-13-20"
-        // po tym jak S5 odrzuciło pełny NIP. Lookbehind (?<!\d{3}[\s\-]) blokuje to.
+    @Test fun `kwota OCR litery zamiast zer jest maskowana`() {
+        // BUG-KWOTA-OOO: "15 000" po OCR → "15 OOO" (O zamiast 0).
+        // A.9 używało [0-9]/\d — nie matchowało liter. Fix: D-klasa.
+        val r1 = pseudonymize("kwota: 15 OOO,OO zł")
+        assertFalse("'15 OOO,OO' powinno być zamaskowane", r1.pseudonymizedText.contains("OOO"))
+        val r2 = pseudonymize("23O 5OO PLN")
+        assertFalse("'23O 5OO' powinno być zamaskowane", r2.pseudonymizedText.contains("23O"))
+    }
+
+    @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu maskowany przez AnchorEngine`() {
+        // AnchorEngine: kształt xxx-xxx-xx-xx z kreskami = kotwica strukturalna → maskuj.
+        // Poprzednie zachowanie (S5 odrzuca → zostaje w tekście) zastąpione przez AnchorEngine
+        // który woli FP niż przepuszczone PII. Im mniej pracy dla Guarda tym lepiej.
         val r = pseudonymize("Kontrahent 526-000-13-20 zalegał z płatnością.")
-        assertTrue("Błędny NIP bez kontekstu powinien zostać w tekście",
+        assertFalse("NIP z kształtem kresek powinien być zamaskowany przez AnchorEngine",
             r.pseudonymizedText.contains("526-000-13-20"))
-        assertFalse("Żaden fragment błędnego NIPu nie powinien być zamaskowany",
+        assertTrue("AnchorEngine powinien wstawić token NUMER",
             r.pseudonymizedText.contains("NUMER_"))
     }
 
@@ -610,6 +620,26 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_ADRES)
     }
 
+    @Test fun `miasto przed kodem to jeden token nie dwa`() {
+        // BUG-ADRES-PODWOJON: CITY_POSTAL_REGEX maskowało tylko miasto, kod zostawał.
+        // Efekt: ADRES_001=Warszawa + ADRES_002=00-001 zamiast jednego tokenu.
+        val r = pseudonymize("Zamieszkały w Warszawie, 00-001")
+        val adresCount = r.tokenMap.keys.count { it.startsWith("ADRES") }
+        assertEquals("Warszawa + kod to jeden token ADRES, nie dwa", 1, adresCount)
+        assertNotInOutput(r, "00-001")
+        assertNotInOutput(r, "Warszawa")
+    }
+
+    @Test fun `anchor nie konsumuje prefiksu istniejacego tokenu adres jako miasto`() {
+        // BUG: AnchorEngine A.11b dopasowuje opcjonalne miasto po kodzie.
+        // Gdy wcześniejsza warstwa stworzyła ADRES_NNN dla miasta, A.11b widzi
+        // "00-001 ADRES" i traktuje "ADRES" jako nazwę miasta → ogon "_NNN".
+        // Fix: matchOverlapsToken w applyAll blokuje dopasowanie.
+        val r = pseudonymize("zamieszkały w Warszawie ul. Marszałkowska 15/3, 00-001 Warszawa")
+        val out = r.pseudonymizedText
+        assertFalse("ogon _NNN w wyniku", Regex("""\s_\d{3}(?!\d)""").containsMatchIn(out))
+    }
+
     @Test fun `adres z ul przecinek zamiast kropki`() {
         val r = pseudonymize("ul, Wolności 99, 41-200 Sosnowiec")
         assertTokenExists(r, TOKEN_ADRES)
@@ -620,6 +650,13 @@ class PseudonymEngineTest {
         val r = pseudonymize("u. Dębowa 19/23, 87-100 Białystok")
         assertTokenExists(r, TOKEN_ADRES)
         assertFalse(r.pseudonymizedText.contains("Dębowa 19"))
+    }
+
+    @Test fun `adres ul spacja przed kropka jest maskowany`() {
+        // OCR: "ul .Marszałkowska" — spacja przed kropką skrótu
+        val r = pseudonymize("ul .Marszałkowska 15/3, 00-001 Warszawa")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Marszałkowska")
     }
 
     @Test fun `email OCR spacja po malpce maskowany end-to-end`() {
@@ -697,6 +734,22 @@ class PseudonymEngineTest {
             userDictionary = listOf("Jan Kowalski" to TOKEN_OSOBA)
         )
         assertNotInOutput(r, "JAN KOWALSKI")
+    }
+
+    @Test fun `slownik nie rozbija istniejacego tokenu na prefiks i ogon`() {
+        // Regresja BUG-OGONY: UserDictionary nie miał guarda TOKEN_RE.
+        // Wpis "Firma" matchuje "FIRMA" w "FIRMA_001" (notWordChar nie zawiera '_').
+        // Efekt bez fixa: "FIRMA_001" → "FIRMA_NNN _001" (ogon ze spacją).
+        // NameEngine tworzy FIRMA_001 dla "Sp. z o.o." PRZED W4a (UserDictionary).
+        val r = pseudonymize(
+            text = "Kowalski i Partnerzy Sp. z o.o.",
+            userDictionary = listOf("Firma" to TOKEN_FIRMA)
+        )
+        val output = r.pseudonymizedText
+        assertFalse(
+            "Ogon z spacją — UserDictionary rozbił token: '$output'",
+            Regex("""(?:ADRES|FIRMA|OSOBA|NUMER|EMAIL|KWOTA)\s+_\d{3}""").containsMatchIn(output)
+        )
     }
 
     // =========================================================================
@@ -1537,5 +1590,28 @@ class PseudonymEngineTest {
         val r = pseudonymize("e-mail: anna.wisniewski@firma.pl")
         assertTokenExists(r, TOKEN_EMAIL)
         assertNotInOutput(r, "anna.wisniewski@firma.pl")
+    }
+
+    // BUG-NR-SIEROTA (diagnoza Cursor 01.07): identyfikator alfanumeryczny z 3 segmentami
+    // ukośnikowymi (prefiks-cyfry/cyfry/rok) ucinał się na 2 segmentach, zostawiając rok jawny.
+    @Test fun `numer faktury z trzema segmentami nie zostawia sieroty roku`() {
+        val r = pseudonymize("FAKTURA VAT\nNr FV-08217/08/2023")
+        assertNotInOutput(r, "/2023")
+        assertNotInOutput(r, "08217")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NR-SYGNATURA (diagnoza Cursor 01.07): "Nr" traktowane jak kod wydziału sądowego
+    // (analogicznie do "Co"/"Ns") w StructuralEngine.kt:460 — "Nr 8678/02/2023" ucinał się
+    // na "Nr 8678/02", zostawiając "/2023" jawne.
+    @Test fun `Nr cyfry slash rok jeden token bez sieroty`() {
+        val r = pseudonymize("FAKTURA VAT\nNr 8678/02/2023")
+        assertNotInOutput(r, "/2023")
+        assertNotInOutput(r, "8678")
+    }
+
+    @Test fun `sygnatura sad I Co bez regresu`() {
+        val r = pseudonymize("sygn. akt I Co 3704/2018")
+        assertTokenExists(r, TOKEN_NUMER)
     }
 }

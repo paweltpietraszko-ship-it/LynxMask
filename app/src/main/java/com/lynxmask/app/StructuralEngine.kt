@@ -224,22 +224,15 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // (po ur w środku słowa nie ma \b bo następny znak też jest \w)
     TOKEN_NUMER to Regex("""(?i)\bdat[aą]\s+ur(?:odzen[ií][^\s:–\-\d]{0,2})?\b\.?[^\S\n]*[:–\-]?\n?[^\S\n]*\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}\b"""),
 
-    // Data polska DD.MM.YYYY — S-DATE-PL (strukturalna, różne separatory, bez kontekstu)
-    // Separatory: . , / - ; rok ograniczony do 19xx/20xx (blokuje FP: art. 10.12.98 → rok 1998 ✓, ale 10.12.34 bez 19/20 → skip)
-    // Dzień 01–31, miesiąc 01–12 — walidacja zakresu bez sprawdzania kombinacji (luty bez 29/30/31)
-    TOKEN_NUMER to Regex("""\b(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-](?:19|20)\d{2}\b"""),
+    // S-DATE-PL: data DD.MM.YYYY bez kontekstu — rok musi być 19xx lub 20xx
+    // Separatory: kropka / ukośnik / przecinek (kreska jest lapana przez A.5b NIP-shape).
+    // Rok poza zakresem (np. 1234) → brak masowania (test: "parametr 10.12.1234" → skip).
+    TOKEN_NUMER to Regex("""\b\d{1,2}[./,]\d{1,2}[./,](?:19|20)\d{2}\b"""),
 
-    // Data z kontekstem DATA/DNIA — S-DATE-CTX (kontekstowa, rok 2 lub 4 cyfry)
-    // Fallback po S-DATE-PL: obsługuje daty ze skróconym rokiem ("Dnia 10.12.26")
-    // i formaty niestandardowe. S-DATE-PL przychwyci rok 4-cyfrowy wcześniej.
-    // Maskuje cały fragment łącznie z "Dnia"/"Data:".
-    TOKEN_NUMER to Regex("""(?i)\b(?:dat[aą]|dnia|dniu)\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?:0?[1-9]|[12]\d|3[01])[.,/\-](?:0?[1-9]|1[0-2])[.,/\-]\d{2,4}\b"""),
-
-    // Data ISO YYYY-MM-DD (strukturalna) — S-DATE-ISO / BUG-DATE-PARTIAL
-    // Wzorzec strukturalny (format-only), nie wymaga kontekstu.
-    // Umieszczony PRZED blokiem "numer z kontekstem" żeby całość daty była matchowana zanim
-    // inne reguły złapią sam rok/miesiąc i zostawią fragment "-DD".
-    TOKEN_NUMER to Regex("""\b(?:19|20)\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])\b"""),
+    // S-DATE-CTX: data po słowie kluczowym Dnia/Data — akceptuje 2-cyfrowy rok
+    // Kontekst słowny ("Dnia", "Data:") jest dowodem że to data, nie losowe liczby.
+    // Separator: kropka / ukośnik / przecinek / kreska; rok 2–4 cyfry.
+    TOKEN_NUMER to Regex("""(?i)\b(?:dnia|dat[aą]\s*:?)[^\S\n]+\d{1,2}[./,\-]\d{1,2}[./,\-]\d{2,4}\b"""),
 
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)
@@ -359,17 +352,23 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b\d{9}\b"""),
 
     // --- Telefony ---
-    // S10-FIX: separator [-\s.] zamiast [-\s] — kropka jest częstym separatorem w OCR i formatach EU.
-    // Guard TELEFON_PELNY łapał "600.123.456" / "22.765.43.21" / "48.600.123.456" ale engine nie → wyciek PII.
-    TOKEN_NUMER to Regex("""\b(?:\+?48[-\s.]?)?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),  // PL komórkowy/miejski 9 cyfr
-    // Telefon stacjonarny z kierunkowym: "81 123-45-67", "12 345 67 89", "22.765.43.21"
+    // KOLEJNOŚĆ KRYTYCZNA: kontekstowe (tel./kom./fax) PRZED strukturalnymi.
+    // Bez tego linia \b\d{3}...\d{3}\b kradnie cyfry, zostawiając "tel." / "kom." na widoku.
+    //
+    // Rozszerzone słowa kluczowe: komórka, wew, gsm, nr tel
+    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|kom(?:órka)?|fax|faks|wew(?:nętrzny)?|gsm|nr[\s.]?tel)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
+    // +48 / +4B (OCR: 8→B) z prefiksem
+    TOKEN_NUMER to Regex("""\+4[8Bb][-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}(?!\d)"""),
+    // samo 48 jako prefix (bez +) — np. "48 601 234 567" w OCR bez znaku plusa
+    TOKEN_NUMER to Regex("""(?<!\+)(?<!\d)\b48[-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),
+    // PL komórkowy/miejski bez prefiksu: "600 123 456", "22.765.43.21"
+    // S10-FIX: separator [-\s.] zamiast [-\s]
+    TOKEN_NUMER to Regex("""\b\d{3}[-\s.]?\d{3}[-\s.]?\d{3}\b"""),
+    // Telefon stacjonarny z kierunkowym: "81 123-45-67", "12 345 67 89"
     TOKEN_NUMER to Regex("""\b\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}\b"""),
-    // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89" — dodany v2.1
+    // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89"
     TOKEN_NUMER to Regex("""\(\d{2}\)[^\S\n]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
     TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d{3,15}"""),      // Międzynarodowy
-    // Kontekstowy — po "tel."/"telefon:"/"fax:" — łapie 7-cyfrowe lokalne i niestandardowe formaty
-    // Fallback po wzorcach strukturalnych: TOKEN_RE wyklucza podwójne maskowanie
-    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|fax|faks)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
 
     // --- Kwoty z walutami (format PL i EU) ---
     // (?!00\s) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię
@@ -417,7 +416,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""(?i)(?:działki?|nr działki)\s+\d+(?:/\d+)?"""),
 
     // --- Identyfikatory alfanumeryczne (ID-UZ-77412, CERT-8841, ZW-PS-0336) ---
-    TOKEN_NUMER to Regex("""\b[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10})?\b"""),
+    // BUG-NR-SIEROTA-FIX (Cursor 01.07): trzeci opcjonalny segment — bez niego
+    // "FV-08217/08/2023" ucinał się na "FV-08217/08", zostawiając "/2023" jawne.
+    // A.12 (AnchorEngine) nie mógł tego naprawić — matchOverlapsToken blokował
+    // cały jego match bo widział już utworzony token NUMER_xxx w oknie.
+    TOKEN_NUMER to Regex("""\b[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10}){0,2}\b"""),
 
     // --- Sygnatura akt ---
     // BUG-06-FIX v1.5: usunięto RegexOption.IGNORE_CASE.
@@ -454,7 +457,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // bez prefiksu cyfr rzymskich.
     // Zabezpieczenie przed FP: wymaga uppercase pierwszej litery, tj. "do 5/2020"
     // (przyimek) nie pasuje bo 'd' jest małe.
-    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
+    // BUG-NR-SYGNATURA-FIX (Cursor 01.07): (?![Nn]r\b) wyklucza "Nr" jako fałszywy kod
+    // wydziału. Bez tego "Nr 8678/02/2023" matchował "Nr 8678/02" (Nr jak "Co"/"Ns"),
+    // zostawiając "/2023" jawne — A.12 (AnchorEngine) nie mógł naprawić bo widział
+    // już utworzony token w oknie matchOverlapsToken. "Nr" + numer faktury/umowy
+    // obsługuje teraz A.12 w całości.
+    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
 
     // --- CATCHALL: ciągi cyfr 8+ (przepisany z negatywnym lookahead) ---
     // TODO-7 (sesja 10): Daty NIE mają osobnej jawnej reguły ochrony — są chronione

@@ -202,9 +202,9 @@ class OcrDegradationTest {
             tokens(LVL2).any { it.replace(" ", "").contains("91040512361") })
 
     @Test fun `lvl2 PESEL2 wykryty ze spacja`() =
-        // "748 01934523" → po złączeniu "74801934521" (OCR przestawił cyfry — ale 11 cyfr = wykryty)
+        // A.4 (keyword) przechowuje cały match: "PESEL: 748 01934523" — szukamy cyfr PESEL po usunięciu spacji
         assertTrue("PESEL 748 01934523 nie wykryty",
-            tokens(LVL2).any { it.replace(" ", "").length == 11 && it.replace(" ", "").all { c -> c.isDigit() } })
+            tokens(LVL2).any { it.replace(" ", "").contains("74801934523") })
 
     @Test fun `lvl2 IBAN wykryty ze spacjami`() =
         assertTrue("IBAN (PL89 10901014 ...) nie wykryty",

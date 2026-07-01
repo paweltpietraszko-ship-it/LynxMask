@@ -19,13 +19,21 @@ package com.lynxmask.app
  *                potwierdzone martwy kod po przejrzeniu wszystkich plików silnika
  *
  * Architektura (kolejność wykonania):
- *   Warstwa 0: OcrNormalizer (normalizacja przed detekcją)
- *   Warstwa 1: Słownik użytkownika (SQLCipher) — najwyższy priorytet
- *   Warstwa 2: Regex strukturalne (przeniesione z Triangulum v4.19 + nowe) → StructuralEngine.kt
- *   Warstwa 3: Czarna lista kontekstowa (imiona PESEL + funkcje + tytuły) → NameEngine.kt
- *   Warstwa 4: Biała lista (zostaw zawsze) → NameEngine.kt
- *   Warstwa 5: Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
- *   Warstwa 6: Output Guard + Risk Score → OutputGuard.kt
+ *   Warstwa 0:   OcrNormalizer (normalizacja przed detekcją)
+ *   === RUNDA 1 ===
+ *   Warstwa 2:   Regex strukturalne → StructuralEngine.kt
+ *   Warstwa 3:   Czarna lista kontekstowa + propagacja → NameEngine.kt
+ *   Warstwa 3d:  Wzorce adresów (po NameEngine)
+ *   === ZBIERACZE RESZTEK ===
+ *   Warstwa 4a:  Słownik użytkownika (zbieracz resztek)
+ *   Warstwa 4b:  AnchorEngine (zbieracz resztek kotwicowy) → AnchorEngine.kt
+ *   === RUNDA 2 — ten sam assignToken, te same liczniki ===
+ *   Warstwa 2':  Regex strukturalne (runda 2 — resztki po AnchorEngine)
+ *   Warstwa 3':  Czarna lista kontekstowa (runda 2)
+ *   Warstwa 3d': Wzorce adresów (runda 2)
+ *   === FINALIZACJA ===
+ *   Warstwa 5:   Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
+ *   Warstwa 6:   Output Guard + Risk Score → OutputGuard.kt
  *
  * Tokeny zgodne z Triangulum:
  *   FIRMA_{nnn}, OSOBA_{nnn}, NUMER_{nnn}, KWOTA_{nnn}, ADRES_{nnn}
@@ -78,7 +86,15 @@ data class DetectionTrace(
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
 // ============================================================
-internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})\b""")
+internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})(?!\d)""")
+
+// Sprawdza okno wokół matcha w pełnym tekście — guard TOKEN_RE.containsMatchIn(match.value)
+// nie widzi prefiksu tokenu (np. match="ADRES" przy "ADRES_004" w tekście → false).
+// Ta funkcja rozszerza okno o 1 znak w lewo i 5 w prawo, łapiąc "_NNN" za matchem.
+internal fun matchOverlapsToken(text: String, range: IntRange): Boolean {
+    val win = text.substring(maxOf(0, range.first - 1), minOf(text.length, range.last + 5))
+    return TOKEN_RE.containsMatchIn(win)
+}
 
 // ============================================================
 // Normalizacja canonical — z Triangulum [V4-2]
@@ -121,6 +137,15 @@ object PseudonymEngine {
                     "DEGRADED MODE: LookupTables nie zainicjowane. "
                     + "Detekcja imion ograniczona do 200 fallback names.")
             }
+        }
+
+        // --- Pre-processing: rozdzielanie emaili sklejonych (wielokrotne @ bez spacji) ---
+        // OcrNormalizer krok 0b może sklejać emaile z osobnych linii dokumentu.
+        // Jeśli w ciągu bez spacji/newline jest więcej niż jedno @, wstawiamy \n po TLD.
+        // Lista TLD zamiast [a-z]{2,6} — zapobiega backtrackowi na .gov → .pl split
+        run {
+            val tlds = "pl|com|net|org|eu|gov|info|biz|de|uk|fr|it|nl|be|at|cz|sk|hu|ro|io|co|me|edu"
+            text = Regex("""\.(?:$tlds)(?=[a-zA-Z0-9][^\s@\n]*@)""").replace(text) { m -> m.value + "\n" }
         }
 
         // --- Pre-processing: naprawa emaili z błędami OCR ---
@@ -181,25 +206,6 @@ object PseudonymEngine {
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
 
-        // --- Warstwa 1: Słownik użytkownika ---
-        // Defensywna walidacja typu — zabezpiecza przed błędnym typem z ManualTokenSection
-        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_EMAIL, TOKEN_KWOTA, TOKEN_ADRES)
-        for ((dictValue, tokenType) in userDictionary) {
-            if (dictValue.isBlank()) continue
-            val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
-            val token = assignToken(dictValue, safeType, layer = "DICT", rule = "USER_DICTIONARY")
-            // DICT-FIX v2.1: regex zamiast String.replace() — zapobiega podmiance fragmentów
-            // większych słów (np. "Jan" → "OSOBA_001" podmienia "Janusz" → "OSOBA_001usz").
-            // \b nie obsługuje polskich diakrytyków — używamy lookbehind/lookahead.
-            val escapedValue = Regex.escape(dictValue)
-            val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
-            val dictRegex = Regex(
-                "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
-                RegexOption.IGNORE_CASE
-            )
-            text = dictRegex.replace(text) { token }
-        }
-
         // --- Warstwa 2: Regex strukturalne ---
         if (BuildConfig.DEBUG) {
             android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
@@ -211,6 +217,7 @@ object PseudonymEngine {
                 if (TOKEN_RE.containsMatchIn(match)) return@replace match
 
                 // S5 — walidacja sumy kontrolnej PESEL i NIP
+                // pre/suf dodane poniżej — zapobiega sklejaniu tokenów
                 // Walidację stosujemy TYLKO do wzorców PESEL i NIP (lookup po pattern string),
                 // żeby nie blokować telefonów, IBAN, sygnatur ani innych wzorców.
                 //
@@ -232,7 +239,12 @@ object PseudonymEngine {
                     if (digits.length == 10 && !isValidNip(digits)) return@replace match
                 }
 
-                assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
+                val token = assignToken(match, tokenType, layer = "STRUCTURAL", rule = tokenType)
+                val before = if (matchResult.range.first > 0) text[matchResult.range.first - 1] else ' '
+                val after  = if (matchResult.range.last + 1 < text.length) text[matchResult.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                pre + token + suf
             }
         }
 
@@ -295,7 +307,78 @@ object PseudonymEngine {
         for ((tokenType, pattern) in ADDRESS_PATTERNS) {
             pattern.findAll(text).toList().asReversed().forEach { match ->
                 if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                text = text.replaceRange(match.range, assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType))
+                val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
+                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                text = text.replaceRange(match.range, pre + token + suf)
+            }
+        }
+
+        // --- Warstwa 4a: Słownik użytkownika (zbieracz resztek) ---
+        // UWAGA: przeniesiony z Warstwy 1 — musi działać PO silnikach strukturalnych.
+        // W Warstwie 1 UserDictionary kradł fragmenty emaili i nazwisk z par imię+nazwisko,
+        // powodując że StructuralEngine i NameEngine dostawały już zniszczony tekst.
+        // Jako zbieracz resztek operuje na tekście gdzie EMAIL i OSOBA są już zamaskowane.
+        val validTokenTypes = setOf(TOKEN_FIRMA, TOKEN_OSOBA, TOKEN_NUMER, TOKEN_EMAIL, TOKEN_KWOTA, TOKEN_ADRES)
+        for ((dictValue, tokenType) in userDictionary) {
+            if (dictValue.isBlank()) continue
+            val safeType = if (tokenType in validTokenTypes) tokenType else TOKEN_OSOBA
+            val token = assignToken(dictValue, safeType, layer = "DICT", rule = "USER_DICTIONARY")
+            val escapedValue = Regex.escape(dictValue)
+            val notWordChar = """[a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9]"""
+            val dictRegex = Regex(
+                "(?<!$notWordChar)$escapedValue(?!$notWordChar)",
+                RegexOption.IGNORE_CASE
+            )
+            val snap = text
+            text = dictRegex.replace(snap) { m ->
+                if (matchOverlapsToken(snap, m.range)) m.value else token
+            }
+        }
+
+        // --- Warstwa 4b: AnchorEngine (zbieracz resztek kotwicowy) ---
+        // Operuje wyłącznie na tym co Warstwy 2–4a przeoczyły.
+        // Nie może popsuć istniejących tokenów — każdy przebieg pomija TOKEN_RE.
+        text = applyAnchorEngine(text) { value, tokenType ->
+            assignToken(value, tokenType, layer = "ANCHOR", rule = tokenType)
+        }
+
+        // --- Runda 2: Structural + Name + Address na resztkach po AnchorEngine ---
+        // Ten sam assignToken (te same liczniki, ta sama tokenMap) — zero kolizji tokenów.
+        // TOKEN_RE w każdym silniku chroni już zamaskowane fragmenty przed ponownym przetworzeniem.
+        for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
+            text = pattern.replace(text) { matchResult ->
+                val match = matchResult.value
+                if (TOKEN_RE.containsMatchIn(match)) return@replace match
+                val digits = match.filter { it.isDigit() }
+                if (pattern.pattern in PESEL_PATTERN_STRINGS && !digits.startsWith("48")) {
+                    if (digits.length == 11 && !isValidPesel(digits)) return@replace match
+                }
+                if (pattern.pattern in NIP_PATTERN_STRINGS) {
+                    if (digits.length == 10 && !isValidNip(digits)) return@replace match
+                }
+                val token = assignToken(match, tokenType, layer = "STRUCTURAL_R2", rule = tokenType)
+                val before = if (matchResult.range.first > 0) text[matchResult.range.first - 1] else ' '
+                val after  = if (matchResult.range.last + 1 < text.length) text[matchResult.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                pre + token + suf
+            }
+        }
+        text = applyContextualBlacklist(text, { value, tokenType ->
+            assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
+        }, profileType)
+        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+            pattern.findAll(text).toList().asReversed().forEach { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
+                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                text = text.replaceRange(match.range, pre + token + suf)
             }
         }
 

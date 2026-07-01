@@ -266,6 +266,17 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_ABBREV_SPACE_DOT: spacja wstawiona przez OCR między skrótem a kropką
+    // "ul .Marszałkowska" → "ul.Marszałkowska"  (OCR_UL_PREFIX doda spację po kropce)
+    // "al .Grunwaldzka"   → "al.Grunwaldzka"
+    // Obsługuje: ul, al, os, pl — przed wielką literą lub spacją+wielką literą.
+    // ----------------------------------------------------------
+    private val OCR_ABBREV_SPACE_DOT = Regex(
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(ul|al|os|pl)[^\S\n]+\.(?=[^\S\n]*[A-ZŁŚŹĆŃĄĘÓŻ])""",
+        RegexOption.IGNORE_CASE
+    )
+
+    // ----------------------------------------------------------
     // OCR_UL_PREFIX v1.4: naprawa skrótu "ul." rozbitego przez OCR
     //
     // "u. Nazwa" → "ul. Nazwa"  (OCR zgubił l)
@@ -386,7 +397,7 @@ object OcrNormalizer {
     // "ul. Słoneczna I9" → "ul. Słoneczna 19", "ul. Niepodległości I35" → "ul. Niepodległości 135"
     // ----------------------------------------------------------
     private val OCR_HOUSE_NUM = Regex(
-        """((?i:ul[.,]?|al[.,]?|pl[.,]?|os\.)[^\S\n]+(?:[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\-]{2,50}[^\S\n]+){1,2})([IO][0-9IO]{0,3})(?=[,\s\n/]|$)"""
+        """((?i:ul[.,]?|al[.,]?|pl[.,]?|os\.)[^\S\n]+(?:[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\-]{2,50}[^\S\n]+){1,2})([IOl][0-9IOl]{0,3})(?=[,\s\n/]|$)"""
     )
 
     /** Wyciąga 10 cyfr NIP z fragmentu OCR (z mapą liter→cyfry). */
@@ -431,10 +442,10 @@ object OcrNormalizer {
 
     // OCR_NIP_BARE3322 / 3223: kształt NIP bez słowa kluczowego — l/O/cyrylica w segmentach (S4)
     private val OCR_NIP_BARE3322 = Regex(
-        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})\b"""
+        """\b(\d{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})\b"""
     )
     private val OCR_NIP_BARE3223 = Regex(
-        """\b(\d{3})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([\s\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})\b"""
+        """\b(\d{3})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{2})([ \t\-.])([0-9TIlOSBGZ\u0417\u0437\u041E\u043EoOIl]{3})\b"""
     )
 
     private fun replaceNipBareShape(m: MatchResult): String {
@@ -692,6 +703,12 @@ object OcrNormalizer {
                 "${m.groupValues[1]}_${m.groupValues[2]}"
             }
         } while (text != prev8)
+
+        // 8c. OCR: spacja przed kropką skrótu adresowego — "ul .Nazwa" → "ul.Nazwa"
+        text = OCR_ABBREV_SPACE_DOT.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]}."
+        }
 
         // 9. OCR: "u. Nazwa" lub "u Nazwa" → "ul. Nazwa"
         text = OCR_UL_PREFIX.replace(text) { m ->

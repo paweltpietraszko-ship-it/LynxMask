@@ -1,0 +1,138 @@
+=== EMAIL — kotwica @ ===
+piotr.wisniewski@kancelaria.pl
+m.kowalczyk@nfz.gov.pl
+biuro@wrozlaw-adwokaci.pl
+p1otr.w1sn1ewski@kance1aria.pl
+m.kowa1czyk@nfz.g0v.p1
+biuro@wroc1aw-adwokac1.p1
+piotr.wisniewski @kancelaria.pl
+m.kowalczyk@ nfz.gov.pl
+p1otr.wisn1ewski @ kance1aria .pl
+
+=== TELEFON — kotwica +48 / tel. ===
++48 501 234 567
++48 602 345 678
+tel. 22 123 45 67
+kom. 784 321 987
++48 5O1 234 567
++48 6O2 345 67B
+tel. 22 l23 45 67
+kom. 7B4 321 9B7
++4B 501 234 567
++48 501 23 567
+tel.22 123 45 67
+
+=== PESEL — kształt z tolerancją ===
+90040512345
+75121867890
+03281512367
+9OO4O512345
+751218678O0
+O328l512367
+9004051234S
+7S121867890
+90040 512345
+75121-867890
+
+=== NIP — kształt z tolerancją ===
+526-021-15-81
+722-30-32-34
+5260211581
+526-O21-15-81
+722-3O-32-34
+S260211581
+526 021 15 81
+726-3O-B2-34
+
+=== IBAN — kotwica PL ===
+PL61 1090 1014 0000 0712 1981 2874
+PL27 1140 2004 0000 3102 0135 5387
+PL61 1O9O 1O14 OOOO O712 1981 2874
+PL27 114O 2OO4 OOOO 31O2 O135 5387
+PL6l l090 l0l4 0000 07l2 l98l 2874
+PL 61 1090 1014 0000 0712 1981 2874
+
+=== ADRES — kotwica ul. / al. / kod pocztowy ===
+ul. Marszałkowska 15/3, 00-001 Warszawa
+al. Grunwaldzka 156, 80-244 Gdańsk
+os. Tysiąclecia 8/12, 31-610 Kraków
+ul. Marszałkowska l5/3, OO-OO1 Warszawa
+al. Grunwa1dzka 156, 8O-244 Gdańsk
+os. Tysiąc1ecia 8/12, 3l-61O Kraków
+ul .Marszałkowska 15/3, 00-001 Warszawa
+al.Grunwaldzka 156, 80-244 Gdańsk
+ul. Marszał kowska 15/3 OO-OO1 Warszawa
+OO-OO1 Warszawa
+8O-244 Gdańsk
+3l-61O Kraków
+
+=== ORGANIZACJA — kotwica S.A. / Sp. z o.o. ===
+Kowalski i Partnerzy Sp. z o.o.
+Przedsiębiorstwo Budowlane Nowak S.A.
+Kancelaria Adwokacka Wiśniewski sp.j.
+Kowalski i Partnerzy Sp. z o.o,
+Przedsiębiorstwo Budowlane Nowak S,A,
+Kancelaria Adwokacka Wiśniewski sp,j,
+Kowalski i Partnerzy Sp.z o.o.
+Przedsiębiorstwo Budow1ane Nowak S.A.
+
+=== DATA urodzenia — kotwica ur. / dob: ===
+ur. 12.03.1985
+ur. 5.11.1972
+dob: 1990-07-22
+data urodzenia: 8 kwietnia 1963
+ur. l2.O3.l985
+ur. 5.1l.1972
+dob: l990-O7-22
+data urodzenia: B kwietnia 1963
+ur.12.03.1985
+ur. 12.O3 .1985
+ur 12.03.1985
+
+=== SYGNATURA — kotwica sygn. / KRS / KW ===
+sygn. akt I C 234/24
+sygn. akt II AKa 567/23
+KRS 0000456789
+KW GD1M/00234567/8
+sygn. akt l C 234/24
+sygn. akt Il AKa 567/23
+KRS OOO0456789
+KW GDlM/OO234567/8
+sygn.akt I C 234/24
+sygn. akt I C 234 /24
+
+=== KWOTA — kotwica zł / PLN / kwota: ===
+15 000,00 zł
+230 500 PLN
+kwota: 49 999,99 zł
+wartość: 1 250 000,00 zł
+15 OOO,OO zł
+23O 5OO PLN
+kwota: 49 999,99 z1
+wartość: 1 25O OOO,OO zł
+15.000,00 zł
+kwota:49 999,99 zł
+
+=== OSOBA — kotwica tytułu / para tokenów ===
+dr Marek Zając
+adw. Anna Kowalczyk
+mec. Tomasz Wiśniewski
+mgr inż. Barbara Lewandowska
+dr Marek Zaj ąc
+adw. Anna Kowa1czyk
+mec. Tomasz W1śniewski
+mgr inż. Barbara Lewandow ska
+Dr Marek Zając
+ADW. Anna Kowalczyk
+
+=== TRUDNE — kotwica zniszczona przez OCR ===
+piotr0kancelaria.pl
+jan0firma.com.pl
++4B 5Ol 234 567
+0048 6O2 34S 678
+PL6l lO9O lOl4 OOOO O7l2 l9Bl 2874
+ur.l2.O3.l9BS
+KRS OOOO4S6789
+kwota: 49 999,99 z1
+Sp.z o,o.
+S,A,

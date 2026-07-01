@@ -118,6 +118,7 @@ object LookupTables {
         _cityForms     = cities
         _medForms      = med
         _initialized   = true
+        resetRegexCache()
     }
 
     /** Ładuje pełny słownik z classpath (src/test/resources/) — dla unit testów na JVM. */
@@ -137,6 +138,7 @@ object LookupTables {
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
         _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
+        if (_initialized) resetRegexCache()
     }
 
     private fun loadFormsFromClasspath(filename: String): Set<String> {
@@ -169,6 +171,7 @@ object LookupTables {
         _cityForms     = emptySet()
         _medForms      = emptySet()
         _initialized   = false
+        resetRegexCache()
     }
 
     // Rozszerza set o wersje bez polskich znaków diakrytycznych.
