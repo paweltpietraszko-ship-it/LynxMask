@@ -1,7 +1,10 @@
 # TODO — LynxMask Mobile
 # JEDYNY plik z otwartymi bugami i zadaniami. Zamknięte pozycje usuwać stąd od razu, nie przekreślać.
-# Historia/decyzje → git log. Nie tworzyć osobnych briefów/BACKLOG/TODO_silnik w katalogu głównym.
-# Ostatni remanent: 04.07.2026 — połączono TODO.md+BACKLOG.md+TODO_silnik.md+3×CURSOR_BRIEF, zweryfikowano przez kod.
+# Historia/decyzje → git log. Nie tworzyć osobnych briefów/PLAN/CURSOR_* w katalogu głównym —
+# treść idzie tutaj (zadania) albo do memory Claude (kontekst/diagnoza/decyzje).
+# Ostatni remanent: 04.07.2026 — połączono TODO.md+BACKLOG.md+TODO_silnik.md+3×CURSOR_BRIEF.
+# Remanent 05.07.2026 — usunięto PLAN_AddressEngine_Claude/CURSOR_AUDYT_ADRES/CURSOR_BRIEF_AddressEngine
+# (Faza A+B ADRES zrobione, backlog Fazy C przeniesiony niżej, reszta w pamięci Claude).
 
 ---
 
@@ -53,23 +56,34 @@ Screenshoty gotowe: `Google_Play/01_HUB.jpg`…`06_ZABEZPIECZENIA.jpg`. Checklis
 
 ---
 
-## W TOKU — migracja AnchorEngine → StructuralEngine (gałąź `feature/entity-migration`)
+## W TOKU — migracja ADRES → AddressEngine (gałąź `feature/entity-migration`)
 
-Cel (brief v2, `AnchorEngine_brief_v2.docx`): AnchorEngine ma być czystym zbieraczem resztek, nie duplikować wzorców z StructuralEngine/NameEngine. Plan pełny: pamięć `project_anchor_migration_plan.md`.
+**Stan 04-05.07.2026: Faza A + Faza B ZROBIONE i potwierdzone.** AddressEngine.kt (Warstwa 0b)
+jest głównym silnikiem ADRES. Duplikaty structural/name (`ADDRESS_PATTERNS` Warstwa 3d+Runda 2,
+`applyStreetLookup`) wyłączone pod `USE_ADDRESS_ENGINE_V0`. `AnchorEngine` A.11* zostaje aktywny
+(kotwica-fallback, nie duplikat). Commity: `d50b252`, `ae2881e`, `747f32b`. Tag punktu powrotu:
+`checkpoint-adres-faza-b-2026-07-04`. Benchmark: ADRES recall 94,5%/96,6% (stały/fresh),
+szczegóły w pamięci `project_benchmark_baseline_2026-07-04.md`.
 
-**Krok bieżący — refaktor ADRES kod+miasto** (plan 8-krokowy, kroki 0-2 zrobione):
-- Krok 3: usunąć `CITY_POSTAL` z `NameEngine.applyCityLookup`
-- Krok 4: usunąć duplikat #597 z `ADDRESS_PATTERNS`
-- Krok 5: usunąć A.11b z `AnchorEngine.kt` — **potwierdzone: nadal w kodzie (linia ~284)**
-- Krok 6: guard A.11c/A.11d na osierocony kod pocztowy w tej samej linii
-- Krok 7 (opcjonalnie): OcrNormalizer "Warszawa80"→"Warszawa 80"
-- Krok 8: audyt Rundy 2 ADDRESS (wyłączyć kod+miasto, zostawić ulicę/budynek)
+**Faza C — dalsze doszlifowanie (priorytet malejący, portowane z planu Cursora):**
+- C-A8: `ul. Jana Pawła II 10/5 20-001 Lublin` — dziś wychodzi jako 2 tokeny (ulica+numer /
+  kod+miasto), zaakceptowane jako OK, nie 1 duży token. Do rozważenia tylko jeśli benchmark
+  pokaże to jako realny recall-miss.
+- C-STREET-FULL-3: `STREET_FULL` w AddressEngine.kt ma `{0,1}` dodatkowego słowa nazwy (max
+  2 słowa), `STREET_NO_ZIP` ma już `{0,2}` (max 3 słowa) — niespójność, sprawdzić czy nazwy
+  3-członowe z kodem pocztowym (nie tylko bez) tego potrzebują.
+- Reszta pozycji z oryginalnego planu (C-NIP-GLUE, C-OCR-GLUE, C-A11c-COMMA) — **prawdopodobnie
+  już rozwiązane** przez dzisiejsze fixy (NIP glue 3-2-2-3, STREET_CITY blok 3b, A.11 zasięg) —
+  zweryfikować przy najbliższej okazji zamiast zakładać.
 
-**Stan niezacommitowany** (od `abff69e`): `AnchorEngine.kt`, `OcrNormalizer.kt`, `PseudonymEngine.kt`, `StructuralEngine.kt`, `PseudonymEngineTest.kt`. Zawierają już (**potwierdzone w kodzie**): `OCR_NIP_POSTAL_GLUE`, guard kierunku 1 `postalCityCodeToNameRe`, fix `OCR_PESEL_SPLIT`. Plik testowy `testy/test_kod_pocztowy_migracja.txt` nieścommitowany.
+**Jedyny otwarty blocker:** NIP `390-051-86-91` w `doc_00009.png` (benchmark fresh) — OCR
+zdegradowany z nietypową spacją, nie wygląda na temat ADRES. Patrz pamięć
+`project_benchmark_baseline_2026-07-04.md`.
 
-**Czeka na:** testy jednostkowe (Paweł) + test ręczny pliku wyżej na telefonie → potem commit, potem krok 3.
-
-Po kroku 8: migracja wyższego ryzyka (KWOTA A.9, OSOBA-tytuł A.10, IBAN A.6, DATA A.7) — tylko tam, gdzie ręczny test na telefonie pokaże realny problem (nie na zapas, patrz `feedback_real_test_methodology.md`).
+**Opcjonalnie po stabilizacji (C2 z oryginalnego planu):**
+- `USE_ADDRESS_ENGINE_V0` → `true` na stałe w release (usunąć flagę)
+- Fizyczne usunięcie martwego kodu (nie tylko guard) z StructuralEngine/NameEngine
+- Kolory diagnostyczne w `TextPreviewModal.kt` do usunięcia gdy dojście do jednego silnika potwierdzone
 
 ---
 
@@ -77,9 +91,8 @@ Po kroku 8: migracja wyższego ryzyka (KWOTA A.9, OSOBA-tytuł A.10, IBAN A.6, D
 
 | Bug | Opis | Priorytet |
 |-----|------|-----------|
-| BUG-FP-ULICE-IMIENIE | "Jana Pawła II" / "Zielona Góra" → OSOBA zamiast adres. PII i tak zakryte. | niski |
-| BUG-ADRES-MYSLNIK | "ul. Gdańska-Sopocka 3/1" — myślnik łamie wzorzec nazwy ulicy | niski |
-| BUG-ADRES-BRAK-PREFIKS | Ulica bez "ul."/"al." nie maskowana (sufit OCR dla większości przypadków) | niski |
+| BUG-FP-ULICE-IMIENIE | "Jana Pawła II" (patron ulicy, bez "ul."/numeru) → OSOBA zamiast adres. PII i tak zakryte. | niski |
+| BUG-ADRES-BRAK-PREFIKS | Ulica bez "ul."/"al." nie maskowana, chyba że w słowniku (STREET_DICT, bez numeru) — sufit OCR dla większości przypadków | niski |
 | AUDIT-03 | CATCHALL `\d{8,}` (StructuralEngine.kt:640) sprawdza sumę kontrolną PESEL/NIP dla wszystkich długich ciągów cyfr, nie tylko PESEL/NIP — **potwierdzone nadal w kodzie** | średni |
 | RESEARCH-3 (połowa) | `assessQuality` liczy próg <0.7 (OcrNormalizer.kt:916) ale brak `shouldReject` dla confidence<0.5 + odrzucenie w UI — **potwierdzone brak w kodzie** | niski |
 
