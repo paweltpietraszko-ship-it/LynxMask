@@ -5,6 +5,12 @@
 
 ---
 
+## DO ZBADANIA — audyt pokrycia testów (nie teraz, po zamknięciu migracji ADRES)
+
+591 testów jednostkowych, ale nikt nie sprawdzał czy się nie pokrywają (kilka testów sprawdzających to samo z różnych sesji) i czy realnie obejmują całą pipeline (OcrNormalizer → StructuralEngine → NameEngine → AnchorEngine → Guard) czy są dziury. Zrobić po zamknięciu bieżącej migracji, nie w trakcie.
+
+---
+
 ## BLOKERY RELEASE
 
 | # | Zadanie | Kto |
