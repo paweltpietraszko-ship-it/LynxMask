@@ -65,7 +65,8 @@ data class PseudonymResult(
     val riskScore: RiskScore,
     val qualityWarning: String?,            // ostrzeżenie jakości OCR
     val guardHits: List<GuardHit> = emptyList(),  // wycieki wykryte przez OutputGuard
-    val trace: List<DetectionTrace> = emptyList()
+    val trace: List<DetectionTrace> = emptyList(),
+    val tokenLayers: Map<String, String> = emptyMap()  // token → layer, tylko DEBUG (AddressEngine v0 diagnostyka)
 )
 
 data class PseudonymFlag(
@@ -82,6 +83,11 @@ data class DetectionTrace(
     val matchedText: String,
     val token: String
 )
+
+// AddressEngine v0 — silnik równoległy testowy (04.07.2026), patrz AddressEngine.kt.
+// Włączony domyślnie w DEBUG (test na telefonie), wyłączony w release dopóki nie
+// potwierdzony i nie zamknięta osobna sesja usuwania duplikatów ze starych źródeł.
+internal val USE_ADDRESS_ENGINE_V0 = BuildConfig.DEBUG
 
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
@@ -180,6 +186,7 @@ object PseudonymEngine {
 
         // --- Struktury danych sesji ---
         val tokenMap = mutableMapOf<String, String>()
+        val tokenLayers = mutableMapOf<String, String>()  // AddressEngine v0 diagnostyka, tylko DEBUG
         val reverseMap = mutableMapOf<String, String>()
         val counters = mutableMapOf<String, Int>()
         val flags = mutableListOf<PseudonymFlag>()
@@ -192,6 +199,9 @@ object PseudonymEngine {
             val token = "${tokenType}_${count.toString().padStart(3, '0')}"
             tokenMap[token] = value
             reverseMap[canonical] = token
+            if (BuildConfig.DEBUG) {
+                tokenLayers[token] = layer
+            }
             if (traceMode) {
                 traceLog.add(DetectionTrace(layer = layer, rule = rule, matchedText = value, token = token))
             }
@@ -212,6 +222,19 @@ object PseudonymEngine {
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
 
+        // --- Warstwa 0b: AddressEngine v0 — silnik równoległy testowy (04.07.2026) ---
+        // Decyzja właściciela po audycie Cursora (CURSOR_AUDYT_ADRES_2026-07-04.md,
+        // CURSOR_BRIEF_AddressEngine_2026-07-04.md): skonsolidowana logika adresowa,
+        // uruchomiona PRZED wszystkim innym (w tym starym applyPostalCityPatterns) —
+        // żeby żadna reguła NameEngine nie zdążyła pociąć adresu na kawałki (Zielona Góra,
+        // Władysława Stanisława Reymonta). Stare źródła (applyPostalCityPatterns,
+        // ADDRESS_PATTERNS, applyStreetLookup, AnchorEngine A.11*) CELOWO zostają —
+        // fallback + diagnostyka kolorem w UI (zielony = ten silnik, niebieski = stary kod).
+        // Po potwierdzeniu na telefonie: osobna sesja usuwa duplikaty.
+        if (USE_ADDRESS_ENGINE_V0) {
+            text = applyAddressEngine(text, ::assignToken)
+        }
+
         // --- Warstwa 1b: POSTAL_CITY — kod pocztowy + miasto, jeden właściciel pary ---
         // Plan Cursor 01.07: musi biec PRZED STRUCTURAL_PATTERNS (nie po) — kontekstowy
         // wzorzec PESEL (linia ~333, goły \d) bez tego widzi kod pocztowy jako gołe cyfry
@@ -220,8 +243,15 @@ object PseudonymEngine {
         // adresach sąsiadujących z innymi encjami. Jeśli kod pocztowy jest już tokenem
         // (nie gołymi cyframi) zanim PESEL/NIP/inne wzorce kontekstowe zdążą coś zobaczyć,
         // ten cały problem znika: token zaczyna się literą, nie cyfrą.
-        text = applyPostalCityPatterns(text) { value, tokenType ->
-            assignToken(value, tokenType, layer = "STRUCTURAL", rule = "POSTAL_CITY")
+        //
+        // Przy v0 (USE_ADDRESS_ENGINE_V0): pominięte — AddressEngine.Blok5 robi to samo,
+        // wcześniej w potoku (patrz Warstwa 0b powyżej). Bez tego pominięcia duplikat
+        // zostawiał niebieskie tokeny na tym samym tekście co AddressEngine już zamaskował
+        // (diagnoza Cursor 04.07, CURSOR_BRIEF_AddressEngine — objaw 1/2).
+        if (!USE_ADDRESS_ENGINE_V0) {
+            text = applyPostalCityPatterns(text) { value, tokenType ->
+                assignToken(value, tokenType, layer = "STRUCTURAL", rule = "POSTAL_CITY")
+            }
         }
 
         // --- Warstwa 2: Regex strukturalne ---
@@ -435,7 +465,8 @@ object PseudonymEngine {
             riskScore = riskScore,
             qualityWarning = qualityWarning,
             guardHits = guardHits,
-            trace = traceLog
+            trace = traceLog,
+            tokenLayers = tokenLayers
         )
     }
 

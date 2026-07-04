@@ -2,6 +2,130 @@ CLAUDE CODE — NOTATKI MIĘDZY SESJAMI
 LynxMask Mobile | C:\Projects\LynxMask\
 ================================================================================
 
+## NOWE ZADANIE zapisane 04.07 noc (NIE zrobione, świadomie odłożone — pełny plan gotowy)
+
+"w Jeleniej Górze"/odmiana dwuwyrazowych miast nie działa (tylko mianownik). Sprawdzone: Desktop
+nie ma gotowca, Morfeusz2 zweryfikowany że da radę (algorytm + wyniki testu w pamięci
+`project_city_declension_task.md`, też wpis w TODO.md). Nie zaczynać od zera — czytaj tamten plik.
+
+================================================================================
+
+## SESJA 2026-07-04 (noc — fix "Góra jako OSOBA", ostatni wątek przed zamknięciem)
+
+### Commity
+BRAK — nadal nic nie scommitowane od c332f17. Working tree rośnie (ta sama seria + PLN fix +
+ten fix).
+
+### Co zrobiono
+Po diagnozie (agent) właściciel zaproponował: policzyć programowo przecięcie drugich-członów
+dwuwyrazowych nazw miast (cities_forms.json) i top-1000 nazwisk (surnames_top1000.json), zapisać
+jako JSON w assets, użyć do maskowania. Zaimplementowane:
+
+1. `generate_city_surname_overlap.py` (nowy, wzorowany na generate_street_forms.py) → policzył
+   44 słowa (góra, górny, górka, borek, róg, kępa i in.) → `city_surname_overlap.json`.
+2. `LookupTables.kt` — nowe pole `citySurnameOverlap`, wczytywane wszędzie tam gdzie
+   cityForms/streetForms (initialize/initializeFromClasspath/initializeForTesting). Skopiowany
+   też do `app/src/test/resources/` dla testów JVM.
+3. `NameEngine.kt` — WAŻNE: pierwsze podejście (dopisać do isOnWhiteList) było BŁĘDNE i zostało
+   COFNIĘTE — tylko wyciszałoby OSOBA, zostawiając "Jelenia Góra" CAŁKOWICIE niezamaskowaną w
+   zdaniu bez przyimka (regres pokrycia PII). Właściwy fix: NOWA reguła przed "samo nazwisko",
+   dopasowuje dwa sąsiednie wielkoliterowe słowa, jeśli druga ∈ citySurnameOverlap I cała fraza ∈
+   cityForms → maskuje CAŁOŚĆ jako ADRES. W przeciwnym razie (np. "Pan Góra" — realna osoba) —
+   nie strzela, recall dla prawdziwych nazwisk zachowany.
+
+Testy dodane w PseudonymEngineTest.kt (2 nowe: pozytywny "Jelenia Góra"→ADRES + kontrola recall
+"Kandydat nazwiskiem Góra"→OSOBA nadal). `installDebug` zrobiony. Testy jednostkowe NIE odpalone
+przez Claude (zakaz — Paweł uruchamia sam).
+
+Pełny opis mechanizmu i decyzji: pamięć `bug_gora_jako_osoba_diagnoza.md` (sekcja "NAPRAWIONE").
+
+### Co zrobić dalej (właściciel) — TO JEST OSTATNI OTWARTY WĄTEK
+🔲 Odpal PseudonymEngineTest (598 testów po dodaniu 2 nowych) — powinny być zielone.
+🔲 Odpal `testy/test_adres_regresja_sesja.txt` + Test 1b (Jelenia Góra) na telefonie.
+🔲 Po potwierdzeniu — **commit CAŁEJ serii** (AddressEngine v0 + fix PLN/NUMER + fix Góra/ADRES).
+   To zamyka cały wątek ADRES z tej sesji.
+
+================================================================================
+
+## PRIORYTET NA NASTĘPNĄ SESJĘ (Paweł, 04.07 wieczór — przeczytaj przed wszystkim innym)
+
+**Walczymy z ADRES do końca — nie przerywać w połowie.** Właściciel wprost: "nigdzie mi się nie
+spieszy, a czyste maskowanie bez ogonów i PII jest priorytetem". Czyste maskowanie (zero
+urwanych tokenów, zero pominiętego PII) jest ważniejsze niż tempo. Nie zamykać wątku ADRES/
+AddressEngine v0 dopóki nie jest naprawdę czysto — testować dalej, jedno po drugim, tak długo
+jak trzeba, zamiast uznawać "wystarczająco dobre" za koniec.
+
+## SESJA 2026-07-04 (wieczór — dokończenie zagadki PLN, cd. sesji popołudniowej)
+
+### Commity
+BRAK — nic nie scommitowane od c332f17, tak jak poprzednio. Working tree = ta sama seria +
+ten fix.
+
+### Co zrobiono — ZAGADKA "PLN 1234" ROZWIĄZANA
+Poprzednia sesja (popołudnie) nie znalazła przyczyny mimo 2 rund ręcznego czytania regexów —
+i błędnie zakładała że problem jest w ADRES. Metoda: tymczasowy test JVM z
+`PseudonymEngine.pseudonymize(text, traceMode = true)`, wypisanie `result.trace` — pokazało
+natychmiast: `layer=STRUCTURAL rule=NUMER matchedText='PLN 1234'`.
+
+**Przyczyna:** wzorzec tablic rejestracyjnych pojazdów w `StructuralEngine.kt` (~linia 552,
+`TOKEN_NUMER to Regex("""\b[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b""")`) — "PLN" (3 wielkie litery)
++ spacja + "1234" (4 cyfry) ma dokładnie kształt polskiej tablicy ("WZ 1234"). To NIE był ADRES
+w ogóle, tylko fałszywe rozpoznanie w Warstwie 2 (Runda 1), zanim AddressEngine/inne warstwy
+miały znaczenie.
+
+**Fix:** dodany negative lookahead wykluczający skróty walutowe (ta sama lista co TOKEN_KWOTA
+wyżej w pliku): `(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)` przed wzorcem tablicy.
+Punktowa zmiana, jedna linia w StructuralEngine.kt.
+
+Istniejący test `BUG05 znane FP tablice i identyfikatory` świadomie dokumentował "PLN 1234"
+jako zaakceptowany FP — zaktualizowany (usunięty z listy, test przemianowany na `BUG05 znane FP
+identyfikatory`, zostaje tylko "POLSKA-1234-5678"). Dodane 2 nowe testy regresji w
+PseudonymEngineTest.kt.
+
+**Test:** pełny PseudonymEngineTest (596 testów) — 0 FAILED. `installDebug` wykonany, apk na
+SM-A536B gotowe.
+
+### Co zrobić dalej (właściciel)
+🔲 Odpal `testy/test_adres_regresja_sesja.txt` na telefonie — sprawdź punkt 6 (PLN — całkowicie
+   jawne, zero tokenu) i punkt 7 (IBAN — NUMER, bez regresji). Reszta pliku niezmieniona.
+🔲 Po potwierdzeniu — commit całej serii (AddressEngine v0 z popołudnia + ten fix PLN/NUMER).
+
+Pełny stan: pamięć project_addressengine_v0_state.md (sekcja "ROZWIĄZANE" zastąpiła "OTWARTE —
+NIEROZWIĄZANA ZAGADKA").
+
+================================================================================
+
+## SESJA 2026-07-04 (popołudnie — AddressEngine v0)
+
+### Commity
+BRAK — nic nie scommitowane od c332f17. Cała ta sesja jest w working tree.
+
+### Co zrobiono
+Po audycie Cursora (ADRES: 12 nakładających się reguł w 4 plikach) — zbudowany nowy
+AddressEngine.kt, silnik równoległy testowy uruchamiany PRZED NameEngine, ze starym kodem
+nietkniętym (fallback). Diagnostyka kolorem w podglądzie tekstu: zielony=nowy, niebieski=stary,
+czerwony=odkryty. 4 rundy poprawek z Cursorem (błąd: kotwice na początku potoku — poprawione,
+patrz pamięć feedback_anchor_must_stay_last.md).
+
+Większość testowych przypadków działa (Zielona Góra, Gdańska-Sopocka myślnik, pI.→pl. degradacja,
+Długa 7 Gdańsk bez kodu). "Góra samo jako OSOBA" w zdaniu bez adresu — Paweł potwierdził jako
+OK (nie błąd), dotyczy każdego miasta na "Góra" (sprawdzone: Zielona i Jelenia Góra identycznie).
+
+### Co otwarte — PRIORYTET NASTĘPNEJ SESJI
+🔲 "PLN 1234" wykrywane jako ADRES — przyczyna NIEZNANA. Słownik użytkownika pusty (wykluczone).
+   Ręczne śledzenie regexów (2 próby) nie znalazło mechanizmu. Następny krok: test JVM z
+   PseudonymEngine.pseudonymize("PLN 1234") + sprawdzić DetectionTrace/tokenLayers żeby
+   zobaczyć KTÓRA reguła to zrobiła, zamiast dalej zgadywać z regexów w izolacji.
+
+Pełny stan: pamięć project_addressengine_v0_state.md.
+
+### Sprzątanie przed commitem
+tmp_regex.kt (root, scratch Cursora) do usunięcia. CURSOR_AUDYT_ADRES_2026-07-04.md i
+CURSOR_BRIEF_AddressEngine_2026-07-04.md w rootcie — do przeniesienia/wyciągnięcia treści
+i usunięcia (zasada: nie trzymać briefów w katalogu głównym).
+
+================================================================================
+
 ## SESJA 2026-06-29 (cd. — routing obrazów)
 
 ### Commity

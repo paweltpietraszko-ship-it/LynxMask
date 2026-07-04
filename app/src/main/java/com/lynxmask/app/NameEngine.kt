@@ -509,8 +509,11 @@ internal fun isOnWhiteList(word: String): Boolean {
 internal val CITY_PREP_REGEX = Regex(
     """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
 )
+// BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): STREET_NAME_CHARS (StructuralEngine.kt) — wspólne
+// źródło znaków nazwy ulicy, żeby myślnik (i przyszłe dodatki) nie trzeba było pamiętać
+// dopisywać w kilku miejscach osobno.
 internal val STREET_CANDIDATE_REGEX = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
 
 private fun applyCityLookup(
@@ -699,7 +702,30 @@ internal fun applyContextualBlacklist(
         }
     }
 
+    // 3a-pre — Miasto dwuwyrazowe na przecięciu z nazwiskiem top-1000 (np. "Zielona Góra",
+    // "Jelenia Góra"). MUSI biec PRZED "Samo nazwisko" niżej — inaczej drugi człon (np. "Góra",
+    // realne nazwisko) dostaje token OSOBA zanim ten blok w ogóle zobaczy całą frazę.
+    // BUG-GORA-OSOBA-FIX (04.07): lista LookupTables.citySurnameOverlap jest WĄSKA (44 słowa,
+    // policzone programowo — generate_city_surname_overlap.py) — nie sprawdzamy całego
+    // (bardzo dużego) cityForms tutaj, tylko te konkretne słowa gdzie kolizja z top-1000
+    // nazwisk jest realna. Guard cityForms.contains(cała fraza) zapobiega myleniu prawdziwej
+    // osoby "Jan Góra" z miastem — maskuje jako ADRES TYLKO gdy cała dwuwyrazowa fraza
+    // faktycznie jest zarejestrowaną nazwą miejscowości.
+    if (LookupTables.initialized && LookupTables.citySurnameOverlap.isNotEmpty()) {
+        result = Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})[^\S\n]([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})\b""")
+            .replace(result) { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+                val second = match.groupValues[2].lowercase()
+                if (!LookupTables.citySurnameOverlap.contains(second)) return@replace match.value
+                if (!LookupTables.cityForms.contains(match.value.lowercase())) return@replace match.value
+                assignToken(match.value, TOKEN_ADRES)
+            }
+    }
+
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
+    // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): pre/suf jak w AnchorEngine/ADDRESS —
+    // obrona na wypadek gdyby jakiś inny krok potoku skleił to słowo z sąsiednim bez spacji
+    // (root cause tego konkretnego przypadku było OCR_STREET_MIDSPACE, naprawione osobno).
     result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{3,})(?![a-ząćęłńóśźż])""")
         .replace(result) { match ->
             if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
@@ -707,7 +733,12 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
-            assignToken(word, TOKEN_OSOBA)
+            val token = assignToken(word, TOKEN_OSOBA)
+            val before = result.getOrElse(match.range.first - 1) { ' ' }
+            val after = result.getOrElse(match.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            "$pre$token$suf"
         }
 
     // 3a — Samo imię z namesForms (najniższy priorytet — po nazwisku, przed tytułami)

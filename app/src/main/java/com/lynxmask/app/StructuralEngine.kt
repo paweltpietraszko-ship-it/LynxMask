@@ -549,7 +549,14 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // BUG-05-FIX v1.4: zmieniono \d{2,5} → \d{4,5}.
     // Poprzedni wzorzec matchował kody alfanumeryczne z 2–3 cyframi ("WZ12", "ISO90").
     // Polskie tablice mają co najmniej 4 cyfry — zawężenie jest bezpieczne dla testów.
-    TOKEN_NUMER to Regex("""\b[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b"""),
+    // BUG-PLN-NUMER-FIX (04.07, sesja AddressEngine v0): kształt [A-Z]{2,3}\s?\d{4,5}
+    // pokrywa się z "PLN 1234"/"USD 5678" (skrót waluty + kwota) — bez "zł"/kwoty jako
+    // liczby z separatorami, kwota poprzedzona etykietą waluty wygląda identycznie jak
+    // tablica rejestracyjna. Lookahead wyklucza znane skróty walutowe (ta sama lista co
+    // TOKEN_KWOTA wyżej) — realne polskie tablice nie kolidują z tymi skrótami.
+    TOKEN_NUMER to Regex(
+        """\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b"""
+    ),
 
     // --- VIN ---
     TOKEN_NUMER to Regex("""\b[A-HJ-NPR-Z0-9]{17}\b"""),
@@ -669,6 +676,13 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 // żeby NameEngine widział pełne adresy jako kontekst dla rozpoznania imion.
 // Przeniesione z STRUCTURAL_PATTERNS — zachowane wszystkie komentarze i fixy.
 // ============================================================
+// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy dla dwóch podobnie zbudowanych
+// regexów (poniżej + NameEngine.STREET_CANDIDATE_REGEX). Dodanie nowego znaku (apostrof,
+// kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach. Nie obejmuje linii
+// niżej "ulica bez kodu pocztowego" — ta ma odrębną, zagnieżdżoną budowę klasy znaków
+// (pozwala na spację w środku inaczej), do rozważenia osobno.
+internal const val STREET_NAME_CHARS = "A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\\-"
+
 internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
 
     // --- Adresy z kodem pocztowym PL ---
@@ -678,8 +692,11 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // lookahead widzi "20" + "\d{2}" + \b → blokuje.
     // "65-5110" przejdzie: "51" nie pasuje do (?:19|20) → lookahead nic nie blokuje.
     // "60-001" przejdzie: "00" nie pasuje do (?:19|20) → OK.
+    // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): brakujący `\-` w klasie znaków nazwy ulicy —
+    // sąsiednia reguła niżej (ulica bez kodu pocztowego) już go ma. Niespójność, nie świadomy
+    // brak. "Gdańska-Sopocka" bez myślnika w klasie łamało się na dwa osobne dopasowania.
     TOKEN_ADRES to Regex(
-        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
     ),
     // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
     // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej

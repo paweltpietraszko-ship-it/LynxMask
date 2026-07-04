@@ -467,11 +467,12 @@ class PseudonymEngineTest {
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 
-    // BUG-05: wzorzec tablic rejestracyjnych łapie "PLN 1234" (PLN = 3 litery + 4 cyfry);
-    // wzorzec identyfikatorów łapie "POLSKA-1234-5678". Znane FP, nie ruszać do osobnego fix.
-    @Test fun `BUG05 znane FP tablice i identyfikatory`() {
+    // BUG-05: wzorzec identyfikatorów łapie "POLSKA-1234-5678". Znany FP, nie ruszać do osobnego fix.
+    // "PLN 1234" — NAPRAWIONE (BUG-PLN-NUMER, sesja 04.07.2026): wzorzec tablic rejestracyjnych
+    // ([A-Z]{2,3}\s?\d{4,5}) miał lookahead wykluczający skróty walutowe dodany w StructuralEngine.kt
+    // — patrz test `BUG-PLN-NUMER kwota z etykieta waluty PLN przed liczba zostaje jawna` wyżej.
+    @Test fun `BUG05 znane FP identyfikatory`() {
         val knownFalsePositives = listOf(
-            "PLN 1234",        // tablica rejestracyjna pattern: [A-Z]{2,3}\s?\d{4,5}
             "POLSKA-1234-5678" // identyfikator pattern: [A-Z]{2,6}[-:/][A-Z0-9]{2,10}...
         )
         for (text in knownFalsePositives) {
@@ -1137,6 +1138,25 @@ class PseudonymEngineTest {
                 flag.fragment.contains("Miasta", ignoreCase = true)
             }
         )
+    }
+
+    // =========================================================================
+    // BUG-PLN-NUMER: "PLN 1234" (skrót waluty + kwota) mylony z tablicą rejestracyjną
+    // (sesja 04.07.2026, test_adres_regresja_sesja.txt [6]/[7])
+    // =========================================================================
+
+    @Test fun `BUG-PLN-NUMER kwota z etykieta waluty PLN przed liczba zostaje jawna`() {
+        val r = pseudonymize("Kwota do zapłaty: PLN 1234")
+        assertTrue("tokenMap powinien być pusty — 'PLN 1234' to waluta, nie encja: ${r.tokenMap}",
+            r.tokenMap.isEmpty())
+        assertTrue("'PLN 1234' powinno zostać jawne w wyniku",
+            r.pseudonymizedText.contains("PLN 1234"))
+    }
+
+    @Test fun `BUG-PLN-NUMER regresja IBAN nadal maskowany jako NUMER`() {
+        val r = pseudonymize("IBAN PL61 1020 1026 0000 0422 7020 1111")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "PL61 1020 1026 0000 0422 7020 1111")
     }
 
     // =========================================================================
@@ -1813,5 +1833,49 @@ class PseudonymEngineTest {
             "NIP nie powinien zawierac fragmentu kodu pocztowego",
             r.tokenMap.values.any { it.contains("526") && it.contains("00-001") }
         )
+    }
+
+    // =========================================================================
+    // BUG-GORA-OSOBA — miasto dwuwyrazowe na przecięciu z nazwiskiem top-1000
+    // (np. "Góra" w "Zielona Góra"/"Jelenia Góra"). Diagnoza 04.07: reguła "samo
+    // nazwisko" maskowała drugi człon jako OSOBA poza kontekstem adresowym.
+    // Fix: nowa reguła w applyContextualBlacklist (przed "samo nazwisko") maskuje
+    // CAŁĄ frazę jako ADRES gdy naprawdę jest zarejestrowaną miejscowością —
+    // wąska lista LookupTables.citySurnameOverlap, nie całe cityForms.
+    // =========================================================================
+
+    @Test fun `BUG-GORA-OSOBA Jelenia Gora maskowana jako ADRES nie OSOBA`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(
+            cities = setOf("warszawa", "jelenia góra", "zielona góra"),
+            citySurnameOverlap = setOf("góra")
+        )
+        val r = pseudonymize("Klient odwiedził oddział w mieście Jelenia Góra w zeszłym miesiącu.")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse("Gora nie powinna byc OSOBA gdy jest czescia znanej miejscowosci",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+        assertNotInOutput(r, "Jelenia")
+        assertNotInOutput(r, "Góra")
+    }
+
+    @Test fun `BUG-GORA-OSOBA prawdziwe nazwisko Gora bez kontekstu miasta nadal OSOBA`() {
+        // Recall dla realnego nazwiska musi zostac — nowa regula maskuje TYLKO gdy
+        // cala dwuwyrazowa fraza jest w cityForms; "Pan Góra" nie jest miejscowoscia.
+        // BUG-TEST-SURNAMES-FIX: initializeForTesting bez jawnego "surnames" wraca do
+        // domyslnego zestawu (kowalski/nowak/...), ktory NIE zawiera "gora" — test dawal
+        // pusty tokenMap (regula "samo nazwisko" nigdy nie widziala "gora" jako nazwiska).
+        // Formy z surnames_top1000.json (klucz "gora").
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(
+            surnames = setOf(
+                "góra", "góry", "górze", "górą", "górę", "gór",
+                "górach", "górami", "góro", "górom", "górowie", "górów"
+            ),
+            cities = setOf("warszawa", "jelenia góra", "zielona góra"),
+            citySurnameOverlap = setOf("góra")
+        )
+        val r = pseudonymize("Kandydat nazwiskiem Góra złożył podanie.")
+        assertTokenExists(r, TOKEN_OSOBA)
+        assertNotInOutput(r, "Góra")
     }
 }

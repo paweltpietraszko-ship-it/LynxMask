@@ -385,7 +385,9 @@
       "Bash(wsl -- bash -c \"cat /home/p_pie/zadanie/src/main.cpp\")",
       "PowerShell(Get-CimInstance *)",
       "PowerShell(Get-PhysicalDisk *)",
-      "Bash(awk '{print $NF, $6, $7, $8}')"
+      "Bash(awk '{print $NF, $6, $7, $8}')",
+      "Bash(xargs -I{} basename {})",
+      "Bash(echo \"---exit: $?---\")"
     ]
   },
   "hooks": {

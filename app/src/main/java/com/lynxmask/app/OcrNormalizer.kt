@@ -120,8 +120,13 @@ object OcrNormalizer {
     // OCR: spacja w środku nazwy ulicy po prefiksie
     // "ul. Marszał kowska 100" → "ul. Marszałkowska 100"
     // ----------------------------------------------------------
+    // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): global (?i) sprawiał że grupa 3
+    // (miała wymagać MAŁYCH liter — kontynuacja rozbitego słowa) łapała też WIELKĄ literę,
+    // więc "Zielona Góra" (dwa osobne, poprawne słowa) było sklejane w "ZielonaGóra" jakby
+    // to był jeden wyraz rozbity przez OCR. Fix: (?i) tylko na prefiksie ul/al/pl/os,
+    // grupy 2 i 3 z powrotem case-sensitive (grupa 3 = wyłącznie małe litery = kontynuacja).
     private val OCR_STREET_MIDSPACE = Regex(
-        """(?i)((?:ul|al|pl|os)\.[^\S\n]*)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,9})[^\S\n]+([a-ząćęłńóśźż]{2,7})(?=[^\S\n]+\d|[^\S\n]*,|[^\S\n]*\n|[^\S\n]*$)"""
+        """((?i:ul|al|pl|os)\.[^\S\n]*)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,9})[^\S\n]+([a-ząćęłńóśźż]{2,7})(?=[^\S\n]+\d|[^\S\n]*,|[^\S\n]*\n|[^\S\n]*$)"""
     )
 
     // ----------------------------------------------------------
@@ -288,6 +293,25 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     private val OCR_UL_PREFIX = Regex(
         """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(?:[uU][lI1]\.?[^\S\n]*|[uU]\.[^\S\n]*|(?:ulica|ULICA)[^\S\n]+)(?=[A-ZŁŚŹĆŃĄĘÓŻ])"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_ADDR_PREFIX (04.07, diagnoza Cursor — BUG-PI-WOLHOCI): analogicznie do OCR_UL_PREFIX,
+    // ale dla al./os./pl. — "pI. Nazwa" (duże I zamiast małego l), "aI.", "o5." itp.
+    // AnchorEngine A.11 i StructuralEngine ADDRESS_PATTERNS wymagają dosłownie "pl\."/"al\."/"os\." —
+    // bez tej normalizacji zdegradowany prefiks nigdy nie trafia w żadną z tych kotwic.
+    // "ul." NIE tu — w pełni obsłużone już przez OCR_UL_PREFIX powyżej.
+    // ----------------------------------------------------------
+    // Lookahead (?=[^\n]{0,55}\d) wymaga numeru budynku w zasięgu linii — odcina większość
+    // fałszywych trafień na niezwiązane skróty (np. "AI. Nowak" bez numeru nie jest adresem).
+    //
+    // BUG-PLN-IBAN-FIX (04.07): separator PO literze prefiksu był całkowicie opcjonalny
+    // (zero-width) — regex łapał "PL" wewnątrz "PLN 1234" (waluta) i "PL61..." (IBAN),
+    // bo zaraz po literze szła wielka litera/cyfra bez żadnego odstępu. Fix: separator
+    // MUSI być — kropka (opcjonalnie + spacja) ALBO co najmniej jedna spacja, nigdy zero znaków.
+    // "PLN"/"PL61" nie mają ani kropki, ani spacji po drugiej literze → już nie pasują.
+    private val OCR_ADDR_PREFIX = Regex(
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(?:([aA])[lLiI1](?:\.[^\S\n]*|[^\S\n]+)|([oO])[sS5](?:\.[^\S\n]*|[^\S\n]+)|([pP])[lLiI1](?:\.[^\S\n]*|[^\S\n]+))(?=[A-ZŁŚŹĆŃĄĘÓŻ][^\n]{0,55}\d)"""
     )
 
     // ----------------------------------------------------------
@@ -721,6 +745,16 @@ object OcrNormalizer {
                 "${m.groupValues[1]}_${m.groupValues[2]}"
             }
         } while (text != prev8)
+
+        // 8b. OCR: zdegradowany prefiks al./os./pl. ("pI.", "aI.", "o5.") → kanoniczny prefiks
+        text = OCR_ADDR_PREFIX.replace(text) { m ->
+            corrections++
+            when {
+                m.groupValues[1].isNotEmpty() -> "al. "
+                m.groupValues[2].isNotEmpty() -> "os. "
+                else -> "pl. "
+            }
+        }
 
         // 8c. OCR: spacja przed kropką skrótu adresowego — "ul .Nazwa" → "ul.Nazwa"
         text = OCR_ABBREV_SPACE_DOT.replace(text) { m ->

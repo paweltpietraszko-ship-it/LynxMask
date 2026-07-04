@@ -274,20 +274,21 @@ internal fun applyAnchorEngine(
     // ------------------------------------------------------------------
     // A.11 ADRES — kotwica: prefix ul. / al. / os. / pl.
     // Widzę prefiks adresowy → co po nim (nazwa + numer) → maskuję.
+    //
+    // COFNIĘTE 04.07 (diagnoza Cursor): próba kształtu ogólnego `\b[uaop].[.,]` zamiast
+    // enumeracji — zbędna i ryzykowna (FP na "Op."/"Ap."/"Up." itd.), skoro OCR_ADDR_PREFIX
+    // w OcrNormalizer.kt już normalizuje zdegradowany prefiks PRZED tym jak AnchorEngine
+    // w ogóle zobaczy tekst. Wraca dosłowna enumeracja — degradacje obsłużone wcześniej w potoku.
     // ------------------------------------------------------------------
     applyAll(
         Regex("""(?i)(?:ul[.,]|al\.|os\.|pl\.)[^\S\n][^\n]{2,60}"""),
         TOKEN_ADRES
     )
 
-    // ------------------------------------------------------------------
-    // A.11b ADRES — kotwica: samotny kod pocztowy XX-XXX + opcjonalna nazwa miasta
-    // ADDRESS_PATTERNS wymaga nazwy miasta. Tu łapiemy sam kod + miasto.
-    // ------------------------------------------------------------------
-    applyAll(
-        Regex("""\b\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3}\b(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]+(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]+)?)?"""),
-        TOKEN_ADRES
-    )
+    // A.11b (samotny kod pocztowy + opcjonalne miasto) usunięty 04.07 (migracja ADRES krok 5) —
+    // duplikat StructuralEngine.applyPostalCityPatterns kierunek 1/3 (Warstwa 1b), które działa
+    // wcześniej w potoku. Jeśli test ręczny ujawni regresję (miasto spoza słownika obok kodu) —
+    // krok 6 planu (guard A.11c/A.11d na osierocony kod) ma to pokryć.
 
     // ------------------------------------------------------------------
     // A.11c ADRES — miasto po istniejącym tokenie ADRES

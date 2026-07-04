@@ -35,7 +35,8 @@ internal fun TextPreviewModal(
     revealedTokens: Set<String>,
     onRevealedTokensChange: (Set<String>) -> Unit,
     onMask: (text: String, type: String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    tokenLayers: Map<String, String> = emptyMap()  // AddressEngine v0 diagnostyka — token→layer, tylko DEBUG
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -82,6 +83,16 @@ internal fun TextPreviewModal(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
+                // AddressEngine v0 diagnostyka (04.07.2026) — tylko DEBUG, usunąć po zamknięciu testu.
+                if (BuildConfig.DEBUG && tokenLayers.isNotEmpty()) {
+                    Text(
+                        "Zielony = AddressEngine (nowy) | Niebieski = stary silnik | Czerwony = odkryty",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LynxColors.TextMuted,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+
                 SelectionContainer(
                     modifier = Modifier
                         .weight(1f)
@@ -92,6 +103,7 @@ internal fun TextPreviewModal(
                         text = displayText,
                         tokenMap = tokenMap,
                         revealedTokens = revealedTokens,
+                        tokenLayers = tokenLayers,
                         onTokenClick = { token ->
                             onRevealedTokensChange(
                                 if (token in revealedTokens) revealedTokens - token
@@ -117,9 +129,10 @@ private fun ClickableTokenText(
     text: String,
     tokenMap: Map<String, String>,
     revealedTokens: Set<String>,
-    onTokenClick: (String) -> Unit
+    onTokenClick: (String) -> Unit,
+    tokenLayers: Map<String, String> = emptyMap()  // AddressEngine v0 diagnostyka, tylko DEBUG
 ) {
-    val annotated = remember(text, tokenMap, revealedTokens) {
+    val annotated = remember(text, tokenMap, revealedTokens, tokenLayers) {
         buildAnnotatedString {
             var lastIndex = 0
             TOKEN_RE.findAll(text).forEach { match ->
@@ -129,10 +142,16 @@ private fun ClickableTokenText(
                 val token = match.value
                 val isRevealed = token in revealedTokens
                 val display = if (isRevealed) tokenMap[token] ?: token else token
+                val fromAddressEngine = tokenLayers[token] == LAYER_ADDRESS_ENGINE
+                val color = when {
+                    isRevealed -> LynxColors.Red
+                    fromAddressEngine -> LynxColors.Green
+                    else -> LynxColors.Blue
+                }
                 pushStringAnnotation(tag = TOKEN_ANNOTATION, annotation = token)
                 withStyle(
                     SpanStyle(
-                        color = if (isRevealed) LynxColors.Red else LynxColors.Blue,
+                        color = color,
                         fontWeight = FontWeight.Medium,
                         textDecoration = if (isRevealed) TextDecoration.Underline else TextDecoration.None
                     )

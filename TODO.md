@@ -5,6 +5,19 @@
 
 ---
 
+## DO ZROBIENIA — pełna odmiana dwuwyrazowych nazw miast
+
+"w Jeleniej Górze"/"Jeleniej Góry" itd. nie są maskowane wcale (tylko mianownik "Jelenia Góra"
+działa, naprawione 04.07 przy okazji fixu "Góra jako OSOBA"). Przyczyna: `cities_forms.json` ma
+dla nazw dwuwyrazowych tylko formę mianownikową — `generate_street_forms.py` (jedyny generator
+tego typu) odmienia tylko pierwszy człon, nie oba w zgodzie przypadków. Sprawdzone: LynxMask-Desktop
+NIE MA gotowego rozwiązania (identyczne pliki/skrypty). Morfeusz2 jest zainstalowany i
+zweryfikowany że działa (testowane na "Jelenia Góra" — daje poprawne tagi przypadków). Pełny plan
++ algorytm + dokładne wyniki testu: pamięć `project_city_declension_task.md`. Osobno: "jeleniogórska"
+(przymiotnik odmiejscowy) to inny, mniejszy priorytet mechanizm — nie łączyć z tym zadaniem.
+
+---
+
 ## DO ZBADANIA — audyt pokrycia testów (nie teraz, po zamknięciu migracji ADRES)
 
 591 testów jednostkowych, ale nikt nie sprawdzał czy się nie pokrywają (kilka testów sprawdzających to samo z różnych sesji) i czy realnie obejmują całą pipeline (OcrNormalizer → StructuralEngine → NameEngine → AnchorEngine → Guard) czy są dziury. Zrobić po zamknięciu bieżącej migracji, nie w trakcie.
