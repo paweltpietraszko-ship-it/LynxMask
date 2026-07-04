@@ -395,7 +395,9 @@
       "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_forms_full.py --sample)",
       "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_forms_full.py --cities cities.json --forms cities_forms.json --output cities_forms.json)",
       "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_surname_overlap.py)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(ls -la MASTER_LynxMask_Mobile.md)",
+      "Bash(wc -l MASTER_LynxMask_Mobile.md)"
     ]
   },
   "hooks": {

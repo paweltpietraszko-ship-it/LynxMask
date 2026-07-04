@@ -675,6 +675,26 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "piotr@o2.pl")
     }
 
+    // BUG-EMAIL-LOCALPART-SPACJA (benchmark 05.07, doc "marek_wozniak@interia.pl" OCR-owane z
+    // podkreślnikiem zamienionym na spację): AnchorEngine A.2 zatrzymywał lewą granicę na
+    // pierwszej spacji, maskując tylko "wozniak@interia,pl" — "marek" zostawał jawny. Fix:
+    // opcjonalne jedno poprzedzające słowo (tylko litery/cyfry) w kotwicy A.2.
+    @Test fun `BUG-EMAIL-LOCALPART-SPACJA podkreslnik pomylony ze spacja maskuje cale local-part`() {
+        val r = pseudonymize("Adres e-mail: marek wozniak@interia,pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "marek")
+        assertNotInOutput(r, "wozniak@interia")
+    }
+
+    // Kontrola: rozszerzenie NIE może połykać etykiet kończących się dwukropkiem/myślnikiem —
+    // to jest to co odróżnia "prawdziwy urwany local-part" od zwykłej etykiety przed emailem.
+    @Test fun `BUG-EMAIL-LOCALPART-SPACJA regresja etykieta z dwukropkiem nie wchodzi do tokenu`() {
+        val r = pseudonymize("Kontakt: piotr.nowak@wp.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTrue("Etykieta 'Kontakt:' powinna zostać jawna, nie wejść do tokenu EMAIL",
+            r.pseudonymizedText.contains("Kontakt:"))
+    }
+
     @Test fun `BRAK_W_OCR Niepodlegosci pseudonymize`() {
         val r = pseudonymize("al. Niepodlegości 13/2, 65-001 Gliwice")
         assertTokenExists(r, TOKEN_ADRES)

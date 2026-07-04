@@ -60,8 +60,17 @@ internal fun applyAnchorEngine(
     // Rozszerzam lewo (do spacji) + prawo (do spacji, z opcjonalnym " .domena").
     // Obsługa OCR: "piotr @ firma.pl" (spacje wokół @), "firma .pl" (spacja w domenie).
     // Nie waliduje formatu. @ w dokumencie = email.
+    //
+    // BUG-EMAIL-LOCALPART-SPACJA-FIX (05.07, benchmark: "marek_wozniak@..." OCR-owane jako
+    // "marek wozniak@..." — podkreślnik pomylony ze spacją). Bez rozszerzenia lewa granica
+    // zatrzymywała się na pierwszej spacji, maskując tylko "wozniak@...", zostawiając "marek"
+    // jawne. Dodano opcjonalne JEDNO poprzedzające słowo — ale tylko złożone z samych
+    // liter/cyfr (`\p{L}0-9`, bez dwukropka/myślnika) — to naturalnie wyklucza etykiety typu
+    // "e-mail:", "Kontakt:", "adres:" (zawsze kończą się dwukropkiem albo mają myślnik) od
+    // prawdziwych urwanych fragmentów local-part (zwykłe słowa, bez interpunkcji). Zweryfikowane
+    // że nie połyka etykiet — patrz test regresji niżej.
     // ------------------------------------------------------------------
-    applyAll(Regex("""[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*"""), TOKEN_EMAIL)
+    applyAll(Regex("""(?:[\p{L}0-9]+\s+)?[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*"""), TOKEN_EMAIL)
 
     // A.2b EMAIL — osierocona domena po istniejącym tokenie
     // EMAIL_001@nfz.gov.pl → A.2 skipped (TOKEN_RE), tu łapiemy @nfz.gov.pl
