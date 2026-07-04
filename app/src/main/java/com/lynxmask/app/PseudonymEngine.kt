@@ -360,15 +360,25 @@ object PseudonymEngine {
         // mógł użyć kontekstu adresu do rozpoznania poprzedzającego imienia/nazwiska.
         // findAll + asReversed + replaceRange zamiast pattern.replace — bezpieczniejsze
         // gdy wzorce adresowe mogą nakładać się na siebie (zamiana od końca).
-        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-            pattern.findAll(text).toList().asReversed().forEach { match ->
-                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
-                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                text = text.replaceRange(match.range, pre + token + suf)
+        //
+        // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — "strangler fig"): duplikat tego samego
+        // kształtu co AddressEngine (Warstwa 0b), gorzej guardowany (kolejne fixy PLN/NIP
+        // dzisiaj musiały być powtarzane osobno tu i w AddressEngine.kt). Wyłączony gdy
+        // USE_ADDRESS_ENGINE_V0 — cel: to co zostanie jawne po wyłączeniu jest backlogiem
+        // AddressEngine, nie zgadywaniem z góry. AnchorEngine (Warstwa 4b, A.11*) ZOSTAJE
+        // aktywny niezależnie — to nie jest ten sam typ duplikatu (kotwica na resztkach, nie
+        // równoległy silnik strukturalny).
+        if (!USE_ADDRESS_ENGINE_V0) {
+            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+                pattern.findAll(text).toList().asReversed().forEach { match ->
+                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                    val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
+                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                    text = text.replaceRange(match.range, pre + token + suf)
+                }
             }
         }
 
@@ -426,15 +436,19 @@ object PseudonymEngine {
         text = applyContextualBlacklist(text, { value, tokenType ->
             assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
         }, profileType)
-        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-            pattern.findAll(text).toList().asReversed().forEach { match ->
-                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
-                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                text = text.replaceRange(match.range, pre + token + suf)
+        // FAZA-B-WYLACZENIE (05.07) — patrz komentarz przy Warstwie 3d, ten sam duplikat
+        // powtórzony w Rundzie 2.
+        if (!USE_ADDRESS_ENGINE_V0) {
+            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+                pattern.findAll(text).toList().asReversed().forEach { match ->
+                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                    val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
+                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                    text = text.replaceRange(match.range, pre + token + suf)
+                }
             }
         }
 

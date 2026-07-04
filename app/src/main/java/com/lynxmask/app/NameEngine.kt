@@ -614,7 +614,13 @@ internal fun applyContextualBlacklist(
     var result = text
 
     // TODO-2: Adresy z bazy GUS TERYT — przed detekcją imion
-    result = applyStreetLookup(result, assignToken)
+    // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — strangler fig): applyStreetLookup to ten sam
+    // słownik (streetForms) i ten sam kształt co AddressEngine.STREET_DICT — duplikat
+    // strukturalny, nie kotwica. Wyłączony gdy USE_ADDRESS_ENGINE_V0. applyCityLookup ZOSTAJE
+    // zawsze — to CITY_PREP ("w Warszawie"), świadomie poza zakresem AddressEngine v0.
+    if (!USE_ADDRESS_ENGINE_V0) {
+        result = applyStreetLookup(result, assignToken)
+    }
     result = applyCityLookup(result, assignToken)
 
     // 3a — Firmy z formą prawną
