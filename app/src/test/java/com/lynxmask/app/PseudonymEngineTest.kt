@@ -1702,4 +1702,116 @@ class PseudonymEngineTest {
         )
         assertTrue("kwota powinna byc w tokenMap", r.tokenMap.values.any { it.contains("49 999") })
     }
+
+    // =========================================================================
+    // BUG-ADRES-KOD-MIASTO — refaktor ADRES (plan Cursor 01.07, krok 0)
+    // Diagnoza: kod pocztowy + miasto rozsiane po 4-6 miejscach (StructuralEngine
+    // ADDRESS #597, AnchorEngine A.11b/A.11c/A.11d, NameEngine CITY_POSTAL, Runda 2)
+    // które się wzajemnie blokują (TOKEN_RE/matchOverlapsToken) i zostawiają rozjechany
+    // stan: jawny kod obok osobnego tokenu miasta, albo sklejenie miasta z kodem
+    // SĄSIEDNIEGO wpisu przy tekście bez spacji między liniami.
+    // Te testy CELOWO FALUJĄ teraz (krok 0 planu) — mają przejść dopiero po pełnym
+    // refaktorze (warstwa 3a POSTAL_CITY, usunięcie A.11b i CITY_POSTAL, guard A.11c/d).
+    // Plik testowy do testu ręcznego: testy/test_kod_pocztowy_migracja.txt
+    // =========================================================================
+
+    @Test fun `kod pocztowy z miastem jeden token bez jawnego kodu`() {
+        val r = pseudonymize("00-001 Warszawa")
+        assertFalse("kod pocztowy nie powinien zostac jawny", r.pseudonymizedText.contains("00-001"))
+        assertFalse("miasto nie powinno zostac jawne", r.pseudonymizedText.contains("Warszawa"))
+        assertEquals(1, r.tokenMap.values.count { it.contains("00-001") && it.contains("Warszawa") })
+    }
+
+    @Test fun `trzy czyste linie kod plus miasto po jednym tokenie kazda`() {
+        val r = pseudonymize("00-001 Warszawa\n80-001 Gdańsk\n31-610 Kraków")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("31-610"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        assertFalse(r.pseudonymizedText.contains("Kraków"))
+        assertEquals(3, r.tokenMap.values.count { it.contains("-") })
+    }
+
+    @Test fun `goly kod pocztowy bez miasta jest maskowany`() {
+        val r = pseudonymize("00-001")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
+    @Test fun `dwa kody i miasta sklejone bez spacji nie miesza sie miast z sasiednim kodem`() {
+        val r = pseudonymize("00-001 Warszawa80-001 Gdańsk")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        // Żaden token nie powinien łączyć miasta z JEDNEGO wpisu z kodem z DRUGIEGO
+        assertFalse(
+            "Warszawa nie powinno byc sklejone z kodem 80-001 (nalezacym do Gdanska)",
+            r.tokenMap.values.any { it.contains("Warszawa") && it.contains("80-001") }
+        )
+        assertFalse(
+            "Gdansk nie powinno byc sklejone z kodem 00-001 (nalezacym do Warszawy)",
+            r.tokenMap.values.any { it.contains("Gdańsk") && it.contains("00-001") }
+        )
+    }
+
+    @Test fun `trzy kody i miasta sklejone bez spacji wszystkie czyste`() {
+        val r = pseudonymize("70-001 Szczecin80-001 Gdańsk31-610 Kraków")
+        assertFalse(r.pseudonymizedText.contains("70-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("31-610"))
+        assertFalse(r.pseudonymizedText.contains("Szczecin"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        assertFalse(r.pseudonymizedText.contains("Kraków"))
+    }
+
+    @Test fun `rok po myslniku nie jest maskowany jako kod pocztowy`() {
+        val r = pseudonymize("15-2024")
+        assertFalse(r.pseudonymizedText.contains(TOKEN_ADRES))
+        assertTrue(r.pseudonymizedText.contains("15-2024"))
+    }
+
+    @Test fun `sam rok nie jest maskowany`() {
+        val r = pseudonymize("1999")
+        assertFalse(r.pseudonymizedText.contains(TOKEN_ADRES))
+        assertTrue(r.pseudonymizedText.contains("1999"))
+    }
+
+    // BUG-PESEL-KOD-SKLEJENIE (test ręczny na telefonie 01.07): kontekstowy wzorzec
+    // PESEL (StructuralEngine linia ~333, goły \d) doklejał fragment sąsiedniego kodu
+    // pocztowego do swojego dopasowania, bo kod pocztowy był jeszcze gołymi cyframi gdy
+    // wzorzec PESEL się uruchamiał. Fix: POSTAL_CITY biegnie PRZED STRUCTURAL_PATTERNS,
+    // więc kod pocztowy jest już tokenem (zaczyna się literą) zanim PESEL go zobaczy.
+    @Test fun `PESEL obok kodu pocztowego nie dokleja fragmentu kodu`() {
+        val r = pseudonymize("PESEL 90051512340 00-001 Warszawa NIP 526-021-15-81")
+        assertFalse("PESEL nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+    }
+
+    // BUG-POSTALCITY-NIP (test regresji 01.07): goły kod pocztowy (kierunek 3 POSTAL_CITY)
+    // łapał ostatni segment NIP-u jako fałszywy kod, bo NIP też ma segment w kształcie
+    // XX-XXX (np. "56-786" z "512-34-56-786"). Guard (?<!\d{2,3}-)(?!-\d) naprawia.
+    @Test fun `NIP nie jest rozbijany przez wzorzec goly kod pocztowy`() {
+        val r = pseudonymize("NIP: 512-34-56-786")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertFalse("NIP nie powinien byc czesciowo zamaskowany jako ADRES",
+            r.tokenMap.values.any { it == "56-786" || it == "34-56" })
+        assertNotInOutput(r, "512-34-56-786")
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE (diagnoza Cursor 01.07, trzeci wariant tej samej klasy
+    // problemu): NIP sklejony BEZ separatora z kodem pocztowym ("...15-8100-001") —
+    // A.5 (kotwica NIP) łapało cały ciąg razem, "Warszawa" zostawało jawne.
+    @Test fun `NIP sklejony bez separatora z kodem pocztowym oba zamaskowane osobno`() {
+        val r = pseudonymize("NIP 526-021-15-8100-001 Warszawa")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(
+            "NIP nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("526") && it.contains("00-001") }
+        )
+    }
 }

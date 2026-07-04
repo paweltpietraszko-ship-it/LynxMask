@@ -212,6 +212,18 @@ object PseudonymEngine {
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
 
+        // --- Warstwa 1b: POSTAL_CITY — kod pocztowy + miasto, jeden właściciel pary ---
+        // Plan Cursor 01.07: musi biec PRZED STRUCTURAL_PATTERNS (nie po) — kontekstowy
+        // wzorzec PESEL (linia ~333, goły \d) bez tego widzi kod pocztowy jako gołe cyfry
+        // i (przy niesprzyjającym sąsiedztwie, np. "PESEL 90051512340 00-001 Warszawa")
+        // dokleja fragment kodu do swojego dopasowania — znalezione testem ręcznym na
+        // adresach sąsiadujących z innymi encjami. Jeśli kod pocztowy jest już tokenem
+        // (nie gołymi cyframi) zanim PESEL/NIP/inne wzorce kontekstowe zdążą coś zobaczyć,
+        // ten cały problem znika: token zaczyna się literą, nie cyfrą.
+        text = applyPostalCityPatterns(text) { value, tokenType ->
+            assignToken(value, tokenType, layer = "STRUCTURAL", rule = "POSTAL_CITY")
+        }
+
         // --- Warstwa 2: Regex strukturalne ---
         if (BuildConfig.DEBUG) {
             android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")

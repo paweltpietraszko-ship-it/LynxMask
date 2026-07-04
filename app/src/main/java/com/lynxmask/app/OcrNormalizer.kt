@@ -367,9 +367,16 @@ object OcrNormalizer {
     // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL + litery jako cyfry
     // Przykład: "PESEL: 6802041 8568"  → "PESEL: 68020418568"
     // Przykład: "PESEL: 9l0405 l2367" → "PESEL: 91040512367"
+    // BUG-PESEL-KOD-SKLEJENIE-FIX (Cursor 01.07): [TIlOo0-9\s]{10,14} (klasa znaków
+    // ze spacją bez ograniczeń) traktował spację PRZED sąsiednim kodem pocztowym jako
+    // kontynuację PESEL-u — "PESEL 90051512340 00-001" → normalizer usuwał spację i
+    // zlepiał "9005151234000-001", zanim JAKAKOLWIEK reguła maskująca zobaczyła tekst
+    // (OcrNormalizer to Warstwa 0, przed wszystkim innym). Fix: (?:...|\s(?!\d{2}-))
+    // zamiast prostej klasy znaków ze spacją — spacja dozwolona jako separator TYLKO
+    // gdy nie zaczyna kształtu kodu pocztowego (\d{2}-).
     // ----------------------------------------------------------
     private val OCR_PESEL_SPLIT = Regex(
-        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9][TIlOo0-9\s]{10,14}[TIlOo0-9])"""
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -379,6 +386,17 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     private val OCR_NIP_DIGITS = Regex(
         """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_NIP_POSTAL_GLUE (Cursor 01.07): NIP sklejony BEZ separatora z kodem pocztowym
+    // — "526-021-15-8100-001" (NIP "526-021-15-81" + kod "00-001", zero spacji między
+    // nimi). Bez tego A.5 (kotwica NIP w AnchorEngine) łapał cały ciąg razem, a kod
+    // pocztowy nigdy nie stawał się osobnym tokenem ADRES. Wstawia spację w miejscu
+    // gdzie kończy się kształt NIP (3-3-2-2, 10 cyfr) a zaczyna kształt kodu (XX-XXX).
+    // ----------------------------------------------------------
+    private val OCR_NIP_POSTAL_GLUE = Regex(
+        """(\d{3}-\d{3}-\d{2}-\d{2})(\d{2}-\d{3})"""
     )
 
     // ----------------------------------------------------------
@@ -765,6 +783,12 @@ object OcrNormalizer {
             val fixed = replaceNipBareShape(m)
             if (fixed != m.value) corrections++
             fixed
+        }
+
+        // 11d. OCR: NIP sklejony bez separatora z kodem pocztowym — wstaw spację na granicy
+        text = OCR_NIP_POSTAL_GLUE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]} ${m.groupValues[2]}"
         }
         text = OCR_NIP_BARE3223.replace(text) { m ->
             val fixed = replaceNipBareShape(m)

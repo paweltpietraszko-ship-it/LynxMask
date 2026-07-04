@@ -230,6 +230,89 @@ internal fun applyPeselShapeChecksum(
 }
 
 // ============================================================
+// POSTAL_CITY — kod pocztowy + miasto (oba kierunki), jeden właściciel pary
+// (plan Cursor 01.07, krok 1 — funkcja zdefiniowana, JESZCZE NIE podłączona do
+// pipeline. Podłączenie w kroku 2 jako warstwa 3a przed NameEngine.)
+//
+// Naprawia bug znaleziony testem ręcznym: 3+ adresów kod+miasto pod rząd (osobne
+// linie ORAZ sklejone bez spacji przez OCR) rozjeżdżało się na pomieszane tokeny —
+// stary wzorzec (StructuralEngine #597, teraz niżej) wymagał \b na granicy
+// dopasowania miasta, a \b NIE ISTNIEJE między literą (koniec miasta) a cyfrą
+// (początek NASTĘPNEGO kodu, gdy sklejone) bo oba są \w. Fix: (?<!\d) zamiast \b
+// na starcie kodu (nie zaczynaj w środku innego ciągu cyfr, ale POZWÓL zaczynać
+// zaraz po literze — to dokładnie przypadek sklejenia OCR), i brak \b na końcu
+// nazwy miasta (klasa znaków sama naturalnie zatrzymuje się na pierwszej cyfrze).
+// ============================================================
+// BUG-POSTALCITY-NIP-FIX (Cursor 01.07, drugi przypadek): ten sam guard co niżej
+// (postalCityBareCodeRe) — bez niego łapał "56-786" ze środka NIP-u "512-34-56-786"
+// jako fałszywy kod pocztowy, bo zaraz po nim była ", zamieszkały..." (przecinek+słowo
+// spełniał wymóg "miasta" — ten kierunek nie wymaga wielkiej litery ani słownika).
+private val postalCityCodeToNameRe = Regex(
+    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}"""
+)
+private val postalCityNameToCodeRe = Regex(
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
+)
+// BUG-POSTALCITY-NIP-FIX (test regresji 01.07): (?<!\d{2,3}-) i (?!-\d) dodane — bez nich
+// ten wzorzec łapał ostatni segment NIP-u jako fałszywy kod pocztowy (np. "56-786" z
+// "512-34-56-786" — NIP ma też kształt XX-XXX w swoim ostatnim segmencie). Guard: nie
+// matchuj jeśli bezpośrednio przed jest inny segment "cyfry-" (jesteśmy w środku
+// dłuższego łańcucha myślnikowego, czyli prawdopodobnie NIP/sygnatura, nie kod pocztowy)
+// ani jeśli bezpośrednio po jest kolejny "-cyfry".
+private val postalCityBareCodeRe = Regex(
+    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)\b"""
+)
+
+// Kod pocztowy + miasto (oba kierunki) jako JEDEN token ADRES. Goły kod (bez miasta)
+// maskowany osobno, TYLKO gdy w tej samej linii nie ma słowa ze słownika miast (guard
+// przed konfliktem z dwoma powyższymi wzorcami, które już by go obsłużyły wcześniej).
+internal fun applyPostalCityPatterns(
+    text: String,
+    assignToken: (value: String, tokenType: String) -> String
+): String {
+    var t = text
+
+    fun replaceRangeAsToken(acc: String, range: IntRange, value: String): String {
+        val token = assignToken(value.trim(), TOKEN_ADRES)
+        val before = acc.getOrElse(range.first - 1) { ' ' }
+        val after = acc.getOrElse(range.last + 1) { ' ' }
+        val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+        val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+        return acc.replaceRange(range, pre + token + suf)
+    }
+
+    // Kierunek 1: kod → miasto ("00-001 Warszawa") — bez słownika, jak stare #597
+    t = postalCityCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value)
+    }
+
+    // Kierunek 2: miasto → kod ("Warszawa, 00-001") — tylko gdy słowo jest w słowniku miast
+    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+        t = postalCityNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+            if (TOKEN_RE.containsMatchIn(m.value)) acc
+            else if (!LookupTables.cityForms.contains(m.groupValues[1].lowercase())) acc
+            else replaceRangeAsToken(acc, m.range, m.value)
+        }
+    }
+
+    // Kierunek 3: goły kod bez miasta — tylko gdy w tej samej linii NIE ma słowa
+    // ze słownika miast (inaczej kierunek 1/2 powinny były to już obsłużyć)
+    t = postalCityBareCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc
+        else {
+            val lineStart = acc.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
+            val lineEnd = acc.indexOf('\n', m.range.last).let { if (it < 0) acc.length else it }
+            val line = acc.substring(lineStart, lineEnd).lowercase()
+            val hasCityWord = LookupTables.initialized &&
+                line.split(Regex("""\W+""")).any { it.isNotEmpty() && LookupTables.cityForms.contains(it) }
+            if (hasCityWord) acc else replaceRangeAsToken(acc, m.range, m.value)
+        }
+    }
+
+    return t
+}
+
+// ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
 // ============================================================
@@ -257,7 +340,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // \d[\d \t\-]{3,16}\d — minimum 5 cyfr (BUG-PESEL-10: OCR może zgubić 1 cyfrę;
     //   kontekst słowny "pesel" eliminuje FP przy tak krótkim ciągu cyfr)
     //   Poprzednio {4,16} = min 6 cyfr; teraz {3,16} = min 5 cyfr.
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
+    // BUG-PESEL-KOD-SKLEJENIE-FIX (Cursor 01.07, pas bezpieczeństwa #3): usunięto `\-`
+    // z klasy znaków — PESEL to ciągłe cyfry (max spacje/taby jako separator OCR), a
+    // myślnik w tej klasie pozwalał dopasowaniu ciągnąć się w kod pocztowy/NIP (kształt
+    // z myślnikami) sąsiadujący z PESEL-em. Prawdziwy fix jest w OcrNormalizer (Warstwa 0)
+    // i StructuralEngine.applyPostalCityPatterns (Warstwa 1b) — to dodatkowy pas bezpieczeństwa.
+    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t]{3,16}\d"""),
 
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.

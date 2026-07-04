@@ -113,9 +113,15 @@ internal fun applyAnchorEngine(
     // A.4  PESEL — kotwica: keyword pe[s5][e3][lL1]
     // Wymagam min. 9 D-znaków po keywordzie — blokuje FP na słowach jak "PESEL kształt"
     // gdzie 's','z' w "kształt" są w D-klasie ale to tylko 2 D-znaki, nie 9.
+    // BUG-PESEL-SKLEJENIE-FIX (test ręczny 01.07): {9,13} → {9,11} — górna granica 13
+    // pozwalała dopasowaniu ciągnąć się 2 znaki ZA prawdziwy 11-cyfrowy PESEL, jeśli
+    // zaraz po nim (nawet po spacji) był inny ciąg cyfropodobny — np. "PESEL 90051512340
+    // 00-001 Warszawa" doklejało "00-" z kodu pocztowego do tokenu PESEL. Prawdziwy PESEL
+    // ma zawsze dokładnie 11 cyfr; górna granica 11 (zamiast 13) nadal toleruje OCR gubiący
+    // cyfry (dolna granica 9) ale nie ciągnie się w sąsiedni, niepowiązany ciąg.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)pe[s5][e3][lL1]\b[^0-9OolIiSsBbZz\n]{0,15}(?:$D[\s\-]?){9,13}"""),
+        Regex("""(?i)pe[s5][e3][lL1]\b[^0-9OolIiSsBbZz\n]{0,15}(?:$D[\s\-]?){9,11}"""),
         TOKEN_NUMER
     )
 
@@ -125,10 +131,15 @@ internal fun applyAnchorEngine(
 
     // ------------------------------------------------------------------
     // A.5  NIP — kotwica: keyword N[IL1]P
-    // Widzę "NIP" → maskuję wszystko do następnej spacji/newline. Bez walidacji formatu.
+    // Widzę "NIP" → maskuję ciąg cyfropodobny w kształcie NIP (10 cyfr). Bez walidacji sumy.
+    // BUG-NIP-KOD-SKLEJENIE-FIX (Cursor 01.07): $D\S* (bez ograniczenia) połykało
+    // WSZYSTKO do następnej spacji, w tym sklejony bez separatora kod pocztowy
+    // ("NIP 526-021-15-8100-001" → cały ciąg jako jeden token, "Warszawa" jawne).
+    // Fix: ograniczenie do dokładnie 10 cyfropodobnych (prawdziwy kształt NIP) zamiast
+    // dowolnego \S* — zatrzymuje się na 10. cyfrze niezależnie od tego co następuje.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)N[IiLl1]P\b[^0-9OolIiSsBbZz\n]{0,15}$D\S*"""),
+        Regex("""(?i)N[IiLl1]P\b[^0-9OolIiSsBbZz\n]{0,15}$D(?:[\s\-]?$D){9}"""),
         TOKEN_NUMER
     )
 

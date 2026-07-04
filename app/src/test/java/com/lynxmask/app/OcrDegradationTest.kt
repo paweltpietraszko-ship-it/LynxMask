@@ -2,7 +2,6 @@ package com.lynxmask.app
 
 import org.junit.Before
 import org.junit.After
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -192,9 +191,8 @@ class OcrDegradationTest {
         assertTrue("Krzyszt0f N0wlckl nie wykryty — NameEngine nie obsłużył LVL2",
             tokens(LVL2).any { "Krzyszt" in it || "N0wlckl" in it || "Nowlckl" in it })
 
-    @Ignore("Limit silnika: cyfra w imieniu (B3ata) łamie NameEngine — OCR degradation LVL2")
-    @Test fun `FAIL lvl2 OSOBA Kaminska pominięta B3ata`() =
-        assertTrue("B3ata Kamlnska nie wykryta (LVL2 — oczekiwany fail: cyfra w imieniu)",
+    @Test fun `lvl2 OSOBA Kaminska wykryta mimo B3ata`() =
+        assertTrue("B3ata Kamlnska nie wykryta (LVL2)",
             tokens(LVL2).any { "B3ata" in it || "Kamlnska" in it })
 
     @Test fun `lvl2 PESEL1 wykryty ze spacjami`() =
@@ -239,9 +237,8 @@ class OcrDegradationTest {
         assertTrue("Krzy5zt0f N0w1ck1 nie wykryty po de-leet (LVL3)",
             tokens(LVL3).any { "Nowicki" in it || "Krzysztof" in it })
 
-    @Ignore("Limit silnika: cyfra w imieniu (Be4ta) łamie NameEngine — OCR degradation LVL3")
-    @Test fun `FAIL lvl3 OSOBA Kaminska pominięta Be4ta`() =
-        assertTrue("Be4ta Kamlnska nie wykryta (LVL3 — oczekiwany fail)",
+    @Test fun `lvl3 OSOBA Kaminska wykryta mimo Be4ta`() =
+        assertTrue("Be4ta Kamlnska nie wykryta (LVL3)",
             tokens(LVL3).any { "Be4ta" in it || "Kamlnska" in it })
 
     @Test fun `lvl3 PESEL1 wykryty 9l0405 l2361`() =
