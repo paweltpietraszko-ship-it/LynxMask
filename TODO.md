@@ -8,6 +8,34 @@
 
 ---
 
+## ŚREDNI — EMAIL recall najgorszy z encji, katalog wzorców degradacji OCR (05.07)
+
+Benchmark 04-05.07: EMAIL stale najsłabszy recall (57-67%, zależnie od runu). Naprawiony
+JEDEN wzorzec dzisiaj (`AnchorEngine.kt` A.2, commit `256de82`): podkreślnik pomylony ze
+spacją w local-part ("marek_wozniak" → "marek wozniak") — dodano opcjonalne 1 poprzedzające
+słowo (tylko litery/cyfry, żeby nie połykać etykiet typu "e-mail:"). **Potwierdzone ponownym
+benchmarkiem że to NIE wystarcza** — email OCR-uje się na dużo więcej sposobów. Katalog
+PRAWDZIWYCH przypadków z benchmarku (świeży build, nie stary — potwierdzone), żaden jeszcze
+nie naprawiony:
+
+| Wzorzec degradacji | Przykład z OCR | Uwaga |
+|---|---|---|
+| Kropka→spacja W DOMENIE, zero kropki | `ratal_dudek95@gmail com` | brak jakiegokolwiek separatora między domeną a TLD |
+| Podkreślnik ZOSTAJE, ale spacja PO nim | `krzysztof_ lewandowski@gmail.com` | dzisiejszy fix wymaga słowa z samych liter/cyfr — podkreślnik na końcu to wyklucza |
+| Kropka→spacja w local-part + spacja przed @ + spacja w domenie naraz | `ewa piotrowska @gmail. com` | potrójna degradacja jednocześnie |
+| Kropka→spacja w local-part (osobny od podkreślnika przypadek) | `kamil. woziak@wppl` | powinno być już naprawione starszym normalizerem (dot-space fix w PseudonymEngine.kt) — sprawdzić czemu benchmark nadal pokazuje to jako miss |
+| Litera→litera w środku lokalnej części + kropka→spacja | `justyna.dud ek@amail.com` | złożony, prawdopodobnie zostawia "justyna." jawne nawet po dzisiejszym fixie |
+
+**Kierunek na następną sesję (nie zaczynać od zera z regexem anchora)**: rozważyć bardziej
+systemowe podejście w `OcrNormalizer.kt` — wykryć `@` jako kotwicę, potem w oknie ±30-40 znaków
+wokół niego znormalizować typowe degradacje (spacja zamiast kropki przed znaną listą TLD:
+`.pl/.com/.eu/...`, obcięta domena bez kropki wcale) — PRZED tym jak AnchorEngine w ogóle
+zobaczy tekst, zamiast dokładać kolejne specjalne przypadki do samego regexu kotwicy A.2.
+To pasuje do wzorca już użytego dla NIP/PESEL (keyword canonicalization w Kroku 0
+OcrNormalizer) — email zasługuje na podobne, dedykowane traktowanie zamiast łatania anchora.
+
+---
+
 ## NISKIE — KWOTA kradnie cyfrę sąsiedniemu słowu (05.07)
 
 Wzorzec KWOTA liczba+waluta (`\d{1,6}...\s*(?:zł|PLN|...)`, StructuralEngine.kt ~527) nie
