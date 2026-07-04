@@ -681,8 +681,9 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_ADRES to Regex(
         """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
     ),
-    // BUG-KOD-POCZTOWY-FIX v1.5: analogicznie — wzorzec 33 (kod + miejscowość).
-    TOKEN_ADRES to Regex("""\b\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ]{2,40}\b"""),
+    // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
+    // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej
+    // w potoku, para jest już tokenem zanim ADDRESS_PATTERNS w ogóle zobaczy tekst.
 
     // --- Adres z ul./al./pl./os. bez kodu pocztowego ---
     // ul. Długa 7, al. Róż 12A, ul. Kazimierza Wielkiego 14/3
