@@ -506,9 +506,6 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
-internal val CITY_POSTAL_REGEX = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+(\d{2}-\d{3,4})\b"""
-)
 internal val CITY_PREP_REGEX = Regex(
     """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
 )
@@ -523,14 +520,10 @@ private fun applyCityLookup(
     if (!LookupTables.initialized || LookupTables.cityForms.isEmpty()) return text
     var result = text
 
-    // Miasto przed kodem pocztowym: "Warszawa, 00-001" → jeden token ADRES dla całości.
-    // Było: assignToken(city) + rest → kod zostawał → A.11b/R2 tworzyło drugi token.
-    result = CITY_POSTAL_REGEX.replace(result) { match ->
-        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
-        val city = match.groupValues[1]
-        if (!LookupTables.cityForms.contains(city.lowercase())) return@replace match.value
-        assignToken(match.value.trim(), TOKEN_ADRES)
-    }
+    // Miasto przed kodem pocztowym: usunięte 04.07 (migracja ADRES krok 3) — już obsłużone
+    // wcześniej w potoku przez StructuralEngine.applyPostalCityPatterns (Warstwa 1b, kierunek 2),
+    // które działa PRZED tą funkcją. CITY_POSTAL_REGEX był tu martwy (TOKEN_RE guard blokował
+    // go niemal zawsze, bo para kod+miasto była już tokenem zanim applyCityLookup ją zobaczył).
 
     // Miasto po przyimku: "w Warszawie", "z Gdańska" → ADRES
     result = CITY_PREP_REGEX.replace(result) { match ->
