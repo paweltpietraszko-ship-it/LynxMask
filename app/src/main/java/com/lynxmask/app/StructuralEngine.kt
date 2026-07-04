@@ -527,6 +527,16 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
         """\b(?!00\s)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\s*(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b""",
         RegexOption.IGNORE_CASE
     ),
+    // BUG-PLN-KWOTA-SYMETRIA (05.07, decyzja Pawła): szyk waluta+liczba ("PLN 1234") był
+    // dotąd tylko WYKLUCZANY z NUMER/ADRES (zostawał jawny) — niespójne, skoro "1234 PLN"
+    // (odwrotny szyk) jest KWOTĄ. Kwota sama nie identyfikuje osoby (nie jest to jak
+    // PESEL/adres/telefon), ale skoro engine i tak maskuje jeden szyk, drugi powinien być
+    // spójny. Ten sam kształt liczby co wyżej, (?!00\b) analogicznie wyklucza artefakt OCR
+    // "PLN 00" z rozbitego "PLN 350,00".
+    TOKEN_KWOTA to Regex(
+        """\b(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\s*(?!00\b)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\b""",
+        RegexOption.IGNORE_CASE
+    ),
 
     // --- Dokumenty tożsamości ---
     // REVERT (?i): case-insensitive zjadał 3-literowe imiona (Jan, Piotr) + cyfry jako dowód.
@@ -534,8 +544,14 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // DOWOD-FIX v1.9: \d{3}[^\S\n]?\d{3} → \d{2,3}[^\S\n]?\d{3,4}.
     // OCR lvl3 (doc_00033) produkuje "AWY57 1380" — spacja po 2 cyfrach zamiast 3.
     // Nowy wzorzec: 2-3 cyfry + opcjonalna spacja + 3-4 cyfry = razem 5-7 cyfr (oczekiwane 6).
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
-    TOKEN_NUMER to Regex("""\b[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
+    // BUG-PLN-DOWOD-FIX (05.07, diagnoza trace po zgłoszeniu "PLN 12345" jako NUMER):
+    // seria dowodu to 3 wielkie litery + 5-7 cyfr — ten sam kształt co skrót waluty + kwota
+    // bez separatora ("PLN 12345" = "PLN" jako seria + "12"+"345" jako numer). Ten sam,
+    // świadomie zamknięty zestaw kodów walut co przy wcześniejszym fixie tablicy
+    // rejestracyjnej (StructuralEngine.kt:558) — nie długość nazwy (seria dowodu ma zawsze
+    // dokładnie 3 litery, więc próg długości złamałby prawdziwe serie).
+    TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
+    TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\d)[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"
@@ -695,8 +711,16 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): brakujący `\-` w klasie znaków nazwy ulicy —
     // sąsiednia reguła niżej (ulica bez kodu pocztowego) już go ma. Niespójność, nie świadomy
     // brak. "Gdańska-Sopocka" bez myślnika w klasie łamało się na dwa osobne dopasowania.
+    // BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): ten sam duplikat wzorca istnieje też w
+    // AddressEngine.kt (STREET_FULL, naprawiony tam guardem na grupach). Ten TOKEN_ADRES nadal
+    // biegnie jako fallback (Warstwa 3d/Runda 2, Faza B jeszcze nie wyłączyła duplikatów) i ma
+    // TĘ SAMĄ lukę — prefiks "ul." opcjonalny pozwalał "PLN 1234, 00-001 Warszawa" dopasować
+    // się w całości, traktując "PLN" jak nazwę ulicy. Pętla w PseudonymEngine.kt nie ma
+    // per-wzorcowej walidacji grup (generyczna dla całej listy ADDRESS_PATTERNS), więc fix tu
+    // jest na poziomie regexu: alternatywa (prefiks+dowolna nazwa) LUB (brak prefiksu+nazwa
+    // NIE będąca skrótem waluty), zamiast jednego opcjonalnego prefiksu przed dowolną nazwą.
     TOKEN_ADRES to Regex(
-        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}|\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
     ),
     // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
     // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej

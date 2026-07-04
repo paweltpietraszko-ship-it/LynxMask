@@ -5,16 +5,28 @@
 
 ---
 
-## DO ZROBIENIA — pełna odmiana dwuwyrazowych nazw miast
+## NISKIE — KWOTA kradnie cyfrę sąsiedniemu słowu (05.07)
 
-"w Jeleniej Górze"/"Jeleniej Góry" itd. nie są maskowane wcale (tylko mianownik "Jelenia Góra"
-działa, naprawione 04.07 przy okazji fixu "Góra jako OSOBA"). Przyczyna: `cities_forms.json` ma
-dla nazw dwuwyrazowych tylko formę mianownikową — `generate_street_forms.py` (jedyny generator
-tego typu) odmienia tylko pierwszy człon, nie oba w zgodzie przypadków. Sprawdzone: LynxMask-Desktop
-NIE MA gotowego rozwiązania (identyczne pliki/skrypty). Morfeusz2 jest zainstalowany i
-zweryfikowany że działa (testowane na "Jelenia Góra" — daje poprawne tagi przypadków). Pełny plan
-+ algorytm + dokładne wyniki testu: pamięć `project_city_declension_task.md`. Osobno: "jeleniogórska"
-(przymiotnik odmiejscowy) to inny, mniejszy priorytet mechanizm — nie łączyć z tym zadaniem.
+Wzorzec KWOTA liczba+waluta (`\d{1,6}...\s*(?:zł|PLN|...)`, StructuralEngine.kt ~527) nie
+sprawdza co jest PRZED liczbą. W tekście typu "PIN 1234 PLN 1234" (kilka różnych 3-literowych
+skrótów + 1234 zbite w jednej linii bez przecinków) "1234" należące semantycznie do "PIN" zostaje
+skradzione przez dopasowanie "1234 PLN" (przeskakuje granicę dwóch osobnych wzmianek) — "PIN"
+zostaje osierocone bez liczby, kolejna liczba osierocona po tokenie. Odtworzone zrzutem z
+telefonu 05.07 (stress-test wielu skrótów naraz). Świadomie odłożone: wymaga sąsiedztwa kilku
+różnych skrótów+liczby bez separatorów w jednej linii — rzadkie w prawdziwych dokumentach.
+Ogólny fix trudny (jak odróżnić "PIN 1234 PLN" od legalnego "kwota: 1234 PLN" samym regexem bez
+listy słów kontekstowych). Test na przyszłość: "PIN 1234 PLN 1234, PLN 1234" → oczekiwane
+3 osobne encje/tokeny, żadna nie osierocona.
+
+---
+
+## NISKIE — resztki po odmianie miast dwuwyrazowych (05.07)
+
+Po pełnej odmianie (Morfeusz2, `generate_city_forms_full.py`) zostały 2 mniejsze, świadomie
+odłożone wątki: (1) ~317 nazw dwuwyrazowych bez rozstrzygnięcia rodzaju/przypadku — zostają tylko
+w mianowniku, jak dotąd (bez regresu, po prostu nie zyskały odmiany); (2) ~194 nazwy 3+-wyrazowe
+("Grabów nad Pilicą", "Brzezie k. Sulechowa") pominięte w tej rundzie — inny, rzadszy wzorzec.
+Osobno: "jeleniogórska" (przymiotnik odmiejscowy) to jeszcze inny mechanizm — nie łączyć.
 
 ---
 

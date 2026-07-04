@@ -551,6 +551,13 @@ private fun applyStreetLookup(
         val streetPart = match.groupValues[1].trim()
         val streetLower = streetPart.lowercase()
 
+        // BUG-PLN-STREETLOOKUP-FIX (05.07, diagnoza agenta): "płn" (skrót "Północna" w
+        // street_names.json) po ASCII-foldowaniu (ł→l, LookupTables.withAsciiVariants) staje
+        // się "pln" i koliduje ze skrótem waluty — streetForms.contains("pln") wychodzi true.
+        // Ten sam CURRENCY_PREFIX_DENY co w AddressEngine.kt (tam już zablokowany), tu było
+        // bez ochrony — łapało "PLN 1234" jako ADRES zanim AnchorEngine zobaczył tekst.
+        if (streetLower in CURRENCY_PREFIX_DENY) return@replace match.value
+
         // Sprawdź klucz (mianownik) i formy fleksyjne z bazy — z prefiksami
         if (LookupTables.streetForms.contains(streetLower) ||
             LookupTables.streetForms.contains("ulica $streetLower") ||

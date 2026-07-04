@@ -424,6 +424,19 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_NIP_POSTAL_GLUE_3223 (05.07, diagnoza Cursor): ten sam problem co wyżej,
+    // ale dla NIP w formacie 3-2-2-3 (np. "521-33-15-33200-001" — NIP "521-33-15-332"
+    // + kod "00-001", zero spacji). OCR_NIP_POSTAL_GLUE obsługuje tylko 3-3-2-2 —
+    // bez tego drugiego wzorca A.5b (kotwica NIP bez keywordu) dopasowywała tylko
+    // pierwsze 3 grupy ("521-33-15"), zostawiając "33200-001 Kraków" całkowicie jawne
+    // (żaden inny wzorzec — ani NIP 3-2-2-3, ani AddressEngine POSTAL — nie widział
+    // sklejonego ciągu jako całości). Ten sam mechanizm co wyżej, inny kształt NIP.
+    // ----------------------------------------------------------
+    private val OCR_NIP_POSTAL_GLUE_3223 = Regex(
+        """(\d{3}-\d{2}-\d{2}-\d{3})(\d{2}-\d{3})"""
+    )
+
+    // ----------------------------------------------------------
     // OCR_NIP_SPLIT: spacja wstawiona przez OCR wewnątrz NIP.
     // Obsługuje "NIP:" i "NIP modyfikator:".
     // Przykład: "NIP nabywcy: 740-61 7-82-26" → "NIP nabywcy: 740-617-82-26"
@@ -821,6 +834,10 @@ object OcrNormalizer {
 
         // 11d. OCR: NIP sklejony bez separatora z kodem pocztowym — wstaw spację na granicy
         text = OCR_NIP_POSTAL_GLUE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]} ${m.groupValues[2]}"
+        }
+        text = OCR_NIP_POSTAL_GLUE_3223.replace(text) { m ->
             corrections++
             "${m.groupValues[1]} ${m.groupValues[2]}"
         }

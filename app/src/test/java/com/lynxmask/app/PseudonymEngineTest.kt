@@ -468,9 +468,8 @@ class PseudonymEngineTest {
     }
 
     // BUG-05: wzorzec identyfikatorów łapie "POLSKA-1234-5678". Znany FP, nie ruszać do osobnego fix.
-    // "PLN 1234" — NAPRAWIONE (BUG-PLN-NUMER, sesja 04.07.2026): wzorzec tablic rejestracyjnych
-    // ([A-Z]{2,3}\s?\d{4,5}) miał lookahead wykluczający skróty walutowe dodany w StructuralEngine.kt
-    // — patrz test `BUG-PLN-NUMER kwota z etykieta waluty PLN przed liczba zostaje jawna` wyżej.
+    // "PLN 1234" — NAPRAWIONE (BUG-PLN-*, sesje 04-05.07.2026): teraz maskowane jako KWOTA
+    // (symetryczny wzorzec waluta+liczba w StructuralEngine.kt) — patrz testy `BUG-PLN-*` niżej.
     @Test fun `BUG05 znane FP identyfikatory`() {
         val knownFalsePositives = listOf(
             "POLSKA-1234-5678" // identyfikator pattern: [A-Z]{2,6}[-:/][A-Z0-9]{2,10}...
@@ -1141,22 +1140,98 @@ class PseudonymEngineTest {
     }
 
     // =========================================================================
-    // BUG-PLN-NUMER: "PLN 1234" (skrót waluty + kwota) mylony z tablicą rejestracyjną
-    // (sesja 04.07.2026, test_adres_regresja_sesja.txt [6]/[7])
+    // BUG-PLN: "PLN 1234" (skrót waluty + kwota) mylony z tablicą rejestracyjną / adresem /
+    // serią dowodu (sesja 04-05.07.2026, test_adres_regresja_sesja.txt [6]/[7]).
+    //
+    // DECYZJA 05.07 (Paweł): waluta+liczba ("PLN 1234") to KWOTA, tak samo jak odwrotny szyk
+    // liczba+waluta ("1234 PLN") już był. Kwota sama nie identyfikuje osoby, ale skoro engine
+    // maskuje jeden szyk jako KWOTA, drugi powinien być spójny — nie zostawiać go jawnym z
+    // przypadku (kolejność słów), tylko z decyzji. Nowy symetryczny wzorzec w
+    // StructuralEngine.kt (obok istniejącego liczba+waluta). Wszystkie testy poniżej
+    // zaktualizowane z "zostaje jawne" na "staje się KWOTA" po tej decyzji.
     // =========================================================================
 
-    @Test fun `BUG-PLN-NUMER kwota z etykieta waluty PLN przed liczba zostaje jawna`() {
+    @Test fun `BUG-PLN-KWOTA etykieta waluty PLN przed liczba maskowana jako KWOTA`() {
         val r = pseudonymize("Kwota do zapłaty: PLN 1234")
-        assertTrue("tokenMap powinien być pusty — 'PLN 1234' to waluta, nie encja: ${r.tokenMap}",
-            r.tokenMap.isEmpty())
-        assertTrue("'PLN 1234' powinno zostać jawne w wyniku",
-            r.pseudonymizedText.contains("PLN 1234"))
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertNotInOutput(r, "PLN 1234")
     }
 
     @Test fun `BUG-PLN-NUMER regresja IBAN nadal maskowany jako NUMER`() {
         val r = pseudonymize("IBAN PL61 1020 1026 0000 0422 7020 1111")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "PL61 1020 1026 0000 0422 7020 1111")
+    }
+
+    // BUG-PLN-DOWOD (diagnoza trace 05.07, po zgłoszeniu telefonicznym "PLN 12345" jako NUMER):
+    // wzorzec serii dowodu osobistego (3 litery + 5-7 cyfr) łapał "PLN 12345" jako
+    // "PLN" (seria) + "12"+"345" (numer), zamiast jako KWOTA.
+    @Test fun `BUG-PLN-DOWOD kwota PLN z pieciocyfrowa liczba maskowana jako KWOTA nie seria dowodu`() {
+        val r = pseudonymize("PLN 12345")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertFalse("Nie powinien powstać NUMER (seria dowodu) z 'PLN 12345'",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_NUMER) })
+        assertNotInOutput(r, "PLN 12345")
+    }
+
+    @Test fun `BUG-PLN-DOWOD regresja prawdziwa seria dowodu nadal maskowana`() {
+        val r = pseudonymize("Seria i numer: AWY57 1380")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "AWY57 1380")
+    }
+
+    // BUG-PLN-STREETLOOKUP (diagnoza agenta 05.07, zrzuty z telefonu "ul. Kamienna,PLN 1234"):
+    // "płn" (skrót ulicy "Północna" w street_names.json) po ASCII-foldowaniu (ł→l) staje się
+    // "pln" w LookupTables.streetForms — realna kolizja danych, nie hipotetyczna. NameEngine
+    // applyStreetLookup nie miał tego samego CURRENCY_PREFIX_DENY co AddressEngine.kt, więc
+    // nadawał "PLN 1234" WŁASNY, osobny token ADRES (odróżnialny od ulicy) zamiast KWOTA.
+    // Test wstrzykuje "pln" wprost do słownika testowego (odtwarza kolizję bez zależności od
+    // realnego assets/street_names.json).
+    @Test fun `BUG-PLN-STREETLOOKUP pln w slowniku ulic nie maskuje samodzielnej kwoty jako ADRES`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(streets = setOf("pln", "kamienna", "kamiennej"))
+        val r = pseudonymize("Kwota do zapłaty: PLN 1234")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertFalse("PLN nie powinno dać ADRES — to kolizja danych, nie ulica",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_ADRES) })
+        assertNotInOutput(r, "PLN 1234")
+    }
+
+    // BUG-A11-LICZENIE-ZNAKOW (Paweł 05.07): AnchorEngine A.11 liczyło znaki (2-60) zamiast
+    // zatrzymywać się na granicy klasy znaku (spacja/koniec liter-cyfr) — brief v2 sekcja 6.4
+    // ("prefiks + 2-3 tokeny"). Po fixie A.11 + applyStreetLookup razem: "ul. Kamienna" (bez
+    // numeru, więc żadna precyzyjna warstwa jej nie łapie) trafia do A.11 jako zbieracz resztek
+    // i zatrzymuje się DOKŁADNIE na przecinku — "PLN 1234" zostaje kompletnie oddzielone od
+    // ulicy i maskowane osobno jako KWOTA (Warstwa 2, przed AnchorEngine).
+    @Test fun `BUG-A11-LICZENIE-ZNAKOW ul Kamienna z przecinkiem PLN oddzielone i maskowane jako KWOTA`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(streets = setOf("kamienna", "kamiennej"))
+        val r = pseudonymize("ul. Kamienna,PLN 1234")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertNotInOutput(r, "Kamienna")
+        assertNotInOutput(r, "PLN 1234")
+        assertFalse(
+            "PLN nie powinno wejść w skład tokenu ADRES",
+            r.tokenMap.filterKeys { it.startsWith(TOKEN_ADRES) }.values.any { it.contains("PLN") }
+        )
+    }
+
+    // BUG-PLN-ADRES (diagnoza Cursor 05.07, wariant tego samego bugu w AddressEngine, nie
+    // StructuralEngine): STREET_FULL ma opcjonalny prefiks "ul." — bez tego "PLN 1234,
+    // 00-001 Warszawa" dopasowywało się w całości jako JEDEN token ADRES, traktując "PLN"
+    // jak nazwę ulicy. Fix: gdy prefiks nie wystąpił, pierwsze słowo nie może być skrótem
+    // waluty (CURRENCY_PREFIX_DENY w AddressEngine.kt). "PLN 1234" teraz osobno jako KWOTA.
+    @Test fun `BUG-PLN-ADRES kwota z kodem pocztowym obok PLN maskowane osobno jako KWOTA i ADRES`() {
+        val r = pseudonymize("PLN 1234, 00-001 Warszawa")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "PLN 1234")
+        assertFalse(
+            "PLN nie powinno wejść w skład tokenu ADRES razem z kodem/miastem",
+            r.tokenMap.filterKeys { it.startsWith(TOKEN_ADRES) }.values.any { it.contains("PLN") }
+        )
     }
 
     // =========================================================================
@@ -1833,6 +1908,34 @@ class PseudonymEngineTest {
             "NIP nie powinien zawierac fragmentu kodu pocztowego",
             r.tokenMap.values.any { it.contains("526") && it.contains("00-001") }
         )
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE-3223 (diagnoza Cursor 05.07, ta sama klasa problemu co wyzej,
+    // ale format 3-2-2-3): OCR_NIP_POSTAL_GLUE obslugiwal tylko 3-3-2-2. Bez rozbicia
+    // A.5b (kotwica NIP bez keywordu) lapala tylko pierwsze 3 grupy ("521-33-15"),
+    // zostawiajac "33200-001 Krakow" calkowicie jawne — zaden inny wzorzec (ani NIP
+    // 3-2-2-3, ani AddressEngine POSTAL) nie widzial sklejonego ciagu jako calosci.
+    @Test fun `NIP format 3-2-2-3 sklejony bez separatora z kodem pocztowym oba zamaskowane osobno`() {
+        val r = pseudonymize("521-33-15-33200-001 Kraków")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Kraków")
+        assertNotInOutput(r, "33200-001")
+        assertFalse(
+            "NIP nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("521") && it.contains("00-001") }
+        )
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE-MIX (05.07): linia mieszana — adres z prefiksem "ul." PLUS
+    // sklejony NIP+kod w tej samej linii. Kontrola ze fix glue 3-2-2-3 nie psuje
+    // wspolistniejacego, poprawnie sformatowanego adresu w tej samej linii.
+    @Test fun `NIP 3-2-2-3 sklejony z kodem obok pelnego adresu w tej samej linii`() {
+        val r = pseudonymize("NIP 521-33-15-33200-001 Warszawa, ul. Długa 7")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "Długa")
     }
 
     // =========================================================================

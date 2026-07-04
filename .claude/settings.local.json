@@ -387,7 +387,15 @@
       "PowerShell(Get-PhysicalDisk *)",
       "Bash(awk '{print $NF, $6, $7, $8}')",
       "Bash(xargs -I{} basename {})",
-      "Bash(echo \"---exit: $?---\")"
+      "Bash(echo \"---exit: $?---\")",
+      "Bash(PYTHONIOENCODING=utf-8 python3 -c ' *)",
+      "Bash(iconv -f utf-8 -t utf-8 /tmp/out.txt)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 \"C:/Users/p_pie/AppData/Local/Temp/claude/C--Projects-LynxMask/1201f2fc-2531-4ea5-bb01-2e78f21a2c43/scratchpad/test_declension.py\")",
+      "Bash(PYTHONIOENCODING=utf-8 python3 \"C:/Users/p_pie/AppData/Local/Temp/claude/C--Projects-LynxMask/1201f2fc-2531-4ea5-bb01-2e78f21a2c43/scratchpad/test_declension2.py\")",
+      "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_forms_full.py --sample)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_forms_full.py --cities cities.json --forms cities_forms.json --output cities_forms.json)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 generate_city_surname_overlap.py)",
+      "Bash(pip install *)"
     ]
   },
   "hooks": {

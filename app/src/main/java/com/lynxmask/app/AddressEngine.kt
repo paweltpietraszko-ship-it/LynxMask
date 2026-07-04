@@ -54,6 +54,13 @@ package com.lynxmask.app
 
 internal const val LAYER_ADDRESS_ENGINE = "ADDRESS_ENGINE"
 
+// BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): STREET_FULL ma OPCJONALNY prefiks "ul." —
+// ten sam mechanizm co wcześniejszy BUG-PLN-NUMER w StructuralEngine (tablica rejestracyjna),
+// tylko tu "PLN" jest traktowane jak nazwa ulicy, a "1234, 00-001 Warszawa" dopełnia kształt
+// pełnego adresu. Ta sama, świadomie kompletna lista skrótów walutowych co przy TOKEN_NUMER —
+// nie enumeracja ad-hoc, jeden ustalony zestaw z brief v2.
+internal val CURRENCY_PREFIX_DENY = setOf("pln", "eur", "usd", "gbp", "chf", "dkk", "nok", "czk", "huf", "ron")
+
 internal fun applyAddressEngine(
     text: String,
     assignToken: (value: String, tokenType: String, layer: String, rule: String) -> String
@@ -124,6 +131,13 @@ internal fun applyAddressEngine(
     // Kopia ADDRESS_PATTERNS pierwszy wzorzec (StructuralEngine.kt), STREET_NAME_CHARS
     // (wspólna stała, zawiera myślnik). Uruchamiany PO Bloku 2 (patrz komentarz tam) —
     // dociera tylko do linii z kodem pocztowym, których Blok 2 (bez kodu) nie skonsumował.
+    //
+    // BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): prefiks "ul." jest OPCJONALNY (potrzebne
+    // dla adresów bez prefiksu, np. zdegradowanych przez OCR) — ale to samo pozwalało
+    // "PLN 1234, 00-001 Warszawa" dopasować się w całości, traktując "PLN" jak nazwę ulicy
+    // (ten sam kształt-bug co przy tablicy rejestracyjnej w StructuralEngine, tylko po
+    // stronie adresu, nie NUMER-u). Grupa 1 = prefiks (jeśli był), grupa 2 = pierwsze słowo
+    // nazwy. Gdy prefiks NIE wystąpił, pierwsze słowo nie może być skrótem waluty.
     // ------------------------------------------------------------------
     run {
         // BUG-CROSS-NEWLINE-FIX (04.07): oryginał (StructuralEngine ~685) używał \s / [,\s]
@@ -132,10 +146,14 @@ internal fun applyAddressEngine(
         // nigdy nowa linia. Ten sam błąd istnieje w oryginale (nie naprawiany teraz — poza
         // scope v0), tu naprawiony dla nowego silnika.
         val streetFullRe = Regex(
-            """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+            """((?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
         )
         t = streetFullRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-            if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value, "STREET_FULL")
+            if (TOKEN_RE.containsMatchIn(m.value)) return@fold acc
+            val hasPrefix = m.groupValues[1].isNotEmpty()
+            val firstWord = m.groupValues[2].lowercase()
+            if (!hasPrefix && firstWord in CURRENCY_PREFIX_DENY) return@fold acc
+            replaceRangeAsToken(acc, m.range, m.value, "STREET_FULL")
         }
     }
 
@@ -204,6 +222,9 @@ internal fun applyAddressEngine(
         t = STREET_CANDIDATE_REGEX.findAll(t).toList().asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) return@fold acc
             val streetLower = m.groupValues[1].trim().lowercase()
+            // BUG-PLN-ADRES-FIX (05.07): dodatkowa warstwa obronna — nawet gdyby skrót
+            // waluty kiedyś trafił do streetForms (błąd danych), nie ma zgody na maskowanie.
+            if (streetLower in CURRENCY_PREFIX_DENY) return@fold acc
             val known = LookupTables.streetForms.contains(streetLower) ||
                 LookupTables.streetForms.contains("ulica $streetLower") ||
                 LookupTables.streetForms.contains("ulicy $streetLower") ||

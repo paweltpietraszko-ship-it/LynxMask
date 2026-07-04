@@ -279,9 +279,20 @@ internal fun applyAnchorEngine(
     // enumeracji — zbędna i ryzykowna (FP na "Op."/"Ap."/"Up." itd.), skoro OCR_ADDR_PREFIX
     // w OcrNormalizer.kt już normalizuje zdegradowany prefiks PRZED tym jak AnchorEngine
     // w ogóle zobaczy tekst. Wraca dosłowna enumeracja — degradacje obsłużone wcześniej w potoku.
+    //
+    // BUG-A11-LICZENIE-ZNAKOW-FIX (05.07, Paweł): `[^\n]{2,60}` liczyło ZNAKI zamiast
+    // zatrzymywać się na granicy — brief v2 sekcja 6.4 (patrz pamięć
+    // feedback_anchorengine_spec_violation.md) mówi wprost "prefiks + 2-3 TOKENY", analogicznie
+    // do 6.2 (TELEFON: "zbieraj cyfropodobne aż do PIERWSZEGO nie-cyfropodobnego znaku") — kotwica
+    // ma się zatrzymywać na granicy klasy znaku (spacja / koniec liter-cyfr), nie liczyć do
+    // limitu. Efekt starego zapisu: "ul. Kamienna,PLN 1234" łykało WSZYSTKO do 60 znaków,
+    // włącznie z niepowiązaną frazą po przecinku. Nowy wzorzec: prefiks + 1-3 "tokeny" złożone
+    // WYŁĄCZNIE z liter/cyfr/myślnika/ukośnika (nazwa ulicy + numer budynku/lokalu) — zatrzymuje
+    // się natychmiast na przecinku, dwukropku czy innym znaku spoza tej klasy. To fix ZASIĘGU
+    // dopasowania po złapaniu kotwicy, nie nowa reguła — kotwica (prefiks) się nie zmienia.
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)(?:ul[.,]|al\.|os\.|pl\.)[^\S\n][^\n]{2,60}"""),
+        Regex("""(?i)(?:ul[.,]|al\.|os\.|pl\.)[^\S\n]+[\p{L}0-9/\-]+(?:[^\S\n]+[\p{L}0-9/\-]+){0,2}"""),
         TOKEN_ADRES
     )
 
