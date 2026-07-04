@@ -1,58 +1,89 @@
-# TODO — LynxMask Mobile (stan: 28.06.2026)
-# Źródła: BACKLOG.md + CLAUDE.md + sesja 28.06 (cd.)
-# Ocena: ważne vs bombka. Kolejność = priorytet release.
+# TODO — LynxMask Mobile
+# JEDYNY plik z otwartymi bugami i zadaniami. Zamknięte pozycje usuwać stąd od razu, nie przekreślać.
+# Historia/decyzje → git log. Nie tworzyć osobnych briefów/BACKLOG/TODO_silnik w katalogu głównym.
+# Ostatni remanent: 04.07.2026 — połączono TODO.md+BACKLOG.md+TODO_silnik.md+3×CURSOR_BRIEF, zweryfikowano przez kod.
 
 ---
 
-## BLOKERY RELEASE — to musi być przed sklepem
+## BLOKERY RELEASE
 
-| # | Zadanie | Dlaczego blokuje | Agent |
-|---|---------|-----------------|-------|
-| ~~R1~~ | ~~**S10 — TELEFON nie w tokenMap**~~ | ✅ fix ee69719 — separator kropkowy dodany do 4 wzorców | ~~Claude Code~~ |
-| ~~R2~~ | ~~**AUD-M06 — security-crypto alpha → 1.0.0**~~ | ✅ fix 28435ca — MasterKeys API 1.0.0 stable | ~~Claude Code~~ |
-| ~~R3~~ | ~~**IMAGE-REDACT UI**~~ | ✅ Cursor — nawigacja, LynxScreenHeader, LynxNavExtras, redesign (sesja 28.06) | ~~Cursor~~ |
-| R4 | **Testy kamerą (E2E)** — checklist z BACKLOG §Strategia | Użytkownik sam zgłasza: "wymaga intensywnych testów przy użyciu aparatu" | Paweł |
-| R5 | **ToS + Privacy Policy** — treść prawnicza | Wymagane przez Google Play. Zapytanie do prawnika wysłane 28.06. Ekran wbudowany gotowy — podmienić tekst w PrivacyPolicyDialog (MainActivity.kt). | Prawnik |
+| # | Zadanie | Kto |
+|---|---------|-----|
+| R4 | Testy kamerą (E2E) — checklist niżej | Paweł |
+| R5 | ToS + Privacy Policy — treść prawnicza (zapytanie wysłane 28.06) — podmienić w PrivacyPolicyDialog (MainActivity.kt) | Prawnik |
+| GP1 | Keystore — wygenerować klucz podpisujący | Paweł + Claude |
+| GP2 | Konto Play Console ($25) | Paweł |
+| GP3 | Firma testerów (12-16 kont Google) | Paweł |
+| GP4 | Build podpisanego .aab | Claude, po GP1 |
+| GP5 | Wgranie .aab + screenshotów + opisu | Paweł, po GP4 |
+| GP6 | Closed Testing 14 dni, 12+ testerów | Paweł |
 
----
-
-## GOOGLE PLAY — zadania przed publikacją
-
-| # | Zadanie | Kto | Status |
-|---|---------|-----|--------|
-| GP1 | Keystore — wygenerować klucz podpisujący | Paweł + Claude Code | 🔲 gdy Paweł gotowy |
-| GP2 | Konto Play Console ($25, jednorazowo) | Paweł | 🔲 |
-| GP3 | Firma testerów (12 lub 16 kont Google) | Paweł | 🔲 |
-| GP4 | Build podpisanego .aab | Claude Code | 🔲 po GP1 |
-| GP5 | Wgranie .aab + screenshotów + opisu | Paweł w Play Console | 🔲 po GP4 |
-| GP6 | Closed Testing 14 dni z 12+ testerami | Paweł | 🔲 |
-
-Screenshoty gotowe: `Google_Play/01_HUB.jpg` … `06_ZABEZPIECZENIA.jpg`
-Szczegóły: `Google_Play/RELEASE_CHECKLIST.md`
+Screenshoty gotowe: `Google_Play/01_HUB.jpg`…`06_ZABEZPIECZENIA.jpg`. Checklist: `Google_Play/RELEASE_CHECKLIST.md`. Keystore nie istnieje.
 
 ---
 
-## WAŻNE — zrobić przed lub tuż po release
+## W TOKU — migracja AnchorEngine → StructuralEngine (gałąź `feature/entity-migration`)
 
-| # | Zadanie | Dlaczego ważne | Agent |
-|---|---------|---------------|-------|
-| ~~W1~~ | ~~**Testy 6.2 — JUnit SessionStore + Deanonymizer**~~ | ✅ 23 testy (DeanonymizerTest 13 + SessionStoreSerializationTest 10) | ~~Claude Code~~ |
-| ~~W2~~ | ~~**S7 — email wykrywany jako NUMER**~~ | ✅ fix a3d4cf1 (22.06) | ~~Claude Code~~ |
-| ~~W3~~ | ~~**IMAGE-REDACT F2**~~ | ✅ Cursor — kolejność redakcja obrazu → OCR tekstu (sesja 28.06) | ~~Cursor~~ |
-| ~~W4~~ | ~~**Audyt RODO/security**~~ | ✅ AUDIT-05 (Log.d guard x3) + AUDIT-05b (debug button) + przegląd 10 punktów | ~~Claude Code~~ |
-| ~~W5~~ | ~~**Smoke E2E automated**~~ | ✅ SmokeE2ETest.kt — 3 testy instrumented | ~~Claude Code~~ |
-| ~~W6~~ | ~~**BUG-SS-1/SS-3**~~ | ✅ b65d560 (UPSERT), b9eae1c (IO thread) | ~~Claude Code~~ |
+Cel (brief v2, `AnchorEngine_brief_v2.docx`): AnchorEngine ma być czystym zbieraczem resztek, nie duplikować wzorców z StructuralEngine/NameEngine. Plan pełny: pamięć `project_anchor_migration_plan.md`.
+
+**Krok bieżący — refaktor ADRES kod+miasto** (plan 8-krokowy, kroki 0-2 zrobione):
+- Krok 3: usunąć `CITY_POSTAL` z `NameEngine.applyCityLookup`
+- Krok 4: usunąć duplikat #597 z `ADDRESS_PATTERNS`
+- Krok 5: usunąć A.11b z `AnchorEngine.kt` — **potwierdzone: nadal w kodzie (linia ~284)**
+- Krok 6: guard A.11c/A.11d na osierocony kod pocztowy w tej samej linii
+- Krok 7 (opcjonalnie): OcrNormalizer "Warszawa80"→"Warszawa 80"
+- Krok 8: audyt Rundy 2 ADDRESS (wyłączyć kod+miasto, zostawić ulicę/budynek)
+
+**Stan niezacommitowany** (od `abff69e`): `AnchorEngine.kt`, `OcrNormalizer.kt`, `PseudonymEngine.kt`, `StructuralEngine.kt`, `PseudonymEngineTest.kt`. Zawierają już (**potwierdzone w kodzie**): `OCR_NIP_POSTAL_GLUE`, guard kierunku 1 `postalCityCodeToNameRe`, fix `OCR_PESEL_SPLIT`. Plik testowy `testy/test_kod_pocztowy_migracja.txt` nieścommitowany.
+
+**Czeka na:** testy jednostkowe (Paweł) + test ręczny pliku wyżej na telefonie → potem commit, potem krok 3.
+
+Po kroku 8: migracja wyższego ryzyka (KWOTA A.9, OSOBA-tytuł A.10, IBAN A.6, DATA A.7) — tylko tam, gdzie ręczny test na telefonie pokaże realny problem (nie na zapas, patrz `feedback_real_test_methodology.md`).
 
 ---
 
-## NISKIE — po release lub okazjonalnie
+## OTWARTE BUGI SILNIKA
 
-| # | Zadanie | Ocena |
-|---|---------|-------|
-| N1 | BUG-PESEL-OCR-SILNIK (dok. doc_00006) | Wymaga konkretnego skanu. Nie blokuje. |
-| N2 | AUDIT-04 — duplikat wzorców IBAN | Kosmetyka silnika, zero wpływu na wynik |
-| N3 | BUG-DOCX-PARTIAL — brak nagłówków/stopek | Edge case, większość PII jest w body |
-| N4 | BUG-PDF-LIMIT — PDF >10 stron bez blokady | Można wyświetlić ostrzeżenie zamiast fixować |
+| Bug | Opis | Priorytet |
+|-----|------|-----------|
+| BUG-FP-ULICE-IMIENIE | "Jana Pawła II" / "Zielona Góra" → OSOBA zamiast adres. PII i tak zakryte. | niski |
+| BUG-ADRES-MYSLNIK | "ul. Gdańska-Sopocka 3/1" — myślnik łamie wzorzec nazwy ulicy | niski |
+| BUG-ADRES-BRAK-PREFIKS | Ulica bez "ul."/"al." nie maskowana (sufit OCR dla większości przypadków) | niski |
+| AUDIT-03 | CATCHALL `\d{8,}` (StructuralEngine.kt:640) sprawdza sumę kontrolną PESEL/NIP dla wszystkich długich ciągów cyfr, nie tylko PESEL/NIP — **potwierdzone nadal w kodzie** | średni |
+| RESEARCH-3 (połowa) | `assessQuality` liczy próg <0.7 (OcrNormalizer.kt:916) ale brak `shouldReject` dla confidence<0.5 + odrzucenie w UI — **potwierdzone brak w kodzie** | niski |
+
+---
+
+## OTWARTE ZADANIA UI
+
+- **ImageRedactionScreen.kt nie używa LynxColors/LynxSpacing/LynxShapes** — potwierdzone: 0 wystąpień. Ekran redakcji obrazu wizualnie odstaje od reszty appki (Material3 gołe przyciski zamiast Lynx design system). Zakres: sticky footer z 2 akcjami, karty/chipy zamiast Switch+label, przenieść na wzorzec z `LibraryScreen.kt`/`PseudonymResultPanel.kt`. Agent: Cursor.
+- BUG-WARMSTART-CLEAR (niski) — `onNewIntent` brak `LynxPendingShare.clear()` dla `ACTION_MAIN`.
+
+---
+
+## NISKIE / DO WERYFIKACJI PRZY OKAZJI (nie zweryfikowane w tym remanencie, samo przeniesione)
+
+- FP-FRAGMENTY-OCR (NameEngine) — fragmenty słów / złamane linie jako OSOBA
+- BUG-02 (OutputGuard) — cicha degradacja gdy LookupTables niezainicjowane, stan niepewny
+- BUG-05 (StructuralEngine) — tablice rejestracyjne FP na kodach produktów, stan po ostatnich wersjach nieznany
+- BUG-08 (PseudonymEngine) — propagacja nazwisk nie łapie członu po tokenie ("dr OSOBA_003 Lewandowska-Karpowicz")
+- BUG-29 (NameEngine) — priorytet flag: niekontekstowe wypychają kontekstowe — może być by design
+- BUG-BENCH-PUBLIC — benchmark zapisuje do `getExternalFilesDir` (app-scoped, nie w pełni "publiczny" jak pierwotnie opisano) — tylko narzędzie deweloperskie
+- BUG-EXPORT-DEPSEUDO — depseudonimizowany tekst eksportowany bez ostrzeżenia
+- N1 BUG-PESEL-OCR-SILNIK — wymaga konkretnego skanu do diagnozy (doc_00006)
+
+---
+
+## KAMPANIA TESTÓW KAMERĄ (checklist Paweł, R4, ~15 min)
+
+1. **Zdjęcie dokumentu** → share do LynxMask → twarz zblurowana domyślnie → zapis do biblioteki → podgląd
+2. **Ręczny prostokąt** → zaznacz podpis → blur → usuń blur → świadome odkrycie → share JPEG
+3. **OCR z aparatu** → tekst z PESEL/NIP → Review → pseudonimizuj → brak gołego numeru w podglądzie → depseudo przywraca
+4. **Realny dokument** (nie syntetyczny) — faktura, umowa — jedno zdjęcie telefonem → krytyczne PII zamaskowane
+5. **Schowek** → skopiuj tekst z danymi → kafelek LynxMask → ostrzeżenie → zapis
+6. **Odzyskiwanie hasła** → zapomniałem hasła → klucz odzyskiwania → nowe hasło → biblioteka OK
+
+Zablokuj release do momentu: pkt 1-4 bez regresji na Samsung SM-A536B (Android 16).
 
 ---
 
@@ -62,45 +93,36 @@ Szczegóły: `Google_Play/RELEASE_CHECKLIST.md`
 |--------|-------------|
 | Folder scan na mobile | Na mobile nikt nie trzyma folderów z dokumentami. Wartość = desktop CLI (już planowane) |
 | Regeneracja klucza odzysk. (v2) | Wymaga starego hasła + klucza. Mało użytkowników tego dotknie. v2. |
-| BUG-LOG-OCR / BUG-BENCH-PUBLIC | Tylko narzędzia deweloperskie, nie dotykają produkcji |
-| BUG-EXPORT-DEPSEUDO ostrzeżenie | Estetyczny brakujący komunikat, nie utrata danych |
+| BUG-LOG-OCR / BUG-BENCH-PUBLIC jako blokery | Tylko narzędzia deweloperskie, nie dotykają produkcji |
 | Folder CLI na mobile | j.w. — to zadanie desktopowe |
 
 ---
 
-## KAMPANIA TESTÓW KAMERĄ (checklist dla Pawła — R4)
+## Potwierdzone zamknięte w remanencie 04.07.2026 (dla śladu — czemu zniknęły z BACKLOG/TODO_silnik/MASTER/CURSOR_BRIEF)
 
-Zgodnie z BACKLOG §Strategia — E2E C ręczne (~15 min):
-
-1. **Zdjęcie dokumentu** → share do LynxMask → twarz zblurowana domyślnie → zapis do biblioteki → podgląd
-2. **Ręczny prostokąt** → zaznacz podpis → blur → usuń blur → świadome odkrycie → share JPEG
-3. **OCR z aparatu** → tekst z PESEL/NIP → Review → pseudonimizuj → brak gołego numeru w podglądzie → depseudo przywraca
-4. **Realny dokument** (nie syntetyczny) — faktura, umowa — jedno zdjęcie telefonem → krytyczne PII zamaskowane
-5. **Schowek** → skopiuj tekst z danymi → kafelek LynxMask → ostrzeżenie → zapis
-6. **Odzyskiwanie hasła** → zapomniałem hasła → klucz odzysk. → nowe hasło → biblioteka OK
-
-Zablokuj release do momentu: pkt 1–4 bez regresji na Samsung SM-A536B (Android 16).
+- P1 AUTH klucz odzyskiwania — `RecoveryKeyManager.kt` istnieje, w pełni podpięty w `LoginScreen.kt` (isKeySet/generateKey/saveKey/verify/clearKey)
+- AUD-M06 security-crypto → `1.0.0` stable (build.gradle.kts:89)
+- Testy 6.2 SessionStore/Deanonymizer — pliki testów istnieją
+- BUG-04 UserDictionary `_loaded` — kod już nie ustawia `_loaded=true` przy błędzie ładowania
+- BUG-LOG-OCR — DebugLogBuffer już nie loguje treści OCR, tylko długość/liczbę linii
+- BUG-LIB-6 — CreateDocument/MediaStore potwierdzone w kodzie
+- CURSOR_BRIEF nip_glued + postal_regres (3 pliki brief usunięte, zawartość zweryfikowana) — fixy potwierdzone w kodzie (niescommitowane, patrz sekcja migracji wyżej)
+- BUG-07 generateFeminineVariants — mapowanie końcówek już rozszerzone poza -ski/-cki/-dzki
+- UI nawigacja (epik "UL") — zamknięty 29.06, potwierdzone przez właściciela
+- Guard UI znikający przycisk "Nie maskuj" — naprawiony 01.07 (Modifier.weight)
+- BUG-STALY-NUMER — zamknięty i zmergowany do master (b6f8a00)
 
 ---
 
-## Co zamknięto w sesji 28.06 (cd.)
+## ŚRODOWISKO — wymagane przed gradlew w CMD
 
-✅ BUG-SCAN-ROUTE — looksLikeIdentityDocument() false positive z PESEL (fix 932b20a)
-✅ BUG-DEPSEUDO-AUTO — auto-wybór najnowszej sesji gdy brak SESJA_ w tekście AI (fix 932b20a)
-✅ AUDIT-05 — Log.d bez BuildConfig.DEBUG guard (GuardAllowlist, LookupTables, UserDictionary) (fix 7044b4d)
-✅ AUDIT-05b — "Kopiuj logi diagnostyczne" tylko w debug build (fix ce6f9be)
-✅ Privacy Policy — dialog wbudowany w apce, dostępny z LoginScreen i SecurityModal (fix 1640c0f)
-✅ Cursor UI — nawigacja, LynxScreenHeader, LynxNavExtras, ML Kit skalowanie (fix a71b477)
-✅ Google Play — screenshoty 6 szt. w Google_Play/, RELEASE_CHECKLIST.md
-✅ Zweryfikowano: S10, AUD-M06, BUG-EMAIL-TLD1, N3(loop), S11 — wszystkie już zamknięte w poprzednich sesjach
+```
+set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
+set PATH=%JAVA_HOME%\bin;%PATH%
+```
 
-## Co zamknięto w sesji 29.06 — regres po refaktorze Cursora
-
-✅ BUG-PICKER-URI — filePickerLauncher: setType() kasował intent.data → setDataAndType() (MainActivity.kt)
-✅ BUG-ONADDTODICT — onAddToDict usunięte z onMask RED hitów przez Cursora (PseudonymResultPanel.kt)
-✅ BUG-ENSUREREADY — finishWithText wywoływał pseudonymize bez LynxAppInit.ensureReady → zero guard hitów przy zimnym starcie (IncomingDocumentFlow.kt)
-✅ BUG-INIT-ORDER — Cursor zmienił setContent przed initem → splash znikał za wcześnie; przywrócono starą logikę (MainActivity.kt)
-✅ BUG-SINGLETASK — ShareTargetActivity singleTask→singleTop; TXT/MD/PDF nie pokazywały LynxMask w share sheet (AndroidManifest.xml)
-✅ BUG-MIME-TEXT — dodano text/* wildcard do filtrów manifest; MD pliki nie trafiały do LynxMask (AndroidManifest.xml)
-✅ BUG-IMAGE-ROUTE — classifyImageInput zawsze zwracał CARD zamiast PAGE → zdjęcia dokumentów tekstowych szły do IMAGE-REDACT zamiast OCR (ImageDocumentRoute.kt)
-✅ BUG-PAGE-BRANCH — routeImageInput brak gałęzi PAGE → ścieżka pseudonimizacji (IncomingDocumentFlow.kt)
+Przed benchmarkiem po zmianie kodu — wymagany reinstall:
+```
+.\gradlew :app:installDebug :app:installDebugAndroidTest
+```
+`run_benchmark.bat` odpala Paweł, nie Claude.

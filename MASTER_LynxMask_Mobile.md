@@ -9,6 +9,8 @@
 
 Nie pisz od nowa. Odznaczaj DONE, dopisuj nowe. Najnowszy dokument wygrywa przy konflikcie. Ground truth z git/Claude Code wygrywa nad dokumentem.
 
+**Uwaga (04.07.2026):** ten plik to archiwum decyzji i historii — NIE lista zadań. Otwarte bugi/zadania wyłącznie w `TODO.md` (jeden plik, zawsze aktualny). Sekcje 🔲 poniżej mogą być nieaktualne (część już zamknięta, zweryfikowana w remanencie 04.07) — nie traktować jako źródło prawdy o tym co otwarte.
+
 **Wersjonowanie (od 20.06):** jeden numer wersji w nagłówku, nie osobne pliki per wersja — to wciąż jeden, nadpisywany plik. Numer rośnie przy każdym większym scaleniu/checkpoincie (koniec sesji, większa decyzja). Bump wersji = jedna linia w nagłówku, nie osobny rejestr.
 
 \---

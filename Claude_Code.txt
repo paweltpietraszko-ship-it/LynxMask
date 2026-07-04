@@ -2,88 +2,66 @@ CLAUDE CODE — NOTATKI MIĘDZY SESJAMI
 LynxMask Mobile | C:\Projects\LynxMask\
 ================================================================================
 
-## SESJA 2026-06-25 (cd. — wieczór)
+## SESJA 2026-06-29 (cd. — routing obrazów)
 
 ### Commity
-- 7e4bd95  fix: ImageRedact blur pixelate + słownik w detekcji + re-detect po dodaniu słowa
-- f1bf622  chore: cleanup root — usunięto śmieci AI, stara mapa, test_ocr_normalizer_hard
-- fe527a4  chore: dodaj CLAUDE.md — pamięć projektu dla wszystkich instancji Claude Code
-- 7e8b18e  fix: usun zbędny key(regionPreviewKey) z Image + fix bitmap recycle
+- 274be12  fix: naprawa regresy po refaktorze Cursora (sesja 29.06) — pierwsze poprawki
+- 1fd32cf  fix: routing obrazow — domyslnie OCR, CARD tylko gdy markery + krotki tekst (<400 zn.)
 
 ### Co zrobiono
-1. **ImageRedactionPipeline.kt** — trzy zmiany:
-   - BLUR_DIVISOR 12→8, filter=false w createScaledBitmap (pixelate zamiast smooth blur)
-   - detectTextLinesAsRegions() + detectFacesAndTextAsRegions() dostały parametr userDict
-   - PseudonymEngine.pseudonymize() teraz dostaje userDictionary = userDict
-   - Dodano log [BlurRegion] z wymiarami
+Cała sesja poświęcona na naprawę routingu skanów obrazów. Problem: po refaktorze Cursora WSZYSTKIE skany (umowy, faktury, harmonogramy, dokumenty szpitalne) szły do IMAGE-REDACT zamiast OCR.
 
-2. **ShareTargetActivity.kt** — wszystkie 3 ścieżki ImageRedact:
-   - UserDictionary.load(context) przed detekcją
-   - detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
-   - Ścieżka file picker: naprawiono na loadBitmapExifAware() (wcześniej ignorowała EXIF)
+Diagnoza przez eliminację:
+1. Pieczątki wykrywane jako twarze (face detection) → usunięto faceCount z routingu
+2. Markery zbyt szerokie ("rzeczpospolita polska", "n rej", "identification number") → usunięto
+3. Naklejki/barcody → OCR zwracał mało znaków → system uznawał za zdjęcie → IMAGE-REDACT
 
-3. **ImageRedactionScreen.kt** — cztery zmiany:
-   - Po dodaniu słowa FIRMA/OSOBA: natychmiast re-detect tekstu z nowym słownikiem
-   - To samo po akceptacji OCR suggestion card
-   - Usunięty zbędny key(regionPreviewKey) z Image composable (race condition)
-   - Fix memory leak: cropped bitmap w osobnym try/finally
+Rozwiązanie (filozofia Pawła: "dokument musi udowodnić że jest kartą"):
+- STARE: default = CARD, PAGE tylko gdy dowiedzione
+- NOWE: default = PAGE, CARD tylko gdy looksLikeCardDocument AND ocrCharCount < 400
 
-4. **Sprzątanie** — usunięto: AgentAudit.txt, AuditLibrary.txt, Codex.txt, Cursor.txt,
-   Claude_Code.txt (stary), benchmark_report.txt, 1000005989.jpg, BRIEF_Cursor_Onboarding_Copy.md,
-   MAPA_ARCHITEKTURY_LynxMask_mobile_v2.md, tests/test_ocr_normalizer_hard.txt
+### Zmiany kodu
+- **ImageDocumentRoute.kt**: classifyImageInput() — nowa logika, CARD_DOC_MAX_OCR_CHARS=400
+  - Usunięto: faceCount z routingu, MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE, zbyt szerokie markery
+  - Usunięto enum: AMBIGUOUS, PHOTO (były martwe)
+- **IncomingDocumentFlow.kt**: usunięto ImageRouteChoiceContent, ImageRouteChoice, martwe gałęzie when(kind)
+- **ImageRedactionPipeline.kt**: setMinFaceSize 0.005f → 0.10f
+- **ImageRouteTest.kt**: 5 nowych testów, 3 zaktualizowane
 
-5. **CLAUDE.md** — stworzony w root projektu, zastępuje pamięć między sesjami i kontami
+### Margines świadomy
+Paszport z ostrym skanem (>400 zn. OCR) może pójść do PAGE zamiast CARD.
+PII i tak chronione — inny wygląd wyniku (tekst zamiast piksele).
 
-### Stan bugów ImageRedact po sesji
-✅ Słownik użytkownika teraz używany w auto-detekcji PII
-✅ Re-detect po dodaniu słowa — słowo maskowane natychmiast bez re-share
-✅ File picker ścieżka — EXIF rotation naprawiona
-✅ key(regionPreviewKey) race condition usunięty
-🔲 Cały tekst maskowany zamiast tylko PII — Cursor pracuje (prompt wysłany)
-🔲 Blur twarzy niewidoczny (ramka) — Cursor pracuje (ten sam prompt)
+### Stan testów
+ImageRouteTest — NIE uruchomiony przez Pawła w tej sesji. Odpalić na początku następnej.
 
-### Kolejka ogólna (stan po sesji)
-🔲 Testy 6.2: JUnit SessionStore + Deanonymizer
-🔲 S10 — TELEFON nie w tokenMap (wyciek PII)
-🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0 (wymaga weryfikacji wersji stable)
-🔲 BUG-PESEL-OCR-SILNIK — wymaga OCR z telefonu (niskie)
-🔲 Audyt RODO/security (Cursor)
-🔲 Prawnik: ToS, Privacy Policy
-🔲 Google Play: konto, screenshoty, opis
-🔲 Express Mode (koncepcja zapisana w CLAUDE.md)
+### Co otwarte
+🔲 R4 — testy kamerą w toku
+🔲 R5 — treść Privacy Policy od prawnika
+🔲 GP1-GP6 — Google Play (keystore + konto + .aab)
+🔲 BUG-WARMSTART-CLEAR — onNewIntent brak LynxPendingShare.clear() (niski priorytet)
+🔲 BUG-PESEL-OCR-SILNIK — niskie
 
-### Uwagi techniczne
-- Build: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && ./gradlew :app:assembleDebug
-- gradlew PowerShell nie działa (problem z ścieżką) — używać Bash
-- UserDictionary.entries jest thread-safe (@Synchronized getter) — bezpieczne do przekazania
-- ImageRedactionScreen.kt był modyfikowany przez Cursora między commitami — sprawdź aktualny stan przed edycją
-================================================================================
 
-================================================================================
-## SESJA 2026-06-28 (cd.)
+## SESJA 2026-06-30 — AnchorEngine bugi z ekranu
 
-### Commity
-- 932b20a  fix: skany dokumentów szły do ImageRedact + depseudo auto-wybór sesji
+### Commity sesji (gałąź feature/anchor-engine)
+- fa89bc1 — A.2b EMAIL orphan domain (@domain.tld po istniejącym tokenie)
+- d1853d3 — TOKEN_RE trailing \b → (?!\d) (OSOBA_011_001 biały token)
+- 8e7cac3 — A.5b lookbehind/lookahead, A.6 IBAN no newline, A.3 no newline
+- b5c8aa3 — applyAll + PESEL standalone: spacja przed/po tokenie gdy sąsiad to \w
 
-### Co zrobiono
+### b5c8aa3 — spacja wokół tokenu w applyAll
+Naprawia EMAIL_001EMAIL_006 (biały, nieklikalny token).
+applyAll i PESEL fold: gdy char przed matchem to litera/cyfra/_ → dodaj spację
+przed tokenem; gdy char po matchu to litera/cyfra/_ → spacja po tokenie.
+Wynik: EMAIL_001 EMAIL_006 zamiast EMAIL_001EMAIL_006.
 
-**BUG-SCAN-ROUTE** (regresja z sesji 25-28.06):
-- `looksLikeIdentityDocument()` miała warunek który łapał każdy dokument z "PESEL" jako keyword +
-  11-cyfrowym ciągiem (faktury, umowy, zlecenia z polem "PESEL nabywcy:") → routing do ImageRedact
-- Fix: usunięto warunek PESEL, zostały tylko markery fizycznych dok. tożsamości (dowód, paszport, PJ)
-- Plik: ShareTargetActivity.kt:125-128
-- Testy: +2 (ImageRouteTest — faktura i umowa z polem PESEL)
-
-**BUG-DEPSEUDO-AUTO** (link AI→sesja):
-- AI nie zwraca SESJA_ kodu bo brak instrukcji. Fingerprint (szuka tokenów w odpowiedzi AI)
-  też nie działa — AI odpowiada własnymi słowami bez cytowania tokenów.
-- Fix: auto-wybór najnowszej sesji gdy brak auto-detekcji (common case pokryty)
-- Sync `selectedSessionId` z fingerprint gdy tokeny znalezione w odpowiedzi
-- Plik: DepseudonymizationScreen.kt:119-135
-
-### Stan po sesji
-🔲 BUG-SCAN-ROUTE: naprawiony commit 932b20a
-🔲 BUG-DEPSEUDO-AUTO: naprawiony (auto-wybór), długoterminowo: instrukcja AI w kopii tekstu
-
-### Testy do odpalenia
-Odpal ImageRouteTest (10 testów) — zielone.
+### Stan testów po sesji
+AnchorEngineTest — odpalić. PseudonymEngineTest — odpalić.
+NIE zmeregowane do main — czeka na benchmark + kamery.
+- 7b68825 — OcrNormalizer krok 0a: rozdzielanie sklejonych emaili (OCR bez newline)
+  Regex: lista TLD (pl|com|net|...) + lookahead alfanumeryk→@. Wstawia \n po TLD.
+- a12f54f — split sklejonych emaili przeniesiony do PseudonymEngine.kt (po normalizacji)
+  OcrNormalizer krok 0b sam tworzył sklejenia — split musi być POZA normalizatorem.
+- f56e81f — telefony: +48 osobny wzorzec (bez \b), tel./kom. priorytet, cleanup orphanów w AnchorEngine

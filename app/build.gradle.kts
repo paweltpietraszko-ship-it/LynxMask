@@ -3,13 +3,11 @@
 //   - Usunięto CameraX (4 zależności): camera-core, camera-camera2,
 //     camera-lifecycle, camera-view — ścieżka kamery usunięta (Zadanie 4).
 //     Bez tych bibliotek APK zmniejsza się o ~1.5 MB.
-//   - Usunięto face-detection:16.1.7 (BUG-25) — biblioteka nigdy nie była
-//     używana w kodzie (brak wywołań FaceDetection.*); zwiększała APK bez celu.
+//   - face-detection:16.1.7 — IMAGE-REDACT F0 (ImageRedactionPipeline.detectFacesAsRegions)
 //   - Pozostawiono: ML Kit text-recognition (używany w ShareTargetActivity OCR),
 //     play-services-mlkit-document-scanner (GMS Document Scanner — ścieżka share),
 //     SQLCipher, coroutines. Bez zmian.
-//   - Dlaczego bezpieczne: CameraX i face-detection nie są importowane w żadnym
-//     pliku który pozostaje po usunięciu CameraScreen.kt i OcrAnalyzer.kt.
+//   - Dlaczego bezpieczne: CameraX nie jest importowane (CameraScreen usunięty).
 
 plugins {
     alias(libs.plugins.android.application)
