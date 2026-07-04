@@ -1,6 +1,6 @@
 # MASTER — LynxMask Mobile
 
-**Wersja:** 1.4 (22.06.2026 — decyzja P1: warstwa obrazu blur twarzy + podpis)
+**Wersja:** 1.5 (05.07.2026 — migracja ADRES: AddressEngine v0, Faza A+B, odmiana miast, saga PLN)
 **Funkcja:** jedno źródło prawdy dla platformy Mobile (Android / Kotlin). Z tego pliku wycinasz pojedynczy brief naraz dla Claude Code.
 **Data konsolidacji:** 20.06.2026
 **Źródła:** BRIEF\_Sonet\_18\_06\_kompletny.md (18–19.06, najnowszy stan silnika + benchmark), TODO\_silnik.md (20.06, OCR + silnik), TODO\_LynxMask\_mobile\_12\_06 (13.06, UI/bezpieczeństwo/decyzje — recall NIEAKTUALNY), MAPA\_ARCHITEKTURY\_mobile\_v2 (09.06, szkielet OK, wersje martwe), raport sesji 18–19.06, odpowiedzi Claude Code z 20.06.
@@ -808,4 +808,93 @@ Potwierdzono naprawione (agent widział aktualny kod): BUG-KEEP-HIDDEN, BUG-REME
 **Zamknięte 23.06 sesja 2:** AUDIT-01 (mlKitConfidence gubiony na 2 ścieżkach ACTION_VIEW/ACTION_SEND — destrukturyzacja Triple→Pair; commit 31a3e03).
 
 **Następna sesja: UL (biblioteka dokumentów, sekcja 24).**
+
+\---
+
+## 26. MIGRACJA ADRES — AnchorEngine → AddressEngine (25.06–05.07.2026)
+
+**Dopisane 05.07 na wyraźną prośbę Pawła** — dotąd cały ten łańcuch decyzji żył wyłącznie w
+pamięci Claude (poza repo), bez kopii tutaj. Ryzyko: aktualizacja narzędzia mogła to wymazać
+bezpowrotnie. Ten wpis to trwała kopia najważniejszych faktów, nie zamiennik pamięci.
+
+### Odkrycie: AnchorEngine łamał własną specyfikację (01.07)
+
+Oryginalny brief (`AnchorEngine_brief_v2.docx`) opisuje AnchorEngine jako **czysty zbieracz
+resztek** — działa WYŁĄCZNIE na tekście po Rundzie 1 (StructuralEngine+NameEngine), nigdy jako
+równoległy silnik detekcji. Kod miał własne duplikaty wzorców (KWOTA A.9, ADRES A.11, OSOBA-tytuł
+A.10) — odstępstwo od specyfikacji, nie świadomy fallback. Matryca kotwic z briefu (sekcja 6):
+każda kotwica to jawny sygnał intencji autora (słowo kluczowe, znak `@`, sufiks waluty, kontekst
+w oknie, kotwica wsteczna) — NIGDY sam kształt tekstu bez sygnału. Jedyny wyjątek: PESEL z
+poprawną sumą kontrolną.
+
+### Decyzja: AddressEngine.kt — nowy skonsolidowany silnik ADRES (04.07)
+
+Po audycie Cursora (12 nakładających się reguł ADRES w 4 plikach, powtarzające się bugi: Zielona
+Góra→OSOBA, adresy rozbite na kilka tokenów) — zbudowany `AddressEngine.kt`, uruchamiany jako
+Warstwa 0b, **PRZED** NameEngine (żeby reguły imion nie zdążyły pociąć adresu). 5 bloków:
+STREET_CITY (ulica+numer+miasto bez kodu), STREET_NO_ZIP (ulica+numer bez kodu), STREET_FULL
+(ulica+numer+kod+miasto), POSTAL K1/K2/K3 (kod↔miasto), STREET_DICT (słownik ulic, zbieracz
+resztek — celowo na KOŃCU wewnątrz AddressEngine, nie na początku — luźne kotwice/słowniki
+bez wymogu prefiksu zawsze idą na koniec, inaczej kradną słowa precyzyjnym regułom).
+
+Flaga `USE_ADDRESS_ENGINE_V0 = BuildConfig.DEBUG` — aktywna w debug, docelowo `true` też w
+release po pełnym potwierdzeniu.
+
+### Faza A (testy) + Faza B (wyłączenie duplikatów) — ZROBIONE i potwierdzone (04–05.07)
+
+Faza A: `AddressEngineTest.kt` (testy jednostkowe silnika w izolacji) + test ręczny na telefonie
+— zielone. Faza B (strangler fig, decyzja Pawła 05.07: zamiast zgadywać z góry co jeszcze brakuje,
+wyłączyć duplikaty i zobaczyć co zostanie jawne): wyłączone pod `USE_ADDRESS_ENGINE_V0`:
+`ADDRESS_PATTERNS` (Warstwa 3d + Runda 2, `PseudonymEngine.kt`), `applyStreetLookup`
+(`NameEngine.kt`). NIE wyłączone: `applyCityLookup`/CITY_PREP (świadomie poza zakresem
+AddressEngine — "w Warszawie" zostaje w NameEngine), cały `AnchorEngine` A.11* (kotwica-fallback,
+nie duplikat silnika strukturalnego — inna kategoria niż ADDRESS_PATTERNS/applyStreetLookup).
+
+**Wynik: testy jednostkowe zielone, test ręczny bez regresu, benchmark bez regresu.**
+
+Benchmark 04.07 17:29 (stały) / 17:31 (fresh), dataset `ground_truth_lvl03.json`:
+- RECALL ogólny: 91,7% / 92,2% (próg ≥90% — OK)
+- RECALL krytyczne: 98,0% / 96,7% (próg ≥95% — OK)
+- **ADRES recall: 94,5% (52/55) / 96,6% (57/59)** — najlepszy wynik jaki dotąd notowano dla tej encji
+- Stały: zero blockerów. Fresh: 1 blocker (NIP `390-051-86-91` w doc_00009.png, OCR z nietypową
+  spacją w środku segmentu — nie wygląda na temat ADRES, do zbadania osobno)
+
+**Punkt powrotu:** git tag `checkpoint-adres-faza-b-2026-07-04` na commicie `747f32b`. Commity
+tego wątku: `d50b252` (AddressEngine v0 + testy Fazy A), `ae2881e` (odmiana miast + seria PLN),
+`747f32b` (Faza B), `b0883c2` (sprzątanie plików rootu).
+
+### Odmiana miast dwuwyrazowych (Morfeusz2, 05.07)
+
+`cities_forms.json` miał pełną odmianę TYLKO dla miast jednowyrazowych — "w Jeleniej Górze" było
+całkiem niezamaskowane. Nowy skrypt `generate_city_forms_full.py`: 3 strategie dopasowania
+rodzaju gramatycznego (przymiotnik+rzeczownik jak "Zielona Góra", rzeczownik+przymiotnik jak
+"Dąbrowa Górnicza", przymiotnik+przymiotnik jak "Biała Podlaska"). +30433 nowe formy z 7110 nazw
+dwuwyrazowych. `city_surname_overlap.json` przeliczony (44→51 słów). Świadomie odłożone (TODO.md):
+~317 nazw bez rozstrzygnięcia, ~194 nazwy 3+-wyrazowe, przymiotniki odmiejscowe ("jeleniogórska").
+
+### Saga PLN — meta-lekcja o duplikacji logiki walidacji (05.07)
+
+Jeden testowy przypadek ("PLN 1234", skrót waluty mylony z adresem/numerem) wymagał **7 osobnych
+poprawek w 4 różnych plikach** (AddressEngine.kt, StructuralEngine.kt ×3 miejsca, NameEngine.kt,
+OcrNormalizer.kt) — bo ta sama logika walidacji ("czy to naprawdę adres/numer czy przypadkowy
+kształt") żyje osobno w każdym silniku zamiast w jednym miejscu. Jeden z bugów okazał się realną
+kolizją DANYCH, nie logiki: skrót "płn" (od ulicy "Północna") po ASCII-foldowaniu (ł→l) w
+`LookupTables` koliduje ze skrótem waluty PLN. To bezpośrednio uzasadnia i przyspiesza Fazę B —
+mniej miejsc z duplikowaną logiką = mniej takich sag w przyszłości. Ostatecznie: dodano
+symetryczny wzorzec `TOKEN_KWOTA` (waluta+liczba, obok istniejącego liczba+waluta) — decyzja
+Pawła, spójność ważniejsza niż to czy kwota sama w sobie jest PII.
+
+**Poboczny fix zgodności ze specyfikacją:** `AnchorEngine.kt` A.11 (kotwica `ul./al./os./pl.`)
+liczyła dowolne znaki do limitu 60 zamiast zatrzymywać się na granicy klasy znaku (spacja/koniec
+liter-cyfr) — brief v2 sekcja 6.4 mówi wprost "prefiks + 2-3 tokeny". Naprawione zgodnie ze
+specyfikacją, nie wymyślone od nowa.
+
+**Znany, odłożony edge case (TODO.md):** wzorzec KWOTA liczba+waluta może "ukraść" cyfrę
+sąsiedniemu słowu w gęsto upakowanym tekście bez separatorów (np. "PIN 1234 PLN 1234") — rzadkie
+w prawdziwych dokumentach, ogólny fix trudny bez listy słów kontekstowych.
+
+**Następna sesja:** zbadać blocker NIP z benchmarku fresh (doc_00009.png), potem rozważyć Fazę C
+(doszlifowanie edge case'ów ADRES, lista w TODO.md) — dopiero po tym ewentualnie dotknięcie
+AnchorEngine A.11* (nie wcześniej, nie bez benchmarku potwierdzającego że AddressEngine dogonił
+recall).
 
