@@ -8,21 +8,51 @@
 
 ---
 
-## ŚREDNI — NUMER_FAKTURY: brak wzorca dla "Nr FV.../.../..." na końcu dokumentu (06.07, POTWIERDZONY realny bug)
+## ŚREDNI — NUMER_FAKTURY: maskowanie urywa się w środku identyfikatora z ukośnikami (06.07, POTWIERDZONY realny bug — DLA CURSORA)
 
 `doc_00010` (staly, lvl0 perfect scan) — ground truth `numer_faktury=FV/2025/12/1828`. OCR
 (czyste, koniec dokumentu): `"...Wystawił/a: Odebrała: FAKTURA VAT Nr FVI2025/12/1828"`.
-**Potwierdzone w najnowszym benchmarku (po wszystkich dzisiejszych fixach): ŻADEN token nie
-pokrywa tej wartości** — nie ma jej w FP-liście, nie ma nigdzie. To nie artefakt benchmarku
-(w przeciwieństwie do UMW/VAT niżej w historii dnia) — silnik w ogóle nie próbuje tego
-zamaskować. Podejrzenie: fraza "Wystawił/a: Odebrała:" tuż przed (etykiety podpisu) może
-blokować/konsumować kontekst zanim dotrze do "FAKTURA VAT Nr ...", albo brakuje wzorca
-NUMER dla kształtu "Nr <litery><cyfry>/<cyfry>/<cyfry>" w tej konkretnej pozycji (koniec
-dokumentu, po etykietach podpisu). **Start następnej sesji: zdiagnozować w StructuralEngine/
-AnchorEngine dlaczego to nie łapie — dobry kandydat dla Cursora** (interakcja wielu wzorców,
-nie pojedynczy regex).
+
+**Test ręczny Pawła na telefonie (06.07 wieczór) — dokładny obraz błędu:**
+NUMER maskuje tylko fragment do PIERWSZEGO ukośnika. Sam ten pierwszy ukośnik zostaje jawny —
+ani NUMER, ani Guard go nie obejmują (nie zamaskowany, nie oflagowany, nikt). Reszta
+(`12/1828`) zostaje jawna i dopiero Guard oflagowuje ją żółtym (ostatnia deska ratunku
+zadziałała częściowo — wykrycie bez maskowania).
+
+Automatyczny benchmark (ten sam dokument) wcześniej pokazywał ZERO tokenu w ogóle — czyli
+zachowanie mogło się różnić między przebiegami/kompilacjami, albo benchmark i ręczny test
+widziały różny stan. Nie zakładać które jest "prawdziwsze" — zweryfikować oba na tej samej,
+świeżo zainstalowanej wersji.
+
+**Kandydaci regexów do sprawdzenia** (StructuralEngine.kt, różne dozwolone liczby segmentów
+ukośnikowych — możliwe że kolejność/pierwszeństwo między nimi jest źródłem problemu):
+- linia 597: `[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10}){0,2}` (identyfikatory
+  alfanumeryczne, max 3 segmenty po literach)
+- linia 605-607: wzorzec sygnatury `[A-Z0-9]{1,8}(?:/[A-Z0-9]{1,8}){2,}` (min. 3 segmenty,
+  bez górnego limitu — teoretycznie powinien objąć całość)
+- linia 644: `[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}` (sygnatura z odstępem, inny kształt)
+- linia 445: wzorzec z kontekstem "nr faktury"/"faktura nr" — wymaga DOKŁADNIE tej sekwencji
+  słów; nasz tekst ma "FAKTURA VAT Nr" (wtrącone "VAT" łamie dopasowanie obu alternatyw)
+
+**To zadanie DLA CURSORA** — interakcja wielu wzorców NUMER w jednej liście, kolejność
+pierwszeństwa, plus rozbieżność benchmark/ręczny test. Nie łatać punktowo pojedynczego
+regexu bez zrozumienia dlaczego inne, teoretycznie szersze wzorce (linia 605) też nie łapią
+całości.
 
 ---
+
+## WAŻNE — hipoteza Pawła: AnchorEngine ma fundamentalny błąd (06.07 wieczór, zamknięcie sesji)
+
+Paweł explicite, do zweryfikowania na start: **przy lvl0 (perfect scan) i lvl1 (light noise)
+kotwice powinny być NIEZNISZCZONE — skoro mimo to recall nie jest 100%, podejrzewa że
+AnchorEngine ma źle napisaną logikę**, nie że to tylko brakujące przypadki brzegowe. To
+mocniejsza teza niż punktowe bugi znalezione 06.07 (numer_faktury wyżej, PESEL/EMAIL już
+naprawione) — sugeruje żeby następna sesja/Cursor podeszła do audytu AnchorEngine.kt
+CAŁOŚCIOWO na lvl0/lvl1 (gdzie OCR nie powinien być wymówką), nie kolejny pojedynczy dokument
+na raz. Sprawdzić: ile z pozostałych misów na lvl0/lvl1 (patrz benchmark_bugs.txt najnowszy
+przebieg) faktycznie ma nietkniętą kotwicę w tekście, a mimo to nie jest złapane — jeśli
+więcej niż numer_faktury, to potwierdza tezę Pawła i uzasadnia większy audyt architektury,
+nie kolejny mikro-fix.
 
 ---
 
