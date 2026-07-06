@@ -252,6 +252,23 @@ class BenchmarkInstrumentedTest {
             .map { normalizeForCompare(it.value) }
             .toList()
 
+    // Okno wokół faktycznej pozycji encji w OCR zamiast stałego cap-u od początku dokumentu —
+    // stały .take(N) ucinał tekst PRZED dotarciem do encji w dłuższych dokumentach (faktury z
+    // długim wstępem sprzedawcy/nabywcy, akty komornicze). Szuka pierwszych 4 znaków wartości
+    // (odporne na drobne różnice OCR w reszcie), fallback: cały tekst gdy nie znaleziono.
+    private fun ocrSnippetAround(ocrText: String, value: String, radius: Int = 200): String {
+        val needle = value.take(4)
+        val idx = if (needle.length >= 3) ocrText.indexOf(needle, ignoreCase = true) else -1
+        val snippet = if (idx >= 0) {
+            val from = maxOf(0, idx - radius)
+            val to = minOf(ocrText.length, idx + value.length + radius)
+            ocrText.substring(from, to)
+        } else {
+            ocrText
+        }
+        return snippet.replace("\n", " ")
+    }
+
     // Klasyfikacja miss wg §12.2 briefa właściciela
     private fun classifyMiss(key: String, value: String, normalizedText: String): String {
         val normVal = normalizeForCompare(value)
@@ -300,9 +317,34 @@ class BenchmarkInstrumentedTest {
             var matchedTokenType: String? = null
             val found = error == null && ocrAccepted && tokens.any { tok ->
                 val on = norm(tok.original)
+                // fuzzyMatch (odległość edycji <=1, min. 9 znaków) był ograniczony do numericKeys —
+                // literówka/zgubiona litera OCR w środku emaila/nazwiska ("wozniak"→"woziak") łamie
+                // proste .contains() mimo że silnik poprawnie zamaskował wartość jako token. Kotwica
+                // (np. @) nie waliduje kształtu, więc token często ISTNIEJE — to miernik był ślepy,
+                // nie silnik. fuzzyMatch ma już wbudowane zabezpieczenia (długość, max 1 różnica),
+                // więc jest bezpieczny dla każdego typu pola, nie tylko numerycznego.
+                // Wzorce kontekstowe (np. PESEL/NIP) celowo wchłaniają słowo-kotwicę do tokenu
+                // ("PESEL: 12345678901" → jeden token) — dobre dla maskowania, ale psuje
+                // fuzzyMatch powyżej: "pesel:12345678901" (17 zn.) vs goła wartość GT (11 zn.)
+                // różni się długością o 6, więc próg ±1 znaku nigdy nie przejdzie mimo że token
+                // faktycznie zawiera poprawną (lub jedną literą zniekształconą) wartość.
+                // Dla pól numerycznych: wyodrębnij sam ciąg alfanumeryczny z dopasowania przed
+                // porównaniem, tak jak już robi extractNumericRuns() dla missLabel niżej.
+                // Identyfikatory złożone (numer_faktury/umowy/kw/działki: "UMW/2024/291") mają
+                // ukośniki, które łamią extractNumericRuns (wymaga ciągłego alnum ≥9 znaków —
+                // ukośnik przerywa ciąg na kawałki poniżej progu). Kotwica-etykieta ("nr ", "Nr")
+                // zawsze jest PRZED wartością, nigdy po — więc porównanie KOŃCÓWKI tokenu
+                // (przycięte do długości GT) z fuzzyMatch bezpiecznie omija nieznaną długość
+                // prefiksu niezależnie od typu pola. Znalezione 06.07: "nr UMWI2024/291"
+                // (ukośnik odczytany jako "I" przez OCR nawet przy lvl0 "perfect scan" — realne
+                // ograniczenie odczytu glifu, nie szum symulowany) + prefiks "nr " razem dawały
+                // różnicę 2 znaków, ponad próg fuzzyMatch (±1) mimo że token faktycznie istniał.
+                val suffix = if (on.length > valN.length) on.takeLast(valN.length) else on
                 val matched = valN == on ||
                     (valN.length >= 6 && (valN.contains(on) || on.contains(valN))) ||
-                    (key in numericKeys && fuzzyMatch(valN, on))
+                    fuzzyMatch(valN, on) ||
+                    (key in numericKeys && extractNumericRuns(tok.original).any { fuzzyMatch(valN, it) }) ||
+                    (valN.length >= 9 && fuzzyMatch(valN, suffix))
                 if (matched && matchedTokenType == null) matchedTokenType = tok.type
                 matched
             }
@@ -578,6 +620,14 @@ class BenchmarkInstrumentedTest {
                     val to   = minOf(r.normalizedText.length, idx + e.value.length + 15)
                     bb.appendLine("    OCR: «${r.normalizedText.substring(from, to).replace("\n", "↵")}»")
                 }
+                // Diagnostyka "chorego termometru" (06.07): wartość bywa realnie zamaskowana
+                // (potwierdzone ręcznie na telefonie), ale token nie przechodzi porównania z GT
+                // z innego powodu niż literówka/kotwica-prefiks. Wypisz WSZYSTKIE tokeny tego
+                // dokumentu — pozwala zobaczyć dokładnie co silnik przechwycił.
+                if (r.tokens.isNotEmpty()) {
+                    bb.appendLine("    Tokeny w dokumencie: " +
+                        r.tokens.joinToString(", ") { "${it.type}=«${it.original.take(40)}»" })
+                }
             }
             bb.appendLine()
         }
@@ -648,7 +698,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             adresMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
-                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+                bb.appendLine("    OCR: ${ocrSnippetAround(r.ocrText, e.value)}")
             }
             bb.appendLine()
         }
@@ -662,7 +712,10 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             numerMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
-                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+                // OCR[200]/[500] za krótkie — ucinały tekst przed dotarciem do encji w dłuższych
+                // dokumentach (np. numer faktury po długim wstępie sprzedawcy/nabywcy,
+                // doc_00010 staly 06.07). Okno wokół faktycznej pozycji zamiast stałego cap-u.
+                bb.appendLine("    OCR: ${ocrSnippetAround(r.ocrText, e.value)}")
             }
             bb.appendLine()
         }

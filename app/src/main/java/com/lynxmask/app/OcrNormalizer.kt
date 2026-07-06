@@ -252,8 +252,13 @@ object OcrNormalizer {
     private val OCR_EMAIL_SLDSPACE = Regex(
         """(@[a-zA-Z0-9\-]{2,15})[^\S\n]([a-zA-Z0-9\-]{2,15}\.[a-zA-Z][a-zA-Z0-9]{1,3})\b"""
     )
+    // BUG-EMAIL-KROPKA-SPACJA-FIX (06.07, diagnoza Cursor): grupa 1 NIE może zawierać kropkę.
+    // Bez tego "jan@wp.pl do jutra" (domena JUŻ ma kompletne TLD, spacja to granica zdania)
+    // matchował jako "@wp.pl" + spacja + "do" → sklejał "@wp.pl.do". Cel wzorca to tylko domena
+    // BEZ kropki przed spacją ("@onet pl" → "@onet.pl") — z kropką w grupie 1 to już nie jest
+    // ten przypadek.
     private val OCR_EMAIL_TLDSPACE = Regex(
-        """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
+        """(@[a-zA-Z0-9\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
     )
     // N3: {1,} zamiast {2,} w fragmencie1 — obsługa jednoliiterowych segmentów ("jan k owal ski@...")
     private val OCR_EMAIL_LOCALSPACE = Regex(

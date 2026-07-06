@@ -695,6 +695,26 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("Kontakt:"))
     }
 
+    // BUG-EMAIL-KROPKA-SPACJA (06.07, katalog degradacji OCR w TODO.md): kotwica A.2 tolerowała
+    // spację PRZED kropką w domenie ("firma .pl"), ale nie PO kropce ("firma. pl") — ten sam
+    // rodzaj degradacji, lustrzany. Prawa granica urywała się na kropce, zostawiając TLD jawny.
+    // Fix: symetryczny ogon w A.2, aktywny tylko gdy poprzedni fragment urwał się na kropce
+    // (lookbehind) — nie łapie zwykłego słowa po poprawnym mailu (patrz test FP niżej).
+    @Test fun `BUG-EMAIL-KROPKA-SPACJA kropka potem spacja w domenie maskuje cala domene`() {
+        val r = pseudonymize("Kontakt: ewa piotrowska @gmail. com")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "gmail")
+        assertNotInOutput(r, " com")
+    }
+
+    // Kontrola FP: rozszerzenie NIE może połykać zwykłego krótkiego słowa po POPRAWNYM mailu.
+    @Test fun `BUG-EMAIL-KROPKA-SPACJA regresja zwykle slowo po poprawnym mailu zostaje jawne`() {
+        val r = pseudonymize("Napisz na jan@wp.pl do jutra")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTrue("'do jutra' powinno zostać jawne, nie wejść do tokenu EMAIL",
+            r.pseudonymizedText.contains("do jutra"))
+    }
+
     @Test fun `BRAK_W_OCR Niepodlegosci pseudonymize`() {
         val r = pseudonymize("al. Niepodlegości 13/2, 65-001 Gliwice")
         assertTokenExists(r, TOKEN_ADRES)

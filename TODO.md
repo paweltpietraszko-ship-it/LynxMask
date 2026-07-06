@@ -8,31 +8,105 @@
 
 ---
 
-## ŚREDNI — EMAIL recall najgorszy z encji, katalog wzorców degradacji OCR (05.07)
+## ŚREDNI — EMAIL recall, katalog wzorców degradacji OCR (06.07 ZWERYFIKOWANY, 2 poprawki zastosowane)
 
-Benchmark 04-05.07: EMAIL stale najsłabszy recall (57-67%, zależnie od runu). Naprawiony
-JEDEN wzorzec dzisiaj (`AnchorEngine.kt` A.2, commit `256de82`): podkreślnik pomylony ze
-spacją w local-part ("marek_wozniak" → "marek wozniak") — dodano opcjonalne 1 poprzedzające
-słowo (tylko litery/cyfry, żeby nie połykać etykiet typu "e-mail:"). **Potwierdzone ponownym
-benchmarkiem że to NIE wystarcza** — email OCR-uje się na dużo więcej sposobów. Katalog
-PRAWDZIWYCH przypadków z benchmarku (świeży build, nie stary — potwierdzone), żaden jeszcze
-nie naprawiony:
+Benchmark 04-05.07 pokazywał EMAIL jako najsłabszy recall (57-67%). Katalog 5 przykładów z
+05.07 zweryfikowany 06.07 Pythonem przeciw dokładnym regexom z kodu (nie zgadywane) —
+**4 z 5 okazały się fałszywym alarmem**: AnchorEngine A.2 (kotwica `@`, zero walidacji formatu)
+już maskuje całą frazę niezależnie od kształtu wewnątrz domeny (podwójny podkreślnik, brak
+kropki w TLD typu "wppl" — nieważne, token i tak zastępuje cały span).
 
-| Wzorzec degradacji | Przykład z OCR | Uwaga |
-|---|---|---|
-| Kropka→spacja W DOMENIE, zero kropki | `ratal_dudek95@gmail com` | brak jakiegokolwiek separatora między domeną a TLD |
-| Podkreślnik ZOSTAJE, ale spacja PO nim | `krzysztof_ lewandowski@gmail.com` | dzisiejszy fix wymaga słowa z samych liter/cyfr — podkreślnik na końcu to wyklucza |
-| Kropka→spacja w local-part + spacja przed @ + spacja w domenie naraz | `ewa piotrowska @gmail. com` | potrójna degradacja jednocześnie |
-| Kropka→spacja w local-part (osobny od podkreślnika przypadek) | `kamil. woziak@wppl` | powinno być już naprawione starszym normalizerem (dot-space fix w PseudonymEngine.kt) — sprawdzić czemu benchmark nadal pokazuje to jako miss |
-| Litera→litera w środku lokalnej części + kropka→spacja | `justyna.dud ek@amail.com` | złożony, prawdopodobnie zostawia "justyna." jawne nawet po dzisiejszym fixie |
+**Fix 1 (AnchorEngine, 06.07)**: prawa granica A.2 tolerowała spację PRZED kropką w domenie
+("firma .pl") ale nie PO kropce ("firma. pl") — symetryczny ogon dodany, `AnchorEngine.kt:73`,
+aktywny tylko gdy poprzedni fragment urwał się na kropce (lookbehind).
 
-**Kierunek na następną sesję (nie zaczynać od zera z regexem anchora)**: rozważyć bardziej
-systemowe podejście w `OcrNormalizer.kt` — wykryć `@` jako kotwicę, potem w oknie ±30-40 znaków
-wokół niego znormalizować typowe degradacje (spacja zamiast kropki przed znaną listą TLD:
-`.pl/.com/.eu/...`, obcięta domena bez kropki wcale) — PRZED tym jak AnchorEngine w ogóle
-zobaczy tekst, zamiast dokładać kolejne specjalne przypadki do samego regexu kotwicy A.2.
-To pasuje do wzorca już użytego dla NIP/PESEL (keyword canonicalization w Kroku 0
-OcrNormalizer) — email zasługuje na podobne, dedykowane traktowanie zamiast łatania anchora.
+**Fix 2 (OcrNormalizer, 06.07, diagnoza Cursor traceMode)**: test regresji na Fix 1 ujawnił
+INNY, wcześniejszy bug w Warstwie 0 — `OCR_EMAIL_TLDSPACE` (krok 7b) doklejał zwykłe słowo po
+mailu z JUŻ kompletnym TLD ("jan@wp.pl do jutra" → "jan@wp.pl.do jutra", bo grupa 1 dopuszczała
+kropkę w domenie, mylnie traktując kropkę+spację jako artefakt OCR zamiast granicę zdania).
+Naprawione usunięciem kropki z klasy znaków grupy 1 (`OcrNormalizer.kt`). Test regresji w
+`OcrNormalizerEmailTest.kt` (`BUG-EMAIL-KROPKA-SPACJA`). Zweryfikowane Pythonem że nie psuje
+żadnego istniejącego testu TLDSPACE przed wdrożeniem.
+
+Oba fixy razem: Fix 1 w AnchorEngine (kotwica jako ostatnia deska ratunku, ogólna dla całej
+klasy degradacji — patrz pamięć Claude `feedback_anchor_signal_not_shape.md`), Fix 2 w
+OcrNormalizer (osobny, wcześniejszy bug w Warstwie 0, znaleziony diagnozą Cursor przez
+`traceMode=true`, nie zgadywaniem regexów w izolacji — patrz pamięć Claude
+`feedback_trust_anchor_before_patching_other_layers.md`).
+
+**Do zrobienia:** odpalić `PseudonymEngineTest` + `OcrNormalizerEmailTest` (nowe testy + reszta
+— powinny być zielone), potem świeży benchmark żeby potwierdzić że EMAIL recall faktycznie
+wzrósł.
+
+**Dodatkowe odkrycie 06.07 — "chory termometr":** benchmark stały pokazał EMAIL 57,1% (4/7)
+IDENTYCZNIE przed i po powyższych fixach silnika — zbadane, przyczyna NIE w silniku tylko w
+samym skrypcie benchmarku. `BenchmarkInstrumentedTest.kt` — `fuzzyMatch` (tolerancja 1 znaku
+różnicy, min. 9 znaków) był zarezerwowany tylko dla `numericKeys`, email/tekst nie miał żadnej
+tolerancji na literówkę OCR (np. "wozniak"→"woziak" łamie `.contains()` mimo że silnik
+prawdopodobnie poprawnie zamaskował całość jako token — kotwica nie waliduje kształtu).
+**Naprawione**: usunięto ograniczenie do `numericKeys`, fuzzyMatch teraz działa dla wszystkich
+pól. Zweryfikowane Pythonem na 3 przypadkach z benchmarku: 2/3 teraz poprawnie liczone jako
+trafienie, 1/3 (`doc_00016`, dwa niezależne błędy OCR naraz: zgubiona litera W lokalnej części
++ zgubiona kropka w domenie) nadal słusznie miss — poza bezpiecznym progiem fuzzyMatch, nie
+rozluźniać dalej. Pełna diagnoza i zasada ogólna w pamięci Claude
+`feedback_validate_the_benchmark_tool_itself.md` — **przy każdej podejrzanej metryce benchmarku
+sprawdzić najpierw sam skrypt scoringu, nie tylko silnik**.
+
+**Do zrobienia:** odpalić świeży benchmark stały po tym fixie — EMAIL recall powinien skoczyć
+z 57,1% (4/7) na ~85,7% (6/7).
+
+---
+
+## ŚREDNI — 3 blokery release we fresh 06.07 — 2/3 zdiagnozowane, 1/3 wymaga rerun
+
+Fresh benchmark 06-07.07 2026-07-06_2111 pokazał `BUG_SILNIKA=1`, `OCR_ZNIEKSZTAŁCONY=2`,
+`Guard RED=4` — wszystkie FAIL/blokujące. Zdiagnozowane:
+
+**OCR_ZNIEKSZTAŁCONY (2× PESEL, doc_00009 + doc_00062) — NAPRAWIONE, to fałszywy alarm
+benchmarku, ten sam wzorzec co EMAIL wyżej.** Wzorzec kontekstowy PESEL (`StructuralEngine.kt:348`)
+celowo wchłania słowo-kotwicę do tokenu ("PESEL: 12345678901" → jeden token) — to poprawne
+zachowanie silnika. Ale benchmark porównywał CAŁY token (z "pesel:" w środku, 17 zn.) z gołą
+wartością ground truth (11 zn.) — różnica długości 6 zawsze wywalała próg fuzzyMatch (±1 zn.).
+Fix: `BenchmarkInstrumentedTest.kt`, dodano `extractNumericRuns(tok.original)` przed fuzzyMatch
+dla pól numerycznych — wyodrębnia goły ciąg cyfr z dopasowania zanim porówna. Zweryfikowane
+Pythonem na obu przypadkach.
+
+**BUG_SILNIKA (IBAN, doc_00031) — POTWIERDZONY FAŁSZYWY ALARM (test ręczny 06.07), dokładny
+mechanizm jeszcze niejasny.** Paweł ręcznie sprawdził na telefonie — IBAN faktycznie jest
+zamaskowany. Sprawdzone Pythonem: gdyby token zawierał tylko kotwicę-słowo + czysty numer
+("IBAN: PL08...", "Nr konta: PL08..."), już SAM `.contains()` (sprzed tej sesji) powinien to
+złapać — więc to NIE jest ten sam mechanizm co PESEL wyżej, przyczyna inna i nieznana. Fix
+narzędzia zastosowany: sekcja BUG_SILNIKA w `benchmark_bugs.txt` teraz wypisuje WSZYSTKIE
+tokeny wykryte w dokumencie (`r.tokens`), nie tylko fragment znormalizowanego tekstu — powinno
+pokazać dokładnie jaką wartość token faktycznie przechwycił. **Do zrobienia:** rerun benchmark,
+porównać wypisany token z ground truth żeby znaleźć różnicę (np. zniekształcenie OCR w środku
+IBAN łamiące dokładne `.contains()`, mimo że PII i tak zakryte).
+
+**Guard RED hits: 4** — jeszcze nie sprawdzone które konkretnie, zrobić po powyższych.
+
+---
+
+## ŚREDNI — lvl0/lvl1 nie na 100% recall mimo "OCR nie przeszkadza" (06.07)
+
+Paweł zauważył: skoro lvl0 (perfect scan) i lvl1 (light noise) mają symulować czyste OCR,
+dlaczego recall nie jest 100%? Sprawdzone (staly 2026-07-06_2201): 3 misy na lvl0, 4 na lvl1 —
+WSZYSTKIE to złożone identyfikatory z ukośnikiem (numer_faktury/umowy/kw/działki, np.
+"UMW/2024/291"). Diagnoza: token FAKTYCZNIE powstaje (`"nr UMWI2024/291"` w FP-liście) — ukośnik
+odczytany jako litera "I" przez OCR, **realne ograniczenie odczytu glifu, nie symulowany szum**
+(stąd może się zdarzyć nawet przy lvl0). Ale prefiks kotwicy ("nr "/"Nr") + ta jedna literowa
+zamiana razem dają różnicę 2 znaków — ponad próg fuzzyMatch (±1) — więc mimo poprawnego
+maskowania nie liczyło się jako trafienie. **Naprawione**: dodano porównanie KOŃCÓWKI tokenu
+(przyciętej do długości GT) — kotwica zawsze jest przed wartością, nigdy po, więc to bezpieczne
+uniwersalnie. Zweryfikowane Pythonem na obu potwierdzonych przypadkach (UMW, VAT).
+
+**Jeden przypadek nadal niejasny**: `doc_00010` (numer_faktury=FV/2025/12/1828, lvl0) — żaden
+token w ogóle nie zawiera nic zbliżonego do tej wartości (sprawdzone: "1828" nie występuje
+nigdzie indziej w logu). Log OCR ucinał się za wcześnie (faktura ma długi wstęp
+sprzedawca/nabywca, numer faktury pewnie dalej). **Naprawione narzędzie**: sekcje ADRES/NUMER
+w `benchmark_bugs.txt` teraz pokazują okno WOKÓŁ faktycznej pozycji encji (szuka pierwszych 4
+znaków wartości w tekście), nie sztywny limit od początku dokumentu. **Do zrobienia:** rerun,
+sprawdzić czy nowe okno pokaże czy to realny brak wzorca silnika dla numer_faktury w tym
+konkretnym formacie, czy kolejny artefakt liczenia.
 
 ---
 

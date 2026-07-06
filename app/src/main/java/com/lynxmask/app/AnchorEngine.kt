@@ -69,8 +69,15 @@ internal fun applyAnchorEngine(
     // "e-mail:", "Kontakt:", "adres:" (zawsze kończą się dwukropkiem albo mają myślnik) od
     // prawdziwych urwanych fragmentów local-part (zwykłe słowa, bez interpunkcji). Zweryfikowane
     // że nie połyka etykiet — patrz test regresji niżej.
+    //
+    // BUG-EMAIL-KROPKA-SPACJA-FIX (06.07): prawa granica tolerowała spację PRZED kropką
+    // w domenie ("firma .pl"), ale nie PO kropce ("firma. pl") — ten sam rodzaj degradacji OCR,
+    // lustrzany. Dodano symetryczny ogon: łapie jeszcze jeden krótki fragment (2-4 litery, jak
+    // TLD) po pojedynczej spacji, ale TYLKO gdy poprzedni fragment urwał się na kropce
+    // (lookbehind `(?<=\.)`) — to gwarantuje że nie połyka zwykłego słowa po poprawnym mailu
+    // (np. "jan@wp.pl do jutra" — "do" zostaje jawne, bo "wp.pl" nie kończy się kropką).
     // ------------------------------------------------------------------
-    applyAll(Regex("""(?:[\p{L}0-9]+\s+)?[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*"""), TOKEN_EMAIL)
+    applyAll(Regex("""(?:[\p{L}0-9]+\s+)?[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*(?:(?<=\.)[^\S\n][a-zA-Z]{2,4}\b)?"""), TOKEN_EMAIL)
 
     // A.2b EMAIL — osierocona domena po istniejącym tokenie
     // EMAIL_001@nfz.gov.pl → A.2 skipped (TOKEN_RE), tu łapiemy @nfz.gov.pl
