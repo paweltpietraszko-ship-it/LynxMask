@@ -8,6 +8,21 @@
 
 ---
 
+## ZAMKNIĘTE 07.07 — IBAN zagraniczny (DE/FR) zostawiał resztę cyfr jawną
+
+Wzorzec kontekstowy "IBAN:" (StructuralEngine:482) zakładał sztywne grupy po 4 cyfry —
+działa dla PL (26 cyfr po kodzie kraju, dzieli się równo), zostawiał resztę jawną dla krajów
+gdzie się nie dzieli (DE: 20 cyfr → "00" jawne; FR: podobnie). Fix: opcjonalna końcowa grupa
+1-3 cyfr. Test dodany (`IBAN niemiecki i francuski bez reszty jawnej`). Znalezione przy
+teście `test_iban_20_warianty_07_07.txt` (20 wariantów zapisu IBAN, Paweł 07.07).
+
+**Odłożone jako mało realistyczne:** wariant z KAŻDĄ cyfrą osobno oddzieloną spacją
+("Nr rachunku: PL 6 1 1 0 9 0 1..." — celowa skrajna prowokacja w teście) nie maskuje się
+w całości, zostaje ogon jawny. Ekstremalna degradacja OCR (realny skan tak nie wygląda) —
+nie naprawiane teraz, do rewizji tylko jeśli pojawi się realny przykład z benchmarku.
+
+---
+
 ## NISKIE — PseudonymEngineTest.kt to plik molochów (~2000 linii), rozbić na osobną sesję (07.07)
 
 Przekracza próg z CLAUDE.md ("powyżej ~600 linii zaproponuj wydzielenie") kilkukrotnie —

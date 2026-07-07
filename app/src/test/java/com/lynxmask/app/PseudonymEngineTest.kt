@@ -1884,6 +1884,19 @@ class PseudonymEngineTest {
         assertFalse(r2.tokenMap.values.any { it.contains("rozdziału") || it == "5.2" })
     }
 
+    // BUG-IBAN-ZAGRANICZNY (Paweł 07.07, test_iban_20_warianty): wzorzec kontekstowy "IBAN:"
+    // zakładał sztywne grupy po 4 cyfry — działa dla PL (26 cyfr, dzieli się równo), zostawiał
+    // resztę jawną dla krajów gdzie się nie dzieli (DE: 20 cyfr, FR i inne).
+    @Test fun `IBAN niemiecki i francuski bez reszty jawnej`() {
+        val de = pseudonymize("IBAN: DE89370400440532013000")
+        assertNotInOutput(de, "013000")
+        assertTokenExists(de, TOKEN_NUMER)
+
+        val fr = pseudonymize("Platnosc IBAN FR7630006000011234567890189 zagraniczna")
+        assertNotInOutput(fr, "890189")
+        assertTokenExists(fr, TOKEN_NUMER)
+    }
+
     // =========================================================================
     // STRESS TEST SKLEJANIA (Paweł 07.07, po zamknięciu rundy FV): gęsty ciąg RÓŻNYCH
     // encji obok siebie, minimalna proza (same kotwice + wartości, bez opisowych zdań).

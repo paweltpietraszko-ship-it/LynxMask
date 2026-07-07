@@ -252,6 +252,26 @@ class BenchmarkInstrumentedTest {
             .map { normalizeForCompare(it.value) }
             .toList()
 
+    // BUG-BENCHMARK-SPACJA-IBAN (Paweł 07.07): extractNumericRuns łamie się na spacji —
+    // OCR czasem wstawia spację W ŚRODKU długiego numeru (IBAN, numer_kw), nie tylko na
+    // granicy segmentów. "PL7824...798 2507 146112645" → trzy oddzielne runy, żaden nie
+    // przechodzi progu długości fuzzyMatch względem pełnej wartości GT → klasyfikacja
+    // spada do BRAK_W_OCR mimo że silnik (StructuralEngine 485, dedykowany właśnie na ten
+    // przypadek) prawdopodobnie zamaskował to poprawnie. Fix: przesuwane okno o długości
+    // wartości GT (±1) na tekście z usuniętymi spacjami W OBRĘBIE OKNA, nie w całym
+    // dokumencie (globalne usunięcie spacji sklejałoby też niepowiązane sąsiednie słowa).
+    private fun fuzzyContainsIgnoringEmbeddedSpaces(haystack: String, needle: String): Boolean {
+        if (needle.length < 9) return false
+        val compact = haystack.replace(Regex("""\s"""), "").lowercase()
+        for (len in (needle.length - 1)..(needle.length + 1)) {
+            if (len < 9 || len > compact.length) continue
+            for (start in 0..(compact.length - len)) {
+                if (fuzzyMatch(needle, compact.substring(start, start + len))) return true
+            }
+        }
+        return false
+    }
+
     // Okno wokół faktycznej pozycji encji w OCR zamiast stałego cap-u od początku dokumentu —
     // stały .take(N) ucinał tekst PRZED dotarciem do encji w dłuższych dokumentach (faktury z
     // długim wstępem sprzedawcy/nabywcy, akty komornicze). Szuka pierwszych 4 znaków wartości
@@ -275,6 +295,7 @@ class BenchmarkInstrumentedTest {
         return when {
             normalizeForCompare(normalizedText).contains(normVal) -> "BUG_SILNIKA"
             key in numericKeys && extractNumericRuns(normalizedText).any { fuzzyMatch(normVal, it) } -> "OCR_ZNIEKSZTAŁCONY"
+            key in numericKeys && fuzzyContainsIgnoringEmbeddedSpaces(normalizedText, normVal) -> "OCR_ZNIEKSZTAŁCONY"
             else -> "BRAK_W_OCR"
         }
     }

@@ -479,7 +479,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // \b failuje (cyfra→cyfra). {6} jest precyzyjne więc regex nie przejada sąsiednich tokenów.
     TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}"""),
     // IBAN z kontekstem "IBAN:" — dla polskich i zagranicznych numerów UE
-    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){3,7}"""),
+    // BUG-IBAN-ZAGRANICZNY-FIX (Paweł 07.07): sztywne grupy WYŁĄCZNIE po 4 cyfry zakładały że
+    // (całkowita długość - 2 cyfry kontrolne) dzieli się przez 4 bez reszty — prawda dla PL (26),
+    // fałsz dla wielu innych krajów UE (np. DE: 20 cyfr po kodzie kraju, 18 BBAN nie dzieli się
+    // przez 4 → "00" na końcu zostawało jawne; podobnie FR). Opcjonalna końcowa grupa 1-3 cyfr
+    // obsługuje resztę z dzielenia, niezależnie od konkretnego kraju/długości.
+    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){2,7}(?:\s?\d{1,3})?"""),
     // IBAN z kontekstem "konto" — fallback gdy OCR wstawia spacje w nieregularnych miejscach
     // Łapie: "konto komornika: PL41 169010 14937..." niezależnie od podziału na grupy
     TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}\s+\S{0,20}\s*[:–\-]\s*(PL[\d\s]{24,34})\b"""),

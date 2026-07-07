@@ -17,8 +17,8 @@ adb shell rm -rf /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/
 adb shell monkey -p com.lynxmask.app -c android.intent.category.LAUNCHER 1
 timeout /t 2 /nobreak >nul
 
-echo [1b/4] Generowanie swiezego datasetu (68 dok., 17 per poziom, losowy seed)...
-python generator.py --count 68 --output dataset_fresh_run --max-level 3
+echo [1b/4] Generowanie swiezego datasetu (68 dok., 17 per poziom, staly seed 42)...
+python generator.py --count 68 --output dataset_fresh_run --max-level 3 --seed 42
 if errorlevel 1 (
     echo BLAD: generator.py nie powiodl sie
     pause

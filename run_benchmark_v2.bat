@@ -23,20 +23,20 @@ adb shell rm -rf /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/
 adb shell monkey -p com.lynxmask.app -c android.intent.category.LAUNCHER 1 >nul 2>&1
 timeout /t 2 /nobreak >nul
 
-echo [2/4] Przepychanie datasetu stalego (dataset_staly)...
-if not exist "dataset_staly\ground_truth.json" (
-    echo BLAD: Brak dataset_staly\ground_truth.json
-    echo Jednorazowa inicjacja: xcopy dataset_fresh dataset_staly /E /I
+echo [2/4] Generowanie losowego datasetu (68 dok., 17 per poziom, bez seed)...
+python generator.py --count 68 --output dataset_v2_run --max-level 3
+if errorlevel 1 (
+    echo BLAD: generator.py nie powiodl sie
     pause
     exit /b 1
 )
-adb push "dataset_staly\ground_truth.json" "%BENCH%/ground_truth_lvl03.json"
+adb push "dataset_v2_run\ground_truth.json" "%BENCH%/ground_truth_lvl03.json"
 if errorlevel 1 (
     echo BLAD: adb push ground_truth.json
     pause
     exit /b 1
 )
-adb push "dataset_staly\images" "%BENCH%/images"
+adb push "dataset_v2_run\images" "%BENCH%/images"
 if errorlevel 1 (
     echo BLAD: adb push images
     pause
