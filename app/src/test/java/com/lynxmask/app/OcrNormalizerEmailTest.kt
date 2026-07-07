@@ -128,4 +128,16 @@ class OcrNormalizerEmailTest {
         val r = OcrNormalizer.normalize("e-mail: piotr dudek45@ inte ria.pl")
         assertTrue(r.normalizedText.contains("piotrdudek45@interia.pl"))
     }
+
+    // BUG-EMAIL-KROPKA-SPACJA (06.07, diagnoza Cursor traceMode): TLDSPACE nie może doklejać
+    // zwykłego słowa po mailu z JUŻ kompletnym TLD — spacja po "@wp.pl" to granica zdania,
+    // nie artefakt OCR. Bez fixu: "jan@wp.pl do jutra" → "jan@wp.pl.do jutra" (sklejone).
+    @Test
+    fun `BUG-EMAIL-KROPKA-SPACJA kompletne TLD nie skleja nastepnego slowa`() {
+        val r = OcrNormalizer.normalize("jan@wp.pl do jutra")
+        assertFalse("TLDSPACE nie powinien doklejac 'do' do domeny",
+            r.normalizedText.contains("@wp.pl.do"))
+        assertTrue("'do jutra' powinno zostac jawne i oddzielone",
+            r.normalizedText.contains("wp.pl do jutra"))
+    }
 }

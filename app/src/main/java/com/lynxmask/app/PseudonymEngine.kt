@@ -65,7 +65,8 @@ data class PseudonymResult(
     val riskScore: RiskScore,
     val qualityWarning: String?,            // ostrzeżenie jakości OCR
     val guardHits: List<GuardHit> = emptyList(),  // wycieki wykryte przez OutputGuard
-    val trace: List<DetectionTrace> = emptyList()
+    val trace: List<DetectionTrace> = emptyList(),
+    val tokenLayers: Map<String, String> = emptyMap()  // token → layer, tylko DEBUG (AddressEngine v0 diagnostyka)
 )
 
 data class PseudonymFlag(
@@ -83,17 +84,28 @@ data class DetectionTrace(
     val token: String
 )
 
+// AddressEngine v0 — silnik równoległy testowy (04.07.2026), patrz AddressEngine.kt.
+// Włączony domyślnie w DEBUG (test na telefonie), wyłączony w release dopóki nie
+// potwierdzony i nie zamknięta osobna sesja usuwania duplikatów ze starych źródeł.
+internal val USE_ADDRESS_ENGINE_V0 = BuildConfig.DEBUG
+
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
 // ============================================================
 internal val TOKEN_RE = Regex("""\b(FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_(\d{3})(?!\d)""")
 
-// Sprawdza okno wokół matcha w pełnym tekście — guard TOKEN_RE.containsMatchIn(match.value)
-// nie widzi prefiksu tokenu (np. match="ADRES" przy "ADRES_004" w tekście → false).
-// Ta funkcja rozszerza okno o 1 znak w lewo i 5 w prawo, łapiąc "_NNN" za matchem.
+// Sprawdza czy dopasowanie NAPRAWDĘ nakłada się zakresem na istniejący token — nie
+// przybliżone okno znaków (to dawało false positive: token na POPRZEDNIEJ linii
+// blokował niepowiązany match na NASTĘPNEJ linii, gdy okno było szersze niż odległość
+// do najbliższego \n — BUG-TOKEN-AMPUTACJA fix v2, po tym jak proste rozszerzenie
+// okna do -10 znaków naprawiło jeden przypadek ale zepsuło sąsiedni, Cursor+Claude 01.07).
+// Właściwe sprawdzenie: znajdź WSZYSTKIE istniejące tokeny w tekście, porównaj rzeczywiste
+// zakresy. Łapie zarówno dopasowanie zaczynające się W ŚRODKU tokenu (np. "039 49 999,99
+// z1" zaczynające się w cyfrach "NUMER_039"), jak i dopasowanie będące samym PREFIKSEM
+// tokenu (np. "ADRES" przy "ADRES_004" — historyczny BUG-OGONY), bez fałszywego blokowania
+// niepowiązanych dopasowań które tylko leżą blisko (inna linia, inny fragment tekstu).
 internal fun matchOverlapsToken(text: String, range: IntRange): Boolean {
-    val win = text.substring(maxOf(0, range.first - 1), minOf(text.length, range.last + 5))
-    return TOKEN_RE.containsMatchIn(win)
+    return TOKEN_RE.findAll(text).any { it.range.first <= range.last && range.first <= it.range.last }
 }
 
 // ============================================================
@@ -174,6 +186,7 @@ object PseudonymEngine {
 
         // --- Struktury danych sesji ---
         val tokenMap = mutableMapOf<String, String>()
+        val tokenLayers = mutableMapOf<String, String>()  // AddressEngine v0 diagnostyka, tylko DEBUG
         val reverseMap = mutableMapOf<String, String>()
         val counters = mutableMapOf<String, Int>()
         val flags = mutableListOf<PseudonymFlag>()
@@ -186,6 +199,9 @@ object PseudonymEngine {
             val token = "${tokenType}_${count.toString().padStart(3, '0')}"
             tokenMap[token] = value
             reverseMap[canonical] = token
+            if (BuildConfig.DEBUG) {
+                tokenLayers[token] = layer
+            }
             if (traceMode) {
                 traceLog.add(DetectionTrace(layer = layer, rule = rule, matchedText = value, token = token))
             }
@@ -205,6 +221,38 @@ object PseudonymEngine {
         val sessionId = java.util.UUID.randomUUID().toString()
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
+
+        // --- Warstwa 0b: AddressEngine v0 — silnik równoległy testowy (04.07.2026) ---
+        // Decyzja właściciela po audycie Cursora (CURSOR_AUDYT_ADRES_2026-07-04.md,
+        // CURSOR_BRIEF_AddressEngine_2026-07-04.md): skonsolidowana logika adresowa,
+        // uruchomiona PRZED wszystkim innym (w tym starym applyPostalCityPatterns) —
+        // żeby żadna reguła NameEngine nie zdążyła pociąć adresu na kawałki (Zielona Góra,
+        // Władysława Stanisława Reymonta). Stare źródła (applyPostalCityPatterns,
+        // ADDRESS_PATTERNS, applyStreetLookup, AnchorEngine A.11*) CELOWO zostają —
+        // fallback + diagnostyka kolorem w UI (zielony = ten silnik, niebieski = stary kod).
+        // Po potwierdzeniu na telefonie: osobna sesja usuwa duplikaty.
+        if (USE_ADDRESS_ENGINE_V0) {
+            text = applyAddressEngine(text, ::assignToken)
+        }
+
+        // --- Warstwa 1b: POSTAL_CITY — kod pocztowy + miasto, jeden właściciel pary ---
+        // Plan Cursor 01.07: musi biec PRZED STRUCTURAL_PATTERNS (nie po) — kontekstowy
+        // wzorzec PESEL (linia ~333, goły \d) bez tego widzi kod pocztowy jako gołe cyfry
+        // i (przy niesprzyjającym sąsiedztwie, np. "PESEL 90051512340 00-001 Warszawa")
+        // dokleja fragment kodu do swojego dopasowania — znalezione testem ręcznym na
+        // adresach sąsiadujących z innymi encjami. Jeśli kod pocztowy jest już tokenem
+        // (nie gołymi cyframi) zanim PESEL/NIP/inne wzorce kontekstowe zdążą coś zobaczyć,
+        // ten cały problem znika: token zaczyna się literą, nie cyfrą.
+        //
+        // Przy v0 (USE_ADDRESS_ENGINE_V0): pominięte — AddressEngine.Blok5 robi to samo,
+        // wcześniej w potoku (patrz Warstwa 0b powyżej). Bez tego pominięcia duplikat
+        // zostawiał niebieskie tokeny na tym samym tekście co AddressEngine już zamaskował
+        // (diagnoza Cursor 04.07, CURSOR_BRIEF_AddressEngine — objaw 1/2).
+        if (!USE_ADDRESS_ENGINE_V0) {
+            text = applyPostalCityPatterns(text) { value, tokenType ->
+                assignToken(value, tokenType, layer = "STRUCTURAL", rule = "POSTAL_CITY")
+            }
+        }
 
         // --- Warstwa 2: Regex strukturalne ---
         if (BuildConfig.DEBUG) {
@@ -246,6 +294,14 @@ object PseudonymEngine {
                 val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
                 pre + token + suf
             }
+        }
+
+        // --- Warstwa 2b: PESEL standalone D-class (suma kontrolna = kotwica) ---
+        // BUG-MIGRACJA 01.07 (feature/entity-migration): przeniesione z AnchorEngine A.4c.
+        // Musi być PO STRUCTURAL_PATTERNS (TOKEN_RE guard chroni już zamaskowane PESEL-e
+        // z gołych cyfr) ale przed NameEngine — kształt nie zależy od kontekstu osoby/adresu.
+        text = applyPeselShapeChecksum(text) { value, tokenType ->
+            assignToken(value, tokenType, layer = "STRUCTURAL", rule = "PESEL_SHAPE_CHECKSUM")
         }
 
         // --- Warstwa 3: Czarna lista kontekstowa ---
@@ -304,15 +360,25 @@ object PseudonymEngine {
         // mógł użyć kontekstu adresu do rozpoznania poprzedzającego imienia/nazwiska.
         // findAll + asReversed + replaceRange zamiast pattern.replace — bezpieczniejsze
         // gdy wzorce adresowe mogą nakładać się na siebie (zamiana od końca).
-        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-            pattern.findAll(text).toList().asReversed().forEach { match ->
-                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
-                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                text = text.replaceRange(match.range, pre + token + suf)
+        //
+        // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — "strangler fig"): duplikat tego samego
+        // kształtu co AddressEngine (Warstwa 0b), gorzej guardowany (kolejne fixy PLN/NIP
+        // dzisiaj musiały być powtarzane osobno tu i w AddressEngine.kt). Wyłączony gdy
+        // USE_ADDRESS_ENGINE_V0 — cel: to co zostanie jawne po wyłączeniu jest backlogiem
+        // AddressEngine, nie zgadywaniem z góry. AnchorEngine (Warstwa 4b, A.11*) ZOSTAJE
+        // aktywny niezależnie — to nie jest ten sam typ duplikatu (kotwica na resztkach, nie
+        // równoległy silnik strukturalny).
+        if (!USE_ADDRESS_ENGINE_V0) {
+            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+                pattern.findAll(text).toList().asReversed().forEach { match ->
+                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                    val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
+                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                    text = text.replaceRange(match.range, pre + token + suf)
+                }
             }
         }
 
@@ -370,15 +436,19 @@ object PseudonymEngine {
         text = applyContextualBlacklist(text, { value, tokenType ->
             assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
         }, profileType)
-        for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-            pattern.findAll(text).toList().asReversed().forEach { match ->
-                if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
-                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                text = text.replaceRange(match.range, pre + token + suf)
+        // FAZA-B-WYLACZENIE (05.07) — patrz komentarz przy Warstwie 3d, ten sam duplikat
+        // powtórzony w Rundzie 2.
+        if (!USE_ADDRESS_ENGINE_V0) {
+            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
+                pattern.findAll(text).toList().asReversed().forEach { match ->
+                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
+                    val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
+                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
+                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+                    text = text.replaceRange(match.range, pre + token + suf)
+                }
             }
         }
 
@@ -409,7 +479,8 @@ object PseudonymEngine {
             riskScore = riskScore,
             qualityWarning = qualityWarning,
             guardHits = guardHits,
-            trace = traceLog
+            trace = traceLog,
+            tokenLayers = tokenLayers
         )
     }
 

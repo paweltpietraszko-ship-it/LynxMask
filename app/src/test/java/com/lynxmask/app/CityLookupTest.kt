@@ -73,6 +73,30 @@ class CityLookupTest {
         }
     }
 
+    // BUG-ODMIANA-MIAST-DWUCZLONOWE-FIX (05.07): cities_forms.json miał wcześniej TYLKO
+    // mianownik dla nazw dwuwyrazowych ("Jelenia Góra"), nie "Jeleniej Górze" — odmieniony
+    // zapis w prozie przechodził przez CITY_PREP niezauważony. generate_city_forms_full.py
+    // (Morfeusz2, strategia adj+rzeczownik / rzeczownik+adj / adj+adj) dołożył pełną odmianę.
+    @Test fun `dwuczlonowa nazwa miasta odmieniona po przyimku tagowana jako ADRES`() {
+        val cases = listOf(
+            "Klient mieszka w Jeleniej Górze od lat." to "jeleni",
+            "Zamieszkały w Nowym Targu." to "targ",
+            "Pochodzi z Białej Podlaskiej." to "podlask",
+            "Firma z siedzibą w Dąbrowie Górniczej." to "górnicz"
+        )
+        for ((input, stem) in cases) {
+            val result = PseudonymEngine.pseudonymize(input, emptyList())
+            val adresTokens = result.tokenMap.filterKeys { it.startsWith("ADRES_") }
+            val masked = adresTokens.values.any { it.lowercase().contains(stem) }
+            if (!masked) {
+                println("MISS stem='$stem' in: $input")
+                println("  ADRES tokens: $adresTokens")
+            }
+            assertTrue("Odmieniona nazwa miasta ('$stem') nie oznaczona jako ADRES w: $input",
+                masked)
+        }
+    }
+
     @Test fun `miasto przed kodem pocztowym tagowane jako ADRES`() {
         val cases = listOf(
             "Warszawa, 00-001" to "Warszawa",

@@ -34,6 +34,7 @@ object LookupTables {
     private var _streetForms: Set<String> = emptySet()
     private var _cityForms: Set<String> = emptySet()
     private var _medForms: Set<String> = emptySet()
+    private var _citySurnameOverlap: Set<String> = emptySet()
     private var _initialized = false
 
     val initialized: Boolean get() = _initialized
@@ -42,6 +43,15 @@ object LookupTables {
     val streetForms: Set<String> get() = _streetForms
     val cityForms: Set<String> get() = _cityForms
     val medForms: Set<String> get() = _medForms
+
+    // BUG-GORA-OSOBA-FIX (04.07): słowa będące jednocześnie drugim członem dwuwyrazowej
+    // nazwy miejscowości (np. "Góra" w "Zielona Góra"/"Jelenia Góra") i nazwiskiem z
+    // top-1000 — chroni CAŁĄ tę klasę (44 słowa) w NameEngine.isOnWhiteList() przed regułą
+    // "samo nazwisko", bez poszerzania sprawdzania na cały (bardzo duży) cityForms, co
+    // obniżyłoby recall OSOBA dla zwykłych nazwisk gdzie indziej. Wygenerowane programowo —
+    // patrz generate_city_surname_overlap.py, uruchomić ponownie gdy zmienią się źródłowe
+    // słowniki (cities_forms.json / surnames_top1000.json), nie utrzymywać ręcznie.
+    val citySurnameOverlap: Set<String> get() = _citySurnameOverlap
 
     fun initialize(context: Context) {
         if (_initialized) return
@@ -52,12 +62,14 @@ object LookupTables {
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med = loadFlatListFromAsset(context, "medical_facilities.json")
+        val overlap = loadFlatListFromAsset(context, "city_surname_overlap.json")
 
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (baseSurnames + generateFeminineVariants(baseSurnames)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
+        _citySurnameOverlap = overlap.withAsciiVariants()
 
         // INIT-FIX v1.1: initialized tylko gdy krytyczne pliki załadowane.
         // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
@@ -68,7 +80,8 @@ object LookupTables {
             "${_surnamesForms.size} form nazwisk, " +
             "${_streetForms.size} nazw ulic, " +
             "${_cityForms.size} form miast, " +
-            "${_medForms.size} terminów medycznych (z wariantami ASCII)."
+            "${_medForms.size} terminów medycznych, " +
+            "${_citySurnameOverlap.size} słów na przecięciu miast/nazwisk (z wariantami ASCII)."
         )
     }
 
@@ -110,13 +123,15 @@ object LookupTables {
         ),
         med: Set<String> = setOf(
             "szpital", "klinika", "przychodnia", "poradnia", "ambulatorium"
-        )
+        ),
+        citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa")
     ) {
         _namesForms    = names
         _surnamesForms = surnames
         _streetForms   = streets
         _cityForms     = cities
         _medForms      = med
+        _citySurnameOverlap = citySurnameOverlap
         _initialized   = true
         resetRegexCache()
     }
@@ -132,11 +147,13 @@ object LookupTables {
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med      = loadFlatListFromClasspath("medical_facilities.json")
+        val overlap  = loadFlatListFromClasspath("city_surname_overlap.json")
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
+        _citySurnameOverlap = overlap.withAsciiVariants()
         _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
         if (_initialized) resetRegexCache()
     }
@@ -170,6 +187,7 @@ object LookupTables {
         _streetForms   = emptySet()
         _cityForms     = emptySet()
         _medForms      = emptySet()
+        _citySurnameOverlap = emptySet()
         _initialized   = false
         resetRegexCache()
     }

@@ -351,7 +351,8 @@ fun PseudonymResultPanel(
                 manualMasks = manualMasks + (token to text)
                 onAddToDict?.invoke(text, type)
             },
-            onDismiss = { showTextPreview = false }
+            onDismiss = { showTextPreview = false },
+            tokenLayers = result.tokenLayers
         )
     }
 }

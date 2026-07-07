@@ -120,8 +120,13 @@ object OcrNormalizer {
     // OCR: spacja w środku nazwy ulicy po prefiksie
     // "ul. Marszał kowska 100" → "ul. Marszałkowska 100"
     // ----------------------------------------------------------
+    // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): global (?i) sprawiał że grupa 3
+    // (miała wymagać MAŁYCH liter — kontynuacja rozbitego słowa) łapała też WIELKĄ literę,
+    // więc "Zielona Góra" (dwa osobne, poprawne słowa) było sklejane w "ZielonaGóra" jakby
+    // to był jeden wyraz rozbity przez OCR. Fix: (?i) tylko na prefiksie ul/al/pl/os,
+    // grupy 2 i 3 z powrotem case-sensitive (grupa 3 = wyłącznie małe litery = kontynuacja).
     private val OCR_STREET_MIDSPACE = Regex(
-        """(?i)((?:ul|al|pl|os)\.[^\S\n]*)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,9})[^\S\n]+([a-ząćęłńóśźż]{2,7})(?=[^\S\n]+\d|[^\S\n]*,|[^\S\n]*\n|[^\S\n]*$)"""
+        """((?i:ul|al|pl|os)\.[^\S\n]*)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,9})[^\S\n]+([a-ząćęłńóśźż]{2,7})(?=[^\S\n]+\d|[^\S\n]*,|[^\S\n]*\n|[^\S\n]*$)"""
     )
 
     // ----------------------------------------------------------
@@ -247,8 +252,13 @@ object OcrNormalizer {
     private val OCR_EMAIL_SLDSPACE = Regex(
         """(@[a-zA-Z0-9\-]{2,15})[^\S\n]([a-zA-Z0-9\-]{2,15}\.[a-zA-Z][a-zA-Z0-9]{1,3})\b"""
     )
+    // BUG-EMAIL-KROPKA-SPACJA-FIX (06.07, diagnoza Cursor): grupa 1 NIE może zawierać kropkę.
+    // Bez tego "jan@wp.pl do jutra" (domena JUŻ ma kompletne TLD, spacja to granica zdania)
+    // matchował jako "@wp.pl" + spacja + "do" → sklejał "@wp.pl.do". Cel wzorca to tylko domena
+    // BEZ kropki przed spacją ("@onet pl" → "@onet.pl") — z kropką w grupie 1 to już nie jest
+    // ten przypadek.
     private val OCR_EMAIL_TLDSPACE = Regex(
-        """(@[a-zA-Z0-9.\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
+        """(@[a-zA-Z0-9\-]{2,30})[^\S\n]([a-zA-Z0-9]{2,4})\b"""
     )
     // N3: {1,} zamiast {2,} w fragmencie1 — obsługa jednoliiterowych segmentów ("jan k owal ski@...")
     private val OCR_EMAIL_LOCALSPACE = Regex(
@@ -288,6 +298,25 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     private val OCR_UL_PREFIX = Regex(
         """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(?:[uU][lI1]\.?[^\S\n]*|[uU]\.[^\S\n]*|(?:ulica|ULICA)[^\S\n]+)(?=[A-ZŁŚŹĆŃĄĘÓŻ])"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_ADDR_PREFIX (04.07, diagnoza Cursor — BUG-PI-WOLHOCI): analogicznie do OCR_UL_PREFIX,
+    // ale dla al./os./pl. — "pI. Nazwa" (duże I zamiast małego l), "aI.", "o5." itp.
+    // AnchorEngine A.11 i StructuralEngine ADDRESS_PATTERNS wymagają dosłownie "pl\."/"al\."/"os\." —
+    // bez tej normalizacji zdegradowany prefiks nigdy nie trafia w żadną z tych kotwic.
+    // "ul." NIE tu — w pełni obsłużone już przez OCR_UL_PREFIX powyżej.
+    // ----------------------------------------------------------
+    // Lookahead (?=[^\n]{0,55}\d) wymaga numeru budynku w zasięgu linii — odcina większość
+    // fałszywych trafień na niezwiązane skróty (np. "AI. Nowak" bez numeru nie jest adresem).
+    //
+    // BUG-PLN-IBAN-FIX (04.07): separator PO literze prefiksu był całkowicie opcjonalny
+    // (zero-width) — regex łapał "PL" wewnątrz "PLN 1234" (waluta) i "PL61..." (IBAN),
+    // bo zaraz po literze szła wielka litera/cyfra bez żadnego odstępu. Fix: separator
+    // MUSI być — kropka (opcjonalnie + spacja) ALBO co najmniej jedna spacja, nigdy zero znaków.
+    // "PLN"/"PL61" nie mają ani kropki, ani spacji po drugiej literze → już nie pasują.
+    private val OCR_ADDR_PREFIX = Regex(
+        """(?<![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(?:([aA])[lLiI1](?:\.[^\S\n]*|[^\S\n]+)|([oO])[sS5](?:\.[^\S\n]*|[^\S\n]+)|([pP])[lLiI1](?:\.[^\S\n]*|[^\S\n]+))(?=[A-ZŁŚŹĆŃĄĘÓŻ][^\n]{0,55}\d)"""
     )
 
     // ----------------------------------------------------------
@@ -367,9 +396,16 @@ object OcrNormalizer {
     // OCR_PESEL_SPLIT: spacja wstawiona przez OCR wewnątrz numeru PESEL + litery jako cyfry
     // Przykład: "PESEL: 6802041 8568"  → "PESEL: 68020418568"
     // Przykład: "PESEL: 9l0405 l2367" → "PESEL: 91040512367"
+    // BUG-PESEL-KOD-SKLEJENIE-FIX (Cursor 01.07): [TIlOo0-9\s]{10,14} (klasa znaków
+    // ze spacją bez ograniczeń) traktował spację PRZED sąsiednim kodem pocztowym jako
+    // kontynuację PESEL-u — "PESEL 90051512340 00-001" → normalizer usuwał spację i
+    // zlepiał "9005151234000-001", zanim JAKAKOLWIEK reguła maskująca zobaczyła tekst
+    // (OcrNormalizer to Warstwa 0, przed wszystkim innym). Fix: (?:...|\s(?!\d{2}-))
+    // zamiast prostej klasy znaków ze spacją — spacja dozwolona jako separator TYLKO
+    // gdy nie zaczyna kształtu kodu pocztowego (\d{2}-).
     // ----------------------------------------------------------
     private val OCR_PESEL_SPLIT = Regex(
-        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9][TIlOo0-9\s]{10,14}[TIlOo0-9])"""
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -379,6 +415,30 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     private val OCR_NIP_DIGITS = Regex(
         """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_NIP_POSTAL_GLUE (Cursor 01.07): NIP sklejony BEZ separatora z kodem pocztowym
+    // — "526-021-15-8100-001" (NIP "526-021-15-81" + kod "00-001", zero spacji między
+    // nimi). Bez tego A.5 (kotwica NIP w AnchorEngine) łapał cały ciąg razem, a kod
+    // pocztowy nigdy nie stawał się osobnym tokenem ADRES. Wstawia spację w miejscu
+    // gdzie kończy się kształt NIP (3-3-2-2, 10 cyfr) a zaczyna kształt kodu (XX-XXX).
+    // ----------------------------------------------------------
+    private val OCR_NIP_POSTAL_GLUE = Regex(
+        """(\d{3}-\d{3}-\d{2}-\d{2})(\d{2}-\d{3})"""
+    )
+
+    // ----------------------------------------------------------
+    // OCR_NIP_POSTAL_GLUE_3223 (05.07, diagnoza Cursor): ten sam problem co wyżej,
+    // ale dla NIP w formacie 3-2-2-3 (np. "521-33-15-33200-001" — NIP "521-33-15-332"
+    // + kod "00-001", zero spacji). OCR_NIP_POSTAL_GLUE obsługuje tylko 3-3-2-2 —
+    // bez tego drugiego wzorca A.5b (kotwica NIP bez keywordu) dopasowywała tylko
+    // pierwsze 3 grupy ("521-33-15"), zostawiając "33200-001 Kraków" całkowicie jawne
+    // (żaden inny wzorzec — ani NIP 3-2-2-3, ani AddressEngine POSTAL — nie widział
+    // sklejonego ciągu jako całości). Ten sam mechanizm co wyżej, inny kształt NIP.
+    // ----------------------------------------------------------
+    private val OCR_NIP_POSTAL_GLUE_3223 = Regex(
+        """(\d{3}-\d{2}-\d{2}-\d{3})(\d{2}-\d{3})"""
     )
 
     // ----------------------------------------------------------
@@ -704,6 +764,16 @@ object OcrNormalizer {
             }
         } while (text != prev8)
 
+        // 8b. OCR: zdegradowany prefiks al./os./pl. ("pI.", "aI.", "o5.") → kanoniczny prefiks
+        text = OCR_ADDR_PREFIX.replace(text) { m ->
+            corrections++
+            when {
+                m.groupValues[1].isNotEmpty() -> "al. "
+                m.groupValues[2].isNotEmpty() -> "os. "
+                else -> "pl. "
+            }
+        }
+
         // 8c. OCR: spacja przed kropką skrótu adresowego — "ul .Nazwa" → "ul.Nazwa"
         text = OCR_ABBREV_SPACE_DOT.replace(text) { m ->
             corrections++
@@ -765,6 +835,16 @@ object OcrNormalizer {
             val fixed = replaceNipBareShape(m)
             if (fixed != m.value) corrections++
             fixed
+        }
+
+        // 11d. OCR: NIP sklejony bez separatora z kodem pocztowym — wstaw spację na granicy
+        text = OCR_NIP_POSTAL_GLUE.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]} ${m.groupValues[2]}"
+        }
+        text = OCR_NIP_POSTAL_GLUE_3223.replace(text) { m ->
+            corrections++
+            "${m.groupValues[1]} ${m.groupValues[2]}"
         }
         text = OCR_NIP_BARE3223.replace(text) { m ->
             val fixed = replaceNipBareShape(m)

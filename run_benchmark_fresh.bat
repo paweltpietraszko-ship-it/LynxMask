@@ -17,8 +17,12 @@ adb shell rm -rf /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/
 adb shell monkey -p com.lynxmask.app -c android.intent.category.LAUNCHER 1
 timeout /t 2 /nobreak >nul
 
-echo [1b/4] Generowanie swiezego datasetu (68 dok., 17 per poziom, losowy seed)...
-python generator.py --count 68 --output dataset_fresh_run --max-level 3
+echo [1b/4] Generowanie swiezego datasetu (500 dok., 125 per poziom, staly seed 42)...
+rem 07.07: 68 dok. (~325 encji) dawalo blad standardowy ~1,1pp / przedzial ufnosci +-2,1pp -
+rem pojedynczy fix ginal w szumie probki (dwa przebiegi na TYM SAMYM kodzie: 94,6% vs 97,2%).
+rem 500 dok. (~2400 encji) -> blad standardowy ~0,4pp, przedzial +-0,8pp - realna poprawa
+rem 1-2pp staje sie widoczna zamiast tonac w losowosci doboru dokumentow.
+python generator.py --count 500 --output dataset_fresh_run --max-level 3 --seed 42
 if errorlevel 1 (
     echo BLAD: generator.py nie powiodl sie
     pause
@@ -29,7 +33,7 @@ echo [2/4] Przepychanie datasetu...
 adb push dataset_fresh_run\ground_truth.json /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/ground_truth_lvl03.json
 adb push dataset_fresh_run\images /storage/emulated/0/Android/data/com.lynxmask.app/files/bench/images
 
-echo [3/4] Uruchamianie benchmarku (czekaj ~30 sekund)...
+echo [3/4] Uruchamianie benchmarku (500 dok. - czekaj kilka minut, nie 30 sekund)...
 adb shell am instrument -w -r -e class com.lynxmask.app.BenchmarkInstrumentedTest com.lynxmask.app.test/androidx.test.runner.AndroidJUnitRunner
 
 echo [4/4] Pobieranie wynikow...

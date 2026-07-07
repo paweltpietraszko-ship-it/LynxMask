@@ -1,0 +1,56 @@
+TEST REGRESJI — tylko problematyczne zapisy z sesji 04.07.2026 (AddressEngine v0)
+Każdy blok: [nazwa] wejście, potem OCZEKIWANE. Kolory w podglądzie: zielony=AddressEngine, niebieski=stary silnik, czerwony=odkryty ręcznie.
+
+[Test 1 — dwuczłonowa nazwa miasta użyta jako nazwa ulicy]
+ul. Zielona Góra 3, 65-001 Zielona Góra
+OCZEKIWANE: 2 tokeny ADRES (ulica+numer / kod+miasto), zero OSOBA na "Góra"
+
+[Test 1b — kontrola ogólności: inne miasto kończące się na "Góra", bez adresu]
+Klient odwiedził oddział w mieście Jelenia Góra w zeszłym miesiącu.
+OCZEKIWANE: całe "Jelenia Góra" jako ADRES, zero OSOBA na "Góra" — jeśli tu też pęknie,
+przyczyna jest ogólna (każde miasto na "Góra" poza strukturą adresu), nie specyficzna dla
+słowa "Zielona"
+
+[2 — myślnik w nazwie ulicy]
+ul. Gdańska-Sopocka 3/1, 81-001 Gdynia
+OCZEKIWANE: 1 token ADRES całość, "Gdańska-" nie zostaje jawne
+
+[3 — patron ulicy, imię+nazwisko w nazwie]
+ul. Władysława Stanisława Reymonta 45/12, 90-001 Łódź
+OCZEKIWANE: 1 token ADRES całość, zero OSOBA na "Władysława Stanisława"
+
+[4 — ulica+numer+miasto BEZ kodu pocztowego]
+ul. Długa 7, Gdańsk
+OCZEKIWANE: 1 token ADRES całość, "Gdańsk" nie zostaje jawne
+
+[5 — dwuczłonowa nazwa patronimiczna + dwie liczby przed kodem]
+ul. Jana Pawła II 10/5 20-001 Lublin
+OCZEKIWANE: możliwie 1 token ulica+numer, nie zaczyna się od "Pawła" (bez "ul. Jana")
+
+[6 — regresja PLN, nie adres]
+Kwota do zapłaty: PLN 1234
+OCZEKIWANE: PLN zostaje jawne (waluta, nie adres) — BRAK tokenu ADRES na "PLN"
+
+[7 — regresja IBAN, nie adres]
+IBAN PL61 1020 1026 0000 0422 7020 1111
+OCZEKIWANE: cały IBAN jako NUMER (nie ADRES), "PL" nie ucięte jako fałszywy prefiks adresowy
+
+[8 — zdegradowany prefiks OCR pl. → pI.]
+pI. Wolhoci 175
+OCZEKIWANE: 1 token ADRES (prefiks znormalizowany przed maskowaniem)
+
+[9 — trzy pary kod+miasto w jednej linii]
+00-001 Warszawa, 80-001 Gdańsk, 31-610 Kraków
+OCZEKIWANE: 3 osobne tokeny ADRES, żaden kod nie ucięty
+
+[10 — miasto po przyimku, bez adresu — kontrola]
+Spotkanie odbędzie się w Warszawie w przyszłym tygodniu.
+OCZEKIWANE: 1 token ADRES na "Warszawie" (NameEngine CITY_PREP — niebieski, to OK)
+
+[11 — samo miasto bez kontekstu, obok innego adresu — kontrola]
+Klient mieszka w Krakowie. WARSZAWA to inne miasto wspomniane w umowie.
+OCZEKIWANE: oba miasta zamaskowane (Anchor A.11c/CITY_PREP — niebieskie, to OK)
+
+[12 — NIP sklejony z kodem pocztowym bez separatora — kontrola regresji wcześniejszej sesji]
+NIP 526-021-15-8100-001 Warszawa
+OCZEKIWANE: NIP jako NUMER, "00-001 Warszawa" jako osobny ADRES — nie sklejone

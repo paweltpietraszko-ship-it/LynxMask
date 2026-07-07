@@ -180,6 +180,12 @@ class BenchmarkInstrumentedTest {
                 error          = null,
                 trace          = engineResult.trace,
                 guardRedHits   = engineResult.guardHits.count { it.level == "RED" },
+                // BUG-BENCHMARK-BRAK-KONTEKSTU (Paweł 07.07): dotad tylko LICZBA trafien Guard
+                // RED trafiala do raportu — zero szczegolow ktory dokument/jaki fragment, wiec
+                // diagnoza wymagala recznego adb pull. Zapisujemy label+dopasowany tekst.
+                guardRedDetails = engineResult.guardHits
+                    .filter { it.level == "RED" }
+                    .map { "${it.label}=${it.matchedText.take(40)}" },
             )
         } catch (e: Exception) {
             analyze(gt, emptyList(), ocrText = "", ocrAccepted = false, ocrConf = 0f,
@@ -235,16 +241,37 @@ class BenchmarkInstrumentedTest {
 
     private fun normalizeForCompare(s: String) = norm(s)
 
+    // BUG-BENCHMARK-DWIE-DEGRADACJE (Paweł 07.07): stary próg "różnica ≤1 znak" (Hamming dla
+    // równej długości, jedno usunięcie dla różnicy 1) łamie się gdy DŁUGA wartość (email, IBAN)
+    // ma DWIE NIEZALEŻNE degradacje OCR naraz (np. "wozniak"→"woziak" I "wp.pl"→"wppl" w tym
+    // samym adresie — każda z osobna byłaby tolerowana, razem dają odległość edycji 2, ponad
+    // stary próg ±1). Silnik prawdopodobnie zamaskował poprawnie (na zdegradowanym tekście),
+    // ale benchmark raportował BRAK_W_OCR — potwierdzone ręcznym testem na telefonie: wszystko
+    // faktycznie zamaskowane. Fix: prawdziwa odległość Levenshteina (obsługuje kombinacje
+    // podstawień/wstawień/usunięć, nie tylko jeden z tych przypadków osobno) + próg skalowany
+    // długością wartości — krótkie pola (PESEL, 11 zn.) zostają przy tolerancji 1 (ryzyko FP
+    // rośnie nieproporcjonalnie przy krótkich ciągach), długie pola (email, IBAN, 15+ zn.)
+    // dostają 2-3 — statystycznie więcej niezależnych pozycji = większa szansa na 2+ literówki
+    // naraz, bez utraty odróżnialności od zupełnie innej wartości (zweryfikowane Pythonem:
+    // dwa różne PESEL-e/email-e podobnej długości nadal poprawnie odrzucone, odległość rzędu
+    // 9-14, daleko ponad próg).
+    private fun levenshtein(a: String, b: String): Int {
+        val dp = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) dp[i][0] = i
+        for (j in 0..b.length) dp[0][j] = j
+        for (i in 1..a.length) for (j in 1..b.length) {
+            dp[i][j] = if (a[i - 1] == b[j - 1]) dp[i - 1][j - 1]
+                else 1 + minOf(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+        }
+        return dp[a.length][b.length]
+    }
+
     private fun fuzzyMatch(a: String, b: String): Boolean {
         if (a.length < 9 || b.length < 9) return false
-        if (Math.abs(a.length - b.length) > 1) return false
-        val longer  = if (a.length >= b.length) a else b
-        val shorter = if (a.length < b.length) a else b
-        if (longer.length == shorter.length)
-            return longer.zip(shorter).count { (x, y) -> x != y } <= 1
-        for (i in longer.indices)
-            if (longer.removeRange(i, i + 1) == shorter) return true
-        return false
+        val maxLen = maxOf(a.length, b.length)
+        val maxDist = if (maxLen >= 24) 3 else if (maxLen >= 15) 2 else 1
+        if (Math.abs(a.length - b.length) > maxDist) return false
+        return levenshtein(a, b) <= maxDist
     }
 
     private fun extractNumericRuns(text: String): List<String> =
@@ -252,12 +279,50 @@ class BenchmarkInstrumentedTest {
             .map { normalizeForCompare(it.value) }
             .toList()
 
+    // BUG-BENCHMARK-SPACJA-IBAN (Paweł 07.07): extractNumericRuns łamie się na spacji —
+    // OCR czasem wstawia spację W ŚRODKU długiego numeru (IBAN, numer_kw), nie tylko na
+    // granicy segmentów. "PL7824...798 2507 146112645" → trzy oddzielne runy, żaden nie
+    // przechodzi progu długości fuzzyMatch względem pełnej wartości GT → klasyfikacja
+    // spada do BRAK_W_OCR mimo że silnik (StructuralEngine 485, dedykowany właśnie na ten
+    // przypadek) prawdopodobnie zamaskował to poprawnie. Fix: przesuwane okno o długości
+    // wartości GT (±1) na tekście z usuniętymi spacjami W OBRĘBIE OKNA, nie w całym
+    // dokumencie (globalne usunięcie spacji sklejałoby też niepowiązane sąsiednie słowa).
+    private fun fuzzyContainsIgnoringEmbeddedSpaces(haystack: String, needle: String): Boolean {
+        if (needle.length < 9) return false
+        val compact = haystack.replace(Regex("""\s"""), "").lowercase()
+        for (len in (needle.length - 1)..(needle.length + 1)) {
+            if (len < 9 || len > compact.length) continue
+            for (start in 0..(compact.length - len)) {
+                if (fuzzyMatch(needle, compact.substring(start, start + len))) return true
+            }
+        }
+        return false
+    }
+
+    // Okno wokół faktycznej pozycji encji w OCR zamiast stałego cap-u od początku dokumentu —
+    // stały .take(N) ucinał tekst PRZED dotarciem do encji w dłuższych dokumentach (faktury z
+    // długim wstępem sprzedawcy/nabywcy, akty komornicze). Szuka pierwszych 4 znaków wartości
+    // (odporne na drobne różnice OCR w reszcie), fallback: cały tekst gdy nie znaleziono.
+    private fun ocrSnippetAround(ocrText: String, value: String, radius: Int = 200): String {
+        val needle = value.take(4)
+        val idx = if (needle.length >= 3) ocrText.indexOf(needle, ignoreCase = true) else -1
+        val snippet = if (idx >= 0) {
+            val from = maxOf(0, idx - radius)
+            val to = minOf(ocrText.length, idx + value.length + radius)
+            ocrText.substring(from, to)
+        } else {
+            ocrText
+        }
+        return snippet.replace("\n", " ")
+    }
+
     // Klasyfikacja miss wg §12.2 briefa właściciela
     private fun classifyMiss(key: String, value: String, normalizedText: String): String {
         val normVal = normalizeForCompare(value)
         return when {
             normalizeForCompare(normalizedText).contains(normVal) -> "BUG_SILNIKA"
             key in numericKeys && extractNumericRuns(normalizedText).any { fuzzyMatch(normVal, it) } -> "OCR_ZNIEKSZTAŁCONY"
+            key in numericKeys && fuzzyContainsIgnoringEmbeddedSpaces(normalizedText, normVal) -> "OCR_ZNIEKSZTAŁCONY"
             else -> "BRAK_W_OCR"
         }
     }
@@ -272,6 +337,7 @@ class BenchmarkInstrumentedTest {
         error: String?,
         trace: List<DetectionTrace> = emptyList(),
         guardRedHits: Int = 0,
+        guardRedDetails: List<String> = emptyList(),
     ): DocResult {
         val degLevel = gt.optInt("degradation_level", -1)
         val section: String = when {
@@ -300,9 +366,34 @@ class BenchmarkInstrumentedTest {
             var matchedTokenType: String? = null
             val found = error == null && ocrAccepted && tokens.any { tok ->
                 val on = norm(tok.original)
+                // fuzzyMatch (odległość edycji <=1, min. 9 znaków) był ograniczony do numericKeys —
+                // literówka/zgubiona litera OCR w środku emaila/nazwiska ("wozniak"→"woziak") łamie
+                // proste .contains() mimo że silnik poprawnie zamaskował wartość jako token. Kotwica
+                // (np. @) nie waliduje kształtu, więc token często ISTNIEJE — to miernik był ślepy,
+                // nie silnik. fuzzyMatch ma już wbudowane zabezpieczenia (długość, max 1 różnica),
+                // więc jest bezpieczny dla każdego typu pola, nie tylko numerycznego.
+                // Wzorce kontekstowe (np. PESEL/NIP) celowo wchłaniają słowo-kotwicę do tokenu
+                // ("PESEL: 12345678901" → jeden token) — dobre dla maskowania, ale psuje
+                // fuzzyMatch powyżej: "pesel:12345678901" (17 zn.) vs goła wartość GT (11 zn.)
+                // różni się długością o 6, więc próg ±1 znaku nigdy nie przejdzie mimo że token
+                // faktycznie zawiera poprawną (lub jedną literą zniekształconą) wartość.
+                // Dla pól numerycznych: wyodrębnij sam ciąg alfanumeryczny z dopasowania przed
+                // porównaniem, tak jak już robi extractNumericRuns() dla missLabel niżej.
+                // Identyfikatory złożone (numer_faktury/umowy/kw/działki: "UMW/2024/291") mają
+                // ukośniki, które łamią extractNumericRuns (wymaga ciągłego alnum ≥9 znaków —
+                // ukośnik przerywa ciąg na kawałki poniżej progu). Kotwica-etykieta ("nr ", "Nr")
+                // zawsze jest PRZED wartością, nigdy po — więc porównanie KOŃCÓWKI tokenu
+                // (przycięte do długości GT) z fuzzyMatch bezpiecznie omija nieznaną długość
+                // prefiksu niezależnie od typu pola. Znalezione 06.07: "nr UMWI2024/291"
+                // (ukośnik odczytany jako "I" przez OCR nawet przy lvl0 "perfect scan" — realne
+                // ograniczenie odczytu glifu, nie szum symulowany) + prefiks "nr " razem dawały
+                // różnicę 2 znaków, ponad próg fuzzyMatch (±1) mimo że token faktycznie istniał.
+                val suffix = if (on.length > valN.length) on.takeLast(valN.length) else on
                 val matched = valN == on ||
                     (valN.length >= 6 && (valN.contains(on) || on.contains(valN))) ||
-                    (key in numericKeys && fuzzyMatch(valN, on))
+                    fuzzyMatch(valN, on) ||
+                    (key in numericKeys && extractNumericRuns(tok.original).any { fuzzyMatch(valN, it) }) ||
+                    (valN.length >= 9 && fuzzyMatch(valN, suffix))
                 if (matched && matchedTokenType == null) matchedTokenType = tok.type
                 matched
             }
@@ -356,6 +447,7 @@ class BenchmarkInstrumentedTest {
             fpTokens       = fpList,
             missLabels     = missLabels,
             guardRedHits   = guardRedHits,
+            guardRedDetails = guardRedDetails,
             summary        = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
                                      typeMismatch, bugSilnika, ocrZniek, brakWOcr),
             trace          = trace,
@@ -578,6 +670,14 @@ class BenchmarkInstrumentedTest {
                     val to   = minOf(r.normalizedText.length, idx + e.value.length + 15)
                     bb.appendLine("    OCR: «${r.normalizedText.substring(from, to).replace("\n", "↵")}»")
                 }
+                // Diagnostyka "chorego termometru" (06.07): wartość bywa realnie zamaskowana
+                // (potwierdzone ręcznie na telefonie), ale token nie przechodzi porównania z GT
+                // z innego powodu niż literówka/kotwica-prefiks. Wypisz WSZYSTKIE tokeny tego
+                // dokumentu — pozwala zobaczyć dokładnie co silnik przechwycił.
+                if (r.tokens.isNotEmpty()) {
+                    bb.appendLine("    Tokeny w dokumencie: " +
+                        r.tokens.joinToString(", ") { "${it.type}=«${it.original.take(40)}»" })
+                }
             }
             bb.appendLine()
         }
@@ -585,9 +685,34 @@ class BenchmarkInstrumentedTest {
         if (ocrZniekCases.isNotEmpty()) {
             bb.appendLine("[OCR_ZNIEKSZTAŁCONY] Encje krytyczne — BLOCKER RELEASE: ${ocrZniekCases.size}")
             bb.appendLine()
+            // BUG-BENCHMARK-BRAK-KONTEKSTU (Paweł 07.07): ta sekcja pokazywała tylko etykietę
+            // i wartość GT, zero fragmentu OCR/tokenów — diagnoza wymagała ręcznego adb pull
+            // za każdym razem. Dodano ten sam kontekst co [BUG_SILNIKA] wyżej.
             ocrZniekCases.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}  ${e.key}=${e.value.take(40)}")
                 bb.appendLine("    → encja nie jest exact w OCR, ale fuzzy match — bug silnika/normalizera")
+                val idx = r.normalizedText.indexOf(e.value.take(4), ignoreCase = true)
+                if (idx >= 0) {
+                    val from = maxOf(0, idx - 10)
+                    val to   = minOf(r.normalizedText.length, idx + e.value.length + 15)
+                    bb.appendLine("    OCR: «${r.normalizedText.substring(from, to).replace("\n", "↵")}»")
+                }
+                if (r.tokens.isNotEmpty()) {
+                    bb.appendLine("    Tokeny w dokumencie: " +
+                        r.tokens.joinToString(", ") { "${it.type}=«${it.original.take(40)}»" })
+                }
+            }
+            bb.appendLine()
+        }
+
+        val guardRedCases = secB.filter { it.guardRedDetails.isNotEmpty() }
+        if (guardRedCases.isNotEmpty()) {
+            bb.appendLine("[GUARD RED] Dokumenty z alertem RED — BLOCKER RELEASE: " +
+                "${guardRedCases.sumOf { it.guardRedDetails.size }}")
+            bb.appendLine()
+            guardRedCases.forEach { r ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}")
+                r.guardRedDetails.forEach { bb.appendLine("    GUARD RED: $it") }
             }
             bb.appendLine()
         }
@@ -648,7 +773,7 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             adresMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
-                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+                bb.appendLine("    OCR: ${ocrSnippetAround(r.ocrText, e.value)}")
             }
             bb.appendLine()
         }
@@ -662,7 +787,10 @@ class BenchmarkInstrumentedTest {
             bb.appendLine()
             numerMisses.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  ${e.key}=${e.value}  → ${r.missLabels[e.key] ?: "?"}")
-                bb.appendLine("    OCR[200]: ${r.ocrText.take(200).replace("\n", " ")}")
+                // OCR[200]/[500] za krótkie — ucinały tekst przed dotarciem do encji w dłuższych
+                // dokumentach (np. numer faktury po długim wstępie sprzedawcy/nabywcy,
+                // doc_00010 staly 06.07). Okno wokół faktycznej pozycji zamiast stałego cap-u.
+                bb.appendLine("    OCR: ${ocrSnippetAround(r.ocrText, e.value)}")
             }
             bb.appendLine()
         }
@@ -871,6 +999,7 @@ function exportSelected() {
         val fpTokens: List<DetectedToken> = emptyList(),
         val missLabels: Map<String, String>,
         val guardRedHits: Int,
+        val guardRedDetails: List<String> = emptyList(),
         val summary: Summary,
         val trace: List<DetectionTrace> = emptyList(),
         val normalizedText: String = ocrText,

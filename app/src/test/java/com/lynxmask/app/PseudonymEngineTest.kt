@@ -337,10 +337,14 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "765-43-21")
     }
 
-    @Test fun `s10b zbyt krotki numer po tel nie jest maskowany`() {
-        // 3 cyfry — za krótkie, żeby być telefonem
+    // ZMIANA FILOZOFII 01.07 (właściciel): kotwica maskuje niezależnie od długości —
+    // brief sekcja 6 wprost zakazuje wymagania konkretnej liczby cyfr. Stary test
+    // zakładał że 3 cyfry po "tel." to "za krótko żeby być telefonem" — to była
+    // walidacja, nie zasada kotwicy. Test odwrócony: teraz sprawdza że JEST maskowane.
+    @Test fun `s10b krotki numer po tel jest maskowany (zasada kotwicy bez limitu dlugosci)`() {
         val r = pseudonymize("tel. 994")
-        assertNotInOutput(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "994")
     }
 
     // BUG-DATE-PARTIAL — data ISO YYYY-MM-DD nie może zostawać częściowo widoczna
@@ -463,11 +467,11 @@ class PseudonymEngineTest {
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 
-    // BUG-05: wzorzec tablic rejestracyjnych łapie "PLN 1234" (PLN = 3 litery + 4 cyfry);
-    // wzorzec identyfikatorów łapie "POLSKA-1234-5678". Znane FP, nie ruszać do osobnego fix.
-    @Test fun `BUG05 znane FP tablice i identyfikatory`() {
+    // BUG-05: wzorzec identyfikatorów łapie "POLSKA-1234-5678". Znany FP, nie ruszać do osobnego fix.
+    // "PLN 1234" — NAPRAWIONE (BUG-PLN-*, sesje 04-05.07.2026): teraz maskowane jako KWOTA
+    // (symetryczny wzorzec waluta+liczba w StructuralEngine.kt) — patrz testy `BUG-PLN-*` niżej.
+    @Test fun `BUG05 znane FP identyfikatory`() {
         val knownFalsePositives = listOf(
-            "PLN 1234",        // tablica rejestracyjna pattern: [A-Z]{2,3}\s?\d{4,5}
             "POLSKA-1234-5678" // identyfikator pattern: [A-Z]{2,6}[-:/][A-Z0-9]{2,10}...
         )
         for (text in knownFalsePositives) {
@@ -669,6 +673,46 @@ class PseudonymEngineTest {
         val r = pseudonymize("e-nnail: piotr@o2.pl")
         assertTokenExists(r, TOKEN_EMAIL)
         assertNotInOutput(r, "piotr@o2.pl")
+    }
+
+    // BUG-EMAIL-LOCALPART-SPACJA (benchmark 05.07, doc "marek_wozniak@interia.pl" OCR-owane z
+    // podkreślnikiem zamienionym na spację): AnchorEngine A.2 zatrzymywał lewą granicę na
+    // pierwszej spacji, maskując tylko "wozniak@interia,pl" — "marek" zostawał jawny. Fix:
+    // opcjonalne jedno poprzedzające słowo (tylko litery/cyfry) w kotwicy A.2.
+    @Test fun `BUG-EMAIL-LOCALPART-SPACJA podkreslnik pomylony ze spacja maskuje cale local-part`() {
+        val r = pseudonymize("Adres e-mail: marek wozniak@interia,pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "marek")
+        assertNotInOutput(r, "wozniak@interia")
+    }
+
+    // Kontrola: rozszerzenie NIE może połykać etykiet kończących się dwukropkiem/myślnikiem —
+    // to jest to co odróżnia "prawdziwy urwany local-part" od zwykłej etykiety przed emailem.
+    @Test fun `BUG-EMAIL-LOCALPART-SPACJA regresja etykieta z dwukropkiem nie wchodzi do tokenu`() {
+        val r = pseudonymize("Kontakt: piotr.nowak@wp.pl")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTrue("Etykieta 'Kontakt:' powinna zostać jawna, nie wejść do tokenu EMAIL",
+            r.pseudonymizedText.contains("Kontakt:"))
+    }
+
+    // BUG-EMAIL-KROPKA-SPACJA (06.07, katalog degradacji OCR w TODO.md): kotwica A.2 tolerowała
+    // spację PRZED kropką w domenie ("firma .pl"), ale nie PO kropce ("firma. pl") — ten sam
+    // rodzaj degradacji, lustrzany. Prawa granica urywała się na kropce, zostawiając TLD jawny.
+    // Fix: symetryczny ogon w A.2, aktywny tylko gdy poprzedni fragment urwał się na kropce
+    // (lookbehind) — nie łapie zwykłego słowa po poprawnym mailu (patrz test FP niżej).
+    @Test fun `BUG-EMAIL-KROPKA-SPACJA kropka potem spacja w domenie maskuje cala domene`() {
+        val r = pseudonymize("Kontakt: ewa piotrowska @gmail. com")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertNotInOutput(r, "gmail")
+        assertNotInOutput(r, " com")
+    }
+
+    // Kontrola FP: rozszerzenie NIE może połykać zwykłego krótkiego słowa po POPRAWNYM mailu.
+    @Test fun `BUG-EMAIL-KROPKA-SPACJA regresja zwykle slowo po poprawnym mailu zostaje jawne`() {
+        val r = pseudonymize("Napisz na jan@wp.pl do jutra")
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTrue("'do jutra' powinno zostać jawne, nie wejść do tokenu EMAIL",
+            r.pseudonymizedText.contains("do jutra"))
     }
 
     @Test fun `BRAK_W_OCR Niepodlegosci pseudonymize`() {
@@ -960,6 +1004,18 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "60-001")
     }
 
+    // BUG-ADRES-ZACHLANNOSC-TEL (test ręczny na telefonie 07.07): opcjonalne drugie słowo po
+    // kodzie pocztowym (dodane dla miast dwuwyrazowych typu "Zielona Góra") nie miało żadnej
+    // walidacji słownikowej — łapało DOWOLNE następne słowo. "44-100 Łódź Tel: +48 ..." →
+    // token ADRES wchłonął "Tel", zjadając kotwicę telefonu dla kolejnej warstwy. Fix:
+    // drugie słowo wchodzi do tokenu tylko gdy cała fraza jest znanym miastem dwuwyrazowym.
+    @Test fun `adres nie wchlania nastepujacego slowa ktore nie jest czescia nazwy miasta`() {
+        val r = pseudonymize("Adres: ul. Kopernika 78, 44-100 Łódź Tel: +48 724 143 842")
+        assertFalse("Token ADRES nie powinien zawierac 'Tel'",
+            r.tokenMap.values.any { it.contains("Łódź", ignoreCase = true) && it.contains("Tel", ignoreCase = true) })
+        assertNotInOutput(r, "724 143 842")
+    }
+
     // =========================================================================
     // Testy regresji — przypadki z historii bugów
     // =========================================================================
@@ -1136,6 +1192,101 @@ class PseudonymEngineTest {
     }
 
     // =========================================================================
+    // BUG-PLN: "PLN 1234" (skrót waluty + kwota) mylony z tablicą rejestracyjną / adresem /
+    // serią dowodu (sesja 04-05.07.2026, test_adres_regresja_sesja.txt [6]/[7]).
+    //
+    // DECYZJA 05.07 (Paweł): waluta+liczba ("PLN 1234") to KWOTA, tak samo jak odwrotny szyk
+    // liczba+waluta ("1234 PLN") już był. Kwota sama nie identyfikuje osoby, ale skoro engine
+    // maskuje jeden szyk jako KWOTA, drugi powinien być spójny — nie zostawiać go jawnym z
+    // przypadku (kolejność słów), tylko z decyzji. Nowy symetryczny wzorzec w
+    // StructuralEngine.kt (obok istniejącego liczba+waluta). Wszystkie testy poniżej
+    // zaktualizowane z "zostaje jawne" na "staje się KWOTA" po tej decyzji.
+    // =========================================================================
+
+    @Test fun `BUG-PLN-KWOTA etykieta waluty PLN przed liczba maskowana jako KWOTA`() {
+        val r = pseudonymize("Kwota do zapłaty: PLN 1234")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertNotInOutput(r, "PLN 1234")
+    }
+
+    @Test fun `BUG-PLN-NUMER regresja IBAN nadal maskowany jako NUMER`() {
+        val r = pseudonymize("IBAN PL61 1020 1026 0000 0422 7020 1111")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "PL61 1020 1026 0000 0422 7020 1111")
+    }
+
+    // BUG-PLN-DOWOD (diagnoza trace 05.07, po zgłoszeniu telefonicznym "PLN 12345" jako NUMER):
+    // wzorzec serii dowodu osobistego (3 litery + 5-7 cyfr) łapał "PLN 12345" jako
+    // "PLN" (seria) + "12"+"345" (numer), zamiast jako KWOTA.
+    @Test fun `BUG-PLN-DOWOD kwota PLN z pieciocyfrowa liczba maskowana jako KWOTA nie seria dowodu`() {
+        val r = pseudonymize("PLN 12345")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertFalse("Nie powinien powstać NUMER (seria dowodu) z 'PLN 12345'",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_NUMER) })
+        assertNotInOutput(r, "PLN 12345")
+    }
+
+    @Test fun `BUG-PLN-DOWOD regresja prawdziwa seria dowodu nadal maskowana`() {
+        val r = pseudonymize("Seria i numer: AWY57 1380")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "AWY57 1380")
+    }
+
+    // BUG-PLN-STREETLOOKUP (diagnoza agenta 05.07, zrzuty z telefonu "ul. Kamienna,PLN 1234"):
+    // "płn" (skrót ulicy "Północna" w street_names.json) po ASCII-foldowaniu (ł→l) staje się
+    // "pln" w LookupTables.streetForms — realna kolizja danych, nie hipotetyczna. NameEngine
+    // applyStreetLookup nie miał tego samego CURRENCY_PREFIX_DENY co AddressEngine.kt, więc
+    // nadawał "PLN 1234" WŁASNY, osobny token ADRES (odróżnialny od ulicy) zamiast KWOTA.
+    // Test wstrzykuje "pln" wprost do słownika testowego (odtwarza kolizję bez zależności od
+    // realnego assets/street_names.json).
+    @Test fun `BUG-PLN-STREETLOOKUP pln w slowniku ulic nie maskuje samodzielnej kwoty jako ADRES`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(streets = setOf("pln", "kamienna", "kamiennej"))
+        val r = pseudonymize("Kwota do zapłaty: PLN 1234")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertFalse("PLN nie powinno dać ADRES — to kolizja danych, nie ulica",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_ADRES) })
+        assertNotInOutput(r, "PLN 1234")
+    }
+
+    // BUG-A11-LICZENIE-ZNAKOW (Paweł 05.07): AnchorEngine A.11 liczyło znaki (2-60) zamiast
+    // zatrzymywać się na granicy klasy znaku (spacja/koniec liter-cyfr) — brief v2 sekcja 6.4
+    // ("prefiks + 2-3 tokeny"). Po fixie A.11 + applyStreetLookup razem: "ul. Kamienna" (bez
+    // numeru, więc żadna precyzyjna warstwa jej nie łapie) trafia do A.11 jako zbieracz resztek
+    // i zatrzymuje się DOKŁADNIE na przecinku — "PLN 1234" zostaje kompletnie oddzielone od
+    // ulicy i maskowane osobno jako KWOTA (Warstwa 2, przed AnchorEngine).
+    @Test fun `BUG-A11-LICZENIE-ZNAKOW ul Kamienna z przecinkiem PLN oddzielone i maskowane jako KWOTA`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(streets = setOf("kamienna", "kamiennej"))
+        val r = pseudonymize("ul. Kamienna,PLN 1234")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertNotInOutput(r, "Kamienna")
+        assertNotInOutput(r, "PLN 1234")
+        assertFalse(
+            "PLN nie powinno wejść w skład tokenu ADRES",
+            r.tokenMap.filterKeys { it.startsWith(TOKEN_ADRES) }.values.any { it.contains("PLN") }
+        )
+    }
+
+    // BUG-PLN-ADRES (diagnoza Cursor 05.07, wariant tego samego bugu w AddressEngine, nie
+    // StructuralEngine): STREET_FULL ma opcjonalny prefiks "ul." — bez tego "PLN 1234,
+    // 00-001 Warszawa" dopasowywało się w całości jako JEDEN token ADRES, traktując "PLN"
+    // jak nazwę ulicy. Fix: gdy prefiks nie wystąpił, pierwsze słowo nie może być skrótem
+    // waluty (CURRENCY_PREFIX_DENY w AddressEngine.kt). "PLN 1234" teraz osobno jako KWOTA.
+    @Test fun `BUG-PLN-ADRES kwota z kodem pocztowym obok PLN maskowane osobno jako KWOTA i ADRES`() {
+        val r = pseudonymize("PLN 1234, 00-001 Warszawa")
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "PLN 1234")
+        assertFalse(
+            "PLN nie powinno wejść w skład tokenu ADRES razem z kodem/miastem",
+            r.tokenMap.filterKeys { it.startsWith(TOKEN_ADRES) }.values.any { it.contains("PLN") }
+        )
+    }
+
+    // =========================================================================
     // Helpers — nie są testami, tylko narzędziami
     // =========================================================================
 
@@ -1203,6 +1354,36 @@ class PseudonymEngineTest {
         val r = pseudonymize("Umowa z dnia 2024 roku podpisana")
         assertTrue("Rok 2024 powinien pozostać w tekście",
             r.pseudonymizedText.contains("2024"))
+    }
+
+    // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
+    // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie pomylił pojedynczą
+    // cyfrę z literą spoza D-klasy (nie O/o/l/I/i/S/s/B/b/Z/z) — kontekstowy wzorzec PESEL
+    // w Rundzie 1 (StructuralEngine.kt) dopasowywał się CZĘŚCIOWO, zjadając słowo-kotwicę
+    // ale urywając tuż przed obcą literą, więc żadna kolejna warstwa nie dostawała już szansy
+    // dokończyć. Fix: CTX_STRAY w StructuralEngine.kt toleruje jedną obcą literę w środku
+    // ciągu, gdy zaraz po niej jest znowu prawdziwa cyfra.
+    @Test fun `PESEL z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "78121295740" -> "781212957A0" ("4" rozpoznane jako "A")
+        val r = pseudonymize("Beata Kamiiska PESEL: 781212957A0 Adres: ul. Kopernika 78")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "781212957A0")
+        assertNotInOutput(r, "A0")
+    }
+
+    @Test fun `PESEL z obca litera i spacja w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "93072300794" -> "930r2300 794" ("7" rozpoznane jako "r", plus spacja)
+        val r = pseudonymize("Agnieszka Grabowska, PESEL:930r2300 794 zamieszkala Szkolna 6")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "930r2300 794")
+    }
+
+    @Test fun `PESEL obca litera regresja sklejenia z kodem pocztowym nadal dziala`() {
+        // BUG-PESEL-SKLEJENIE-FIX (01.07) nie może wrócić przez CTX_STRAY: tolerancja obcej
+        // litery wymaga prawdziwej cyfry ZARAZ po niej, więc nie przeskakuje w kod pocztowy.
+        val r = pseudonymize("PESEL 90051512340 00-001 Warszawa NIP 526-021-15-81")
+        assertFalse("PESEL nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
     }
 
     // =========================================================================
@@ -1610,8 +1791,542 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "8678")
     }
 
+    // BUG-NUMER-FAKTURA-TABLICA (diagnoza Cursor 07.07, traceMode): wzorzec tablicy
+    // rejestracyjnej (StructuralEngine.kt:573, [A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}) jest
+    // wcześniej na liście niż wzorzec sygnatury slash (linia 605) i pasuje do prefiksu
+    // "FVI2025" (3 litery + 4 cyfry) w numerze faktury zanim szerszy wzorzec dostanie
+    // szansę objąć całość — "/12/1828" zostawał jawny (Guard łapał jako SYGNATURA,
+    // ale nie maskował). Test na jednej linii bez "\n" i ze słowem "VAT" wtrąconym
+    // między "FAKTURA" a "Nr" (kontekstowy wzorzec 445 tego nie łapie).
+    @Test fun `numer faktury bez myslnika prefiks litery-cyfry nie zostawia sieroty slash`() {
+        val r = pseudonymize("FAKTURA VAT Nr FVI2025/12/1828")
+        assertNotInOutput(r, "/12/1828")
+        assertNotInOutput(r, "FVI2025")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NUMER-FAKTURA-VAT (diagnoza Cursor 07.07, test ręczny Pawła): numer faktury czysto
+    // cyfrowy, bez słowa "nr"/"numer" wcale — tylko "Faktura" + słowo pośrednie "VAT" +
+    // identyfikator. Wzorzec kontekstowy 445 wymagał wcześniej DOKŁADNIE sąsiadującego
+    // "nr"/"numer" po "faktura" — "VAT" wtrącone między nimi łamało dopasowanie całkowicie,
+    // a wzorzec sygnatury sądowej (650) łapał tylko "VAT 26/06", zostawiając "/006" jawne.
+    @Test fun `numer faktury cyfrowy 3 segmenty po Faktura VAT bez slowa nr`() {
+        val r = pseudonymize("Faktura VAT 26/06/006")
+        assertNotInOutput(r, "/006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // TEST 07.07 (Paweł): eksperyment architektoniczny — wzorzec 445 (numer faktury) w
+    // StructuralEngine.kt wyłączony celowo (skomentowany). AnchorEngine A.12 (docNumberRe)
+    // ma teraz "FV"/"Fv"/"fv"/"F.V."/"f-ra"/"VAT" jako kotwice bezpośrednie (obok "Nr"),
+    // żeby sprawdzić czy Anchor sam wystarcza jako jedyne miejsce zakrywające NUMER faktury.
+    @Test fun `numer faktury skrot FV jako kotwica bez slowa faktura obok liczby`() {
+        val r = pseudonymize("FAKTURA VAT FV 26/06/006")
+        assertNotInOutput(r, "/006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury z kropkami jako separatorem lapany przez Anchor FV`() {
+        val r = pseudonymize("FAKTURA VAT FV KOR12.012.00012")
+        assertNotInOutput(r, "00012")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury z doklejonym sufiksem miasta nie zostawia sieroty`() {
+        val r = pseudonymize("FAKTURA VAT FV 26/06/006/WAW")
+        assertNotInOutput(r, "/WAW")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // Wykluczenie: stawka VAT (kształt cyfry+%) to NIGDY numer dokumentu — regresja FP.
+    @Test fun `stawka VAT z procentem nie jest maskowana jako numer faktury`() {
+        val r = pseudonymize("Faktura VAT 23%")
+        assertFalse("stawka VAT nie powinna zniknąć z wyniku", r.pseudonymizedText.isBlank())
+        assertTrue("23% powinno zostać widoczne", r.pseudonymizedText.contains("23%"))
+    }
+
+    @Test fun `stawka VAT z dwukropkiem i przecinkiem nie jest maskowana`() {
+        val r = pseudonymize("Faktura VAT: 8%, netto 100 zl")
+        assertTrue("8% powinno zostać widoczne", r.pseudonymizedText.contains("8%"))
+    }
+
+    @Test fun `kwota VAT bez cyfry po slowie nie tworzy falszywego tokenu`() {
+        val r = pseudonymize("Kwota VAT wynosi 230,00 zl")
+        assertFalse("'wynosi' nie powinno stać się fałszywym NUMEREM",
+            r.tokenMap.values.any { it == "wynosi" })
+    }
+
+    // A.12b (Paweł 07.07): lustro A.12 — kotwica "FV" NA KOŃCU numeru, nie na początku.
+    @Test fun `numer faktury z kotwica FV na koncu numeru`() {
+        val r = pseudonymize("Faktura VAT 260712/FV")
+        assertNotInOutput(r, "260712/FV")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // A.12c (Paweł 07.07): "FV" samowystarczalna kotwica, BEZ sygnału wstecz — "FV" samo
+    // w sobie jest wystarczająco specyficzne (ten sam precedens co stary wzorzec 494).
+    // Kluczowy przypadek: litera w środku numeru ("W") niewidoczna dla 494 (czyste cyfry)
+    // i dla A.12 (brak "Faktura"/"VAT" w pobliżu) — zero zewnętrznego kontekstu w tym teście.
+    @Test fun `numer faktury FV z litera w srodku bez zadnego kontekstu`() {
+        val r = pseudonymize("FV20260700W012")
+        assertNotInOutput(r, "FV20260700W012")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury FV na koncu bez kontekstu tez dziala samowystarczalnie`() {
+        val r = pseudonymize("260712/FV")
+        assertNotInOutput(r, "260712/FV")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-FAKTURA-SPACJE-SEPARATOR (Paweł 07.07, test_faktura_20_warianty punkt 18):
+    // OCR czasem wstawia spację wokół ukośnika/myślnika ("26 / 06 / 006" zamiast
+    // "26/06/006") — capture oparty o goły \S+ urywał się na pierwszej spacji.
+    @Test fun `numer faktury ze spacjami wokol ukosnikow nie zostawia sieroty`() {
+        val r = pseudonymize("FAKTURA VAT  FV  26 / 06 / 006")
+        assertNotInOutput(r, "/ 06")
+        assertNotInOutput(r, "/ 006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-FIX (Paweł 07.07, benchmark staly doc_00027): OCR zdegradowało "działki"
+    // do "dzialki" (ł→l) — wzorzec wymagał litery dosłownej. Plus numer z kropkami+ukośnikiem.
+    // Migrowane do AnchorEngine A.12 (StructuralEngine 613 wyłączone) — patrz testy niżej.
+    @Test fun `numer dzialki z degradacja l zamiast l i kropkami jako separator`() {
+        val r = pseudonymize("Nr dzialki ewidencyjnej: 775900.0011.3706/6")
+        assertNotInOutput(r, "775900")
+        assertNotInOutput(r, "3706/6")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-FIX, wariant z fresh doc_00056: poprawne "ł", przecinek zamiast kropki.
+    @Test fun `numer dzialki z prawidlowa litera l i przecinkiem jako separator`() {
+        val r = pseudonymize("Nr działki ewidencyjnej: 206487,0027.8889")
+        assertNotInOutput(r, "206487")
+        assertNotInOutput(r, "0027.8889")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-ANCHOR (Paweł 07.07): "Numer" (pełne słowo, nie "Nr") + "ł"→"t" (inna
+    // degradacja niż "l" wyżej) — kolejny wariant tego samego problemu, stąd migracja do
+    // AnchorEngine zamiast dalszego enumerowania w StructuralEngine.
+    @Test fun `numer dzialki pelne slowo Numer i degradacja l na t`() {
+        val r = pseudonymize("Faktura VAT 23%\nNumer dziatki 7759000.0011.3706/6")
+        assertNotInOutput(r, "7759000")
+        assertNotInOutput(r, "3706/6")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // Regresja FP — "Nr"/"Numer" generyczne odniesienia (strona, punkt/rozdział) NIE mogą
+    // być maskowane tylko dlatego że tolerujemy teraz słowa pośrednie po Nr/Numer.
+    @Test fun `Nr strony i numer punktu nie sa maskowane jako NUMER dokumentu`() {
+        val r1 = pseudonymize("Patrz Nr strony 5 w załączniku.")
+        assertFalse(r1.tokenMap.values.any { it.contains("strony") })
+        val r2 = pseudonymize("Zgodnie z art. 104 ustawy, punkt nr 5.2 rozdziału stanowi że...")
+        assertFalse(r2.tokenMap.values.any { it.contains("rozdziału") || it == "5.2" })
+    }
+
+    // BUG-IBAN-ZAGRANICZNY (Paweł 07.07, test_iban_20_warianty): wzorzec kontekstowy "IBAN:"
+    // zakładał sztywne grupy po 4 cyfry — działa dla PL (26 cyfr, dzieli się równo), zostawiał
+    // resztę jawną dla krajów gdzie się nie dzieli (DE: 20 cyfr, FR i inne).
+    @Test fun `IBAN niemiecki i francuski bez reszty jawnej`() {
+        val de = pseudonymize("IBAN: DE89370400440532013000")
+        assertNotInOutput(de, "013000")
+        assertTokenExists(de, TOKEN_NUMER)
+
+        val fr = pseudonymize("Platnosc IBAN FR7630006000011234567890189 zagraniczna")
+        assertNotInOutput(fr, "890189")
+        assertTokenExists(fr, TOKEN_NUMER)
+    }
+
+    // BUG-IBAN-OGON-KRADZIONY (07.07, znalezione ręcznym testem na telefonie — Paweł: "raz
+    // maskowany w całości, raz tylko ostatnie cyfry"): ten sam IBAN z nieregularnymi spacjami
+    // OCR ("PL7824010135798 2507 146112645") raz był maskowany w pełni (obok słowa "konto"),
+    // raz zostawiał większość jawną — bo gołe wzorce kształtu bez kotwicy (REGON-9, potem też
+    // telefon 3-3-3/2-3-2-2) łapały fragmenty ogona zanim AnchorEngine (kotwica "PL") dostał
+    // szansę. Pierwsza próba fixu dopisywała ten sam guard do kolejnych osobnych wzorców z
+    // osobna (znajdując kolejne ofiary jedna po drugiej) — Paweł explicite zakazał rozproszonych
+    // poprawek. PRAWDZIWY fix: `IBAN_EARLY` w StructuralEngine.kt, PIERWSZY wzorzec w całej
+    // liście — kotwica "PL" zabiera swoje terytorium zanim jakikolwiek goły wzorzec dostanie
+    // szansę, więc żaden z nich nie musi się bronić z osobna.
+    @Test fun `IBAN z nieregularnymi spacjami OCR bez slowa kontekstowego jest maskowany w calosci`() {
+        val r = pseudonymize("Jak w zdaniu ponizej: ciag PL7824010135798 2507 146112645 wystepuje raz.")
+        assertNotInOutput(r, "146112645")
+        assertNotInOutput(r, "7824010135798")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `REGON samodzielny bez PL w poblizu nadal maskowany`() {
+        // Regresja: IBAN_EARLY nie może zablokować zwykłego, niepowiązanego REGON-u.
+        val r = pseudonymize("Firma XYZ, REGON: 123456789, NIP: 111-222-33-44")
+        assertNotInOutput(r, "123456789")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `IBAN z etykieta konto nie zawlaszcza etykiety`() {
+        // IBAN_EARLY biegnie PRZED wzorcem kontekstowym "konto..." — bierze sam numer,
+        // etykieta zostaje jawna (nie jest PII, nie ma potrzeby jej maskować).
+        val r = pseudonymize("Splata na konto komornika: PL7824010135798 2507 146112645  Komornik Sadowy")
+        assertNotInOutput(r, "146112645")
+        assertNotInOutput(r, "7824010135798")
+        assertTrue("Etykieta 'konto komornika' nie jest PII, nie powinna zniknąć",
+            r.pseudonymizedText.contains("konto komornika", ignoreCase = true))
+    }
+
+    // BUG-PESEL-MOST-TOKEN (diagnoza Cursor 07.07, benchmark 500 dok., doc_00430): "ł" ogona
+    // wcześniej utworzonego tokenu ("NUMER_001") + nowa linia + prawdziwy PESEL na następnej
+    // linii — peselShapeRe [\s\-]? (obejmowało \n) przeskakiwało z ogona tokenu w PESEL,
+    // tworząc zanieczyszczone dopasowanie bez poprawnej sumy kontrolnej, przez co prawdziwy
+    // PESEL nigdy nie dostawał osobnej szansy.
+    @Test fun `PESEL na nowej linii po tokenie dowodu nie ginie w moscie newline`() {
+        val r = pseudonymize("Nr dowodu osobistego oST590114\n5508107 1597\nDANE KONTAKTOWE")
+        assertNotInOutput(r, "5508107")
+        assertNotInOutput(r, "1597")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NIP-WIELOLINIOWY (diagnoza Cursor 07.07, benchmark 500 dok., doc_00473): keyword
+    // "NIP (jeśli dotyczy):" i wartość na osobnych liniach OCR — luka Anchor A.5 wykluczała
+    // \n ORAZ litery D-class (o/l/i/s) które są zwykłymi literami w "jeśli"/"dotyczy".
+    @Test fun `NIP z etykieta i wartoscia na osobnych liniach oraz spacja w segmencie`() {
+        val r = pseudonymize("NIP (jesli dotyczy):\n667-87 1-88-83\nOswiadczam")
+        assertNotInOutput(r, "667-87")
+        assertNotInOutput(r, "88-83")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // =========================================================================
+    // STRESS TEST SKLEJANIA (Paweł 07.07, po zamknięciu rundy FV): gęsty ciąg RÓŻNYCH
+    // encji obok siebie, minimalna proza (same kotwice + wartości, bez opisowych zdań).
+    // Cel: złapać "sklejanie" tokenów (token wbudowany w token, brak separatora między
+    // dwoma sąsiednimi tokenami, kradzież znaku przez sąsiedni wzorzec) — patrz
+    // BUG-ADRES-OGONY (30.06) i BUG-KWOTA-KRADNIE-CYFRE (05.07) w pamięci projektu.
+    // Wszystkie wartości ŚWIEŻE — żadna nie występuje w innym teście w tym pliku (celowo,
+    // żeby nie polegać na już oswojonych przez inne wzorce przypadkach).
+    // =========================================================================
+    @Test fun `stres gestych roznych encji obok siebie bez sklejania tokenow`() {
+        // Mini-słownik z domyślnego @Before (Jan/Anna/Piotr/Maria/Adam/Katarzyna +
+        // Kowalski/Nowak/Malinowski/Wiśniewski/Szymański) nie ma świeżych wartości użytych
+        // tutaj celowo (żeby nie powtarzać encji z innych testów) — ładujemy PEŁNY słownik
+        // z classpath (ten sam co produkcyjny asset), tak jak realny telefon go widzi.
+        // @After i tak woła resetForTesting() — nie zostawia tego stanu innym testom.
+        LookupTables.resetForTesting()
+        LookupTables.initializeFromClasspath()
+        val text = "Zbigniew Baranowski, PESEL 90051212387, NIP 987-654-32-10, " +
+            "tel. 511222333, PL91109010140000071219812875, " +
+            "z.baranowski@poczta-firmowa.pl, ul. Świętokrzyska 22/5, 00-050 Warszawa, " +
+            "8765,43 zł, FV20261234X567, sygn. akt III Co 991/2026, ur. 12.05.1990, " +
+            "Zakład Usługowy Baranowski Sp. z o.o."
+        val r = pseudonymize(text)
+
+        // Żadna surowa wartość nie może przeciekać
+        for (raw in listOf(
+            "90051212387", "987-654-32-10", "511222333",
+            "PL91109010140000071219812875", "z.baranowski@poczta-firmowa.pl",
+            "Świętokrzyska 22/5", "00-050 Warszawa", "8765,43", "FV20261234X567",
+            "III Co 991/2026", "12.05.1990"
+        )) {
+            assertNotInOutput(r, raw)
+        }
+
+        // Wszystkie typy encji muszą się pojawić
+        assertTokenExists(r, TOKEN_OSOBA)
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertTokenExists(r, TOKEN_FIRMA)
+
+        // Rozsądna liczba odrębnych tokenów — jeśli dwie encje skleiłyby się w jeden
+        // token, ta liczba byłaby podejrzanie niska.
+        assertTrue("Oczekiwano co najmniej 8 odrębnych tokenów, jest ${r.tokenMap.size}: ${r.tokenMap}",
+            r.tokenMap.size >= 8)
+
+        // SKLEJANIE: każde wystąpienie tokenu (PREFIX_NNN) musi mieć granicę słowa po
+        // obu stronach. Jeśli liczba dopasowań z \b różni się od liczby bez \b — token
+        // jest wtopiony w sąsiedni znak (litera/cyfra), czyli sklejony.
+        // Prefiksy prawdziwych tokenów encji — NIE generyczne [A-Z]+, bo to fałszywie łapie
+        // "SESJA_xxxxxx" (identyfikator sesji na początku dokumentu, dłuższy niż 3 cyfry,
+        // nie encja PII) jako rzekomo "sklejony" token (Paweł 07.07, złapane testem na żywo).
+        val tokenPrefix = "(?:OSOBA|NUMER|EMAIL|ADRES|KWOTA|FIRMA)"
+        val withBoundary = Regex("""\b${tokenPrefix}_\d{3}\b""").findAll(r.pseudonymizedText).count()
+        val withoutBoundary = Regex("""${tokenPrefix}_\d{3}""").findAll(r.pseudonymizedText).count()
+        assertEquals(
+            "Token sklejony z sąsiednim znakiem (brak granicy słowa) w: ${r.pseudonymizedText}",
+            withoutBoundary, withBoundary
+        )
+    }
+
     @Test fun `sygnatura sad I Co bez regresu`() {
         val r = pseudonymize("sygn. akt I Co 3704/2018")
         assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NIP-3-2-2 (diagnoza Cursor 01.07): StructuralEngine.kt:452 (numer wewnętrzny
+    // 3-2-2) matchował tylko pierwsze 3 segmenty ciągu z 4 segmentami myślnikowymi,
+    // zostawiając ostatni jawny. Trzeci wariant tego samego wzorca bugu co faktura/sygnatura.
+    @Test fun `NIP shape 722-30-32-34 jeden token bez sieroty`() {
+        val r = pseudonymize("722-30-32-34")
+        assertFalse("sierota -34 w wyniku", r.pseudonymizedText.contains("-34"))
+        assertFalse("prefiks 722 jawny w wyniku", r.pseudonymizedText.contains("722"))
+        assertEquals(1, r.tokenMap.values.count { it.contains("722") })
+    }
+
+    @Test fun `numer wewnetrzny 3-2-2 bez czwartego segmentu nadal maskowany`() {
+        val r = pseudonymize("722-30-32")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DATA-SLOWNA (test ręczny na telefonie 01.07): data słowna i data z OCR-spacją
+    // urywały się na pierwszym tokenie po kotwicy, zostawiając miesiąc/rok jawny.
+    @Test fun `data urodzenia slowna nie zostawia miesiaca i roku jawnych`() {
+        val r = pseudonymize("data urodzenia: 8 kwietnia 1963")
+        assertNotInOutput(r, "kwietnia")
+        assertNotInOutput(r, "1963")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `data urodzenia z spacja OCR przed koncowka roku nie zostawia roku jawnego`() {
+        val r = pseudonymize("ur. 12.03 .1985")
+        assertNotInOutput(r, "1985")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-KW-CATCHALL (diagnoza Cursor 01.07): CATCHALL \d{8,} łapał sam środkowy ciąg
+    // cyfr osadzony w identyfikatorze z ukośnikami, zostawiając prefiks/sufiks jawne.
+    @Test fun `KW GD1M jeden token bez sierot`() {
+        val r = pseudonymize("KW GD1M/00234567/8")
+        assertFalse("prefiks GD1M jawny", r.pseudonymizedText.contains("GD1M"))
+        assertFalse("sufiks /8 jawny", r.pseudonymizedText.contains("/8"))
+        assertFalse("srodek 00234567 jawny", r.pseudonymizedText.contains("00234567"))
+    }
+
+    @Test fun `REGON 9 cyfr catchall bez regresu`() {
+        val r = pseudonymize("REGON: 557374054")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-SYGNATURA-SPACJA (test ręczny na telefonie 01.07, piąty wariant tego samego
+    // wzorca bugu): OCR-owa spacja przed ukośnikiem w sygnaturze ucinała match przed
+    // ostatnim segmentem.
+    @Test fun `sygnatura z OCR spacja przed ukosnikiem nie zostawia sieroty`() {
+        val r = pseudonymize("sygn. akt I C 234 /24")
+        assertNotInOutput(r, "/24")
+        assertNotInOutput(r, "234")
+    }
+
+    // BUG-KW-KWOTA (diagnoza Cursor 01.07): A.8 (?i)(?:KRS|KW) łapał "kw" wewnątrz słowa
+    // "kwota", zjadając kotwicę A.9b; A.9 potem matchował cyfry WEWNĄTRZ już istniejącego
+    // tokenu NUMER_xxx (bo matchOverlapsToken miał za wąskie okno w lewo), amputując go
+    // do kalekiego "NUMER_" bez cyfr.
+    // BUG-FIRMA-PRZECINEK (test ręczny na telefonie 01.07): OCR-owy przecinek zamiast
+    // kropki w formie prawnej ("S,A," / "sp,j," / "Sp. z o.o,") blokował A.1 całkowicie —
+    // NameEngine łapał tylko nazwisko, reszta nazwy firmy (z formą prawną) zostawała jawna.
+    @Test fun `firma z przecinkiem zamiast kropki w formie prawnej maskowana w calosci`() {
+        val r1 = pseudonymize("Przedsiębiorstwo Budowlane Nowak S,A,")
+        assertNotInOutput(r1, "Przedsiębiorstwo")
+        assertNotInOutput(r1, "S,A,")
+
+        val r2 = pseudonymize("Kancelaria Adwokacka Wiśniewski sp,j,")
+        assertNotInOutput(r2, "Kancelaria")
+        assertNotInOutput(r2, "sp,j,")
+
+        val r3 = pseudonymize("Kowalski i Partnerzy Sp. z o.o,")
+        assertNotInOutput(r3, "Partnerzy")
+        assertNotInOutput(r3, "o.o,")
+    }
+
+    @Test fun `A8 nie lapie kwota jako KW`() {
+        val r = pseudonymize("KRS OOOO4S6789\nkwota: 49 999,99 z1")
+        assertFalse("kwota: nie powinno zostac zjedzone przez A8 KW", r.pseudonymizedText.contains("kwota:"))
+        assertFalse(
+            "token nie powinien byc amputowany (NUMER_ bez cyfr obok KWOTA_)",
+            Regex(""".*NUMER_\s+KWOTA_.*""").containsMatchIn(r.pseudonymizedText)
+        )
+        assertTrue("kwota powinna byc w tokenMap", r.tokenMap.values.any { it.contains("49 999") })
+    }
+
+    // =========================================================================
+    // BUG-ADRES-KOD-MIASTO — refaktor ADRES (plan Cursor 01.07, krok 0)
+    // Diagnoza: kod pocztowy + miasto rozsiane po 4-6 miejscach (StructuralEngine
+    // ADDRESS #597, AnchorEngine A.11b/A.11c/A.11d, NameEngine CITY_POSTAL, Runda 2)
+    // które się wzajemnie blokują (TOKEN_RE/matchOverlapsToken) i zostawiają rozjechany
+    // stan: jawny kod obok osobnego tokenu miasta, albo sklejenie miasta z kodem
+    // SĄSIEDNIEGO wpisu przy tekście bez spacji między liniami.
+    // Te testy CELOWO FALUJĄ teraz (krok 0 planu) — mają przejść dopiero po pełnym
+    // refaktorze (warstwa 3a POSTAL_CITY, usunięcie A.11b i CITY_POSTAL, guard A.11c/d).
+    // Plik testowy do testu ręcznego: testy/test_kod_pocztowy_migracja.txt
+    // =========================================================================
+
+    @Test fun `kod pocztowy z miastem jeden token bez jawnego kodu`() {
+        val r = pseudonymize("00-001 Warszawa")
+        assertFalse("kod pocztowy nie powinien zostac jawny", r.pseudonymizedText.contains("00-001"))
+        assertFalse("miasto nie powinno zostac jawne", r.pseudonymizedText.contains("Warszawa"))
+        assertEquals(1, r.tokenMap.values.count { it.contains("00-001") && it.contains("Warszawa") })
+    }
+
+    @Test fun `trzy czyste linie kod plus miasto po jednym tokenie kazda`() {
+        val r = pseudonymize("00-001 Warszawa\n80-001 Gdańsk\n31-610 Kraków")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("31-610"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        assertFalse(r.pseudonymizedText.contains("Kraków"))
+        assertEquals(3, r.tokenMap.values.count { it.contains("-") })
+    }
+
+    @Test fun `goly kod pocztowy bez miasta jest maskowany`() {
+        val r = pseudonymize("00-001")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
+    @Test fun `dwa kody i miasta sklejone bez spacji nie miesza sie miast z sasiednim kodem`() {
+        val r = pseudonymize("00-001 Warszawa80-001 Gdańsk")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        // Żaden token nie powinien łączyć miasta z JEDNEGO wpisu z kodem z DRUGIEGO
+        assertFalse(
+            "Warszawa nie powinno byc sklejone z kodem 80-001 (nalezacym do Gdanska)",
+            r.tokenMap.values.any { it.contains("Warszawa") && it.contains("80-001") }
+        )
+        assertFalse(
+            "Gdansk nie powinno byc sklejone z kodem 00-001 (nalezacym do Warszawy)",
+            r.tokenMap.values.any { it.contains("Gdańsk") && it.contains("00-001") }
+        )
+    }
+
+    @Test fun `trzy kody i miasta sklejone bez spacji wszystkie czyste`() {
+        val r = pseudonymize("70-001 Szczecin80-001 Gdańsk31-610 Kraków")
+        assertFalse(r.pseudonymizedText.contains("70-001"))
+        assertFalse(r.pseudonymizedText.contains("80-001"))
+        assertFalse(r.pseudonymizedText.contains("31-610"))
+        assertFalse(r.pseudonymizedText.contains("Szczecin"))
+        assertFalse(r.pseudonymizedText.contains("Gdańsk"))
+        assertFalse(r.pseudonymizedText.contains("Kraków"))
+    }
+
+    @Test fun `rok po myslniku nie jest maskowany jako kod pocztowy`() {
+        val r = pseudonymize("15-2024")
+        assertFalse(r.pseudonymizedText.contains(TOKEN_ADRES))
+        assertTrue(r.pseudonymizedText.contains("15-2024"))
+    }
+
+    @Test fun `sam rok nie jest maskowany`() {
+        val r = pseudonymize("1999")
+        assertFalse(r.pseudonymizedText.contains(TOKEN_ADRES))
+        assertTrue(r.pseudonymizedText.contains("1999"))
+    }
+
+    // BUG-PESEL-KOD-SKLEJENIE (test ręczny na telefonie 01.07): kontekstowy wzorzec
+    // PESEL (StructuralEngine linia ~333, goły \d) doklejał fragment sąsiedniego kodu
+    // pocztowego do swojego dopasowania, bo kod pocztowy był jeszcze gołymi cyframi gdy
+    // wzorzec PESEL się uruchamiał. Fix: POSTAL_CITY biegnie PRZED STRUCTURAL_PATTERNS,
+    // więc kod pocztowy jest już tokenem (zaczyna się literą) zanim PESEL go zobaczy.
+    @Test fun `PESEL obok kodu pocztowego nie dokleja fragmentu kodu`() {
+        val r = pseudonymize("PESEL 90051512340 00-001 Warszawa NIP 526-021-15-81")
+        assertFalse("PESEL nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+    }
+
+    // BUG-POSTALCITY-NIP (test regresji 01.07): goły kod pocztowy (kierunek 3 POSTAL_CITY)
+    // łapał ostatni segment NIP-u jako fałszywy kod, bo NIP też ma segment w kształcie
+    // XX-XXX (np. "56-786" z "512-34-56-786"). Guard (?<!\d{2,3}-)(?!-\d) naprawia.
+    @Test fun `NIP nie jest rozbijany przez wzorzec goly kod pocztowy`() {
+        val r = pseudonymize("NIP: 512-34-56-786")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertFalse("NIP nie powinien byc czesciowo zamaskowany jako ADRES",
+            r.tokenMap.values.any { it == "56-786" || it == "34-56" })
+        assertNotInOutput(r, "512-34-56-786")
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE (diagnoza Cursor 01.07, trzeci wariant tej samej klasy
+    // problemu): NIP sklejony BEZ separatora z kodem pocztowym ("...15-8100-001") —
+    // A.5 (kotwica NIP) łapało cały ciąg razem, "Warszawa" zostawało jawne.
+    @Test fun `NIP sklejony bez separatora z kodem pocztowym oba zamaskowane osobno`() {
+        val r = pseudonymize("NIP 526-021-15-8100-001 Warszawa")
+        assertFalse(r.pseudonymizedText.contains("00-001"))
+        assertFalse(r.pseudonymizedText.contains("Warszawa"))
+        assertFalse(
+            "NIP nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("526") && it.contains("00-001") }
+        )
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE-3223 (diagnoza Cursor 05.07, ta sama klasa problemu co wyzej,
+    // ale format 3-2-2-3): OCR_NIP_POSTAL_GLUE obslugiwal tylko 3-3-2-2. Bez rozbicia
+    // A.5b (kotwica NIP bez keywordu) lapala tylko pierwsze 3 grupy ("521-33-15"),
+    // zostawiajac "33200-001 Krakow" calkowicie jawne — zaden inny wzorzec (ani NIP
+    // 3-2-2-3, ani AddressEngine POSTAL) nie widzial sklejonego ciagu jako calosci.
+    @Test fun `NIP format 3-2-2-3 sklejony bez separatora z kodem pocztowym oba zamaskowane osobno`() {
+        val r = pseudonymize("521-33-15-33200-001 Kraków")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Kraków")
+        assertNotInOutput(r, "33200-001")
+        assertFalse(
+            "NIP nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("521") && it.contains("00-001") }
+        )
+    }
+
+    // BUG-NIP-KOD-SKLEJENIE-MIX (05.07): linia mieszana — adres z prefiksem "ul." PLUS
+    // sklejony NIP+kod w tej samej linii. Kontrola ze fix glue 3-2-2-3 nie psuje
+    // wspolistniejacego, poprawnie sformatowanego adresu w tej samej linii.
+    @Test fun `NIP 3-2-2-3 sklejony z kodem obok pelnego adresu w tej samej linii`() {
+        val r = pseudonymize("NIP 521-33-15-33200-001 Warszawa, ul. Długa 7")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "Długa")
+    }
+
+    // =========================================================================
+    // BUG-GORA-OSOBA — miasto dwuwyrazowe na przecięciu z nazwiskiem top-1000
+    // (np. "Góra" w "Zielona Góra"/"Jelenia Góra"). Diagnoza 04.07: reguła "samo
+    // nazwisko" maskowała drugi człon jako OSOBA poza kontekstem adresowym.
+    // Fix: nowa reguła w applyContextualBlacklist (przed "samo nazwisko") maskuje
+    // CAŁĄ frazę jako ADRES gdy naprawdę jest zarejestrowaną miejscowością —
+    // wąska lista LookupTables.citySurnameOverlap, nie całe cityForms.
+    // =========================================================================
+
+    @Test fun `BUG-GORA-OSOBA Jelenia Gora maskowana jako ADRES nie OSOBA`() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(
+            cities = setOf("warszawa", "jelenia góra", "zielona góra"),
+            citySurnameOverlap = setOf("góra")
+        )
+        val r = pseudonymize("Klient odwiedził oddział w mieście Jelenia Góra w zeszłym miesiącu.")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse("Gora nie powinna byc OSOBA gdy jest czescia znanej miejscowosci",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+        assertNotInOutput(r, "Jelenia")
+        assertNotInOutput(r, "Góra")
+    }
+
+    @Test fun `BUG-GORA-OSOBA prawdziwe nazwisko Gora bez kontekstu miasta nadal OSOBA`() {
+        // Recall dla realnego nazwiska musi zostac — nowa regula maskuje TYLKO gdy
+        // cala dwuwyrazowa fraza jest w cityForms; "Pan Góra" nie jest miejscowoscia.
+        // BUG-TEST-SURNAMES-FIX: initializeForTesting bez jawnego "surnames" wraca do
+        // domyslnego zestawu (kowalski/nowak/...), ktory NIE zawiera "gora" — test dawal
+        // pusty tokenMap (regula "samo nazwisko" nigdy nie widziala "gora" jako nazwiska).
+        // Formy z surnames_top1000.json (klucz "gora").
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(
+            surnames = setOf(
+                "góra", "góry", "górze", "górą", "górę", "gór",
+                "górach", "górami", "góro", "górom", "górowie", "górów"
+            ),
+            cities = setOf("warszawa", "jelenia góra", "zielona góra"),
+            citySurnameOverlap = setOf("góra")
+        )
+        val r = pseudonymize("Kandydat nazwiskiem Góra złożył podanie.")
+        assertTokenExists(r, TOKEN_OSOBA)
+        assertNotInOutput(r, "Góra")
     }
 }

@@ -235,8 +235,10 @@ private val WHITE_LIST_LEGAL_FORMS: Set<String> = setOf(
 
 // P6-FIX: regex jako druga linia obrony — obsługuje dowolne kombinacje
 // spacji, wielkich liter i brakujących kropek generowanych przez OCR
+// BUG-FIRMA-PRZECINEK-FIX (01.07): [.,]? zamiast \.? — toleruje też przecinek (nie tylko
+// brak kropki) jako OCR-zamiennik kropki w formie prawnej.
 private val LEGAL_FORM_CHECK_REGEX = Regex(
-    """(?i)sp\.?\s*z\.?\s*o\.?\s*o\.|s\.?\s*a\.|sp\.?\s*j\.|sp\.?\s*k\.|s\.k\.a\.|p\.s\.a\."""
+    """(?i)sp[.,]?\s*z[.,]?\s*o[.,]?\s*o[.,]|s[.,]?\s*a[.,]|sp[.,]?\s*j[.,]|sp[.,]?\s*k[.,]|s[.,]k[.,]a[.,]|p[.,]s[.,]a[.,]"""
 )
 
 private val WHITE_LIST_COMMON_WORDS: Set<String> = setOf(
@@ -457,8 +459,14 @@ private val INITIALS_REGEX = Regex(
 
 // REGEX-FIX v1.5: [^\S\n] zamiast \s w treści nazwy — poprzednia wersja
 // mogła zszywać koniec jednego akapitu z formą prawną z następnego
+// BUG-FIRMA-PRZECINEK-FIX (01.07, test ręczny): [.,] zamiast \. w formach prawnych —
+// OCR myli kropkę z przecinkiem ("S,A," / "sp,j," / "Sp. z o.o,"). Ten regex biegnie
+// PRZED detekcją nazwisk w applyContextualBlacklist (linia ~614) — jeśli nie rozpozna
+// zdegradowanej formy prawnej, "Nowak"/"Wiśniewski" itd. wpadają dalej jako samo
+// nazwisko (OSOBA), a reszta nazwy firmy zostaje jawna. AnchorEngine A.1 ma ten sam fix,
+// ale to TEN regex (NameEngine, Runda 1) ma pierwszeństwo — bez obu fix nie działa.
 private val FIRMA_LEGAL_REGEX = Regex(
-    """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]]{2,50}[^\S\n]+(?:S\.A\.|Sp\.\s*z\s*o\.o\.|s\.c\.|Sp\.j\.|Sp\.k\.|S\.K\.A\.|P\.S\.A\.|LLC|GmbH|Ltd\.|LLP|B\.V\.)""",
+    """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]]{2,50}[^\S\n]+(?:S[.,]A[.,]|Sp[.,]\s*z\s*o[.,]o[.,]|s[.,]c[.,]|Sp[.,]j[.,]|Sp[.,]k[.,]|S[.,]K[.,]A[.,]|P[.,]S[.,]A[.,]|LLC|GmbH|Ltd[.,]|LLP|B[.,]V[.,])""",
     RegexOption.IGNORE_CASE
 )
 
@@ -498,14 +506,14 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
-internal val CITY_POSTAL_REGEX = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+(\d{2}-\d{3,4})\b"""
-)
 internal val CITY_PREP_REGEX = Regex(
     """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
 )
+// BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): STREET_NAME_CHARS (StructuralEngine.kt) — wspólne
+// źródło znaków nazwy ulicy, żeby myślnik (i przyszłe dodatki) nie trzeba było pamiętać
+// dopisywać w kilku miejscach osobno.
 internal val STREET_CANDIDATE_REGEX = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
 
 private fun applyCityLookup(
@@ -515,14 +523,10 @@ private fun applyCityLookup(
     if (!LookupTables.initialized || LookupTables.cityForms.isEmpty()) return text
     var result = text
 
-    // Miasto przed kodem pocztowym: "Warszawa, 00-001" → jeden token ADRES dla całości.
-    // Było: assignToken(city) + rest → kod zostawał → A.11b/R2 tworzyło drugi token.
-    result = CITY_POSTAL_REGEX.replace(result) { match ->
-        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
-        val city = match.groupValues[1]
-        if (!LookupTables.cityForms.contains(city.lowercase())) return@replace match.value
-        assignToken(match.value.trim(), TOKEN_ADRES)
-    }
+    // Miasto przed kodem pocztowym: usunięte 04.07 (migracja ADRES krok 3) — już obsłużone
+    // wcześniej w potoku przez StructuralEngine.applyPostalCityPatterns (Warstwa 1b, kierunek 2),
+    // które działa PRZED tą funkcją. CITY_POSTAL_REGEX był tu martwy (TOKEN_RE guard blokował
+    // go niemal zawsze, bo para kod+miasto była już tokenem zanim applyCityLookup ją zobaczył).
 
     // Miasto po przyimku: "w Warszawie", "z Gdańska" → ADRES
     result = CITY_PREP_REGEX.replace(result) { match ->
@@ -546,6 +550,13 @@ private fun applyStreetLookup(
 
         val streetPart = match.groupValues[1].trim()
         val streetLower = streetPart.lowercase()
+
+        // BUG-PLN-STREETLOOKUP-FIX (05.07, diagnoza agenta): "płn" (skrót "Północna" w
+        // street_names.json) po ASCII-foldowaniu (ł→l, LookupTables.withAsciiVariants) staje
+        // się "pln" i koliduje ze skrótem waluty — streetForms.contains("pln") wychodzi true.
+        // Ten sam CURRENCY_PREFIX_DENY co w AddressEngine.kt (tam już zablokowany), tu było
+        // bez ochrony — łapało "PLN 1234" jako ADRES zanim AnchorEngine zobaczył tekst.
+        if (streetLower in CURRENCY_PREFIX_DENY) return@replace match.value
 
         // Sprawdź klucz (mianownik) i formy fleksyjne z bazy — z prefiksami
         if (LookupTables.streetForms.contains(streetLower) ||
@@ -603,7 +614,13 @@ internal fun applyContextualBlacklist(
     var result = text
 
     // TODO-2: Adresy z bazy GUS TERYT — przed detekcją imion
-    result = applyStreetLookup(result, assignToken)
+    // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — strangler fig): applyStreetLookup to ten sam
+    // słownik (streetForms) i ten sam kształt co AddressEngine.STREET_DICT — duplikat
+    // strukturalny, nie kotwica. Wyłączony gdy USE_ADDRESS_ENGINE_V0. applyCityLookup ZOSTAJE
+    // zawsze — to CITY_PREP ("w Warszawie"), świadomie poza zakresem AddressEngine v0.
+    if (!USE_ADDRESS_ENGINE_V0) {
+        result = applyStreetLookup(result, assignToken)
+    }
     result = applyCityLookup(result, assignToken)
 
     // 3a — Firmy z formą prawną
@@ -698,7 +715,30 @@ internal fun applyContextualBlacklist(
         }
     }
 
+    // 3a-pre — Miasto dwuwyrazowe na przecięciu z nazwiskiem top-1000 (np. "Zielona Góra",
+    // "Jelenia Góra"). MUSI biec PRZED "Samo nazwisko" niżej — inaczej drugi człon (np. "Góra",
+    // realne nazwisko) dostaje token OSOBA zanim ten blok w ogóle zobaczy całą frazę.
+    // BUG-GORA-OSOBA-FIX (04.07): lista LookupTables.citySurnameOverlap jest WĄSKA (44 słowa,
+    // policzone programowo — generate_city_surname_overlap.py) — nie sprawdzamy całego
+    // (bardzo dużego) cityForms tutaj, tylko te konkretne słowa gdzie kolizja z top-1000
+    // nazwisk jest realna. Guard cityForms.contains(cała fraza) zapobiega myleniu prawdziwej
+    // osoby "Jan Góra" z miastem — maskuje jako ADRES TYLKO gdy cała dwuwyrazowa fraza
+    // faktycznie jest zarejestrowaną nazwą miejscowości.
+    if (LookupTables.initialized && LookupTables.citySurnameOverlap.isNotEmpty()) {
+        result = Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})[^\S\n]([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})\b""")
+            .replace(result) { match ->
+                if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+                val second = match.groupValues[2].lowercase()
+                if (!LookupTables.citySurnameOverlap.contains(second)) return@replace match.value
+                if (!LookupTables.cityForms.contains(match.value.lowercase())) return@replace match.value
+                assignToken(match.value, TOKEN_ADRES)
+            }
+    }
+
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
+    // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): pre/suf jak w AnchorEngine/ADDRESS —
+    // obrona na wypadek gdyby jakiś inny krok potoku skleił to słowo z sąsiednim bez spacji
+    // (root cause tego konkretnego przypadku było OCR_STREET_MIDSPACE, naprawione osobno).
     result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{3,})(?![a-ząćęłńóśźż])""")
         .replace(result) { match ->
             if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
@@ -706,7 +746,12 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
-            assignToken(word, TOKEN_OSOBA)
+            val token = assignToken(word, TOKEN_OSOBA)
+            val before = result.getOrElse(match.range.first - 1) { ' ' }
+            val after = result.getOrElse(match.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            "$pre$token$suf"
         }
 
     // 3a — Samo imię z namesForms (najniższy priorytet — po nazwisku, przed tytułami)

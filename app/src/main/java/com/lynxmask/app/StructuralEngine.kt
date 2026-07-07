@@ -177,10 +177,178 @@ internal fun isValidNip(digits: String): Boolean {
 }
 
 // ============================================================
+// PESEL standalone (D-class tolerant) — PRZENIESIONE z AnchorEngine.kt A.4c
+// (BUG-MIGRACJA 01.07, feature/entity-migration). Wywoływane z PseudonymEngine.kt
+// Runda 1, zaraz po STRUCTURAL_PATTERNS. Zachowanie identyczne co przed migracją —
+// suma kontrolna jest jedynym wyjątkiem od wymogu kotwicy (brief AnchorEngine v2 §6.3).
+// ============================================================
+private const val PESEL_D = """[0-9OolIiSsBbZz]"""
+
+// Sprawdza sumę kontrolną PESEL (11 cyfropodobnych). Separator (spacja/kreska) jest pomijany.
+// Tolerancyjna na OCR (D-klasa: O→0, l/i→1, z→2, s→5, b→8) — inna niż isValidPesel()
+// powyżej (ta wymaga gołych cyfr, używana przez S5 bypass dla STRUCTURAL_PATTERNS).
+private fun isPeselChecksumValidTolerant(s: CharSequence): Boolean {
+    val weights = intArrayOf(1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1)
+    var n = 0; var sum = 0
+    for (c in s) {
+        val d = when (c.lowercaseChar()) {
+            'o' -> 0; 'l', 'i' -> 1; 'z' -> 2; 's' -> 5; 'b' -> 8
+            in '0'..'9' -> c - '0'
+            else -> continue
+        }
+        if (n >= 11) return false
+        sum += d * weights[n++]
+    }
+    return n == 11 && sum % 10 == 0
+}
+
+// BUG-PESEL-MOST-TOKEN-FIX (diagnoza Cursor 07.07, traceMode): [\s\-]? obejmował \n, więc
+// regex mógł "przeskoczyć" przez nową linię z ogona wcześniej utworzonego tokenu (np. cyfry
+// "001" z "NUMER_001") w prawdziwy PESEL na następnej linii, tworząc zanieczyszczone
+// dopasowanie ("001\n5508107") które nie przechodzi sumy kontrolnej — a findAll i tak
+// skonsumowało ten zakres, więc prawdziwy PESEL na tej linii nigdy nie dostawał osobnej
+// szansy. PESEL nigdy nie rozciąga się na dwie linie, więc [ \t\-]? (bez \n) jest bezpieczne
+// i ogólne — nie tylko łata ten jeden dokument.
+private val peselShapeRe = Regex(
+    """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$PESEL_D[ \t\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])"""
+)
+
+// Ciąg 9-13 D-znaków (z opcjonalnym pojedynczym separatorem) → maskuje TYLKO gdy
+// suma kontrolna PESEL dokładnie się zgadza (prawdopodobieństwo przypadku ~10% → wymagane).
+internal fun applyPeselShapeChecksum(
+    text: String,
+    assignToken: (value: String, tokenType: String) -> String
+): String {
+    var t = text
+    val peselHits = peselShapeRe.findAll(t).toList()
+    t = peselHits.asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc
+        else if (isPeselChecksumValidTolerant(m.value)) {
+            val token = assignToken(m.value.trim(), TOKEN_NUMER)
+            val before = acc.getOrElse(m.range.first - 1) { ' ' }
+            val after = acc.getOrElse(m.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            acc.replaceRange(m.range, pre + token + suf)
+        }
+        else acc
+    }
+    return t
+}
+
+// ============================================================
+// POSTAL_CITY — kod pocztowy + miasto (oba kierunki), jeden właściciel pary
+// (plan Cursor 01.07, krok 1 — funkcja zdefiniowana, JESZCZE NIE podłączona do
+// pipeline. Podłączenie w kroku 2 jako warstwa 3a przed NameEngine.)
+//
+// Naprawia bug znaleziony testem ręcznym: 3+ adresów kod+miasto pod rząd (osobne
+// linie ORAZ sklejone bez spacji przez OCR) rozjeżdżało się na pomieszane tokeny —
+// stary wzorzec (StructuralEngine #597, teraz niżej) wymagał \b na granicy
+// dopasowania miasta, a \b NIE ISTNIEJE między literą (koniec miasta) a cyfrą
+// (początek NASTĘPNEGO kodu, gdy sklejone) bo oba są \w. Fix: (?<!\d) zamiast \b
+// na starcie kodu (nie zaczynaj w środku innego ciągu cyfr, ale POZWÓL zaczynać
+// zaraz po literze — to dokładnie przypadek sklejenia OCR), i brak \b na końcu
+// nazwy miasta (klasa znaków sama naturalnie zatrzymuje się na pierwszej cyfrze).
+// ============================================================
+// BUG-POSTALCITY-NIP-FIX (Cursor 01.07, drugi przypadek): ten sam guard co niżej
+// (postalCityBareCodeRe) — bez niego łapał "56-786" ze środka NIP-u "512-34-56-786"
+// jako fałszywy kod pocztowy, bo zaraz po nim była ", zamieszkały..." (przecinek+słowo
+// spełniał wymóg "miasta" — ten kierunek nie wymaga wielkiej litery ani słownika).
+private val postalCityCodeToNameRe = Regex(
+    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}"""
+)
+private val postalCityNameToCodeRe = Regex(
+    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
+)
+// BUG-POSTALCITY-NIP-FIX (test regresji 01.07): (?<!\d{2,3}-) i (?!-\d) dodane — bez nich
+// ten wzorzec łapał ostatni segment NIP-u jako fałszywy kod pocztowy (np. "56-786" z
+// "512-34-56-786" — NIP ma też kształt XX-XXX w swoim ostatnim segmencie). Guard: nie
+// matchuj jeśli bezpośrednio przed jest inny segment "cyfry-" (jesteśmy w środku
+// dłuższego łańcucha myślnikowego, czyli prawdopodobnie NIP/sygnatura, nie kod pocztowy)
+// ani jeśli bezpośrednio po jest kolejny "-cyfry".
+private val postalCityBareCodeRe = Regex(
+    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)\b"""
+)
+
+// Kod pocztowy + miasto (oba kierunki) jako JEDEN token ADRES. Goły kod (bez miasta)
+// maskowany osobno, TYLKO gdy w tej samej linii nie ma słowa ze słownika miast (guard
+// przed konfliktem z dwoma powyższymi wzorcami, które już by go obsłużyły wcześniej).
+internal fun applyPostalCityPatterns(
+    text: String,
+    assignToken: (value: String, tokenType: String) -> String
+): String {
+    var t = text
+
+    fun replaceRangeAsToken(acc: String, range: IntRange, value: String): String {
+        val token = assignToken(value.trim(), TOKEN_ADRES)
+        val before = acc.getOrElse(range.first - 1) { ' ' }
+        val after = acc.getOrElse(range.last + 1) { ' ' }
+        val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+        val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+        return acc.replaceRange(range, pre + token + suf)
+    }
+
+    // Kierunek 1: kod → miasto ("00-001 Warszawa") — bez słownika, jak stare #597
+    t = postalCityCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value)
+    }
+
+    // Kierunek 2: miasto → kod ("Warszawa, 00-001") — tylko gdy słowo jest w słowniku miast
+    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+        t = postalCityNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+            if (TOKEN_RE.containsMatchIn(m.value)) acc
+            else if (!LookupTables.cityForms.contains(m.groupValues[1].lowercase())) acc
+            else replaceRangeAsToken(acc, m.range, m.value)
+        }
+    }
+
+    // Kierunek 3: goły kod bez miasta — tylko gdy w tej samej linii NIE ma słowa
+    // ze słownika miast (inaczej kierunek 1/2 powinny były to już obsłużyć)
+    t = postalCityBareCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (TOKEN_RE.containsMatchIn(m.value)) acc
+        else {
+            val lineStart = acc.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
+            val lineEnd = acc.indexOf('\n', m.range.last).let { if (it < 0) acc.length else it }
+            val line = acc.substring(lineStart, lineEnd).lowercase()
+            val hasCityWord = LookupTables.initialized &&
+                line.split(Regex("""\W+""")).any { it.isNotEmpty() && LookupTables.cityForms.contains(it) }
+            if (hasCityWord) acc else replaceRangeAsToken(acc, m.range, m.value)
+        }
+    }
+
+    return t
+}
+
+// CTX_STRAY (BUG-PESEL-OBCA-LITERA, 07.07): pojedyncza obca litera tolerowana w środku
+// ciągu cyfr kontekstowych, gdy zaraz po niej jest znowu prawdziwa cyfra — patrz komentarz
+// przy wzorcu PESEL niżej.
+private const val CTX_STRAY = """[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]"""
+
+// BUG-IBAN-OGON-KRADZIONY (07.07, znalezione ręcznym testem na telefonie — Paweł: "raz
+// maskowany w całości, raz tylko ostatnie cyfry"; POPRAWIONE PO RAZ DRUGI po jawnej instrukcji
+// Pawła "nigdy nie proponuj rozproszonych miejsc" — pierwsza próba dopisywała ten sam guard do
+// N osobnych gołych wzorców kształtu z osobna, znajdując kolejne ofiary jedna po drugiej.
+// PRAWDZIWY fix jest w JEDNYM miejscu: IBAN_EARLY niżej, pierwszy wzorzec w STRUCTURAL_PATTERNS,
+// zabiera swoje terytorium ZANIM jakikolwiek goły wzorzec (REGON, telefon, CATCHALL) dostanie
+// szansę zobaczyć fragment nierozpoznanego jeszcze "PL"+cyfry. Ten sam kształt co AnchorEngine
+// A.6 (D-klasa + spacja/tab/myślnik, 20-42 znaki) — kotwica "PL" jest silniejszym sygnałem niż
+// jakikolwiek goły wzorzec liczący same cyfry, więc powinna wygrywać pierwsza, nie bronić się
+// na końcu. Jako efekt uboczny naprawia też "zawłaszczanie" etykiety (np. "konto komornika:")
+// przez wzorzec kontekstowy niżej — IBAN_EARLY zabiera sam numer, zanim kontekstowy wzorzec
+// zdąży dokleić etykietę.
+private const val IBAN_EARLY = """(?<![A-ZŁŚŹĆŃĄĘÓŻa-z])PL[0-9OolIiSsBbZz \t\-]{20,42}"""
+
+// ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
 // ============================================================
 internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
+
+    // --- IBAN_EARLY (BUG-IBAN-OGON-KRADZIONY, 07.07) --- musi być PIERWSZY wzorzec w całej
+    // liście — kotwica "PL" + elastyczny ciąg cyfropodobny zabiera swoje terytorium zanim
+    // jakikolwiek goły wzorzec kształtu (REGON, telefon, CATCHALL) dostanie szansę. Patrz
+    // komentarz przy definicji stałej IBAN_EARLY wyżej.
+    TOKEN_NUMER to Regex(IBAN_EARLY),
 
     // --- Email --- (przeniesiony na pozycję 0 — musi być przed CATCHALL \d{9} i VAT EU [A-Z]{2}\d{8,12})
     // TLD: [a-zA-Z][a-zA-Z0-9]{1,} — zaczyna się literą, może zawierać cyfry (OCR: "p1"→"pl", "c0m"→"com")
@@ -204,7 +372,26 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // \d[\d \t\-]{3,16}\d — minimum 5 cyfr (BUG-PESEL-10: OCR może zgubić 1 cyfrę;
     //   kontekst słowny "pesel" eliminuje FP przy tak krótkim ciągu cyfr)
     //   Poprzednio {4,16} = min 6 cyfr; teraz {3,16} = min 5 cyfr.
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t\-]{3,16}\d"""),
+    // BUG-PESEL-KOD-SKLEJENIE-FIX (Cursor 01.07, pas bezpieczeństwa #3): usunięto `\-`
+    // z klasy znaków — PESEL to ciągłe cyfry (max spacje/taby jako separator OCR), a
+    // myślnik w tej klasie pozwalał dopasowaniu ciągnąć się w kod pocztowy/NIP (kształt
+    // z myślnikami) sąsiadujący z PESEL-em. Prawdziwy fix jest w OcrNormalizer (Warstwa 0)
+    // i StructuralEngine.applyPostalCityPatterns (Warstwa 1b) — to dodatkowy pas bezpieczeństwa.
+    // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
+    // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie potrafi pomylić
+    // POJEDYNCZĄ cyfrę z DOWOLNĄ literą, nie tylko znaną D-klasą ("4"→"A", "7"→"r" w dwóch
+    // różnych dokumentach — nie da się tego enumerować literą po literze). Bez tolerancji ten
+    // wzorzec (elastyczna klasa środkowa) potrafi dopasować się CZĘŚCIOWO — urwać tuż przed
+    // obcą literą — co jest gorsze niż brak dopasowania: token PESEL powstaje, ale zjada tylko
+    // część cyfr, a "ogon" (np. "A0") zostaje jawny TUŻ ZA tokenem, i słowo-kotwica "PESEL" jest
+    // już skonsumowane, więc żadna kolejna warstwa nie dostanie już szansy go dokończyć. Fix:
+    // pojedyncza obca litera w środku jest tolerowana TYLKO gdy zaraz po niej (z opcjonalnym
+    // separatorem spacja/tab) jest znowu prawdziwa cyfra — odróżnia to "przerwę w cyfrach" od
+    // "koniec numeru, zaczyna się inny tekst", więc nie wraca BUG-PESEL-SKLEJENIE-FIX powyżej.
+    TOKEN_NUMER to Regex(
+        """(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*""" +
+        """\d(?:[\d \t]|$CTX_STRAY(?=[ \t]?\d)){3,16}\d"""
+    ),
 
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
@@ -288,20 +475,41 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Sygnatura akt/komornicza z kontekstem "sygn." / "sygnatura akt"
     // Łapie: I Co 3704/2018, Km 4917/2018, Km 808382024 (OCR bez ukośnika)
     // Format po słowie kluczowym: 1-3 grupy liter + cyfry (z opcjonalnymi ukośnikami)
-    TOKEN_NUMER to Regex("""(?i)\bsygn(?:atura)?\.?(?:[^\S\n]+akt)?\b[^\S\n]*[:–\-]?[^\S\n]*(?:[A-Za-z]{1,4}[^\S\n]+){1,3}\d[\d/\-]{1,20}\b"""),
+    // BUG-SYGNATURA-SPACJA-FIX (01.07, sam Claude — piąty wariant tego samego wzorca
+    // bugu z dzisiejszej sesji): (?:[^\S\n]?/[^\S\n]?[\d/\-]{1,20})? na końcu — bez tego
+    // OCR-owa spacja przed ukośnikiem ("234 /24") ucinała match na "234", zostawiając
+    // " /24" jawne. AnchorEngine A.8 nie naprawiał bo matchOverlapsToken widział token.
+    TOKEN_NUMER to Regex("""(?i)\bsygn(?:atura)?\.?(?:[^\S\n]+akt)?\b[^\S\n]*[:–\-]?[^\S\n]*(?:[A-Za-z]{1,4}[^\S\n]+){1,3}\d[\d/\-]{1,20}(?:[^\S\n]?/[^\S\n]?[\d/\-]{1,20})?\b"""),
 
     // Numer umowy z kontekstem "nr umowy" / "numer umowy"
     // Łapie: UMW/2022/966, U-00615/2024, KT/0001/2022
     // \n? dopuszcza newline między etykietą a numerem (OCR: label + enter + wartość)
-    TOKEN_NUMER to Regex("""(?i)\b(?:nr|numer)\.?[^\S\n]+umow[ya]\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,22}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07, uogólnione na 441/449): lookahead
+    // (?=[A-Za-z0-9/\-]*\d) — capture identyfikatora musi zawierać choć jedną cyfrę.
+    // Prawdziwy numer umowy/faktury/KW zawsze ma cyfrę; bez tego wymogu capture może złapać
+    // zwykłe słowo opisowe zamiast prawdziwego identyfikatora (patrz uzasadnienie przy 445).
+    TOKEN_NUMER to Regex("""(?i)\b(?:nr|numer)\.?[^\S\n]+umow[ya]\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{3,22}\b"""),
 
     // Numer faktury z kontekstem "nr faktury" / "numer faktury" / "faktura nr"
     // Łapie: FV-01079/04/2024, 4704/12/2020, FV/2022/12
-    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+faktur[ay]|faktura[^\S\n]+(?:nr|numer))\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{2,22}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07): trzecia alternatywa — "faktura"/
+    // "faktury" z do 5 dowolnymi słowami pośrednimi (np. "VAT", "VAT Nr", "uproszczona")
+    // zamiast wymogu DOKŁADNIE sąsiadującego "nr"/"numer". Bez tego "Faktura VAT 26/06/006"
+    // (bez słowa "nr" wcale) nie miał żadnego właściciela kontekstowego — łapał go dopiero
+    // wzorzec sygnatury sądowej (linia ~650) tylko częściowo, zostawiając ostatni segment jawny.
+    // Lookahead (?=[A-Za-z0-9/\-]*\d) — bez tego, gdy prawdziwy numer jest oddzielony
+    // nową linią ("FAKTURA VAT\nNr FV-08217/08/2023"), ALT3 z zerem słów pośrednich fałszywie
+    // łapała samo słowo "VAT" jako "identyfikator" (znalezione testem Pythona przed commitem).
+    // TEST 07.07 (Paweł): wyłączone celowo — sprawdzamy czy AnchorEngine A.12 (kotwica
+    // "Nr"/"FV"/"fv"/"f.v."/"f-ra" + sygnał wstecz "faktur|vat|uproszczon") sam wystarcza
+    // jako jedyne miejsce zakrywające NUMER faktury, bez duplikatu w StructuralEngine.
+    // Jeśli test wypadnie źle — odkomentować tę linię (patrz TODO.md).
+    // TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+faktur[ay]|faktura[^\S\n]+(?:nr|numer)|faktur[ay](?:[^\S\n]+\w+){0,5})\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{2,22}\b"""),
 
     // Numer KW (księgi wieczystej) z kontekstem
     // Łapie: PO1P/00424625/8, M/00787548/4
-    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+kw|ksi[eę]g[ia][^\S\n]+wieczyst\w{0,3}(?:[^\S\n]+(?:nr|numer))?)\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,20}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07, uogólnione): patrz uzasadnienie przy 441.
+    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+kw|ksi[eę]g[ia][^\S\n]+wieczyst\w{0,3}(?:[^\S\n]+(?:nr|numer))?)\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{3,20}\b"""),
 
     // ============================================================
     // Warstwa 2 — Regex strukturalne
@@ -317,7 +525,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // \b failuje (cyfra→cyfra). {6} jest precyzyjne więc regex nie przejada sąsiednich tokenów.
     TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}"""),
     // IBAN z kontekstem "IBAN:" — dla polskich i zagranicznych numerów UE
-    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){3,7}"""),
+    // BUG-IBAN-ZAGRANICZNY-FIX (Paweł 07.07): sztywne grupy WYŁĄCZNIE po 4 cyfry zakładały że
+    // (całkowita długość - 2 cyfry kontrolne) dzieli się przez 4 bez reszty — prawda dla PL (26),
+    // fałsz dla wielu innych krajów UE (np. DE: 20 cyfr po kodzie kraju, 18 BBAN nie dzieli się
+    // przez 4 → "00" na końcu zostawało jawne; podobnie FR). Opcjonalna końcowa grupa 1-3 cyfr
+    // obsługuje resztę z dzielenia, niezależnie od konkretnego kraju/długości.
+    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){2,7}(?:\s?\d{1,3})?"""),
     // IBAN z kontekstem "konto" — fallback gdy OCR wstawia spacje w nieregularnych miejscach
     // Łapie: "konto komornika: PL41 169010 14937..." niezależnie od podziału na grupy
     TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}\s+\S{0,20}\s*[:–\-]\s*(PL[\d\s]{24,34})\b"""),
@@ -368,12 +581,28 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}\b"""),
     // S10: kierunkowy w nawiasach "(22) 765-43-21", "(12)345-67-89"
     TOKEN_NUMER to Regex("""\(\d{2}\)[^\S\n]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
-    TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d{3,15}"""),      // Międzynarodowy
+    // BUG-MIEDZYNARODOWY-FIX (01.07): stary wzorzec kończył się \d{3,15} (wymaga
+    // 3+ CIĄGŁYCH cyfr) — dla numeru z nierównym grupowaniem, np. "+48 501 23 567"
+    // (3-2-3 zamiast 3-3-3), silnik cofał się i rozbijał "48" na "4"+"8" żeby
+    // dopasować "501" jako trzycyfrową końcówkę, produkując ucięty match "+48 501"
+    // i zostawiając "23 567" jawne. Fix: powtarzalna grupa (?:sep?\d{1,4}){1,4}
+    // zamiast jednego sztywnego \d{3,15} — obsługuje dowolne grupowanie cyfr.
+    TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?(?:[\s\-.]?\d{1,4}){1,4}"""),      // Międzynarodowy
 
     // --- Kwoty z walutami (format PL i EU) ---
     // (?!00\s) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię
     TOKEN_KWOTA to Regex(
         """\b(?!00\s)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\s*(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b""",
+        RegexOption.IGNORE_CASE
+    ),
+    // BUG-PLN-KWOTA-SYMETRIA (05.07, decyzja Pawła): szyk waluta+liczba ("PLN 1234") był
+    // dotąd tylko WYKLUCZANY z NUMER/ADRES (zostawał jawny) — niespójne, skoro "1234 PLN"
+    // (odwrotny szyk) jest KWOTĄ. Kwota sama nie identyfikuje osoby (nie jest to jak
+    // PESEL/adres/telefon), ale skoro engine i tak maskuje jeden szyk, drugi powinien być
+    // spójny. Ten sam kształt liczby co wyżej, (?!00\b) analogicznie wyklucza artefakt OCR
+    // "PLN 00" z rozbitego "PLN 350,00".
+    TOKEN_KWOTA to Regex(
+        """\b(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\s*(?!00\b)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\b""",
         RegexOption.IGNORE_CASE
     ),
 
@@ -383,8 +612,14 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // DOWOD-FIX v1.9: \d{3}[^\S\n]?\d{3} → \d{2,3}[^\S\n]?\d{3,4}.
     // OCR lvl3 (doc_00033) produkuje "AWY57 1380" — spacja po 2 cyfrach zamiast 3.
     // Nowy wzorzec: 2-3 cyfry + opcjonalna spacja + 3-4 cyfry = razem 5-7 cyfr (oczekiwane 6).
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
-    TOKEN_NUMER to Regex("""\b[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
+    // BUG-PLN-DOWOD-FIX (05.07, diagnoza trace po zgłoszeniu "PLN 12345" jako NUMER):
+    // seria dowodu to 3 wielkie litery + 5-7 cyfr — ten sam kształt co skrót waluty + kwota
+    // bez separatora ("PLN 12345" = "PLN" jako seria + "12"+"345" jako numer). Ten sam,
+    // świadomie zamknięty zestaw kodów walut co przy wcześniejszym fixie tablicy
+    // rejestracyjnej (StructuralEngine.kt:558) — nie długość nazwy (seria dowodu ma zawsze
+    // dokładnie 3 litery, więc próg długości złamałby prawdziwe serie).
+    TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
+    TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\d)[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
     TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"
@@ -398,7 +633,20 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // BUG-05-FIX v1.4: zmieniono \d{2,5} → \d{4,5}.
     // Poprzedni wzorzec matchował kody alfanumeryczne z 2–3 cyframi ("WZ12", "ISO90").
     // Polskie tablice mają co najmniej 4 cyfry — zawężenie jest bezpieczne dla testów.
-    TOKEN_NUMER to Regex("""\b[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b"""),
+    // BUG-PLN-NUMER-FIX (04.07, sesja AddressEngine v0): kształt [A-Z]{2,3}\s?\d{4,5}
+    // pokrywa się z "PLN 1234"/"USD 5678" (skrót waluty + kwota) — bez "zł"/kwoty jako
+    // liczby z separatorami, kwota poprzedzona etykietą waluty wygląda identycznie jak
+    // tablica rejestracyjna. Lookahead wyklucza znane skróty walutowe (ta sama lista co
+    // TOKEN_KWOTA wyżej) — realne polskie tablice nie kolidują z tymi skrótami.
+    // BUG-NUMER-FAKTURA-TABLICA-FIX (diagnoza Cursor 07.07, traceMode): ten wzorzec jest
+    // wcześniej na liście niż wzorzec sygnatury/faktury z ukośnikami (linia ~605) i łapał
+    // prefiks "FVI2025" numeru faktury "FVI2025/12/1828", zanim szerszy wzorzec dostał
+    // szansę objąć całość — "/12/1828" zostawał jawny. Prawdziwe tablice rejestracyjne
+    // nie są kontynuowane ukośnikiem, więc (?!\s*/) bezpiecznie wyklucza ten przypadek
+    // i oddaje go wzorcowi z ukośnikami.
+    TOKEN_NUMER to Regex(
+        """\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}(?!\s*/)\b"""
+    ),
 
     // --- VIN ---
     TOKEN_NUMER to Regex("""\b[A-HJ-NPR-Z0-9]{17}\b"""),
@@ -413,7 +661,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""(?i)(?:BIC|SWIFT)[\s:]+([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b"""),
 
     // --- Numery działek geodezyjnych ---
-    TOKEN_NUMER to Regex("""(?i)(?:działki?|nr działki)\s+\d+(?:/\d+)?"""),
+    // BUG-DZIALKA-FIX (Paweł 07.07): WYŁĄCZONE — kolejny wariant tego samego problemu co
+    // numer_faktury (07.07, patrz feedback_anchor_vs_structural_faktura_experiment.md):
+    // "Numer dziatki" (pełne słowo "Numer", nie "Nr"; "ł"→"t" zamiast "l") ujawniło że
+    // enumerowanie kolejnych degradacji/synonimów w StructuralEngine nie kończy się.
+    // Migracja do AnchorEngine A.12 (docNumberRe: "Nr"/"Numer" + do 2 słów pośrednich +
+    // sygnał "dzia.k" jako wildcard na literze "ł") — Anchor jako jedyny właściciel,
+    // zgodnie z decyzją z eksperymentu faktury. Skomentowane, nie usunięte — łatwy powrót.
+    // TOKEN_NUMER to Regex(
+    //     """(?i)(?:dzia[łl]k\w*|nr[^\S\n]+dzia[łl]k\w*)\b(?:[^\S\n]+\w+){0,2}[^\S\n]*[:–\-]?[^\S\n]*""" +
+    //     """(?=[A-Za-z0-9./\-,]*\d)[A-Za-z0-9]+(?:[^\S\n]?[/\-.,][^\S\n]?[A-Za-z0-9]+)*"""
+    // ),
 
     // --- Identyfikatory alfanumeryczne (ID-UZ-77412, CERT-8841, ZW-PS-0336) ---
     // BUG-NR-SIEROTA-FIX (Cursor 01.07): trzeci opcjonalny segment — bez niego
@@ -443,7 +701,12 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // (?<!\d{3}[\s\-]): nie matchuj jeśli poprzedza 3 cyfry + separator — to ogon odrzuconego NIPu.
     // Przypadek: 526-000-13-20 (zła suma S5) → wzorzec 3-2-2-3 odrzuca cały NIP,
     // ale bez lookbehind wzorzec 3-2-2 złapałby ogon "000-13-20" jako oddzielny token.
-    TOKEN_NUMER to Regex("""(?<!\d{3}[\s\-])\b\d{3}[\s\-]\d{2}[\s\-]\d{2}\b"""),
+    // BUG-NIP-3-2-2-FIX (Cursor 01.07): (?![\s\-]\d) na końcu — bez tego "722-30-32-34"
+    // (4 segmenty, nie NIP w formacie 3-3-2-2 ani 3-2-2-3) dopasowywał tylko "722-30-32",
+    // zostawiając "-34" jawne. A.5b (AnchorEngine, kształt NIP bez keywordu) bierze całość
+    // poprawnie, ale matchOverlapsToken blokował go bo token już istniał. Trzeci wariant
+    // tego samego wzorca bugu co StructuralEngine.kt:419 i :460 (fakturę/sygnatura).
+    TOKEN_NUMER to Regex("""(?<!\d{3}[\s\-])\b\d{3}[\s\-]\d{2}[\s\-]\d{2}(?![\s\-]\d)\b"""),
 
     // --- Sygnatura sądowa/notarialna z odstępem (np. II K 123/25, I C 456/26, A 4567/2026) ---
     // Musi być PRZED wzorcem budynku, żeby nie była brana za adres
@@ -462,7 +725,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // zostawiając "/2023" jawne — A.12 (AnchorEngine) nie mógł naprawić bo widział
     // już utworzony token w oknie matchOverlapsToken. "Nr" + numer faktury/umowy
     // obsługuje teraz A.12 w całości.
-    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07): (?!\s*/) — ten wzorzec (2 segmenty,
+    // np. "VAT 26/06") konsumował prefiks dłuższego identyfikatora ("Faktura VAT 26/06/006"),
+    // zostawiając "/006" jawne, zanim kontekstowy wzorzec faktury (linia ~445) mógł objąć
+    // całość. Ten sam mechanizm bugu co tablica rejestracyjna (linia ~579).
+    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}(?!\s*/)\b"""),
 
     // --- CATCHALL: ciągi cyfr 8+ (przepisany z negatywnym lookahead) ---
     // TODO-7 (sesja 10): Daty NIE mają osobnej jawnej reguły ochrony — są chronione
@@ -475,7 +742,13 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Jeśli kiedykolwiek zmienisz tę regułę lub CATCHALL, dodaj testy dla wszystkich
     // formatów dat (patrz PseudonymEngineTest.kt TODO-7).
     // Nie łapie: lat 1900-2099, wartości z jednostkami, pozycji < 8 cyfr
-    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)\d{8,}\b"""),
+    // BUG-KW-CATCHALL-FIX (Cursor 01.07): (?<![A-Z0-9/]) + (?![/\d]) — bez tego CATCHALL
+    // łapał sam środkowy ciąg cyfr osadzony w identyfikatorze z ukośnikami (np.
+    // "KW GD1M/00234567/8" → CATCHALL brał tylko "00234567"), zostawiając prefiks
+    // literowy i sufiks jawne. AnchorEngine A.8 (kotwica KW) nie naprawiał bo
+    // matchOverlapsToken widział już utworzony token w oknie. Czwarty wariant tego
+    // samego wzorca bugu co StructuralEngine.kt:419/:452/:460 (faktura/sygnatura/NIP).
+    TOKEN_NUMER to Regex("""\b(?!(?:19|20)\d{2}\b)(?<![A-Z0-9/])\d{8,}\b(?![/\d])"""),
 
     // --- S4: Kwoty słowne ---
     //
@@ -507,6 +780,13 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 // żeby NameEngine widział pełne adresy jako kontekst dla rozpoznania imion.
 // Przeniesione z STRUCTURAL_PATTERNS — zachowane wszystkie komentarze i fixy.
 // ============================================================
+// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy dla dwóch podobnie zbudowanych
+// regexów (poniżej + NameEngine.STREET_CANDIDATE_REGEX). Dodanie nowego znaku (apostrof,
+// kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach. Nie obejmuje linii
+// niżej "ulica bez kodu pocztowego" — ta ma odrębną, zagnieżdżoną budowę klasy znaków
+// (pozwala na spację w środku inaczej), do rozważenia osobno.
+internal const val STREET_NAME_CHARS = "A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\\-"
+
 internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
 
     // --- Adresy z kodem pocztowym PL ---
@@ -516,11 +796,23 @@ internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
     // lookahead widzi "20" + "\d{2}" + \b → blokuje.
     // "65-5110" przejdzie: "51" nie pasuje do (?:19|20) → lookahead nic nie blokuje.
     // "60-001" przejdzie: "00" nie pasuje do (?:19|20) → OK.
+    // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): brakujący `\-` w klasie znaków nazwy ulicy —
+    // sąsiednia reguła niżej (ulica bez kodu pocztowego) już go ma. Niespójność, nie świadomy
+    // brak. "Gdańska-Sopocka" bez myślnika w klasie łamało się na dwa osobne dopasowania.
+    // BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): ten sam duplikat wzorca istnieje też w
+    // AddressEngine.kt (STREET_FULL, naprawiony tam guardem na grupach). Ten TOKEN_ADRES nadal
+    // biegnie jako fallback (Warstwa 3d/Runda 2, Faza B jeszcze nie wyłączyła duplikatów) i ma
+    // TĘ SAMĄ lukę — prefiks "ul." opcjonalny pozwalał "PLN 1234, 00-001 Warszawa" dopasować
+    // się w całości, traktując "PLN" jak nazwę ulicy. Pętla w PseudonymEngine.kt nie ma
+    // per-wzorcowej walidacji grup (generyczna dla całej listy ADDRESS_PATTERNS), więc fix tu
+    // jest na poziomie regexu: alternatywa (prefiks+dowolna nazwa) LUB (brak prefiksu+nazwa
+    // NIE będąca skrótem waluty), zamiast jednego opcjonalnego prefiksu przed dowolną nazwą.
     TOKEN_ADRES to Regex(
-        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29}(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}|\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
     ),
-    // BUG-KOD-POCZTOWY-FIX v1.5: analogicznie — wzorzec 33 (kod + miejscowość).
-    TOKEN_ADRES to Regex("""\b\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ]{2,40}\b"""),
+    // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
+    // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej
+    // w potoku, para jest już tokenem zanim ADDRESS_PATTERNS w ogóle zobaczy tekst.
 
     // --- Adres z ul./al./pl./os. bez kodu pocztowego ---
     // ul. Długa 7, al. Róż 12A, ul. Kazimierza Wielkiego 14/3

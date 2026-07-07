@@ -2,88 +2,190 @@ CLAUDE CODE — NOTATKI MIĘDZY SESJAMI
 LynxMask Mobile | C:\Projects\LynxMask\
 ================================================================================
 
-## SESJA 2026-06-25 (cd. — wieczór)
+## NOWE ZADANIE zapisane 04.07 noc (NIE zrobione, świadomie odłożone — pełny plan gotowy)
 
-### Commity
-- 7e4bd95  fix: ImageRedact blur pixelate + słownik w detekcji + re-detect po dodaniu słowa
-- f1bf622  chore: cleanup root — usunięto śmieci AI, stara mapa, test_ocr_normalizer_hard
-- fe527a4  chore: dodaj CLAUDE.md — pamięć projektu dla wszystkich instancji Claude Code
-- 7e8b18e  fix: usun zbędny key(regionPreviewKey) z Image + fix bitmap recycle
-
-### Co zrobiono
-1. **ImageRedactionPipeline.kt** — trzy zmiany:
-   - BLUR_DIVISOR 12→8, filter=false w createScaledBitmap (pixelate zamiast smooth blur)
-   - detectTextLinesAsRegions() + detectFacesAndTextAsRegions() dostały parametr userDict
-   - PseudonymEngine.pseudonymize() teraz dostaje userDictionary = userDict
-   - Dodano log [BlurRegion] z wymiarami
-
-2. **ShareTargetActivity.kt** — wszystkie 3 ścieżki ImageRedact:
-   - UserDictionary.load(context) przed detekcją
-   - detectFacesAndTextAsRegions(bmp, userDict = UserDictionary.entries)
-   - Ścieżka file picker: naprawiono na loadBitmapExifAware() (wcześniej ignorowała EXIF)
-
-3. **ImageRedactionScreen.kt** — cztery zmiany:
-   - Po dodaniu słowa FIRMA/OSOBA: natychmiast re-detect tekstu z nowym słownikiem
-   - To samo po akceptacji OCR suggestion card
-   - Usunięty zbędny key(regionPreviewKey) z Image composable (race condition)
-   - Fix memory leak: cropped bitmap w osobnym try/finally
-
-4. **Sprzątanie** — usunięto: AgentAudit.txt, AuditLibrary.txt, Codex.txt, Cursor.txt,
-   Claude_Code.txt (stary), benchmark_report.txt, 1000005989.jpg, BRIEF_Cursor_Onboarding_Copy.md,
-   MAPA_ARCHITEKTURY_LynxMask_mobile_v2.md, tests/test_ocr_normalizer_hard.txt
-
-5. **CLAUDE.md** — stworzony w root projektu, zastępuje pamięć między sesjami i kontami
-
-### Stan bugów ImageRedact po sesji
-✅ Słownik użytkownika teraz używany w auto-detekcji PII
-✅ Re-detect po dodaniu słowa — słowo maskowane natychmiast bez re-share
-✅ File picker ścieżka — EXIF rotation naprawiona
-✅ key(regionPreviewKey) race condition usunięty
-🔲 Cały tekst maskowany zamiast tylko PII — Cursor pracuje (prompt wysłany)
-🔲 Blur twarzy niewidoczny (ramka) — Cursor pracuje (ten sam prompt)
-
-### Kolejka ogólna (stan po sesji)
-🔲 Testy 6.2: JUnit SessionStore + Deanonymizer
-🔲 S10 — TELEFON nie w tokenMap (wyciek PII)
-🔲 AUD-M06 — security-crypto 1.1.0-alpha06 → 1.0.0 (wymaga weryfikacji wersji stable)
-🔲 BUG-PESEL-OCR-SILNIK — wymaga OCR z telefonu (niskie)
-🔲 Audyt RODO/security (Cursor)
-🔲 Prawnik: ToS, Privacy Policy
-🔲 Google Play: konto, screenshoty, opis
-🔲 Express Mode (koncepcja zapisana w CLAUDE.md)
-
-### Uwagi techniczne
-- Build: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && ./gradlew :app:assembleDebug
-- gradlew PowerShell nie działa (problem z ścieżką) — używać Bash
-- UserDictionary.entries jest thread-safe (@Synchronized getter) — bezpieczne do przekazania
-- ImageRedactionScreen.kt był modyfikowany przez Cursora między commitami — sprawdź aktualny stan przed edycją
-================================================================================
+"w Jeleniej Górze"/odmiana dwuwyrazowych miast nie działa (tylko mianownik). Sprawdzone: Desktop
+nie ma gotowca, Morfeusz2 zweryfikowany że da radę (algorytm + wyniki testu w pamięci
+`project_city_declension_task.md`, też wpis w TODO.md). Nie zaczynać od zera — czytaj tamten plik.
 
 ================================================================================
-## SESJA 2026-06-28 (cd.)
+
+## SESJA 2026-07-04 (noc — fix "Góra jako OSOBA", ostatni wątek przed zamknięciem)
 
 ### Commity
-- 932b20a  fix: skany dokumentów szły do ImageRedact + depseudo auto-wybór sesji
+BRAK — nadal nic nie scommitowane od c332f17. Working tree rośnie (ta sama seria + PLN fix +
+ten fix).
 
 ### Co zrobiono
+Po diagnozie (agent) właściciel zaproponował: policzyć programowo przecięcie drugich-członów
+dwuwyrazowych nazw miast (cities_forms.json) i top-1000 nazwisk (surnames_top1000.json), zapisać
+jako JSON w assets, użyć do maskowania. Zaimplementowane:
 
-**BUG-SCAN-ROUTE** (regresja z sesji 25-28.06):
-- `looksLikeIdentityDocument()` miała warunek który łapał każdy dokument z "PESEL" jako keyword +
-  11-cyfrowym ciągiem (faktury, umowy, zlecenia z polem "PESEL nabywcy:") → routing do ImageRedact
-- Fix: usunięto warunek PESEL, zostały tylko markery fizycznych dok. tożsamości (dowód, paszport, PJ)
-- Plik: ShareTargetActivity.kt:125-128
-- Testy: +2 (ImageRouteTest — faktura i umowa z polem PESEL)
+1. `generate_city_surname_overlap.py` (nowy, wzorowany na generate_street_forms.py) → policzył
+   44 słowa (góra, górny, górka, borek, róg, kępa i in.) → `city_surname_overlap.json`.
+2. `LookupTables.kt` — nowe pole `citySurnameOverlap`, wczytywane wszędzie tam gdzie
+   cityForms/streetForms (initialize/initializeFromClasspath/initializeForTesting). Skopiowany
+   też do `app/src/test/resources/` dla testów JVM.
+3. `NameEngine.kt` — WAŻNE: pierwsze podejście (dopisać do isOnWhiteList) było BŁĘDNE i zostało
+   COFNIĘTE — tylko wyciszałoby OSOBA, zostawiając "Jelenia Góra" CAŁKOWICIE niezamaskowaną w
+   zdaniu bez przyimka (regres pokrycia PII). Właściwy fix: NOWA reguła przed "samo nazwisko",
+   dopasowuje dwa sąsiednie wielkoliterowe słowa, jeśli druga ∈ citySurnameOverlap I cała fraza ∈
+   cityForms → maskuje CAŁOŚĆ jako ADRES. W przeciwnym razie (np. "Pan Góra" — realna osoba) —
+   nie strzela, recall dla prawdziwych nazwisk zachowany.
 
-**BUG-DEPSEUDO-AUTO** (link AI→sesja):
-- AI nie zwraca SESJA_ kodu bo brak instrukcji. Fingerprint (szuka tokenów w odpowiedzi AI)
-  też nie działa — AI odpowiada własnymi słowami bez cytowania tokenów.
-- Fix: auto-wybór najnowszej sesji gdy brak auto-detekcji (common case pokryty)
-- Sync `selectedSessionId` z fingerprint gdy tokeny znalezione w odpowiedzi
-- Plik: DepseudonymizationScreen.kt:119-135
+Testy dodane w PseudonymEngineTest.kt (2 nowe: pozytywny "Jelenia Góra"→ADRES + kontrola recall
+"Kandydat nazwiskiem Góra"→OSOBA nadal). `installDebug` zrobiony. Testy jednostkowe NIE odpalone
+przez Claude (zakaz — Paweł uruchamia sam).
 
-### Stan po sesji
-🔲 BUG-SCAN-ROUTE: naprawiony commit 932b20a
-🔲 BUG-DEPSEUDO-AUTO: naprawiony (auto-wybór), długoterminowo: instrukcja AI w kopii tekstu
+Pełny opis mechanizmu i decyzji: pamięć `bug_gora_jako_osoba_diagnoza.md` (sekcja "NAPRAWIONE").
 
-### Testy do odpalenia
-Odpal ImageRouteTest (10 testów) — zielone.
+### Co zrobić dalej (właściciel) — TO JEST OSTATNI OTWARTY WĄTEK
+🔲 Odpal PseudonymEngineTest (598 testów po dodaniu 2 nowych) — powinny być zielone.
+🔲 Odpal `testy/test_adres_regresja_sesja.txt` + Test 1b (Jelenia Góra) na telefonie.
+🔲 Po potwierdzeniu — **commit CAŁEJ serii** (AddressEngine v0 + fix PLN/NUMER + fix Góra/ADRES).
+   To zamyka cały wątek ADRES z tej sesji.
+
+================================================================================
+
+## PRIORYTET NA NASTĘPNĄ SESJĘ (Paweł, 04.07 wieczór — przeczytaj przed wszystkim innym)
+
+**Walczymy z ADRES do końca — nie przerywać w połowie.** Właściciel wprost: "nigdzie mi się nie
+spieszy, a czyste maskowanie bez ogonów i PII jest priorytetem". Czyste maskowanie (zero
+urwanych tokenów, zero pominiętego PII) jest ważniejsze niż tempo. Nie zamykać wątku ADRES/
+AddressEngine v0 dopóki nie jest naprawdę czysto — testować dalej, jedno po drugim, tak długo
+jak trzeba, zamiast uznawać "wystarczająco dobre" za koniec.
+
+## SESJA 2026-07-04 (wieczór — dokończenie zagadki PLN, cd. sesji popołudniowej)
+
+### Commity
+BRAK — nic nie scommitowane od c332f17, tak jak poprzednio. Working tree = ta sama seria +
+ten fix.
+
+### Co zrobiono — ZAGADKA "PLN 1234" ROZWIĄZANA
+Poprzednia sesja (popołudnie) nie znalazła przyczyny mimo 2 rund ręcznego czytania regexów —
+i błędnie zakładała że problem jest w ADRES. Metoda: tymczasowy test JVM z
+`PseudonymEngine.pseudonymize(text, traceMode = true)`, wypisanie `result.trace` — pokazało
+natychmiast: `layer=STRUCTURAL rule=NUMER matchedText='PLN 1234'`.
+
+**Przyczyna:** wzorzec tablic rejestracyjnych pojazdów w `StructuralEngine.kt` (~linia 552,
+`TOKEN_NUMER to Regex("""\b[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b""")`) — "PLN" (3 wielkie litery)
++ spacja + "1234" (4 cyfry) ma dokładnie kształt polskiej tablicy ("WZ 1234"). To NIE był ADRES
+w ogóle, tylko fałszywe rozpoznanie w Warstwie 2 (Runda 1), zanim AddressEngine/inne warstwy
+miały znaczenie.
+
+**Fix:** dodany negative lookahead wykluczający skróty walutowe (ta sama lista co TOKEN_KWOTA
+wyżej w pliku): `(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)` przed wzorcem tablicy.
+Punktowa zmiana, jedna linia w StructuralEngine.kt.
+
+Istniejący test `BUG05 znane FP tablice i identyfikatory` świadomie dokumentował "PLN 1234"
+jako zaakceptowany FP — zaktualizowany (usunięty z listy, test przemianowany na `BUG05 znane FP
+identyfikatory`, zostaje tylko "POLSKA-1234-5678"). Dodane 2 nowe testy regresji w
+PseudonymEngineTest.kt.
+
+**Test:** pełny PseudonymEngineTest (596 testów) — 0 FAILED. `installDebug` wykonany, apk na
+SM-A536B gotowe.
+
+### Co zrobić dalej (właściciel)
+🔲 Odpal `testy/test_adres_regresja_sesja.txt` na telefonie — sprawdź punkt 6 (PLN — całkowicie
+   jawne, zero tokenu) i punkt 7 (IBAN — NUMER, bez regresji). Reszta pliku niezmieniona.
+🔲 Po potwierdzeniu — commit całej serii (AddressEngine v0 z popołudnia + ten fix PLN/NUMER).
+
+Pełny stan: pamięć project_addressengine_v0_state.md (sekcja "ROZWIĄZANE" zastąpiła "OTWARTE —
+NIEROZWIĄZANA ZAGADKA").
+
+================================================================================
+
+## SESJA 2026-07-04 (popołudnie — AddressEngine v0)
+
+### Commity
+BRAK — nic nie scommitowane od c332f17. Cała ta sesja jest w working tree.
+
+### Co zrobiono
+Po audycie Cursora (ADRES: 12 nakładających się reguł w 4 plikach) — zbudowany nowy
+AddressEngine.kt, silnik równoległy testowy uruchamiany PRZED NameEngine, ze starym kodem
+nietkniętym (fallback). Diagnostyka kolorem w podglądzie tekstu: zielony=nowy, niebieski=stary,
+czerwony=odkryty. 4 rundy poprawek z Cursorem (błąd: kotwice na początku potoku — poprawione,
+patrz pamięć feedback_anchor_must_stay_last.md).
+
+Większość testowych przypadków działa (Zielona Góra, Gdańska-Sopocka myślnik, pI.→pl. degradacja,
+Długa 7 Gdańsk bez kodu). "Góra samo jako OSOBA" w zdaniu bez adresu — Paweł potwierdził jako
+OK (nie błąd), dotyczy każdego miasta na "Góra" (sprawdzone: Zielona i Jelenia Góra identycznie).
+
+### Co otwarte — PRIORYTET NASTĘPNEJ SESJI
+🔲 "PLN 1234" wykrywane jako ADRES — przyczyna NIEZNANA. Słownik użytkownika pusty (wykluczone).
+   Ręczne śledzenie regexów (2 próby) nie znalazło mechanizmu. Następny krok: test JVM z
+   PseudonymEngine.pseudonymize("PLN 1234") + sprawdzić DetectionTrace/tokenLayers żeby
+   zobaczyć KTÓRA reguła to zrobiła, zamiast dalej zgadywać z regexów w izolacji.
+
+Pełny stan: pamięć project_addressengine_v0_state.md.
+
+### Sprzątanie przed commitem
+tmp_regex.kt (root, scratch Cursora) do usunięcia. CURSOR_AUDYT_ADRES_2026-07-04.md i
+CURSOR_BRIEF_AddressEngine_2026-07-04.md w rootcie — do przeniesienia/wyciągnięcia treści
+i usunięcia (zasada: nie trzymać briefów w katalogu głównym).
+
+================================================================================
+
+## SESJA 2026-06-29 (cd. — routing obrazów)
+
+### Commity
+- 274be12  fix: naprawa regresy po refaktorze Cursora (sesja 29.06) — pierwsze poprawki
+- 1fd32cf  fix: routing obrazow — domyslnie OCR, CARD tylko gdy markery + krotki tekst (<400 zn.)
+
+### Co zrobiono
+Cała sesja poświęcona na naprawę routingu skanów obrazów. Problem: po refaktorze Cursora WSZYSTKIE skany (umowy, faktury, harmonogramy, dokumenty szpitalne) szły do IMAGE-REDACT zamiast OCR.
+
+Diagnoza przez eliminację:
+1. Pieczątki wykrywane jako twarze (face detection) → usunięto faceCount z routingu
+2. Markery zbyt szerokie ("rzeczpospolita polska", "n rej", "identification number") → usunięto
+3. Naklejki/barcody → OCR zwracał mało znaków → system uznawał za zdjęcie → IMAGE-REDACT
+
+Rozwiązanie (filozofia Pawła: "dokument musi udowodnić że jest kartą"):
+- STARE: default = CARD, PAGE tylko gdy dowiedzione
+- NOWE: default = PAGE, CARD tylko gdy looksLikeCardDocument AND ocrCharCount < 400
+
+### Zmiany kodu
+- **ImageDocumentRoute.kt**: classifyImageInput() — nowa logika, CARD_DOC_MAX_OCR_CHARS=400
+  - Usunięto: faceCount z routingu, MIN_IMAGE_OCR_CHARS_FOR_TEXT_PIPELINE, zbyt szerokie markery
+  - Usunięto enum: AMBIGUOUS, PHOTO (były martwe)
+- **IncomingDocumentFlow.kt**: usunięto ImageRouteChoiceContent, ImageRouteChoice, martwe gałęzie when(kind)
+- **ImageRedactionPipeline.kt**: setMinFaceSize 0.005f → 0.10f
+- **ImageRouteTest.kt**: 5 nowych testów, 3 zaktualizowane
+
+### Margines świadomy
+Paszport z ostrym skanem (>400 zn. OCR) może pójść do PAGE zamiast CARD.
+PII i tak chronione — inny wygląd wyniku (tekst zamiast piksele).
+
+### Stan testów
+ImageRouteTest — NIE uruchomiony przez Pawła w tej sesji. Odpalić na początku następnej.
+
+### Co otwarte
+🔲 R4 — testy kamerą w toku
+🔲 R5 — treść Privacy Policy od prawnika
+🔲 GP1-GP6 — Google Play (keystore + konto + .aab)
+🔲 BUG-WARMSTART-CLEAR — onNewIntent brak LynxPendingShare.clear() (niski priorytet)
+🔲 BUG-PESEL-OCR-SILNIK — niskie
+
+
+## SESJA 2026-06-30 — AnchorEngine bugi z ekranu
+
+### Commity sesji (gałąź feature/anchor-engine)
+- fa89bc1 — A.2b EMAIL orphan domain (@domain.tld po istniejącym tokenie)
+- d1853d3 — TOKEN_RE trailing \b → (?!\d) (OSOBA_011_001 biały token)
+- 8e7cac3 — A.5b lookbehind/lookahead, A.6 IBAN no newline, A.3 no newline
+- b5c8aa3 — applyAll + PESEL standalone: spacja przed/po tokenie gdy sąsiad to \w
+
+### b5c8aa3 — spacja wokół tokenu w applyAll
+Naprawia EMAIL_001EMAIL_006 (biały, nieklikalny token).
+applyAll i PESEL fold: gdy char przed matchem to litera/cyfra/_ → dodaj spację
+przed tokenem; gdy char po matchu to litera/cyfra/_ → spacja po tokenie.
+Wynik: EMAIL_001 EMAIL_006 zamiast EMAIL_001EMAIL_006.
+
+### Stan testów po sesji
+AnchorEngineTest — odpalić. PseudonymEngineTest — odpalić.
+NIE zmeregowane do main — czeka na benchmark + kamery.
+- 7b68825 — OcrNormalizer krok 0a: rozdzielanie sklejonych emaili (OCR bez newline)
+  Regex: lista TLD (pl|com|net|...) + lookahead alfanumeryk→@. Wstawia \n po TLD.
+- a12f54f — split sklejonych emaili przeniesiony do PseudonymEngine.kt (po normalizacji)
+  OcrNormalizer krok 0b sam tworzył sklejenia — split musi być POZA normalizatorem.
+- f56e81f — telefony: +48 osobny wzorzec (bez \b), tel./kom. priorytet, cleanup orphanów w AnchorEngine

@@ -73,16 +73,21 @@ internal fun RedHitsSection(
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)) {
+                        // BUG-GUARD-BUTTON-WIDTH-FIX (01.07): Modifier.weight(1f) na obu
+                        // przyciskach — bez tego LynxButtonShell (wspólny dla obu) ma
+                        // wewnętrzny Row.fillMaxWidth(), więc PIERWSZY przycisk zajmował
+                        // całą dostępną szerokość, a drugi ("Zostaw jawne") dostawał zero
+                        // miejsca i znikał z widoku.
                         LynxSecondaryButton(
                             onClick = { onMask(hit) },
-                            modifier = Modifier.heightIn(min = 36.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 36.dp),
                             accent = LynxColors.Red
                         ) {
                             Text("Maskuj", fontSize = 12.sp, color = LynxColors.Red)
                         }
                         LynxGhostButton(
                             onClick = { onLeaveRevealed(hit) },
-                            modifier = Modifier.heightIn(min = 36.dp)
+                            modifier = Modifier.weight(1f).heightIn(min = 36.dp)
                         ) {
                             Text("Zostaw jawne", fontSize = 11.sp, color = LynxColors.TextMuted)
                         }
@@ -175,9 +180,10 @@ private fun YellowAlertRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Row(horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)) {
+            // BUG-GUARD-BUTTON-WIDTH-FIX (01.07): patrz RedHitsSection wyżej — ten sam fix.
             LynxSecondaryButton(
                 onClick = onMask,
-                modifier = Modifier.heightIn(min = 36.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 36.dp),
                 accent = LynxColors.Amber
             ) {
                 Text("Maskuj", fontSize = 11.sp, color = LynxColors.Amber)
@@ -185,7 +191,7 @@ private fun YellowAlertRow(
             if (onDismiss != null) {
                 LynxGhostButton(
                     onClick = onDismiss,
-                    modifier = Modifier.heightIn(min = 36.dp)
+                    modifier = Modifier.weight(1f).heightIn(min = 36.dp)
                 ) {
                     Text("Nie maskuj", fontSize = 11.sp, color = LynxColors.TextMuted)
                 }
