@@ -8,6 +8,21 @@
 
 ---
 
+## ZAMKNIĘTE 07.07 — benchmark: fuzzyMatch ślepy na DWIE niezależne degradacje OCR naraz
+
+Email zgłoszony jako `BRAK_W_OCR` w benchmarku stałym — test ręczny na telefonie potwierdził
+że silnik maskuje go POPRAWNIE w całości. Przyczyna: `kamil.wozniak@wp.pl` (19 zn., GT) vs
+`kamil.woziak@wppl` (17 zn., realna wartość po dwóch NIEZALEŻNYCH degradacjach OCR: zgubione
+"n" + zgubiona kropka) — różnica długości 2, ponad stary sztywny próg `fuzzyMatch` (≤1 znak).
+Fix: prawdziwa odległość Levenshteina (`BenchmarkInstrumentedTest.kt`) + próg skalowany
+długością wartości (1 dla <15 zn., 2 dla 15-23, 3 dla 24+) — długie pola (email/IBAN)
+statystycznie częściej mają 2+ niezależne literówki OCR naraz niż krótkie (PESEL). Zweryfikowane
+Pythonem: nie osłabia rozróżnialności (dwie różne wartości podobnej długości nadal odległość
+9-14, daleko ponad podniesiony próg). Szósta instancja "chorego termometru" — pełny opis w
+pamięci `feedback_validate_the_benchmark_tool_itself.md`.
+
+---
+
 ## ZAMKNIĘTE 07.07 — IBAN zagraniczny (DE/FR) zostawiał resztę cyfr jawną
 
 Wzorzec kontekstowy "IBAN:" (StructuralEngine:482) zakładał sztywne grupy po 4 cyfry —

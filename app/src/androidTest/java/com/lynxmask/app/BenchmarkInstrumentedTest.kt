@@ -235,16 +235,37 @@ class BenchmarkInstrumentedTest {
 
     private fun normalizeForCompare(s: String) = norm(s)
 
+    // BUG-BENCHMARK-DWIE-DEGRADACJE (Paweł 07.07): stary próg "różnica ≤1 znak" (Hamming dla
+    // równej długości, jedno usunięcie dla różnicy 1) łamie się gdy DŁUGA wartość (email, IBAN)
+    // ma DWIE NIEZALEŻNE degradacje OCR naraz (np. "wozniak"→"woziak" I "wp.pl"→"wppl" w tym
+    // samym adresie — każda z osobna byłaby tolerowana, razem dają odległość edycji 2, ponad
+    // stary próg ±1). Silnik prawdopodobnie zamaskował poprawnie (na zdegradowanym tekście),
+    // ale benchmark raportował BRAK_W_OCR — potwierdzone ręcznym testem na telefonie: wszystko
+    // faktycznie zamaskowane. Fix: prawdziwa odległość Levenshteina (obsługuje kombinacje
+    // podstawień/wstawień/usunięć, nie tylko jeden z tych przypadków osobno) + próg skalowany
+    // długością wartości — krótkie pola (PESEL, 11 zn.) zostają przy tolerancji 1 (ryzyko FP
+    // rośnie nieproporcjonalnie przy krótkich ciągach), długie pola (email, IBAN, 15+ zn.)
+    // dostają 2-3 — statystycznie więcej niezależnych pozycji = większa szansa na 2+ literówki
+    // naraz, bez utraty odróżnialności od zupełnie innej wartości (zweryfikowane Pythonem:
+    // dwa różne PESEL-e/email-e podobnej długości nadal poprawnie odrzucone, odległość rzędu
+    // 9-14, daleko ponad próg).
+    private fun levenshtein(a: String, b: String): Int {
+        val dp = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) dp[i][0] = i
+        for (j in 0..b.length) dp[0][j] = j
+        for (i in 1..a.length) for (j in 1..b.length) {
+            dp[i][j] = if (a[i - 1] == b[j - 1]) dp[i - 1][j - 1]
+                else 1 + minOf(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+        }
+        return dp[a.length][b.length]
+    }
+
     private fun fuzzyMatch(a: String, b: String): Boolean {
         if (a.length < 9 || b.length < 9) return false
-        if (Math.abs(a.length - b.length) > 1) return false
-        val longer  = if (a.length >= b.length) a else b
-        val shorter = if (a.length < b.length) a else b
-        if (longer.length == shorter.length)
-            return longer.zip(shorter).count { (x, y) -> x != y } <= 1
-        for (i in longer.indices)
-            if (longer.removeRange(i, i + 1) == shorter) return true
-        return false
+        val maxLen = maxOf(a.length, b.length)
+        val maxDist = if (maxLen >= 24) 3 else if (maxLen >= 15) 2 else 1
+        if (Math.abs(a.length - b.length) > maxDist) return false
+        return levenshtein(a, b) <= maxDist
     }
 
     private fun extractNumericRuns(text: String): List<String> =
