@@ -1897,6 +1897,28 @@ class PseudonymEngineTest {
         assertTokenExists(fr, TOKEN_NUMER)
     }
 
+    // BUG-PESEL-MOST-TOKEN (diagnoza Cursor 07.07, benchmark 500 dok., doc_00430): "ł" ogona
+    // wcześniej utworzonego tokenu ("NUMER_001") + nowa linia + prawdziwy PESEL na następnej
+    // linii — peselShapeRe [\s\-]? (obejmowało \n) przeskakiwało z ogona tokenu w PESEL,
+    // tworząc zanieczyszczone dopasowanie bez poprawnej sumy kontrolnej, przez co prawdziwy
+    // PESEL nigdy nie dostawał osobnej szansy.
+    @Test fun `PESEL na nowej linii po tokenie dowodu nie ginie w moscie newline`() {
+        val r = pseudonymize("Nr dowodu osobistego oST590114\n5508107 1597\nDANE KONTAKTOWE")
+        assertNotInOutput(r, "5508107")
+        assertNotInOutput(r, "1597")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NIP-WIELOLINIOWY (diagnoza Cursor 07.07, benchmark 500 dok., doc_00473): keyword
+    // "NIP (jeśli dotyczy):" i wartość na osobnych liniach OCR — luka Anchor A.5 wykluczała
+    // \n ORAZ litery D-class (o/l/i/s) które są zwykłymi literami w "jeśli"/"dotyczy".
+    @Test fun `NIP z etykieta i wartoscia na osobnych liniach oraz spacja w segmencie`() {
+        val r = pseudonymize("NIP (jesli dotyczy):\n667-87 1-88-83\nOswiadczam")
+        assertNotInOutput(r, "667-87")
+        assertNotInOutput(r, "88-83")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
     // =========================================================================
     // STRESS TEST SKLEJANIA (Paweł 07.07, po zamknięciu rundy FV): gęsty ciąg RÓŻNYCH
     // encji obok siebie, minimalna proza (same kotwice + wartości, bez opisowych zdań).

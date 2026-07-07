@@ -202,8 +202,15 @@ private fun isPeselChecksumValidTolerant(s: CharSequence): Boolean {
     return n == 11 && sum % 10 == 0
 }
 
+// BUG-PESEL-MOST-TOKEN-FIX (diagnoza Cursor 07.07, traceMode): [\s\-]? obejmował \n, więc
+// regex mógł "przeskoczyć" przez nową linię z ogona wcześniej utworzonego tokenu (np. cyfry
+// "001" z "NUMER_001") w prawdziwy PESEL na następnej linii, tworząc zanieczyszczone
+// dopasowanie ("001\n5508107") które nie przechodzi sumy kontrolnej — a findAll i tak
+// skonsumowało ten zakres, więc prawdziwy PESEL na tej linii nigdy nie dostawał osobnej
+// szansy. PESEL nigdy nie rozciąga się na dwie linie, więc [ \t\-]? (bez \n) jest bezpieczne
+// i ogólne — nie tylko łata ten jeden dokument.
 private val peselShapeRe = Regex(
-    """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$PESEL_D[\s\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])"""
+    """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])(?:$PESEL_D[ \t\-]?){9,13}(?![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ0-9OolIiSsBbZz])"""
 )
 
 // Ciąg 9-13 D-znaków (z opcjonalnym pojedynczym separatorem) → maskuje TYLKO gdy

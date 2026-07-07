@@ -70,18 +70,26 @@ złapana przed commitem). Testy dodane: degradacja ł→t, regresja "Nr strony"/
 
 ---
 
-## WAŻNE — hipoteza Pawła: AnchorEngine ma fundamentalny błąd (06.07 wieczór, zamknięcie sesji)
+## CZĘŚCIOWO ODPOWIEDZIANE 07.07 — hipoteza Pawła: AnchorEngine ma fundamentalny błąd (06.07)
 
-Paweł explicite, do zweryfikowania na start: **przy lvl0 (perfect scan) i lvl1 (light noise)
-kotwice powinny być NIEZNISZCZONE — skoro mimo to recall nie jest 100%, podejrzewa że
-AnchorEngine ma źle napisaną logikę**, nie że to tylko brakujące przypadki brzegowe. To
-mocniejsza teza niż punktowe bugi znalezione 06.07 (numer_faktury wyżej, PESEL/EMAIL już
-naprawione) — sugeruje żeby następna sesja/Cursor podeszła do audytu AnchorEngine.kt
-CAŁOŚCIOWO na lvl0/lvl1 (gdzie OCR nie powinien być wymówką), nie kolejny pojedynczy dokument
-na raz. Sprawdzić: ile z pozostałych misów na lvl0/lvl1 (patrz benchmark_bugs.txt najnowszy
-przebieg) faktycznie ma nietkniętą kotwicę w tekście, a mimo to nie jest złapane — jeśli
-więcej niż numer_faktury, to potwierdza tezę Pawła i uzasadnia większy audyt architektury,
-nie kolejny mikro-fix.
+Diagnoza Cursor (`traceMode`, benchmark 500 dok.) na dwóch konkretnych PESEL/NIP miss z lvl0/
+lvl3: **NIE jeden wspólny mechanizm** (to nie "wcześniejszy wzorzec kradnie prefiks + TOKEN_RE
+blokuje" jak przy numer_faktury) — PESEL i NIP padały z RÓŻNYCH przyczyn:
+- PESEL: `[\s\-]?` w `peselShapeRe` obejmowało `\n`, więc regex "mostkował" z ogona
+  wcześniejszego tokenu (np. "001" z "NUMER_001") w prawdziwy PESEL na następnej linii —
+  zanieczyszczone dopasowanie nie przechodziło sumy kontrolnej, prawdziwy PESEL nigdy nie
+  dostawał osobnej szansy (findAll już skonsumował ten zakres). Naprawione: `[\s\-]?` → `[ \t\-]?`.
+- NIP: luka w Anchor A.5 (`[^0-9OolIiSsBbZz\n]{0,15}`) wykluczała `\n` (keyword+wartość na
+  osobnych liniach) ORAZ litery D-class (o,l,i,s) które są zwykłymi literami w polskich
+  słowach etykiety ("jeśli", "dotyczy") — luka nie mogła nawet dopasować typowej frazy.
+  Naprawione: wykluczać tylko prawdziwe cyfry, dopuścić `\n`, limit 15→25.
+
+**Werdykt Cursora na hipotezę**: ⚠️ częściowo potwierdzona — nie jeden wspólny bug, ale
+systemowa NIESPÓJNOŚĆ tolerancji OCR (`[\s\-]?` vs `[ \t\-]?`) i layoutu (`\n` w lukach)
+między warstwami/regułami. Interakcja tokenów-placeholderów z późniejszymi regexami
+(most token→wartość) to osobna, nienazwana dotąd klasa bugów — do obserwacji czy się powtórzy.
+Oba fixy zweryfikowane Pythonem + testy w `PseudonymEngineTest.kt`. Czeka na benchmark 500
+jeszcze raz żeby potwierdzić że oba BUG_SILNIKA znikły.
 
 ---
 

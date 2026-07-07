@@ -153,9 +153,16 @@ internal fun applyAnchorEngine(
     // ("NIP 526-021-15-8100-001" → cały ciąg jako jeden token, "Warszawa" jawne).
     // Fix: ograniczenie do dokładnie 10 cyfropodobnych (prawdziwy kształt NIP) zamiast
     // dowolnego \S* — zatrzymuje się na 10. cyfrze niezależnie od tego co następuje.
+    // BUG-NIP-WIELOLINIOWY-FIX (diagnoza Cursor 07.07): luka [^0-9OolIiSsBbZz\n]{0,15}
+    // wykluczała \n (blokując "NIP (jeśli dotyczy):\nXXX-XX-XX-XX" — keyword i wartość na
+    // osobnych liniach OCR) ORAZ wykluczała litery D-class (o,l,i,s...) które są zwykłymi
+    // literami w prawdziwych polskich słowach ("jeśli", "dotyczy" same zawierają o/l/i/s) —
+    // luka nie mogła nawet dopasować typowego tekstu etykiety. Fix: wykluczaj tylko
+    // PRAWDZIWE cyfry (nie litery-przypominające-cyfry), dopuszczaj \n, podnieś limit do 25
+    // (typowa etykieta "(jeśli dotyczy): " ma ~18 znaków).
     // ------------------------------------------------------------------
     applyAll(
-        Regex("""(?i)N[IiLl1]P\b[^0-9OolIiSsBbZz\n]{0,15}$D(?:[\s\-]?$D){9}"""),
+        Regex("""(?i)N[IiLl1]P\b[^0-9]{0,25}$D(?:[\s\-]?$D){9}"""),
         TOKEN_NUMER
     )
 
