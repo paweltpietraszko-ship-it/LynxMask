@@ -8,6 +8,60 @@
 
 ---
 
+## PRIORYTET NASTĘPNEJ SESJI — `\b` (granica słowa) nie rozpoznaje polskich liter diakrytycznych
+
+Odkryte 07.07 wieczór podczas diagnozy KWOTA ("15 000,00 zł" niezamaskowane mimo poprawnego
+wzorca). **Potwierdzone Javą, nie domysł:** `\b` w Kotlinie/Javie domyślnie używa ASCII-only
+definicji `\w` — polskie litery (ą,ć,ę,ł,ń,ó,ś,ź,ż) NIE są "literami słowa" dla `\b`. Każdy
+wzorzec kończący się dosłownie na takiej literze tuż przed `\b` (np. `zł\b`) ma granicę słowa
+która NIGDY nie występuje → całe dopasowanie pęka, bez wyjątku, zawsze. To nie jest
+przypadkowa degradacja OCR — to bug obecny od zawsze (potwierdzone: identyczny kod na
+gałęzi `master`, git blame pokazuje że `\b` było tam od początku wzorca).
+
+**Znane potwierdzone miejsca (grep, nie wyczerpujące):**
+- `StructuralEngine.kt:512` i `:522` — sufiks/prefiks waluty KWOTA (`...zł|PLN|...)\b`)
+- `StructuralEngine.kt:676` — kwota słownie (`...zł|groszy|grosze|grosz)\b`)
+- `NameEngine.kt:349` (VERB_ENDINGS) — końcówki czasowników, wiele alternatyw kończy się na
+  ą/ę/ł (`ał|ała|...|ują|ę|ą|...)\b`) — używane do rozpoznawania granic zdań, wpływ na OSOBA
+  nieprzebadany
+- `NameEngine.kt:363` (TITLE_ADJECTIVE_ENDINGS) — ten sam kształt (`...ową)\b`)
+- `NameEngine.kt:401, 413, 457` — dopasowania nazwisk kończące się klasą `[a-ząćęłńóśźż...]+\b`
+  — jeśli nazwisko/wyraz akurat kończy się na diakrytyk, granica może nie zadziałać (nie
+  potwierdzone czy realnie odbija się na recall — OSOBA ma wysoki recall w benchmarku, więc
+  albo rzadko trafia, albo inne warstwy łapią mimo tego)
+
+**Dlaczego NIE naprawione dziś:** brak jednego miejsca w kodzie żeby to zamknąć raz — każdy
+regex budowany osobno przez `Regex("""...""")`, zero wspólnej fabryki. Zamiast łatać każde
+miejsce z osobna (dokładnie ten błąd co Paweł zabronił dziś przy IBAN) — potrzebna JEDNA
+współdzielona stała (np. `NOT_PL_WORD = """(?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9_])"""`, ten sam
+mechanizm co już istnieje w AnchorEngine A.9 dla dokładnie tego samego przypadku KWOTA —
+`(?![a-ząćęłńóśźż])` zamiast `\b`) i podmiana `\b` na nią we wszystkich potwierdzonych
+miejscach na raz, świadomie, nie punktowo.
+
+**Do zrobienia następnej sesji:**
+1. Pełny audyt (nie tylko grep na literał+\b — alternacje z `|` maskują to, trzeba przejrzeć
+   ręcznie każdą regułę z `\b` na końcu i sprawdzić czy JAKAKOLWIEK alternatywa/zakres znaków
+   może się skończyć na polskiej literze).
+2. Zdefiniować współdzieloną stałą (rozważyć wspólny plik/obiekt zamiast duplikować w każdym
+   z 3+ plików — NIE kopiować tej samej stałej do każdego pliku z osobna, to też byłoby
+   rozproszenie).
+3. Podmienić `\b` → stała, zweryfikować Javą PRZED Kotlinem (jak dziś).
+4. Rozważyć czy to nie uzasadnia jednego alternatywnego podejścia: `(?U)` (flaga
+   UNICODE_CHARACTER_CLASS) na poziomie kompilacji wzorca zamiast lookahead — sprawdzić czy
+   Kotlin/Java na to pozwala bez zmiany zachowania `\d`/`\w` gdzie indziej (ryzyko: `\d` pod
+   UNICODE_CHARACTER_CLASS może zacząć łapać cyfry spoza ASCII — do zweryfikowania Pythonem/
+   Javą przed wyborem tej drogi).
+
+**EMAIL — wątek NIEDOKOŃCZONY, osobny od powyższego:** `p1otr.wisn1ewski @ kance1aria .pl`
+(spacje wokół @ ORAZ spacja przed .pl jednocześnie, z testu `test_anchor_full.txt` linia 10)
+wyszło niezamaskowane na telefonie, ale wzorzec AnchorEngine A.2 przetestowany w izolacji
+(Javą) DOPASOWUJE się poprawnie do tego dokładnego tekstu. Mechanizm awarii nieznany —
+prawdopodobnie inna warstwa wcześniej w potoku koliduje (ten sam wzorzec co dzisiejsze bugi
+PESEL/IBAN: coś kradnie fragment zanim AnchorEngine dostanie szansę). Nie diagnozowane do
+końca — do zrobienia następnym razem z pełnym `test_anchor_full.txt` jako punktem startu.
+
+---
+
 ## ZAMKNIĘTE 07.07 — benchmark: fuzzyMatch ślepy na DWIE niezależne degradacje OCR naraz
 
 Email zgłoszony jako `BRAK_W_OCR` w benchmarku stałym — test ręczny na telefonie potwierdził
