@@ -1,0 +1,52 @@
+=============================================================
+TEST NUMER FAKTURY — 20 WARIANTÓW (CZYSTE + IMITACJA OCR)
+Cel: zamknięcie sesji 07.07 (FV/VAT jako kotwica w AnchorEngine).
+Każda linia to osobny przypadek — sprawdź w Podglądzie tekstu czy
+CAŁY numer faktury zniknął (token NUMER_xxx), bez jawnej resztki.
+Punkt 10 jest KONTROLNY — "23%" to stawka VAT, NIE numer faktury,
+MUSI zostać widoczne w tekście (nie powinno się zamaskować).
+=============================================================
+
+--- SEKCJA 1: ZAPISY CZYSTE (bez degradacji OCR) ---
+
+1) Faktura VAT nr FV/2026/07/0142
+
+2) FAKTURA VAT Nr FV-08217/08/2023
+
+3) Faktura nr 4704/12/2020
+
+4) nr faktury: FV-01079/04/2024
+
+5) Faktura VAT 26/06/006
+
+6) 260712/FV
+
+7) FV/2026/07/142
+
+8) Nr faktury FV202607/0142
+
+9) Faktura VAT FV20260700142
+
+10) Faktura VAT 23%
+
+--- SEKCJA 2: IMITACJA DEGRADACJI OCR ---
+
+11) FAKTURA VAT Nr FVI2025/12/1828
+
+12) FV20260700W012
+
+13) FAKTURA VAT FV KOR12.012.00012
+
+14) Faktura VAT FV 26/06/006/WAW
+
+15) FAKTURA VAT Nr FVI2O25/12/1828
+
+16) Faktura VAT NR F.V. 26I06I006
+
+17) FAKTURA VAT F-ra 26/06/006
+
+18) FAKTURA VAT  FV  26 / 06 / 006
+
+19) FAKTURA VAT Nr FV-O8217/O8/2O23
+
+20) Faktura VAT 26I06I006

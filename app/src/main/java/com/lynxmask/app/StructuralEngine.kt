@@ -438,15 +438,32 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Numer umowy z kontekstem "nr umowy" / "numer umowy"
     // Łapie: UMW/2022/966, U-00615/2024, KT/0001/2022
     // \n? dopuszcza newline między etykietą a numerem (OCR: label + enter + wartość)
-    TOKEN_NUMER to Regex("""(?i)\b(?:nr|numer)\.?[^\S\n]+umow[ya]\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,22}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07, uogólnione na 441/449): lookahead
+    // (?=[A-Za-z0-9/\-]*\d) — capture identyfikatora musi zawierać choć jedną cyfrę.
+    // Prawdziwy numer umowy/faktury/KW zawsze ma cyfrę; bez tego wymogu capture może złapać
+    // zwykłe słowo opisowe zamiast prawdziwego identyfikatora (patrz uzasadnienie przy 445).
+    TOKEN_NUMER to Regex("""(?i)\b(?:nr|numer)\.?[^\S\n]+umow[ya]\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{3,22}\b"""),
 
     // Numer faktury z kontekstem "nr faktury" / "numer faktury" / "faktura nr"
     // Łapie: FV-01079/04/2024, 4704/12/2020, FV/2022/12
-    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+faktur[ay]|faktura[^\S\n]+(?:nr|numer))\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{2,22}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07): trzecia alternatywa — "faktura"/
+    // "faktury" z do 5 dowolnymi słowami pośrednimi (np. "VAT", "VAT Nr", "uproszczona")
+    // zamiast wymogu DOKŁADNIE sąsiadującego "nr"/"numer". Bez tego "Faktura VAT 26/06/006"
+    // (bez słowa "nr" wcale) nie miał żadnego właściciela kontekstowego — łapał go dopiero
+    // wzorzec sygnatury sądowej (linia ~650) tylko częściowo, zostawiając ostatni segment jawny.
+    // Lookahead (?=[A-Za-z0-9/\-]*\d) — bez tego, gdy prawdziwy numer jest oddzielony
+    // nową linią ("FAKTURA VAT\nNr FV-08217/08/2023"), ALT3 z zerem słów pośrednich fałszywie
+    // łapała samo słowo "VAT" jako "identyfikator" (znalezione testem Pythona przed commitem).
+    // TEST 07.07 (Paweł): wyłączone celowo — sprawdzamy czy AnchorEngine A.12 (kotwica
+    // "Nr"/"FV"/"fv"/"f.v."/"f-ra" + sygnał wstecz "faktur|vat|uproszczon") sam wystarcza
+    // jako jedyne miejsce zakrywające NUMER faktury, bez duplikatu w StructuralEngine.
+    // Jeśli test wypadnie źle — odkomentować tę linię (patrz TODO.md).
+    // TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+faktur[ay]|faktura[^\S\n]+(?:nr|numer)|faktur[ay](?:[^\S\n]+\w+){0,5})\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{2,22}\b"""),
 
     // Numer KW (księgi wieczystej) z kontekstem
     // Łapie: PO1P/00424625/8, M/00787548/4
-    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+kw|ksi[eę]g[ia][^\S\n]+wieczyst\w{0,3}(?:[^\S\n]+(?:nr|numer))?)\b[^\S\n]*[:–\-]?\n?[^\S\n]*[A-Za-z0-9][A-Za-z0-9/\-]{3,20}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07, uogólnione): patrz uzasadnienie przy 441.
+    TOKEN_NUMER to Regex("""(?i)\b(?:(?:nr|numer)\.?[^\S\n]+kw|ksi[eę]g[ia][^\S\n]+wieczyst\w{0,3}(?:[^\S\n]+(?:nr|numer))?)\b[^\S\n]*[:–\-]?\n?[^\S\n]*(?=[A-Za-z0-9/\-]*\d)[A-Za-z0-9][A-Za-z0-9/\-]{3,20}\b"""),
 
     // ============================================================
     // Warstwa 2 — Regex strukturalne
@@ -570,8 +587,14 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // liczby z separatorami, kwota poprzedzona etykietą waluty wygląda identycznie jak
     // tablica rejestracyjna. Lookahead wyklucza znane skróty walutowe (ta sama lista co
     // TOKEN_KWOTA wyżej) — realne polskie tablice nie kolidują z tymi skrótami.
+    // BUG-NUMER-FAKTURA-TABLICA-FIX (diagnoza Cursor 07.07, traceMode): ten wzorzec jest
+    // wcześniej na liście niż wzorzec sygnatury/faktury z ukośnikami (linia ~605) i łapał
+    // prefiks "FVI2025" numeru faktury "FVI2025/12/1828", zanim szerszy wzorzec dostał
+    // szansę objąć całość — "/12/1828" zostawał jawny. Prawdziwe tablice rejestracyjne
+    // nie są kontynuowane ukośnikiem, więc (?!\s*/) bezpiecznie wyklucza ten przypadek
+    // i oddaje go wzorcowi z ukośnikami.
     TOKEN_NUMER to Regex(
-        """\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}\b"""
+        """\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}(?!\s*/)\b"""
     ),
 
     // --- VIN ---
@@ -587,7 +610,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""(?i)(?:BIC|SWIFT)[\s:]+([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b"""),
 
     // --- Numery działek geodezyjnych ---
-    TOKEN_NUMER to Regex("""(?i)(?:działki?|nr działki)\s+\d+(?:/\d+)?"""),
+    // BUG-DZIALKA-FIX (Paweł 07.07): WYŁĄCZONE — kolejny wariant tego samego problemu co
+    // numer_faktury (07.07, patrz feedback_anchor_vs_structural_faktura_experiment.md):
+    // "Numer dziatki" (pełne słowo "Numer", nie "Nr"; "ł"→"t" zamiast "l") ujawniło że
+    // enumerowanie kolejnych degradacji/synonimów w StructuralEngine nie kończy się.
+    // Migracja do AnchorEngine A.12 (docNumberRe: "Nr"/"Numer" + do 2 słów pośrednich +
+    // sygnał "dzia.k" jako wildcard na literze "ł") — Anchor jako jedyny właściciel,
+    // zgodnie z decyzją z eksperymentu faktury. Skomentowane, nie usunięte — łatwy powrót.
+    // TOKEN_NUMER to Regex(
+    //     """(?i)(?:dzia[łl]k\w*|nr[^\S\n]+dzia[łl]k\w*)\b(?:[^\S\n]+\w+){0,2}[^\S\n]*[:–\-]?[^\S\n]*""" +
+    //     """(?=[A-Za-z0-9./\-,]*\d)[A-Za-z0-9]+(?:[^\S\n]?[/\-.,][^\S\n]?[A-Za-z0-9]+)*"""
+    // ),
 
     // --- Identyfikatory alfanumeryczne (ID-UZ-77412, CERT-8841, ZW-PS-0336) ---
     // BUG-NR-SIEROTA-FIX (Cursor 01.07): trzeci opcjonalny segment — bez niego
@@ -641,7 +674,11 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // zostawiając "/2023" jawne — A.12 (AnchorEngine) nie mógł naprawić bo widział
     // już utworzony token w oknie matchOverlapsToken. "Nr" + numer faktury/umowy
     // obsługuje teraz A.12 w całości.
-    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}\b"""),
+    // BUG-NUMER-FAKTURA-VAT-FIX (diagnoza Cursor 07.07): (?!\s*/) — ten wzorzec (2 segmenty,
+    // np. "VAT 26/06") konsumował prefiks dłuższego identyfikatora ("Faktura VAT 26/06/006"),
+    // zostawiając "/006" jawne, zanim kontekstowy wzorzec faktury (linia ~445) mógł objąć
+    // całość. Ten sam mechanizm bugu co tablica rejestracyjna (linia ~579).
+    TOKEN_NUMER to Regex("""\b(?:[IVXLCDM]+\s+)?(?![Nn]r\b)[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}(?!\s*/)\b"""),
 
     // --- CATCHALL: ciągi cyfr 8+ (przepisany z negatywnym lookahead) ---
     // TODO-7 (sesja 10): Daty NIE mają osobnej jawnej reguły ochrony — są chronione

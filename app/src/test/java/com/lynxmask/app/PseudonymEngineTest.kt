@@ -1749,6 +1749,199 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "8678")
     }
 
+    // BUG-NUMER-FAKTURA-TABLICA (diagnoza Cursor 07.07, traceMode): wzorzec tablicy
+    // rejestracyjnej (StructuralEngine.kt:573, [A-Z]{2,3}\s?\d{4,5}[A-Z]{0,2}) jest
+    // wcześniej na liście niż wzorzec sygnatury slash (linia 605) i pasuje do prefiksu
+    // "FVI2025" (3 litery + 4 cyfry) w numerze faktury zanim szerszy wzorzec dostanie
+    // szansę objąć całość — "/12/1828" zostawał jawny (Guard łapał jako SYGNATURA,
+    // ale nie maskował). Test na jednej linii bez "\n" i ze słowem "VAT" wtrąconym
+    // między "FAKTURA" a "Nr" (kontekstowy wzorzec 445 tego nie łapie).
+    @Test fun `numer faktury bez myslnika prefiks litery-cyfry nie zostawia sieroty slash`() {
+        val r = pseudonymize("FAKTURA VAT Nr FVI2025/12/1828")
+        assertNotInOutput(r, "/12/1828")
+        assertNotInOutput(r, "FVI2025")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-NUMER-FAKTURA-VAT (diagnoza Cursor 07.07, test ręczny Pawła): numer faktury czysto
+    // cyfrowy, bez słowa "nr"/"numer" wcale — tylko "Faktura" + słowo pośrednie "VAT" +
+    // identyfikator. Wzorzec kontekstowy 445 wymagał wcześniej DOKŁADNIE sąsiadującego
+    // "nr"/"numer" po "faktura" — "VAT" wtrącone między nimi łamało dopasowanie całkowicie,
+    // a wzorzec sygnatury sądowej (650) łapał tylko "VAT 26/06", zostawiając "/006" jawne.
+    @Test fun `numer faktury cyfrowy 3 segmenty po Faktura VAT bez slowa nr`() {
+        val r = pseudonymize("Faktura VAT 26/06/006")
+        assertNotInOutput(r, "/006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // TEST 07.07 (Paweł): eksperyment architektoniczny — wzorzec 445 (numer faktury) w
+    // StructuralEngine.kt wyłączony celowo (skomentowany). AnchorEngine A.12 (docNumberRe)
+    // ma teraz "FV"/"Fv"/"fv"/"F.V."/"f-ra"/"VAT" jako kotwice bezpośrednie (obok "Nr"),
+    // żeby sprawdzić czy Anchor sam wystarcza jako jedyne miejsce zakrywające NUMER faktury.
+    @Test fun `numer faktury skrot FV jako kotwica bez slowa faktura obok liczby`() {
+        val r = pseudonymize("FAKTURA VAT FV 26/06/006")
+        assertNotInOutput(r, "/006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury z kropkami jako separatorem lapany przez Anchor FV`() {
+        val r = pseudonymize("FAKTURA VAT FV KOR12.012.00012")
+        assertNotInOutput(r, "00012")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury z doklejonym sufiksem miasta nie zostawia sieroty`() {
+        val r = pseudonymize("FAKTURA VAT FV 26/06/006/WAW")
+        assertNotInOutput(r, "/WAW")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // Wykluczenie: stawka VAT (kształt cyfry+%) to NIGDY numer dokumentu — regresja FP.
+    @Test fun `stawka VAT z procentem nie jest maskowana jako numer faktury`() {
+        val r = pseudonymize("Faktura VAT 23%")
+        assertFalse("stawka VAT nie powinna zniknąć z wyniku", r.pseudonymizedText.isBlank())
+        assertTrue("23% powinno zostać widoczne", r.pseudonymizedText.contains("23%"))
+    }
+
+    @Test fun `stawka VAT z dwukropkiem i przecinkiem nie jest maskowana`() {
+        val r = pseudonymize("Faktura VAT: 8%, netto 100 zl")
+        assertTrue("8% powinno zostać widoczne", r.pseudonymizedText.contains("8%"))
+    }
+
+    @Test fun `kwota VAT bez cyfry po slowie nie tworzy falszywego tokenu`() {
+        val r = pseudonymize("Kwota VAT wynosi 230,00 zl")
+        assertFalse("'wynosi' nie powinno stać się fałszywym NUMEREM",
+            r.tokenMap.values.any { it == "wynosi" })
+    }
+
+    // A.12b (Paweł 07.07): lustro A.12 — kotwica "FV" NA KOŃCU numeru, nie na początku.
+    @Test fun `numer faktury z kotwica FV na koncu numeru`() {
+        val r = pseudonymize("Faktura VAT 260712/FV")
+        assertNotInOutput(r, "260712/FV")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // A.12c (Paweł 07.07): "FV" samowystarczalna kotwica, BEZ sygnału wstecz — "FV" samo
+    // w sobie jest wystarczająco specyficzne (ten sam precedens co stary wzorzec 494).
+    // Kluczowy przypadek: litera w środku numeru ("W") niewidoczna dla 494 (czyste cyfry)
+    // i dla A.12 (brak "Faktura"/"VAT" w pobliżu) — zero zewnętrznego kontekstu w tym teście.
+    @Test fun `numer faktury FV z litera w srodku bez zadnego kontekstu`() {
+        val r = pseudonymize("FV20260700W012")
+        assertNotInOutput(r, "FV20260700W012")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `numer faktury FV na koncu bez kontekstu tez dziala samowystarczalnie`() {
+        val r = pseudonymize("260712/FV")
+        assertNotInOutput(r, "260712/FV")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-FAKTURA-SPACJE-SEPARATOR (Paweł 07.07, test_faktura_20_warianty punkt 18):
+    // OCR czasem wstawia spację wokół ukośnika/myślnika ("26 / 06 / 006" zamiast
+    // "26/06/006") — capture oparty o goły \S+ urywał się na pierwszej spacji.
+    @Test fun `numer faktury ze spacjami wokol ukosnikow nie zostawia sieroty`() {
+        val r = pseudonymize("FAKTURA VAT  FV  26 / 06 / 006")
+        assertNotInOutput(r, "/ 06")
+        assertNotInOutput(r, "/ 006")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-FIX (Paweł 07.07, benchmark staly doc_00027): OCR zdegradowało "działki"
+    // do "dzialki" (ł→l) — wzorzec wymagał litery dosłownej. Plus numer z kropkami+ukośnikiem.
+    // Migrowane do AnchorEngine A.12 (StructuralEngine 613 wyłączone) — patrz testy niżej.
+    @Test fun `numer dzialki z degradacja l zamiast l i kropkami jako separator`() {
+        val r = pseudonymize("Nr dzialki ewidencyjnej: 775900.0011.3706/6")
+        assertNotInOutput(r, "775900")
+        assertNotInOutput(r, "3706/6")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-FIX, wariant z fresh doc_00056: poprawne "ł", przecinek zamiast kropki.
+    @Test fun `numer dzialki z prawidlowa litera l i przecinkiem jako separator`() {
+        val r = pseudonymize("Nr działki ewidencyjnej: 206487,0027.8889")
+        assertNotInOutput(r, "206487")
+        assertNotInOutput(r, "0027.8889")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-DZIALKA-ANCHOR (Paweł 07.07): "Numer" (pełne słowo, nie "Nr") + "ł"→"t" (inna
+    // degradacja niż "l" wyżej) — kolejny wariant tego samego problemu, stąd migracja do
+    // AnchorEngine zamiast dalszego enumerowania w StructuralEngine.
+    @Test fun `numer dzialki pelne slowo Numer i degradacja l na t`() {
+        val r = pseudonymize("Faktura VAT 23%\nNumer dziatki 7759000.0011.3706/6")
+        assertNotInOutput(r, "7759000")
+        assertNotInOutput(r, "3706/6")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // Regresja FP — "Nr"/"Numer" generyczne odniesienia (strona, punkt/rozdział) NIE mogą
+    // być maskowane tylko dlatego że tolerujemy teraz słowa pośrednie po Nr/Numer.
+    @Test fun `Nr strony i numer punktu nie sa maskowane jako NUMER dokumentu`() {
+        val r1 = pseudonymize("Patrz Nr strony 5 w załączniku.")
+        assertFalse(r1.tokenMap.values.any { it.contains("strony") })
+        val r2 = pseudonymize("Zgodnie z art. 104 ustawy, punkt nr 5.2 rozdziału stanowi że...")
+        assertFalse(r2.tokenMap.values.any { it.contains("rozdziału") || it == "5.2" })
+    }
+
+    // =========================================================================
+    // STRESS TEST SKLEJANIA (Paweł 07.07, po zamknięciu rundy FV): gęsty ciąg RÓŻNYCH
+    // encji obok siebie, minimalna proza (same kotwice + wartości, bez opisowych zdań).
+    // Cel: złapać "sklejanie" tokenów (token wbudowany w token, brak separatora między
+    // dwoma sąsiednimi tokenami, kradzież znaku przez sąsiedni wzorzec) — patrz
+    // BUG-ADRES-OGONY (30.06) i BUG-KWOTA-KRADNIE-CYFRE (05.07) w pamięci projektu.
+    // Wszystkie wartości ŚWIEŻE — żadna nie występuje w innym teście w tym pliku (celowo,
+    // żeby nie polegać na już oswojonych przez inne wzorce przypadkach).
+    // =========================================================================
+    @Test fun `stres gestych roznych encji obok siebie bez sklejania tokenow`() {
+        // Mini-słownik z domyślnego @Before (Jan/Anna/Piotr/Maria/Adam/Katarzyna +
+        // Kowalski/Nowak/Malinowski/Wiśniewski/Szymański) nie ma świeżych wartości użytych
+        // tutaj celowo (żeby nie powtarzać encji z innych testów) — ładujemy PEŁNY słownik
+        // z classpath (ten sam co produkcyjny asset), tak jak realny telefon go widzi.
+        // @After i tak woła resetForTesting() — nie zostawia tego stanu innym testom.
+        LookupTables.resetForTesting()
+        LookupTables.initializeFromClasspath()
+        val text = "Zbigniew Baranowski, PESEL 90051212387, NIP 987-654-32-10, " +
+            "tel. 511222333, PL91109010140000071219812875, " +
+            "z.baranowski@poczta-firmowa.pl, ul. Świętokrzyska 22/5, 00-050 Warszawa, " +
+            "8765,43 zł, FV20261234X567, sygn. akt III Co 991/2026, ur. 12.05.1990, " +
+            "Zakład Usługowy Baranowski Sp. z o.o."
+        val r = pseudonymize(text)
+
+        // Żadna surowa wartość nie może przeciekać
+        for (raw in listOf(
+            "90051212387", "987-654-32-10", "511222333",
+            "PL91109010140000071219812875", "z.baranowski@poczta-firmowa.pl",
+            "Świętokrzyska 22/5", "00-050 Warszawa", "8765,43", "FV20261234X567",
+            "III Co 991/2026", "12.05.1990"
+        )) {
+            assertNotInOutput(r, raw)
+        }
+
+        // Wszystkie typy encji muszą się pojawić
+        assertTokenExists(r, TOKEN_OSOBA)
+        assertTokenExists(r, TOKEN_NUMER)
+        assertTokenExists(r, TOKEN_EMAIL)
+        assertTokenExists(r, TOKEN_ADRES)
+        assertTokenExists(r, TOKEN_KWOTA)
+        assertTokenExists(r, TOKEN_FIRMA)
+
+        // Rozsądna liczba odrębnych tokenów — jeśli dwie encje skleiłyby się w jeden
+        // token, ta liczba byłaby podejrzanie niska.
+        assertTrue("Oczekiwano co najmniej 8 odrębnych tokenów, jest ${r.tokenMap.size}: ${r.tokenMap}",
+            r.tokenMap.size >= 8)
+
+        // SKLEJANIE: każde wystąpienie tokenu (PREFIX_NNN) musi mieć granicę słowa po
+        // obu stronach. Jeśli liczba dopasowań z \b różni się od liczby bez \b — token
+        // jest wtopiony w sąsiedni znak (litera/cyfra), czyli sklejony.
+        val withBoundary = Regex("""\b[A-ZŁŚŹĆŃÓĄĘŻ]+_\d{3}\b""").findAll(r.pseudonymizedText).count()
+        val withoutBoundary = Regex("""[A-ZŁŚŹĆŃÓĄĘŻ]+_\d{3}""").findAll(r.pseudonymizedText).count()
+        assertEquals(
+            "Token sklejony z sąsiednim znakiem (brak granicy słowa) w: ${r.pseudonymizedText}",
+            withoutBoundary, withBoundary
+        )
+    }
+
     @Test fun `sygnatura sad I Co bez regresu`() {
         val r = pseudonymize("sygn. akt I Co 3704/2018")
         assertTokenExists(r, TOKEN_NUMER)

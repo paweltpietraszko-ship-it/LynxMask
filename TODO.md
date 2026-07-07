@@ -8,36 +8,35 @@
 
 ---
 
-## ŚREDNI — NUMER_FAKTURY: maskowanie urywa się w środku identyfikatora z ukośnikami (06.07, POTWIERDZONY realny bug — DLA CURSORA)
+## NISKIE — PseudonymEngineTest.kt to plik molochów (~2000 linii), rozbić na osobną sesję (07.07)
 
-`doc_00010` (staly, lvl0 perfect scan) — ground truth `numer_faktury=FV/2025/12/1828`. OCR
-(czyste, koniec dokumentu): `"...Wystawił/a: Odebrała: FAKTURA VAT Nr FVI2025/12/1828"`.
+Przekracza próg z CLAUDE.md ("powyżej ~600 linii zaproponuj wydzielenie") kilkukrotnie —
+Paweł świadomie odłożył rozbicie na inną sesję zamiast robić to przy okazji dzisiejszej pracy.
 
-**Test ręczny Pawła na telefonie (06.07 wieczór) — dokładny obraz błędu:**
-NUMER maskuje tylko fragment do PIERWSZEGO ukośnika. Sam ten pierwszy ukośnik zostaje jawny —
-ani NUMER, ani Guard go nie obejmują (nie zamaskowany, nie oflagowany, nikt). Reszta
-(`12/1828`) zostaje jawna i dopiero Guard oflagowuje ją żółtym (ostatnia deska ratunku
-zadziałała częściowo — wykrycie bez maskowania).
+**Propozycja podziału wg encji (osobna odpowiedzialność):**
+- `NumerFakturaTest.kt` — testy faktury/FV/VAT z sesji 07.07 (~15 testów)
+- `NumerDzialkaTest.kt` — testy działki z sesji 07.07
+- Reszta zostaje w `PseudonymEngineTest.kt` (ogólny pipeline: PESEL/NIP/sygnatura/email/umowa/KW/stary bagaż)
 
-Automatyczny benchmark (ten sam dokument) wcześniej pokazywał ZERO tokenu w ogóle — czyli
-zachowanie mogło się różnić między przebiegami/kompilacjami, albo benchmark i ręczny test
-widziały różny stan. Nie zakładać które jest "prawdziwsze" — zweryfikować oba na tej samej,
-świeżo zainstalowanej wersji.
+Nie robić przy okazji innego zadania — świadoma, osobna sesja poświęcona tylko temu.
 
-**Kandydaci regexów do sprawdzenia** (StructuralEngine.kt, różne dozwolone liczby segmentów
-ukośnikowych — możliwe że kolejność/pierwszeństwo między nimi jest źródłem problemu):
-- linia 597: `[A-Z]{2,6}[-:/][A-Z0-9]{2,10}(?:[-:/][A-Z0-9]{2,10}){0,2}` (identyfikatory
-  alfanumeryczne, max 3 segmenty po literach)
-- linia 605-607: wzorzec sygnatury `[A-Z0-9]{1,8}(?:/[A-Z0-9]{1,8}){2,}` (min. 3 segmenty,
-  bez górnego limitu — teoretycznie powinien objąć całość)
-- linia 644: `[A-Z][a-zA-Z]{0,2}\s+\d{1,6}/\d{2,4}` (sygnatura z odstępem, inny kształt)
-- linia 445: wzorzec z kontekstem "nr faktury"/"faktura nr" — wymaga DOKŁADNIE tej sekwencji
-  słów; nasz tekst ma "FAKTURA VAT Nr" (wtrącone "VAT" łamie dopasowanie obu alternatyw)
+---
 
-**To zadanie DLA CURSORA** — interakcja wielu wzorców NUMER w jednej liście, kolejność
-pierwszeństwa, plus rozbieżność benchmark/ręczny test. Nie łatać punktowo pojedynczego
-regexu bez zrozumienia dlaczego inne, teoretycznie szersze wzorce (linia 605) też nie łapią
-całości.
+## ZAMKNIĘTE 07.07 — NUMER_FAKTURY / architektura Anchor vs Structural
+
+Cała diagnoza + eksperyment (wyłączenie StructuralEngine 445, konsolidacja w AnchorEngine
+A.12/A.12b/A.12c: FV/VAT/Nr jako kotwice, zero walidacji kształtu) — zapisane w pamięci
+`feedback_anchor_vs_structural_faktura_experiment.md`. Testy zielone, potwierdzone telefonem
+(20 wariantów czystych + degradacja OCR, `testy/test_faktura_20_warianty_07_07.txt`).
+
+**Rozszerzone 07.07 (benchmark) na numer_dzialki — ten sam wzorzec, druga migracja.**
+Benchmark ujawnił 2 warianty: "Nr dzialki" (ł→l) i "Numer dziatki" (pełne słowo + ł→t) —
+kolejna enumeracja degradacji/synonimów w StructuralEngine 613. Zmigrowane do AnchorEngine
+A.12: "Nr"/"Numer" + do 2 słów pośrednich + sygnał "dzia.k" (wildcard na "ł", ta sama technika
+co pe[s5][e3][lL1]/N[IL1]P) jako self-signal wewnątrz dopasowania. StructuralEngine 613
+wyłączone (skomentowane). Uwaga: tolerancja słów pośrednich TYLKO dla Nr/Numer, nie dla VAT
+(inaczej "Kwota VAT wynosi..." wraca jako fałszywy alarm — zweryfikowane Pythonem, regresja
+złapana przed commitem). Testy dodane: degradacja ł→t, regresja "Nr strony"/"punkt nr 5.2".
 
 ---
 
@@ -68,6 +67,28 @@ różnych skrótów+liczby bez separatorów w jednej linii — rzadkie w prawdzi
 Ogólny fix trudny (jak odróżnić "PIN 1234 PLN" od legalnego "kwota: 1234 PLN" samym regexem bez
 listy słów kontekstowych). Test na przyszłość: "PIN 1234 PLN 1234, PLN 1234" → oczekiwane
 3 osobne encje/tokeny, żadna nie osierocona.
+
+---
+
+## NISKIE — imię "Zdzisław" brak w słowniku 1460 imion (07.07)
+
+Odkryte przy budowie testu sklejania (`test_sklejanie_encji_07_07.txt`): "Zdzisław" faktycznie
+nie ma w produkcyjnym `assets/names_inflected.json` (potwierdzone grepem). Nieznana skala (ile
+innych rzadszych imion brakuje) — do sprawdzenia jeśli kiedyś wróci temat pokrycia słownika.
+Test zamieniony na "Zbigniew" (jest w słowniku), nie blokuje niczego.
+
+**Ważniejsze odkrycie przy tej samej okazji:** zamiana na "Zbigniew" SAMA W SOBIE nie
+wystarczyła — `LookupTables.initializeForTesting()` (wołane w `@Before` klasy
+`PseudonymEngineTest`) wstrzykuje celowo MINIMALNY, zaszyty na sztywno słownik testowy (tylko
+Jan/Anna/Piotr/Maria/Adam/Katarzyna + Kowalski/Nowak/Malinowski/Wiśniewski/Szymański) —
+kompletnie inny niż pełny produkcyjny (1460 imion/1000 nazwisk), którego telefon używa. Stąd
+rozjazd: test ręczny na telefonie widział "Zbigniew Baranowski" poprawnie, JVM unit test nie
+widział ŻADNEGO nazwiska spoza tej piątki, niezależnie które wybiorę. Fix: test wywołuje
+`LookupTables.resetForTesting()` + `LookupTables.initializeFromClasspath()` (ładuje pełny
+słownik z `src/test/resources/`, identyczny co produkcyjny asset) na początku, `@After`
+klasy i tak sprząta przez `resetForTesting()`. **Zapamiętać na przyszłość:** każdy test
+używający NIEPOWTÓRZONYCH (świeżych) imion/nazwisk musi jawnie wołać `initializeFromClasspath()`
+zamiast polegać na domyślnym `initializeForTesting()` z `@Before`.
 
 ---
 

@@ -378,21 +378,55 @@ internal fun applyAnchorEngine(
     }
 
     // ------------------------------------------------------------------
-    // A.12 NUMER dokumentu (faktura/umowa) — kotwica: "Nr"/"nr" + sygnał dokumentu wstecz
+    // A.12 NUMER dokumentu (faktura/umowa) — kotwica: "Nr"/"nr"/"VAT" + sygnał dokumentu wstecz
     // StructuralEngine wymaga dokładnej frazy "nr faktury"/"numer umowy" (fraza-kotwica).
     // Realne dokumenty piszą tytuł osobno od numeru: "FAKTURA VAT" \n "Nr FV-08217/08/2023"
     // albo "UMOWA O ŚWIADCZENIE USŁUG" \n "nr U-00284/2023" — słowo "faktury"/"umowy"
     // nigdy nie styka się z samym numerem, więc fraza-kotwica nigdy nie trafia (BUG_SILNIKA).
     // Tu: widzę "Nr X" → sprawdzam WSTECZ (60 zn.) czy jest słowo-sygnał dokumentu → maskuję.
-    // Nie waliduje formatu numeru — kształt dokumentu bywa dowolny (cyfry/litery/ukośniki).
+    // Nie waliduje formatu numeru — kształt dokumentu bywa dowolny (cyfry/litery/ukośniki/kropki).
+    // "VAT" jako kotwica bezpośrednia (nie tylko sygnał wstecz) — to PODSTAWOWY, nie brzegowy
+    // zapis numeru faktury w Polsce ("Faktura VAT 26/06/006", bez "Nr"/"FV" między VAT a liczbą).
+    // Wykluczenie (?!...%) — stawka VAT (kształt: 1-3 cyfry + opcjonalny przecinek + "%") to
+    // NIGDY numer dokumentu, zawsze procent — ogólny kształt, nie wyliczanie konkretnych stawek
+    // (23/8/0% dziś, inna jutro). Wymóg cyfry w capture (?=\S*\d) chroni przed złapaniem
+    // zwykłego słowa ("Kwota VAT wynosi..." → "wynosi" bez cyfry → nie matchuje).
+    // "Nr"/"Numer"/"VAT" wymagają sygnału wstecz — to generyczne słowa, spotykane też
+    // poza fakturami ("Nr strony 5", "punkt nr 5.2" — NIE mają być maskowane).
     // ------------------------------------------------------------------
-    val docNumberRe = Regex("""(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ])[Nn]r\.?[^\S\n]*:?[^\S\n]*\S+""")
-    val docSignalRe = Regex("""(?i)faktur|umow|zlecen|kontrahent|\bvat\b|uproszczon""")
+    // Capture ogólny: segment alfanumeryczny + powtórzenia (separator z opcjonalną
+    // spacją wokół + kolejny segment) — zamiast gołego \S+, które urywa się na
+    // PIERWSZEJ napotkanej spacji. OCR czasem wstawia spację wokół ukośnika/myślnika
+    // ("26 / 06 / 006" zamiast "26/06/006") — bez tego capture kończył się na "26",
+    // zostawiając "/ 06 / 006" jawne (Paweł 07.07, test_faktura_20_warianty, punkt 18).
+    // BUG-DZIALKA-ANCHOR (Paweł 07.07): "Numer dziatki 7759000.0011.3706/6" — "Numer"
+    // (pełne słowo, nie tylko "Nr") + do 2 słów pośrednich ("działki"/"dziatki ewidencyjnej")
+    // przed właściwym numerem. Tolerancja słów pośrednich TYLKO dla Nr/Numer — VAT zostaje
+    // przy wąskiej, bezpośredniej regule (dodanie tej samej tolerancji do VAT otwierało
+    // z powrotem "Kwota VAT wynosi 230,00 zł" — "wynosi" łykane jako słowo pośrednie,
+    // "230,00" wyglądające jak identyfikator po dodaniu przecinka do separatorów).
+    val docNumberRe = Regex(
+        """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ])""" +
+        """(?:(?:[Nn]r|[Nn]umer)\.?(?:[^\S\n]+[a-ząćęłńóśźż]+){0,2}""" +
+        """|(?i:vat(?!\s*:?\s*\d{1,3}(?:[.,]\d+)?\s*%)))""" +
+        """[^\S\n]*:?[^\S\n]*(?=\S*\d)[A-Za-z0-9]+(?:[^\S\n]?[/\-.,][^\S\n]?[A-Za-z0-9]+)*"""
+    )
+    // "dzia.k" — wildcard na pozycji "ł" (OCR degraduje do "l"/"t"/inne), ta sama technika
+    // co reszta pliku (pe[s5][e3][lL1], N[IL1]P) — rozpoznaje kontekst działki/nieruchomości
+    // obok faktur/umów jako ważny sygnał dokumentu.
+    val docSignalRe = Regex("""(?i)faktur|umow|zlecen|kontrahent|\bvat\b|uproszczon|dzia.k""")
     t = docNumberRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
         if (matchOverlapsToken(acc, m.range)) acc
         else {
             val lookback = acc.substring(maxOf(0, m.range.first - 60), m.range.first)
-            if (!docSignalRe.containsMatchIn(lookback)) acc
+            // Sygnał PRZED dopasowaniem ("Faktura VAT\nNr X"), ALBO — tylko dla gałęzi
+            // Nr/Numer — WEWNĄTRZ słowa pośredniego ("Nr działki..." → "działki" samo
+            // się kwalifikuje). Gałąź VAT celowo wyłączona z tego drugiego sprawdzenia:
+            // "vat" zawsze pasowałby do własnego m.value (trigger = "vat"), co unieważniłoby
+            // wymóg sygnału wstecz i przywróciłoby "Kwota VAT wynosi..." jako fałszywy alarm.
+            val selfSignal = !m.value.trim().startsWith("vat", ignoreCase = true) &&
+                docSignalRe.containsMatchIn(m.value)
+            if (!docSignalRe.containsMatchIn(lookback) && !selfSignal) acc
             else {
                 val token = assignToken(m.value.trim(), TOKEN_NUMER)
                 val before = acc.getOrElse(m.range.first - 1) { ' ' }
@@ -401,6 +435,48 @@ internal fun applyAnchorEngine(
                 val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
                 acc.replaceRange(m.range, pre + token + suf)
             }
+        }
+    }
+
+    // A.12c — FV/Fv/fv/F.V./f-ra jako kotwica SAMOWYSTARCZALNA, bez sygnału wstecz.
+    // Paweł 07.07: "FV" to zamknięty, specyficzny polski skrót "Faktura VAT" — w
+    // odróżnieniu od "Nr"/"VAT" (generyczne słowa, potrzebują potwierdzenia kontekstem),
+    // "FV" samo w sobie już jest wystarczającym sygnałem (dokładnie ten sam precedens co
+    // stary wzorzec strukturalny 494 `[A-Z]{2}\d{8,12}`, też bezkontekstowy).
+    // Różnica od 494: dopuszcza DOWOLNĄ mieszankę liter i cyfr po "FV", nie tylko czyste
+    // cyfry — "FV20260700W012" (litera "W" w środku numeru) była niewidoczna dla 494
+    // (wymaga czystego ciągu cyfr) i dla A.12 (brak "Faktura"/"VAT" w promieniu 60 zn.).
+    // Działa w obie strony: "FV" jako prefiks (glued lub ze spacją) i jako sufiks na
+    // końcu numeru ("260712/FV", lustro — Paweł 07.07).
+    // ------------------------------------------------------------------
+    val fvPrefixRe = Regex(
+        """(?<![a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ])(?i:fv|f\.v\.|f-ra)""" +
+        """\.?[^\S\n]*:?[^\S\n]*(?=[A-Za-z0-9]*\d)[A-Za-z0-9]+(?:[^\S\n]?[/\-.][^\S\n]?[A-Za-z0-9]+)*"""
+    )
+    t = fvPrefixRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (matchOverlapsToken(acc, m.range)) acc
+        else {
+            val token = assignToken(m.value.trim(), TOKEN_NUMER)
+            val before = acc.getOrElse(m.range.first - 1) { ' ' }
+            val after  = acc.getOrElse(m.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+            acc.replaceRange(m.range, pre + token + suf)
+        }
+    }
+    val fvTrailRe = Regex(
+        """(?<!\S)(?=[A-Za-z0-9]*\d)[A-Za-z0-9]+(?:[^\S\n]?[/\-.][^\S\n]?[A-Za-z0-9]+)*""" +
+        """[^\S\n]?[-/.][^\S\n]?(?i:fv|f\.v\.|f-ra)\b"""
+    )
+    t = fvTrailRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
+        if (matchOverlapsToken(acc, m.range)) acc
+        else {
+            val token = assignToken(m.value.trim(), TOKEN_NUMER)
+            val before = acc.getOrElse(m.range.first - 1) { ' ' }
+            val after  = acc.getOrElse(m.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
+            acc.replaceRange(m.range, pre + token + suf)
         }
     }
 
