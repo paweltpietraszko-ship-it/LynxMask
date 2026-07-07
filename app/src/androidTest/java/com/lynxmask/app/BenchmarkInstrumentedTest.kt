@@ -180,6 +180,12 @@ class BenchmarkInstrumentedTest {
                 error          = null,
                 trace          = engineResult.trace,
                 guardRedHits   = engineResult.guardHits.count { it.level == "RED" },
+                // BUG-BENCHMARK-BRAK-KONTEKSTU (Paweł 07.07): dotad tylko LICZBA trafien Guard
+                // RED trafiala do raportu — zero szczegolow ktory dokument/jaki fragment, wiec
+                // diagnoza wymagala recznego adb pull. Zapisujemy label+dopasowany tekst.
+                guardRedDetails = engineResult.guardHits
+                    .filter { it.level == "RED" }
+                    .map { "${it.label}=${it.matchedText.take(40)}" },
             )
         } catch (e: Exception) {
             analyze(gt, emptyList(), ocrText = "", ocrAccepted = false, ocrConf = 0f,
@@ -331,6 +337,7 @@ class BenchmarkInstrumentedTest {
         error: String?,
         trace: List<DetectionTrace> = emptyList(),
         guardRedHits: Int = 0,
+        guardRedDetails: List<String> = emptyList(),
     ): DocResult {
         val degLevel = gt.optInt("degradation_level", -1)
         val section: String = when {
@@ -440,6 +447,7 @@ class BenchmarkInstrumentedTest {
             fpTokens       = fpList,
             missLabels     = missLabels,
             guardRedHits   = guardRedHits,
+            guardRedDetails = guardRedDetails,
             summary        = Summary(total, detected, criticalMissed, fp, recall, precision, f1,
                                      typeMismatch, bugSilnika, ocrZniek, brakWOcr),
             trace          = trace,
@@ -677,9 +685,34 @@ class BenchmarkInstrumentedTest {
         if (ocrZniekCases.isNotEmpty()) {
             bb.appendLine("[OCR_ZNIEKSZTAŁCONY] Encje krytyczne — BLOCKER RELEASE: ${ocrZniekCases.size}")
             bb.appendLine()
+            // BUG-BENCHMARK-BRAK-KONTEKSTU (Paweł 07.07): ta sekcja pokazywała tylko etykietę
+            // i wartość GT, zero fragmentu OCR/tokenów — diagnoza wymagała ręcznego adb pull
+            // za każdym razem. Dodano ten sam kontekst co [BUG_SILNIKA] wyżej.
             ocrZniekCases.forEach { (r, e) ->
                 bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}  ${e.key}=${e.value.take(40)}")
                 bb.appendLine("    → encja nie jest exact w OCR, ale fuzzy match — bug silnika/normalizera")
+                val idx = r.normalizedText.indexOf(e.value.take(4), ignoreCase = true)
+                if (idx >= 0) {
+                    val from = maxOf(0, idx - 10)
+                    val to   = minOf(r.normalizedText.length, idx + e.value.length + 15)
+                    bb.appendLine("    OCR: «${r.normalizedText.substring(from, to).replace("\n", "↵")}»")
+                }
+                if (r.tokens.isNotEmpty()) {
+                    bb.appendLine("    Tokeny w dokumencie: " +
+                        r.tokens.joinToString(", ") { "${it.type}=«${it.original.take(40)}»" })
+                }
+            }
+            bb.appendLine()
+        }
+
+        val guardRedCases = secB.filter { it.guardRedDetails.isNotEmpty() }
+        if (guardRedCases.isNotEmpty()) {
+            bb.appendLine("[GUARD RED] Dokumenty z alertem RED — BLOCKER RELEASE: " +
+                "${guardRedCases.sumOf { it.guardRedDetails.size }}")
+            bb.appendLine()
+            guardRedCases.forEach { r ->
+                bb.appendLine("  ${r.file.substringAfterLast("/")}  lvl=${r.degLevel}")
+                r.guardRedDetails.forEach { bb.appendLine("    GUARD RED: $it") }
             }
             bb.appendLine()
         }
@@ -966,6 +999,7 @@ function exportSelected() {
         val fpTokens: List<DetectedToken> = emptyList(),
         val missLabels: Map<String, String>,
         val guardRedHits: Int,
+        val guardRedDetails: List<String> = emptyList(),
         val summary: Summary,
         val trace: List<DetectionTrace> = emptyList(),
         val normalizedText: String = ocrText,

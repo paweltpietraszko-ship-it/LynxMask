@@ -70,6 +70,23 @@ złapana przed commitem). Testy dodane: degradacja ł→t, regresja "Nr strony"/
 
 ---
 
+## ZAMKNIĘTE 07.07 — benchmark_bugs.txt nie pokazywał kontekstu dla OCR_ZNIEKSZTAŁCONY/Guard RED
+
+Paweł: "na tym etapie benchmark musi pokazywać frazę z bugiem" — zamiast zmuszać do ręcznego
+`adb pull benchmark_trace.txt` przy każdej diagnozie. Naprawione w
+`BenchmarkInstrumentedTest.kt`:
+- `[OCR_ZNIEKSZTAŁCONY]` — dodano fragment OCR + listę tokenów dokumentu (ten sam format co
+  `[BUG_SILNIKA]`, wcześniej pokazywał tylko etykietę i wartość GT bez żadnego kontekstu).
+- `[GUARD RED]` — nowa sekcja, wcześniej istniała tylko sumaryczna LICZBA w report.txt, zero
+  szczegółu który dokument/jaki fragment. Wątek `guardRedDetails: List<String>` (label+
+  dopasowany tekst) przeciągnięty przez `analyze()`/`DocResult` do zapisu w bugs.txt.
+
+2× PESEL `OCR_ZNIEKSZTAŁCONY` (doc_00025, doc_00355) zdiagnozowane i zamknięte dzięki temu
+kontekstowi — patrz wpis "ZAMKNIĘTE 07.07 — ostatnie 2× PESEL OCR_ZNIEKSZTAŁCONY" niżej.
+1× Guard RED (IBAN) jeszcze nie zdiagnozowany — do sprawdzenia przy najbliższej okazji.
+
+---
+
 ## CZĘŚCIOWO ODPOWIEDZIANE 07.07 — hipoteza Pawła: AnchorEngine ma fundamentalny błąd (06.07)
 
 Diagnoza Cursor (`traceMode`, benchmark 500 dok.) na dwóch konkretnych PESEL/NIP miss z lvl0/
@@ -90,6 +107,45 @@ między warstwami/regułami. Interakcja tokenów-placeholderów z późniejszymi
 (most token→wartość) to osobna, nienazwana dotąd klasa bugów — do obserwacji czy się powtórzy.
 Oba fixy zweryfikowane Pythonem + testy w `PseudonymEngineTest.kt`. Czeka na benchmark 500
 jeszcze raz żeby potwierdzić że oba BUG_SILNIKA znikły.
+
+---
+
+## ZAMKNIĘTE 07.07 — ostatnie 2× PESEL OCR_ZNIEKSZTAŁCONY (doc_00025, doc_00355)
+
+Trzecia, ostatnia przyczyna w tej samej rodzinie bugów co wpis wyżej. Dzięki nowemu kontekstowi
+diagnostycznemu w `benchmark_bugs.txt` (fragment OCR + tokeny z urządzenia) zdiagnozowane
+precyzyjnie: prawdziwy OCR na zaszumionym obrazie pomylił pojedynczą cyfrę z literą spoza
+D-klasy — "4"→"A" (doc_00025), "7"→"r" (doc_00355). Nie da się tego enumerować literą po
+literze (kolejny dokument = kolejna litera).
+
+Pierwsza próba fixu poszła do AnchorEngine.kt (A.4/A.5) — okazała się martwym kodem: kontekstowy
+wzorzec PESEL w Rundzie 1 (`StructuralEngine.kt`, wzorzec "PESEL z kontekstem") biegnie PIERWSZY
+i dla doc_00025 dopasowywał się CZĘŚCIOWO (elastyczna klasa środkowa `\d[\d \t]{3,16}\d` potrafi
+urwać się tuż przed obcą literą i mimo to zwrócić poprawny match) — konsumował słowo-kotwicę
+"PESEL", zostawiając ogon ("A0") jawny, bez szansy dla AnchorEngine na dokończenie (kotwica już
+zjedzona). Prawdziwy fix: `CTX_STRAY` w `StructuralEngine.kt` — toleruje jedną obcą literę w
+środku ciągu cyfr, TYLKO gdy zaraz po niej jest znowu prawdziwa cyfra (lookahead) — nie cofa
+BUG-PESEL-SKLEJENIE-FIX (01.07). Zweryfikowane Pythonem, testy w `PseudonymEngineTest.kt`,
+potwierdzone ręcznym testem na telefonie (`testy/test_pesel_obca_litera_07_07.txt`) — Paweł:
+"bardzo dobrze zamaskowany".
+
+**Lekcja dla kolejnych instancji**: przy diagnozie AnchorEngine-poziomu bugów sprawdzić NAJPIERW
+czy Runda 1 (StructuralEngine) w ogóle dopuszcza tekst do AnchorEngine dla danego przypadku —
+częściowe dopasowanie w Rundzie 1 blokuje AnchorEngine skuteczniej niż brak dopasowania.
+
+---
+
+## ZAMKNIĘTE 07.07 — AddressEngine POSTAL_K1 wchłaniał dowolne następne słowo (np. "Tel")
+
+Znalezione ręcznym testem na telefonie (`test_pesel_obca_litera_07_07.txt`, zdanie z "PESEL: ...
+Adres: ... 44-100 Łódź Tel: +48 ..."): opcjonalne drugie słowo po kodzie pocztowym (dodane
+04.07 dla miast dwuwyrazowych, BUG-MIASTO-DWUCZŁONOWE-FIX) nie miało żadnej walidacji — token
+ADRES wchłonął "Tel", zjadając kotwicę telefonu. Fix (`AddressEngine.kt`, blok POSTAL_K1): drugie
+słowo wchodzi do tokenu tylko gdy (a) cała fraza jest w `cityForms`, LUB (b) drugie słowo jest w
+`citySurnameOverlap` (góra/górka/górny/róg/kępa — ten sam słownik z naprawy "Góra jako OSOBA").
+Pierwsza wersja fixu (tylko warunek a) złamała 2 istniejące testy w `AddressEngineTest.kt`
+("Zielona Góra" bez pełnej kombinacji w testowym `cityForms`) — poprawione dodaniem warunku (b),
+zweryfikowane Pythonem, wszystkie testy zielone.
 
 ---
 

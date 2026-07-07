@@ -172,11 +172,31 @@ internal fun applyAddressEngine(
         // "65-001 Zielona Góra" maskowało tylko "65-001 Zielona", zostawiając "Góra" osieroconą
         // (którą potem NameEngine łapał jako OSOBA, bo "góra" jest w surnamesForms). Dodano
         // opcjonalne drugie słowo, jak w POSTAL_K2.
+        // BUG-ADRES-ZACHLANNOSC-TEL (test ręczny na telefonie 07.07): opcjonalne drugie słowo
+        // nie miało ŻADNEJ walidacji — łapało DOWOLNE następne słowo, np. "44-100 Łódź Tel:" →
+        // adres wchłonął "Tel", zjadając kotwicę telefonu. Fix: drugie słowo wchodzi do tokenu
+        // TYLKO gdy (a) cała fraza jest znanym miastem w cityForms, LUB (b) drugie słowo jest w
+        // citySurnameOverlap (góra/górka/górny/róg/kępa — ten sam słownik co NameEngine już
+        // używa do rozróżnienia "prawdziwe miasto" vs "nazwisko/słowo pospolite", patrz
+        // bug_gora_jako_osoba_diagnoza). Wariant (b) jest konieczny bo cityForms rzadko ma
+        // literalną kombinację dwuwyrazową jako jeden wpis — "Tel" nie jest w żadnym z tych
+        // słowników, więc nadal odrzucone.
         val postalCodeToNameRe = Regex(
-            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}(?:[^\S\n][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30})?"""
+            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]+""" +
+            """([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30})(?:([^\S\n])([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}))?"""
         )
         t = postalCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-            if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value, "POSTAL_K1")
+            if (TOKEN_RE.containsMatchIn(m.value)) acc
+            else {
+                val word1 = m.groups[1]!!
+                val word2 = m.groups[3]
+                val twoWordCity = word2 != null && LookupTables.initialized && (
+                    LookupTables.cityForms.contains("${word1.value.lowercase()} ${word2.value.lowercase()}") ||
+                    LookupTables.citySurnameOverlap.contains(word2.value.lowercase())
+                )
+                val range = if (twoWordCity) m.range else m.range.first..word1.range.last
+                replaceRangeAsToken(acc, range, acc.substring(range.first, range.last + 1), "POSTAL_K1")
+            }
         }
 
         if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {

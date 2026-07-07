@@ -319,6 +319,11 @@ internal fun applyPostalCityPatterns(
     return t
 }
 
+// CTX_STRAY (BUG-PESEL-OBCA-LITERA, 07.07): pojedyncza obca litera tolerowana w środku
+// ciągu cyfr kontekstowych, gdy zaraz po niej jest znowu prawdziwa cyfra — patrz komentarz
+// przy wzorcu PESEL niżej.
+private const val CTX_STRAY = """[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]"""
+
 // ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
@@ -352,7 +357,21 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // myślnik w tej klasie pozwalał dopasowaniu ciągnąć się w kod pocztowy/NIP (kształt
     // z myślnikami) sąsiadujący z PESEL-em. Prawdziwy fix jest w OcrNormalizer (Warstwa 0)
     // i StructuralEngine.applyPostalCityPatterns (Warstwa 1b) — to dodatkowy pas bezpieczeństwa.
-    TOKEN_NUMER to Regex("""(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d[\d \t]{3,16}\d"""),
+    // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
+    // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie potrafi pomylić
+    // POJEDYNCZĄ cyfrę z DOWOLNĄ literą, nie tylko znaną D-klasą ("4"→"A", "7"→"r" w dwóch
+    // różnych dokumentach — nie da się tego enumerować literą po literze). Bez tolerancji ten
+    // wzorzec (elastyczna klasa środkowa) potrafi dopasować się CZĘŚCIOWO — urwać tuż przed
+    // obcą literą — co jest gorsze niż brak dopasowania: token PESEL powstaje, ale zjada tylko
+    // część cyfr, a "ogon" (np. "A0") zostaje jawny TUŻ ZA tokenem, i słowo-kotwica "PESEL" jest
+    // już skonsumowane, więc żadna kolejna warstwa nie dostanie już szansy go dokończyć. Fix:
+    // pojedyncza obca litera w środku jest tolerowana TYLKO gdy zaraz po niej (z opcjonalnym
+    // separatorem spacja/tab) jest znowu prawdziwa cyfra — odróżnia to "przerwę w cyfrach" od
+    // "koniec numeru, zaczyna się inny tekst", więc nie wraca BUG-PESEL-SKLEJENIE-FIX powyżej.
+    TOKEN_NUMER to Regex(
+        """(?i)\bpe[s5][e3][lL1]\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*""" +
+        """\d(?:[\d \t]|$CTX_STRAY(?=[ \t]?\d)){3,16}\d"""
+    ),
 
     // NIP z kontekstem — analogicznie do PESEL: słowo kluczowe wystarczy, S5 pominięte.
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.

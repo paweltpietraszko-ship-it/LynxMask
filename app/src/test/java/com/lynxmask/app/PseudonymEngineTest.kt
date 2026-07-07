@@ -1004,6 +1004,18 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "60-001")
     }
 
+    // BUG-ADRES-ZACHLANNOSC-TEL (test ręczny na telefonie 07.07): opcjonalne drugie słowo po
+    // kodzie pocztowym (dodane dla miast dwuwyrazowych typu "Zielona Góra") nie miało żadnej
+    // walidacji słownikowej — łapało DOWOLNE następne słowo. "44-100 Łódź Tel: +48 ..." →
+    // token ADRES wchłonął "Tel", zjadając kotwicę telefonu dla kolejnej warstwy. Fix:
+    // drugie słowo wchodzi do tokenu tylko gdy cała fraza jest znanym miastem dwuwyrazowym.
+    @Test fun `adres nie wchlania nastepujacego slowa ktore nie jest czescia nazwy miasta`() {
+        val r = pseudonymize("Adres: ul. Kopernika 78, 44-100 Łódź Tel: +48 724 143 842")
+        assertFalse("Token ADRES nie powinien zawierac 'Tel'",
+            r.tokenMap.values.any { it.contains("Łódź", ignoreCase = true) && it.contains("Tel", ignoreCase = true) })
+        assertNotInOutput(r, "724 143 842")
+    }
+
     // =========================================================================
     // Testy regresji — przypadki z historii bugów
     // =========================================================================
@@ -1342,6 +1354,36 @@ class PseudonymEngineTest {
         val r = pseudonymize("Umowa z dnia 2024 roku podpisana")
         assertTrue("Rok 2024 powinien pozostać w tekście",
             r.pseudonymizedText.contains("2024"))
+    }
+
+    // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
+    // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie pomylił pojedynczą
+    // cyfrę z literą spoza D-klasy (nie O/o/l/I/i/S/s/B/b/Z/z) — kontekstowy wzorzec PESEL
+    // w Rundzie 1 (StructuralEngine.kt) dopasowywał się CZĘŚCIOWO, zjadając słowo-kotwicę
+    // ale urywając tuż przed obcą literą, więc żadna kolejna warstwa nie dostawała już szansy
+    // dokończyć. Fix: CTX_STRAY w StructuralEngine.kt toleruje jedną obcą literę w środku
+    // ciągu, gdy zaraz po niej jest znowu prawdziwa cyfra.
+    @Test fun `PESEL z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "78121295740" -> "781212957A0" ("4" rozpoznane jako "A")
+        val r = pseudonymize("Beata Kamiiska PESEL: 781212957A0 Adres: ul. Kopernika 78")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "781212957A0")
+        assertNotInOutput(r, "A0")
+    }
+
+    @Test fun `PESEL z obca litera i spacja w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "93072300794" -> "930r2300 794" ("7" rozpoznane jako "r", plus spacja)
+        val r = pseudonymize("Agnieszka Grabowska, PESEL:930r2300 794 zamieszkala Szkolna 6")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "930r2300 794")
+    }
+
+    @Test fun `PESEL obca litera regresja sklejenia z kodem pocztowym nadal dziala`() {
+        // BUG-PESEL-SKLEJENIE-FIX (01.07) nie może wrócić przez CTX_STRAY: tolerancja obcej
+        // litery wymaga prawdziwej cyfry ZARAZ po niej, więc nie przeskakuje w kod pocztowy.
+        val r = pseudonymize("PESEL 90051512340 00-001 Warszawa NIP 526-021-15-81")
+        assertFalse("PESEL nie powinien zawierac fragmentu kodu pocztowego",
+            r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
     }
 
     // =========================================================================
@@ -1969,8 +2011,12 @@ class PseudonymEngineTest {
         // SKLEJANIE: każde wystąpienie tokenu (PREFIX_NNN) musi mieć granicę słowa po
         // obu stronach. Jeśli liczba dopasowań z \b różni się od liczby bez \b — token
         // jest wtopiony w sąsiedni znak (litera/cyfra), czyli sklejony.
-        val withBoundary = Regex("""\b[A-ZŁŚŹĆŃÓĄĘŻ]+_\d{3}\b""").findAll(r.pseudonymizedText).count()
-        val withoutBoundary = Regex("""[A-ZŁŚŹĆŃÓĄĘŻ]+_\d{3}""").findAll(r.pseudonymizedText).count()
+        // Prefiksy prawdziwych tokenów encji — NIE generyczne [A-Z]+, bo to fałszywie łapie
+        // "SESJA_xxxxxx" (identyfikator sesji na początku dokumentu, dłuższy niż 3 cyfry,
+        // nie encja PII) jako rzekomo "sklejony" token (Paweł 07.07, złapane testem na żywo).
+        val tokenPrefix = "(?:OSOBA|NUMER|EMAIL|ADRES|KWOTA|FIRMA)"
+        val withBoundary = Regex("""\b${tokenPrefix}_\d{3}\b""").findAll(r.pseudonymizedText).count()
+        val withoutBoundary = Regex("""${tokenPrefix}_\d{3}""").findAll(r.pseudonymizedText).count()
         assertEquals(
             "Token sklejony z sąsiednim znakiem (brak granicy słowa) w: ${r.pseudonymizedText}",
             withoutBoundary, withBoundary
