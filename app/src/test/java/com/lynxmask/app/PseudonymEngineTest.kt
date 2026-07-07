@@ -1939,6 +1939,40 @@ class PseudonymEngineTest {
         assertTokenExists(fr, TOKEN_NUMER)
     }
 
+    // BUG-IBAN-OGON-KRADZIONY (07.07, znalezione ręcznym testem na telefonie — Paweł: "raz
+    // maskowany w całości, raz tylko ostatnie cyfry"): ten sam IBAN z nieregularnymi spacjami
+    // OCR ("PL7824010135798 2507 146112645") raz był maskowany w pełni (obok słowa "konto"),
+    // raz zostawiał większość jawną — bo gołe wzorce kształtu bez kotwicy (REGON-9, potem też
+    // telefon 3-3-3/2-3-2-2) łapały fragmenty ogona zanim AnchorEngine (kotwica "PL") dostał
+    // szansę. Pierwsza próba fixu dopisywała ten sam guard do kolejnych osobnych wzorców z
+    // osobna (znajdując kolejne ofiary jedna po drugiej) — Paweł explicite zakazał rozproszonych
+    // poprawek. PRAWDZIWY fix: `IBAN_EARLY` w StructuralEngine.kt, PIERWSZY wzorzec w całej
+    // liście — kotwica "PL" zabiera swoje terytorium zanim jakikolwiek goły wzorzec dostanie
+    // szansę, więc żaden z nich nie musi się bronić z osobna.
+    @Test fun `IBAN z nieregularnymi spacjami OCR bez slowa kontekstowego jest maskowany w calosci`() {
+        val r = pseudonymize("Jak w zdaniu ponizej: ciag PL7824010135798 2507 146112645 wystepuje raz.")
+        assertNotInOutput(r, "146112645")
+        assertNotInOutput(r, "7824010135798")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `REGON samodzielny bez PL w poblizu nadal maskowany`() {
+        // Regresja: IBAN_EARLY nie może zablokować zwykłego, niepowiązanego REGON-u.
+        val r = pseudonymize("Firma XYZ, REGON: 123456789, NIP: 111-222-33-44")
+        assertNotInOutput(r, "123456789")
+        assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    @Test fun `IBAN z etykieta konto nie zawlaszcza etykiety`() {
+        // IBAN_EARLY biegnie PRZED wzorcem kontekstowym "konto..." — bierze sam numer,
+        // etykieta zostaje jawna (nie jest PII, nie ma potrzeby jej maskować).
+        val r = pseudonymize("Splata na konto komornika: PL7824010135798 2507 146112645  Komornik Sadowy")
+        assertNotInOutput(r, "146112645")
+        assertNotInOutput(r, "7824010135798")
+        assertTrue("Etykieta 'konto komornika' nie jest PII, nie powinna zniknąć",
+            r.pseudonymizedText.contains("konto komornika", ignoreCase = true))
+    }
+
     // BUG-PESEL-MOST-TOKEN (diagnoza Cursor 07.07, benchmark 500 dok., doc_00430): "ł" ogona
     // wcześniej utworzonego tokenu ("NUMER_001") + nowa linia + prawdziwy PESEL na następnej
     // linii — peselShapeRe [\s\-]? (obejmowało \n) przeskakiwało z ogona tokenu w PESEL,

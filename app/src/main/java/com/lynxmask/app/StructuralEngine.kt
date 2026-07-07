@@ -324,11 +324,31 @@ internal fun applyPostalCityPatterns(
 // przy wzorcu PESEL niżej.
 private const val CTX_STRAY = """[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]"""
 
+// BUG-IBAN-OGON-KRADZIONY (07.07, znalezione ręcznym testem na telefonie — Paweł: "raz
+// maskowany w całości, raz tylko ostatnie cyfry"; POPRAWIONE PO RAZ DRUGI po jawnej instrukcji
+// Pawła "nigdy nie proponuj rozproszonych miejsc" — pierwsza próba dopisywała ten sam guard do
+// N osobnych gołych wzorców kształtu z osobna, znajdując kolejne ofiary jedna po drugiej.
+// PRAWDZIWY fix jest w JEDNYM miejscu: IBAN_EARLY niżej, pierwszy wzorzec w STRUCTURAL_PATTERNS,
+// zabiera swoje terytorium ZANIM jakikolwiek goły wzorzec (REGON, telefon, CATCHALL) dostanie
+// szansę zobaczyć fragment nierozpoznanego jeszcze "PL"+cyfry. Ten sam kształt co AnchorEngine
+// A.6 (D-klasa + spacja/tab/myślnik, 20-42 znaki) — kotwica "PL" jest silniejszym sygnałem niż
+// jakikolwiek goły wzorzec liczący same cyfry, więc powinna wygrywać pierwsza, nie bronić się
+// na końcu. Jako efekt uboczny naprawia też "zawłaszczanie" etykiety (np. "konto komornika:")
+// przez wzorzec kontekstowy niżej — IBAN_EARLY zabiera sam numer, zanim kontekstowy wzorzec
+// zdąży dokleić etykietę.
+private const val IBAN_EARLY = """(?<![A-ZŁŚŹĆŃĄĘÓŻa-z])PL[0-9OolIiSsBbZz \t\-]{20,42}"""
+
 // ============================================================
 // Warstwa 2 — Regex strukturalne
 // Kolejność KRYTYCZNA — bardziej specyficzne przed ogólnymi
 // ============================================================
 internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
+
+    // --- IBAN_EARLY (BUG-IBAN-OGON-KRADZIONY, 07.07) --- musi być PIERWSZY wzorzec w całej
+    // liście — kotwica "PL" + elastyczny ciąg cyfropodobny zabiera swoje terytorium zanim
+    // jakikolwiek goły wzorzec kształtu (REGON, telefon, CATCHALL) dostanie szansę. Patrz
+    // komentarz przy definicji stałej IBAN_EARLY wyżej.
+    TOKEN_NUMER to Regex(IBAN_EARLY),
 
     // --- Email --- (przeniesiony na pozycję 0 — musi być przed CATCHALL \d{9} i VAT EU [A-Z]{2}\d{8,12})
     // TLD: [a-zA-Z][a-zA-Z0-9]{1,} — zaczyna się literą, może zawierać cyfry (OCR: "p1"→"pl", "c0m"→"com")
