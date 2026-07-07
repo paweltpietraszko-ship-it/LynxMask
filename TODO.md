@@ -219,14 +219,19 @@ Screenshoty gotowe: `Google_Play/01_HUB.jpg`…`06_ZABEZPIECZENIA.jpg`. Checklis
 
 ---
 
-## W TOKU — migracja ADRES → AddressEngine (gałąź `feature/entity-migration`)
+## ZAMKNIĘTE 07.07 — migracja ADRES → AddressEngine (jedyny silnik)
 
-**Stan 04-05.07.2026: Faza A + Faza B ZROBIONE i potwierdzone.** AddressEngine.kt (Warstwa 0b)
-jest głównym silnikiem ADRES. Duplikaty structural/name (`ADDRESS_PATTERNS` Warstwa 3d+Runda 2,
-`applyStreetLookup`) wyłączone pod `USE_ADDRESS_ENGINE_V0`. `AnchorEngine` A.11* zostaje aktywny
-(kotwica-fallback, nie duplikat). Commity: `d50b252`, `ae2881e`, `747f32b`. Tag punktu powrotu:
-`checkpoint-adres-faza-b-2026-07-04`. Benchmark: ADRES recall 94,5%/96,6% (stały/fresh),
-szczegóły w pamięci `project_benchmark_baseline_2026-07-04.md`.
+**Faza A + Faza B (04-05.07) + konsolidacja finalna (07.07, commit `5fcb3c0`).** AddressEngine.kt
+jest teraz JEDYNYM silnikiem ADRES, w każdym buildzie (nie tylko debug). Usunięte fizycznie:
+`USE_ADDRESS_ENGINE_V0` (był `BuildConfig.DEBUG` — w release wyłączałby AddressEngine, zostawiając
+stary kod jako jedyny mechanizm produkcyjny), `StructuralEngine.applyPostalCityPatterns`,
+`StructuralEngine.ADDRESS_PATTERNS` (Runda 1+2), `NameEngine.applyStreetLookup`. `AnchorEngine`
+A.11/A.11c/d/e zostaje aktywny (kotwica-fallback na resztkach, nie duplikat — potwierdzone
+audytem Cursora `CURSOR_AUDYT_ROZPROSZENIE_ENCJI_2026-07-07.md`). Kompilacja zweryfikowana,
+czeka na testy jednostkowe + benchmark Pawła po tej zmianie.
+
+Commity: `d50b252`, `ae2881e`, `747f32b`, `5fcb3c0`. Tag punktu powrotu:
+`checkpoint-adres-faza-b-2026-07-04`. Merge do master: `4fb3689` (checkpoint przed tym krokiem).
 
 **Faza C — dalsze doszlifowanie (priorytet malejący, portowane z planu Cursora):**
 - C-A8: `ul. Jana Pawła II 10/5 20-001 Lublin` — dziś wychodzi jako 2 tokeny (ulica+numer /
@@ -243,10 +248,16 @@ szczegóły w pamięci `project_benchmark_baseline_2026-07-04.md`.
 zdegradowany z nietypową spacją, nie wygląda na temat ADRES. Patrz pamięć
 `project_benchmark_baseline_2026-07-04.md`.
 
-**Opcjonalnie po stabilizacji (C2 z oryginalnego planu):**
-- `USE_ADDRESS_ENGINE_V0` → `true` na stałe w release (usunąć flagę)
-- Fizyczne usunięcie martwego kodu (nie tylko guard) z StructuralEngine/NameEngine
-- Kolory diagnostyczne w `TextPreviewModal.kt` do usunięcia gdy dojście do jednego silnika potwierdzone
+**Zrobione 07.07 (C2 z oryginalnego planu):**
+- ✅ `USE_ADDRESS_ENGINE_V0` usunięty, AddressEngine na stałe jedynym silnikiem
+- ✅ Fizyczne usunięcie martwego kodu ze StructuralEngine/NameEngine
+
+**Wciąż otwarte:**
+- Kolory diagnostyczne w `TextPreviewModal.kt` (zielony=AddressEngine/niebieski=stary kod) — do
+  usunięcia, rozróżnienie już nie ma sensu skoro stary kod nie istnieje
+- AnchorEngine A.11 (prefiks ulicy) — czy da się bezpiecznie usunąć? Nie jest pod flagą, biegnie
+  zawsze; wymaga osobnej weryfikacji benchmarkiem czy realnie coś jeszcze łapie (patrz audyt
+  Cursora, pytanie 1)
 
 ---
 
