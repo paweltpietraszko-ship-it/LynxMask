@@ -236,89 +236,6 @@ internal fun applyPeselShapeChecksum(
     return t
 }
 
-// ============================================================
-// POSTAL_CITY — kod pocztowy + miasto (oba kierunki), jeden właściciel pary
-// (plan Cursor 01.07, krok 1 — funkcja zdefiniowana, JESZCZE NIE podłączona do
-// pipeline. Podłączenie w kroku 2 jako warstwa 3a przed NameEngine.)
-//
-// Naprawia bug znaleziony testem ręcznym: 3+ adresów kod+miasto pod rząd (osobne
-// linie ORAZ sklejone bez spacji przez OCR) rozjeżdżało się na pomieszane tokeny —
-// stary wzorzec (StructuralEngine #597, teraz niżej) wymagał \b na granicy
-// dopasowania miasta, a \b NIE ISTNIEJE między literą (koniec miasta) a cyfrą
-// (początek NASTĘPNEGO kodu, gdy sklejone) bo oba są \w. Fix: (?<!\d) zamiast \b
-// na starcie kodu (nie zaczynaj w środku innego ciągu cyfr, ale POZWÓL zaczynać
-// zaraz po literze — to dokładnie przypadek sklejenia OCR), i brak \b na końcu
-// nazwy miasta (klasa znaków sama naturalnie zatrzymuje się na pierwszej cyfrze).
-// ============================================================
-// BUG-POSTALCITY-NIP-FIX (Cursor 01.07, drugi przypadek): ten sam guard co niżej
-// (postalCityBareCodeRe) — bez niego łapał "56-786" ze środka NIP-u "512-34-56-786"
-// jako fałszywy kod pocztowy, bo zaraz po nim była ", zamieszkały..." (przecinek+słowo
-// spełniał wymóg "miasta" — ten kierunek nie wymaga wielkiej litery ani słownika).
-private val postalCityCodeToNameRe = Regex(
-    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}"""
-)
-private val postalCityNameToCodeRe = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
-)
-// BUG-POSTALCITY-NIP-FIX (test regresji 01.07): (?<!\d{2,3}-) i (?!-\d) dodane — bez nich
-// ten wzorzec łapał ostatni segment NIP-u jako fałszywy kod pocztowy (np. "56-786" z
-// "512-34-56-786" — NIP ma też kształt XX-XXX w swoim ostatnim segmencie). Guard: nie
-// matchuj jeśli bezpośrednio przed jest inny segment "cyfry-" (jesteśmy w środku
-// dłuższego łańcucha myślnikowego, czyli prawdopodobnie NIP/sygnatura, nie kod pocztowy)
-// ani jeśli bezpośrednio po jest kolejny "-cyfry".
-private val postalCityBareCodeRe = Regex(
-    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)\b"""
-)
-
-// Kod pocztowy + miasto (oba kierunki) jako JEDEN token ADRES. Goły kod (bez miasta)
-// maskowany osobno, TYLKO gdy w tej samej linii nie ma słowa ze słownika miast (guard
-// przed konfliktem z dwoma powyższymi wzorcami, które już by go obsłużyły wcześniej).
-internal fun applyPostalCityPatterns(
-    text: String,
-    assignToken: (value: String, tokenType: String) -> String
-): String {
-    var t = text
-
-    fun replaceRangeAsToken(acc: String, range: IntRange, value: String): String {
-        val token = assignToken(value.trim(), TOKEN_ADRES)
-        val before = acc.getOrElse(range.first - 1) { ' ' }
-        val after = acc.getOrElse(range.last + 1) { ' ' }
-        val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-        val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
-        return acc.replaceRange(range, pre + token + suf)
-    }
-
-    // Kierunek 1: kod → miasto ("00-001 Warszawa") — bez słownika, jak stare #597
-    t = postalCityCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-        if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value)
-    }
-
-    // Kierunek 2: miasto → kod ("Warszawa, 00-001") — tylko gdy słowo jest w słowniku miast
-    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
-        t = postalCityNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-            if (TOKEN_RE.containsMatchIn(m.value)) acc
-            else if (!LookupTables.cityForms.contains(m.groupValues[1].lowercase())) acc
-            else replaceRangeAsToken(acc, m.range, m.value)
-        }
-    }
-
-    // Kierunek 3: goły kod bez miasta — tylko gdy w tej samej linii NIE ma słowa
-    // ze słownika miast (inaczej kierunek 1/2 powinny były to już obsłużyć)
-    t = postalCityBareCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-        if (TOKEN_RE.containsMatchIn(m.value)) acc
-        else {
-            val lineStart = acc.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
-            val lineEnd = acc.indexOf('\n', m.range.last).let { if (it < 0) acc.length else it }
-            val line = acc.substring(lineStart, lineEnd).lowercase()
-            val hasCityWord = LookupTables.initialized &&
-                line.split(Regex("""\W+""")).any { it.isNotEmpty() && LookupTables.cityForms.contains(it) }
-            if (hasCityWord) acc else replaceRangeAsToken(acc, m.range, m.value)
-        }
-    }
-
-    return t
-}
-
 // CTX_STRAY (BUG-PESEL-OBCA-LITERA, 07.07): pojedyncza obca litera tolerowana w środku
 // ciągu cyfr kontekstowych, gdy zaraz po niej jest znowu prawdziwa cyfra — patrz komentarz
 // przy wzorcu PESEL niżej.
@@ -776,61 +693,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 )
 
 // ============================================================
-// Warstwa adresowa — uruchamiana PO NameEngine (applyContextualBlacklist),
-// żeby NameEngine widział pełne adresy jako kontekst dla rozpoznania imion.
-// Przeniesione z STRUCTURAL_PATTERNS — zachowane wszystkie komentarze i fixy.
-// ============================================================
-// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy dla dwóch podobnie zbudowanych
-// regexów (poniżej + NameEngine.STREET_CANDIDATE_REGEX). Dodanie nowego znaku (apostrof,
-// kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach. Nie obejmuje linii
-// niżej "ulica bez kodu pocztowego" — ta ma odrębną, zagnieżdżoną budowę klasy znaków
-// (pozwala na spację w środku inaczej), do rozważenia osobno.
+// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy, używane przez AddressEngine.kt
+// (jedyny silnik ADRES od 07.07) i NameEngine.STREET_CANDIDATE_REGEX. Dodanie nowego znaku
+// (apostrof, kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach.
 internal const val STREET_NAME_CHARS = "A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\\-"
-
-internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
-
-    // --- Adresy z kodem pocztowym PL ---
-    // BUG-KOD-POCZTOWY-FIX v1.5:
-    // \d{2}-\d{3} → \d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}
-    // Lookahead przed cyframi kodu: "15-2024" (rok) nie przejdzie, bo po "-"
-    // lookahead widzi "20" + "\d{2}" + \b → blokuje.
-    // "65-5110" przejdzie: "51" nie pasuje do (?:19|20) → lookahead nic nie blokuje.
-    // "60-001" przejdzie: "00" nie pasuje do (?:19|20) → OK.
-    // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): brakujący `\-` w klasie znaków nazwy ulicy —
-    // sąsiednia reguła niżej (ulica bez kodu pocztowego) już go ma. Niespójność, nie świadomy
-    // brak. "Gdańska-Sopocka" bez myślnika w klasie łamało się na dwa osobne dopasowania.
-    // BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): ten sam duplikat wzorca istnieje też w
-    // AddressEngine.kt (STREET_FULL, naprawiony tam guardem na grupach). Ten TOKEN_ADRES nadal
-    // biegnie jako fallback (Warstwa 3d/Runda 2, Faza B jeszcze nie wyłączyła duplikatów) i ma
-    // TĘ SAMĄ lukę — prefiks "ul." opcjonalny pozwalał "PLN 1234, 00-001 Warszawa" dopasować
-    // się w całości, traktując "PLN" jak nazwę ulicy. Pętla w PseudonymEngine.kt nie ma
-    // per-wzorcowej walidacji grup (generyczna dla całej listy ADDRESS_PATTERNS), więc fix tu
-    // jest na poziomie regexu: alternatywa (prefiks+dowolna nazwa) LUB (brak prefiksu+nazwa
-    // NIE będąca skrótem waluty), zamiast jednego opcjonalnego prefiksu przed dowolną nazwą.
-    TOKEN_ADRES to Regex(
-        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}|\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
-    ),
-    // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
-    // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej
-    // w potoku, para jest już tokenem zanim ADDRESS_PATTERNS w ogóle zobaczy tekst.
-
-    // --- Adres z ul./al./pl./os. bez kodu pocztowego ---
-    // ul. Długa 7, al. Róż 12A, ul. Kazimierza Wielkiego 14/3
-    // ADDR-FIX v1.2: [^\S\n] zamiast \s w nazwie ulicy — zapobiega dopasowaniu
-    // przez newline (np. łączeniu "ul. Długa" z akapitu 1 z "14/3" z akapitu 2)
-    TOKEN_ADRES to Regex(
-        """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]\-]{1,50}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
-    ),
-
-    // --- Numer budynku/lokalu (np. 4/6, 12A/3B, 47/2) ---
-    // BUG-OCR-1-FIX v1.3: zmieniono \d{1,4} → \d{1,2} po ukośniku.
-    // Numer lokalu/apartamentu ma co najwyżej 2 cyfry (lokal 99 to już bardzo duże).
-    // Rok (2014, 1999) i grosze (100) mają 3-4 cyfry → nie mogą być numerem lokalu.
-    // Poprzednio: "651/2014" (rozporządzenie UE nr 651/2014) → fałszywy TOKEN_ADRES.
-    // Poprzednio: "00/100 złotych" (grosze w kwocie słownej) → fałszywy TOKEN_ADRES.
-    // (?!/[\d]) wyklucza daty złożone: 30/05/2026 (po 05 następuje /2026)
-    TOKEN_ADRES to Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?(?!/[\d])\b"""),
-)
 
 // ============================================================
 // S5 — Zestawy pattern stringów PESEL i NIP do walidacji checksumów

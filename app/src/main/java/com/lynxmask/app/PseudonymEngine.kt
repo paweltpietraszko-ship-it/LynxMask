@@ -84,11 +84,6 @@ data class DetectionTrace(
     val token: String
 )
 
-// AddressEngine v0 — silnik równoległy testowy (04.07.2026), patrz AddressEngine.kt.
-// Włączony domyślnie w DEBUG (test na telefonie), wyłączony w release dopóki nie
-// potwierdzony i nie zamknięta osobna sesja usuwania duplikatów ze starych źródeł.
-internal val USE_ADDRESS_ENGINE_V0 = BuildConfig.DEBUG
-
 // ============================================================
 // Regex TOKEN — do wykrywania istniejących tokenów
 // ============================================================
@@ -222,42 +217,16 @@ object PseudonymEngine {
             .replace("-", "").take(6).uppercase()
         text = "SESJA_$sessionId\n$text"
 
-        // --- Warstwa 0b: AddressEngine v0 — silnik równoległy testowy (04.07.2026) ---
-        // Decyzja właściciela po audycie Cursora (CURSOR_AUDYT_ADRES_2026-07-04.md,
-        // CURSOR_BRIEF_AddressEngine_2026-07-04.md): skonsolidowana logika adresowa,
-        // uruchomiona PRZED wszystkim innym (w tym starym applyPostalCityPatterns) —
-        // żeby żadna reguła NameEngine nie zdążyła pociąć adresu na kawałki (Zielona Góra,
-        // Władysława Stanisława Reymonta). Stare źródła (applyPostalCityPatterns,
-        // ADDRESS_PATTERNS, applyStreetLookup, AnchorEngine A.11*) CELOWO zostają —
-        // fallback + diagnostyka kolorem w UI (zielony = ten silnik, niebieski = stary kod).
-        // Po potwierdzeniu na telefonie: osobna sesja usuwa duplikaty.
-        if (USE_ADDRESS_ENGINE_V0) {
-            text = applyAddressEngine(text, ::assignToken)
-        }
-
-        // --- Warstwa 1b: POSTAL_CITY — kod pocztowy + miasto, jeden właściciel pary ---
-        // Plan Cursor 01.07: musi biec PRZED STRUCTURAL_PATTERNS (nie po) — kontekstowy
-        // wzorzec PESEL (linia ~333, goły \d) bez tego widzi kod pocztowy jako gołe cyfry
-        // i (przy niesprzyjającym sąsiedztwie, np. "PESEL 90051512340 00-001 Warszawa")
-        // dokleja fragment kodu do swojego dopasowania — znalezione testem ręcznym na
-        // adresach sąsiadujących z innymi encjami. Jeśli kod pocztowy jest już tokenem
-        // (nie gołymi cyframi) zanim PESEL/NIP/inne wzorce kontekstowe zdążą coś zobaczyć,
-        // ten cały problem znika: token zaczyna się literą, nie cyfrą.
-        //
-        // Przy v0 (USE_ADDRESS_ENGINE_V0): pominięte — AddressEngine.Blok5 robi to samo,
-        // wcześniej w potoku (patrz Warstwa 0b powyżej). Bez tego pominięcia duplikat
-        // zostawiał niebieskie tokeny na tym samym tekście co AddressEngine już zamaskował
-        // (diagnoza Cursor 04.07, CURSOR_BRIEF_AddressEngine — objaw 1/2).
-        if (!USE_ADDRESS_ENGINE_V0) {
-            text = applyPostalCityPatterns(text) { value, tokenType ->
-                assignToken(value, tokenType, layer = "STRUCTURAL", rule = "POSTAL_CITY")
-            }
-        }
+        // --- Warstwa 0b: AddressEngine — jedyny silnik ADRES ---
+        // Konsolidacja 07.07 (po audycie Cursora, testy zielone + benchmark na telefonie):
+        // stare źródła (applyPostalCityPatterns, ADDRESS_PATTERNS, NameEngine.applyStreetLookup)
+        // usunięte — duplikowały ten sam kształt, gorzej guardowane. AnchorEngine A.11*
+        // zostaje (kotwica na resztkach, nie równoległy silnik strukturalny).
+        text = applyAddressEngine(text, ::assignToken)
 
         // --- Warstwa 2: Regex strukturalne ---
         if (BuildConfig.DEBUG) {
             android.util.Log.d("LynxMask", "STRUCTURAL_PATTERNS: ${STRUCTURAL_PATTERNS.size}")
-            android.util.Log.d("LynxMask", "ADDRESS_PATTERNS: ${ADDRESS_PATTERNS.size}")
         }
         for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
             text = pattern.replace(text) { matchResult ->
@@ -355,33 +324,6 @@ object PseudonymEngine {
                 }
             }
 
-        // --- Warstwa 3d: Wzorce adresów — po NameEngine (widzi pełne adresy) ---
-        // ADDRESS_PATTERNS uruchamiane PO applyContextualBlacklist, żeby NameEngine
-        // mógł użyć kontekstu adresu do rozpoznania poprzedzającego imienia/nazwiska.
-        // findAll + asReversed + replaceRange zamiast pattern.replace — bezpieczniejsze
-        // gdy wzorce adresowe mogą nakładać się na siebie (zamiana od końca).
-        //
-        // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — "strangler fig"): duplikat tego samego
-        // kształtu co AddressEngine (Warstwa 0b), gorzej guardowany (kolejne fixy PLN/NIP
-        // dzisiaj musiały być powtarzane osobno tu i w AddressEngine.kt). Wyłączony gdy
-        // USE_ADDRESS_ENGINE_V0 — cel: to co zostanie jawne po wyłączeniu jest backlogiem
-        // AddressEngine, nie zgadywaniem z góry. AnchorEngine (Warstwa 4b, A.11*) ZOSTAJE
-        // aktywny niezależnie — to nie jest ten sam typ duplikatu (kotwica na resztkach, nie
-        // równoległy silnik strukturalny).
-        if (!USE_ADDRESS_ENGINE_V0) {
-            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-                pattern.findAll(text).toList().asReversed().forEach { match ->
-                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                    val token = assignToken(match.value, tokenType, layer = "ADDRESS", rule = tokenType)
-                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                    text = text.replaceRange(match.range, pre + token + suf)
-                }
-            }
-        }
-
         // --- Warstwa 4a: Słownik użytkownika (zbieracz resztek) ---
         // UWAGA: przeniesiony z Warstwy 1 — musi działać PO silnikach strukturalnych.
         // W Warstwie 1 UserDictionary kradł fragmenty emaili i nazwisk z par imię+nazwisko,
@@ -436,21 +378,6 @@ object PseudonymEngine {
         text = applyContextualBlacklist(text, { value, tokenType ->
             assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
         }, profileType)
-        // FAZA-B-WYLACZENIE (05.07) — patrz komentarz przy Warstwie 3d, ten sam duplikat
-        // powtórzony w Rundzie 2.
-        if (!USE_ADDRESS_ENGINE_V0) {
-            for ((tokenType, pattern) in ADDRESS_PATTERNS) {
-                pattern.findAll(text).toList().asReversed().forEach { match ->
-                    if (TOKEN_RE.containsMatchIn(match.value)) return@forEach
-                    val token = assignToken(match.value, tokenType, layer = "ADDRESS_R2", rule = tokenType)
-                    val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
-                    val after  = if (match.range.last + 1 < text.length) text[match.range.last + 1] else ' '
-                    val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                    val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                    text = text.replaceRange(match.range, pre + token + suf)
-                }
-            }
-        }
 
         // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
         detectAlgorithmicFlags(text, flags, guardAllowlist)

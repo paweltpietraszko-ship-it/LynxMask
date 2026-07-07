@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 /**
- * AddressEngine.kt — v0, silnik równoległy testowy (04.07.2026)
+ * AddressEngine.kt — jedyny silnik ADRES (skonsolidowany 07.07.2026)
  *
  * Decyzja właściciela po audycie Cursora (`CURSOR_AUDYT_ADRES_2026-07-04.md`,
  * brief `CURSOR_BRIEF_AddressEngine_2026-07-04.md`): 12 nakładających się reguł ADRES
@@ -11,10 +11,11 @@ package com.lynxmask.app
  * jeden skonsolidowany silnik, uruchamiany PRZED NameEngine, żeby żadna reguła imion/nazwisk
  * nie zdążyła pociąć adresu zanim ten silnik zobaczy go w całości.
  *
- * v0 = TEST RÓWNOLEGŁY. Stare źródła (StructuralEngine.applyPostalCityPatterns,
- * ADDRESS_PATTERNS, NameEngine.applyStreetLookup, AnchorEngine A.11/A.11c/A.11d/A.11e)
- * CELOWO NIE są usuwane w tej iteracji — nadal działają jako fallback po tym silniku.
- * Duplikaty są tu oczekiwane i informacyjne, nie błąd.
+ * Konsolidacja 07.07 (drugi audyt Cursora, po zielonych testach + benchmarku na telefonie):
+ * stare źródła StructuralEngine.applyPostalCityPatterns, ADDRESS_PATTERNS i
+ * NameEngine.applyStreetLookup USUNIĘTE — były zduplikowanym kształtem, gorzej guardowanym.
+ * AnchorEngine A.11/A.11c/A.11d/A.11e ZOSTAJĄ — to kotwica na resztkach (nie równoległy
+ * silnik strukturalny), patrz notatka architektury niżej.
  *
  * WAŻNE — poprawka architektury (Paweł, 04.07, po pierwszej rundzie testów): TYLKO reguły
  * strukturalne/deterministyczne należą tu, na POCZĄTKU potoku. Kotwice luźne (prefix linii

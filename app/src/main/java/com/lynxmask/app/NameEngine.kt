@@ -510,12 +510,11 @@ internal val CITY_PREP_REGEX = Regex(
     """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
 )
 // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): STREET_NAME_CHARS (StructuralEngine.kt) — wspólne
-// źródło znaków nazwy ulicy, żeby myślnik (i przyszłe dodatki) nie trzeba było pamiętać
-// dopisywać w kilku miejscach osobno.
+// źródło znaków nazwy ulicy. Współdzielone z AddressEngine.kt (Blok 1, STREET_DICT) — jedyny
+// pozostały konsument po usunięciu applyStreetLookup (07.07, duplikat AddressEngine.STREET_DICT).
 internal val STREET_CANDIDATE_REGEX = Regex(
     """\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
-
 private fun applyCityLookup(
     text: String,
     assignToken: (String, String) -> String
@@ -537,42 +536,6 @@ private fun applyCityLookup(
     }
 
     return result
-}
-
-private fun applyStreetLookup(
-    text: String,
-    assignToken: (String, String) -> String
-): String {
-    if (!LookupTables.initialized || LookupTables.streetForms.isEmpty()) return text
-
-    return STREET_CANDIDATE_REGEX.replace(text) { match ->
-        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
-
-        val streetPart = match.groupValues[1].trim()
-        val streetLower = streetPart.lowercase()
-
-        // BUG-PLN-STREETLOOKUP-FIX (05.07, diagnoza agenta): "płn" (skrót "Północna" w
-        // street_names.json) po ASCII-foldowaniu (ł→l, LookupTables.withAsciiVariants) staje
-        // się "pln" i koliduje ze skrótem waluty — streetForms.contains("pln") wychodzi true.
-        // Ten sam CURRENCY_PREFIX_DENY co w AddressEngine.kt (tam już zablokowany), tu było
-        // bez ochrony — łapało "PLN 1234" jako ADRES zanim AnchorEngine zobaczył tekst.
-        if (streetLower in CURRENCY_PREFIX_DENY) return@replace match.value
-
-        // Sprawdź klucz (mianownik) i formy fleksyjne z bazy — z prefiksami
-        if (LookupTables.streetForms.contains(streetLower) ||
-            LookupTables.streetForms.contains("ulica $streetLower") ||
-            LookupTables.streetForms.contains("ulicy $streetLower") ||
-            LookupTables.streetForms.contains("aleje $streetLower") ||
-            LookupTables.streetForms.contains("alei $streetLower") ||
-            LookupTables.streetForms.contains("plac $streetLower") ||
-            LookupTables.streetForms.contains("placu $streetLower") ||
-            LookupTables.streetForms.contains("os. $streetLower") ||
-            LookupTables.streetForms.contains("osiedle $streetLower")) {
-            assignToken(match.value, TOKEN_ADRES)
-        } else {
-            match.value
-        }
-    }
 }
 
 // Pola dowodu osobistego — maskują TYLKO wartość, etykieta zostaje w tekście.
@@ -614,13 +577,10 @@ internal fun applyContextualBlacklist(
     var result = text
 
     // TODO-2: Adresy z bazy GUS TERYT — przed detekcją imion
-    // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — strangler fig): applyStreetLookup to ten sam
-    // słownik (streetForms) i ten sam kształt co AddressEngine.STREET_DICT — duplikat
-    // strukturalny, nie kotwica. Wyłączony gdy USE_ADDRESS_ENGINE_V0. applyCityLookup ZOSTAJE
-    // zawsze — to CITY_PREP ("w Warszawie"), świadomie poza zakresem AddressEngine v0.
-    if (!USE_ADDRESS_ENGINE_V0) {
-        result = applyStreetLookup(result, assignToken)
-    }
+    // applyStreetLookup usunięty 07.07 (konsolidacja ADRES) — ten sam słownik i kształt co
+    // AddressEngine.STREET_DICT, duplikat strukturalny. applyCityLookup zostaje — to CITY_PREP
+    // ("w Warszawie"), świadomie poza zakresem AddressEngine (przyimek + słownik miast, nie
+    // ulica/kod pocztowy).
     result = applyCityLookup(result, assignToken)
 
     // 3a — Firmy z formą prawną
