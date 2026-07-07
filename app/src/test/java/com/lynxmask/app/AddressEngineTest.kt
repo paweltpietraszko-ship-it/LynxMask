@@ -115,4 +115,34 @@ class AddressEngineTest {
         val adresCount = r.tokenMap.keys.count { it.startsWith(TOKEN_ADRES) }
         assertEquals("Oczekiwano dokładnie 3 tokenów ADRES — tokenMap: ${r.tokenMap}", 3, adresCount)
     }
+
+    // BUG-ADRES-ZLEPIONE-KODY (07.07, test ręczny na telefonie): [^\S\n]+ w POSTAL_K1/K2
+    // wymagał co najmniej jednej spacji między kodem a miastem — gdy zlepione bez separatora
+    // (kilka adresów pod rząd bez spacji, realny przypadek OCR), dopasowanie w ogóle nie
+    // odpalało, zostawiając WSZYSTKO jawne (nie tylko brzydko, kompletnie niezamaskowane).
+    @Test fun `kod pocztowy zlepiony z miastem bez spacji jest maskowany`() {
+        val r = pseudonymize("00-001Warszawa")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-001")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
+    @Test fun `trzy pary kod miasto zlepione bez spacji sa maskowane osobno`() {
+        val r = pseudonymize("70-001Szczecin80-001Gdańsk31-610Kraków")
+        assertNotInOutput(r, "Szczecin")
+        assertNotInOutput(r, "Gdańsk")
+        assertNotInOutput(r, "Kraków")
+        assertNotInOutput(r, "70-001")
+        assertNotInOutput(r, "80-001")
+        assertNotInOutput(r, "31-610")
+        val adresCount = r.tokenMap.keys.count { it.startsWith(TOKEN_ADRES) }
+        assertEquals("Oczekiwano dokładnie 3 tokenów ADRES — tokenMap: ${r.tokenMap}", 3, adresCount)
+    }
+
+    @Test fun `miasto zlepione z kodem pocztowym bez spacji jest maskowane`() {
+        val r = pseudonymize("Warszawa00-001")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-001")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
 }

@@ -182,8 +182,15 @@ internal fun applyAddressEngine(
         // bug_gora_jako_osoba_diagnoza). Wariant (b) jest konieczny bo cityForms rzadko ma
         // literalną kombinację dwuwyrazową jako jeden wpis — "Tel" nie jest w żadnym z tych
         // słowników, więc nadal odrzucone.
+        // BUG-ADRES-ZLEPIONE-KODY (07.07, test ręczny na telefonie): [^\S\n]+ wymagał co
+        // najmniej JEDNEJ spacji między kodem a miastem — gdy OCR (albo kilka adresów pod rząd
+        // bez separatora) skleja je bez spacji ("00-001Warszawa", "70-001Szczecin80-001Gdańsk..."),
+        // dopasowanie w ogóle nie odpalało, zostawiając WSZYSTKO jawne. Fix: [^\S\n]* (zero lub
+        // więcej) — toleruje też zlepienie. Zweryfikowane Javą: nadal poprawnie rozdziela kilka
+        // zlepionych par kod+miasto pod rząd na osobne tokeny, nie psuje normalnych przypadków
+        // ze spacją, nie łapie niepowiązanego tekstu (np. IBAN).
         val postalCodeToNameRe = Regex(
-            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]+""" +
+            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]*""" +
             """([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30})(?:([^\S\n])([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}))?"""
         )
         t = postalCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
@@ -201,8 +208,10 @@ internal fun applyAddressEngine(
         }
 
         if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+            // BUG-ADRES-ZLEPIONE-KODY (07.07): ten sam fix co POSTAL_K1 wyżej — [^\S\n]*
+            // zamiast [^\S\n]+, toleruje miasto zlepione bezpośrednio z kodem bez spacji.
             val postalNameToCodeRe = Regex(
-                """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,]?[^\S\n]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
+                """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,]?[^\S\n]*((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
             )
             t = postalNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
                 if (TOKEN_RE.containsMatchIn(m.value)) acc
