@@ -320,9 +320,11 @@ internal fun applyAnchorEngine(
     )
 
     // A.11b (samotny kod pocztowy + opcjonalne miasto) usunięty 04.07 (migracja ADRES krok 5) —
-    // duplikat StructuralEngine.applyPostalCityPatterns kierunek 1/3 (Warstwa 1b), które działa
-    // wcześniej w potoku. Jeśli test ręczny ujawni regresję (miasto spoza słownika obok kodu) —
-    // krok 6 planu (guard A.11c/A.11d na osierocony kod) ma to pokryć.
+    // duplikat ówczesnego StructuralEngine.applyPostalCityPatterns kierunek 1/3 (Warstwa 1b),
+    // które działało wcześniej w potoku (funkcja sama usunięta 07.07, patrz AddressEngine.kt
+    // POSTAL_K1/K2/K3 — dziś jedyny właściciel tej pary). Jeśli test ręczny ujawni regresję
+    // (miasto spoza słownika obok kodu) — krok 6 planu (guard A.11c/A.11d na osierocony kod)
+    // ma to pokryć.
 
     // ------------------------------------------------------------------
     // A.11c ADRES — miasto po istniejącym tokenie ADRES

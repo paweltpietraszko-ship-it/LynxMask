@@ -2,8 +2,9 @@ package com.lynxmask.app
 
 // AddressEngineTest.kt — Faza A planu migracji ADRES (PLAN_AddressEngine_Claude_2026-07-04.md,
 // sekcja A1). Testy sprawdzają wynik CAŁEGO potoku (pseudonymize) — AddressEngine biegnie jako
-// Warstwa 0b, przed wszystkim innym, więc jeśli poprawnie skonsumuje adres, stare warstwy
-// (NameEngine/AnchorEngine) nie mają już czego dotykać. Testy celowo NIE sprawdzają konkretnej
+// Warstwa 0b, przed wszystkim innym, więc jeśli poprawnie skonsumuje adres, reszta potoku nie ma
+// już czego dotykać (NameEngine.applyStreetLookup usunięty 07.07 — duplikat; AnchorEngine A.11*
+// zostaje aktywny jako kotwica na resztkach, patrz TOKEN_RE guard). Testy celowo NIE sprawdzają konkretnej
 // reguły/warstwy (STREET_DICT vs STREET_NO_ZIP itd.) tam gdzie plan dopuszcza kilka poprawnych
 // wariantów ("co najmniej 2x ADRES lub 1 duży ADRES") — liczy się brak PII w wyniku, nie
 // wewnętrzny mechanizm (zasada CLAUDE.md: silnik MASKUJE, nie POPRAWIA).

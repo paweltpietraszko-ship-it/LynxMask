@@ -303,7 +303,7 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_ADDR_PREFIX (04.07, diagnoza Cursor — BUG-PI-WOLHOCI): analogicznie do OCR_UL_PREFIX,
     // ale dla al./os./pl. — "pI. Nazwa" (duże I zamiast małego l), "aI.", "o5." itp.
-    // AnchorEngine A.11 i StructuralEngine ADDRESS_PATTERNS wymagają dosłownie "pl\."/"al\."/"os\." —
+    // AnchorEngine A.11 i AddressEngine wymagają dosłownie "pl\."/"al\."/"os\." —
     // bez tej normalizacji zdegradowany prefiks nigdy nie trafia w żadną z tych kotwic.
     // "ul." NIE tu — w pełni obsłużone już przez OCR_UL_PREFIX powyżej.
     // ----------------------------------------------------------

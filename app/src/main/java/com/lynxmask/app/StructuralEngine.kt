@@ -293,7 +293,7 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // z klasy znaków — PESEL to ciągłe cyfry (max spacje/taby jako separator OCR), a
     // myślnik w tej klasie pozwalał dopasowaniu ciągnąć się w kod pocztowy/NIP (kształt
     // z myślnikami) sąsiadujący z PESEL-em. Prawdziwy fix jest w OcrNormalizer (Warstwa 0)
-    // i StructuralEngine.applyPostalCityPatterns (Warstwa 1b) — to dodatkowy pas bezpieczeństwa.
+    // i AddressEngine (Warstwa 0b, biegnie przed tym wzorcem) — to dodatkowy pas bezpieczeństwa.
     // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
     // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie potrafi pomylić
     // POJEDYNCZĄ cyfrę z DOWOLNĄ literą, nie tylko znaną D-klasą ("4"→"A", "7"→"r" w dwóch
