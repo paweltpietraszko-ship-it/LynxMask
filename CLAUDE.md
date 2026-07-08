@@ -41,7 +41,11 @@ Właściciel projektu nie jest programistą — pisze kod przez Claude Code w te
 
 **Zasada projektu:** Silnik MASKUJE encje, nie POPRAWIA dokumentu. Nie proponuj fuzzy masking ani near-match.
 
-**Cursor do diagnozy:** Gdy problem rozsiana po wielu plikach — zaproponuj użycie Cursora. Cursor dostarcza diagnozę → Claude wdraża i commituje.
+**Cursor do diagnozy — playbook (zwalidowany 08.07):** Podział sprawdza się w praktyce, trzymaj się go bez pytania za każdym razem.
+- **Sięgaj po Cursora sam, bez pytania**, gdy: problem jest rozsiany po wielu plikach (np. "coś nie działa, ale regex sam w sobie jest poprawny"), potrzeba historii gita/porównania commitów żeby znaleźć winowajcę regresji, albo utknąłeś w martwym punkcie technicznym (np. próba bezpośredniego uruchomienia skompilowanych klas zamiast czekać na test właściciela).
+- **Pchaj dalej sam, bez Cursora**, gdy: problem jest punktowy (jeden plik, jeden regex), masz szybki cykl weryfikacji (Java przed Kotlinem), albo to prosta naprawa/rozszerzenie istniejącej reguły.
+- Cursor dostarcza diagnozę → Claude wdraża i commituje. Zadania dla Cursora pisz wprost w czacie (kopiowalny blok), nie tylko w TODO.md.
+- Właściciel konsultuje/koordynuje między Claude i Cursor — to on decyduje które info od kogo ma wagę, nie zgaduj tego za niego.
 
 **Nowe pliki/moduły:** Nie twórz nowego pliku ani nie dodawaj zależności bez konieczności. Jeśli masz wybór między rozszerzeniem istniejącego pliku a nowym — wybierz istniejący. Nowy plik tylko gdy: (a) przekracza granicę odpowiedzialności (patrz "Pliki molochów"), (b) byłby importowany z wielu innych plików, lub (c) właściciel wprost prosił.
 
