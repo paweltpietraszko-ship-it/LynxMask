@@ -8,13 +8,21 @@
 
 ---
 
-## PRIORYTET NASTĘPNEJ SESJI — sprawdzić wyniki benchmarku 08.07 (fresh+stały+v2)
+## PRIORYTET NASTĘPNEJ SESJI — przywrócić słownik nazwisk STOPNIOWO, z benchmarkiem po każdym kroku
 
-Paweł odpalił benchmark PO wszystkich fixach z 08.07 (commit `1b0d7b4`), porównując z
-baseline z rana tego samego dnia. Zacznij od `benchmark_results/fresh/2026-07-08_*`,
-`staly/2026-07-08_*`, `v2/2026-07-08_*` (najnowsze katalogi) — sprawdź KWOTA recall
-(oczekiwana poprawa: cross-newline fix + A.9c/A.9d + O-run normalizer) i czy któryś z
-33 fixów w commicie nie wprowadził regresu gdzie indziej (NUMER, ADRES, OSOBA).
+Kontekst pełny w memory Claude: `project_session_wrapup_2026-07-08_dictionary_revert.md`.
+Skrót: 08.07 zbudowany 3-warstwowy system nazwisk (słownik 1000→39k) — benchmark ujawnił
+FP NameEngine 37→152 (4×), precyzja -15pp. Cofnięte (`git reset --hard 29c8ba9` + cherry-pick
+4 niezależnych fixów: NIP/telefon-konto/adres). Tag `checkpoint-przed-revertem-slownika-2026-07-08`
+to punkt odzysku ze STAREGO (39k) stanu, gdyby trzeba było coś stamtąd wziąć.
+
+**Plan na jutro (małe kroki, nie big-bang):**
+1. Wyższy próg wystąpień w rejestrze PESEL (np. 500, nie 100) — mniej nazwisk, mniej kolizji.
+2. Denylist pospolitych słów PRZED merge do JSON (Morfologik offline, raz, w generatorze) —
+   nie łatać post-hoc w NameEngine w runtime jak dziś (za wolne, złapało 2 z ~117 nowych FP).
+3. BEZ warstwy rdzeń+sufiks na start — dodać osobno, po ustabilizowaniu słownika.
+4. Fix lemma-lowercase z generatora (już naprawiony, dobry) — zastosować od razu.
+5. Benchmark PO KAŻDYM kroku, nie na końcu.
 
 ## ZAMKNIĘTE 08.07 — `\b` diakrytyki + cross-newline + KWOTA bez waluty (commit 1b0d7b4)
 
