@@ -1615,6 +1615,36 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "1A1")
     }
 
+    // BUG-TELEFON-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "numer telefonu 6O2 3r4 891" zostawało jawne w części "3r4 891"): telefon nigdy nie
+    // dostał tolerancji CTX_STRAY którą mają PESEL i NIP — "r" nie jest D-klasą (O/o/l/I/i/
+    // S/s/B/b/Z/z), więc wartość urywała się w środku numeru. Przy okazji naprawiono też
+    // brak tolerancji na odmienione słowo-kotwicę ("telefonu" zamiast "telefon").
+    @Test fun `telefon z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "602374891" -> "6O2 3r4 891" ("0" -> "O" jest D-klasą OK, "7" -> "r" NIE jest)
+        val r = pseudonymize("Kontakt: numer telefonu 6O2 3r4 891, prosimy dzwonić po 10.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "3r4 891")
+        assertNotInOutput(r, "6O2 3r4 891")
+    }
+
+    // BUG-KONTO-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "nr konta: 45 1140 2004 0000 3702 7823 A176" zostawiało "A176" jawne): numer konta
+    // bez prefiksu PL (bare NRB) nigdy nie dostał tolerancji CTX_STRAY — każda 4-cyfrowa
+    // grupa wymagała dosłownie \d{4}.
+    @Test fun `numer konta bez PL z obca litera na koncu jest maskowany w calosci`() {
+        val r = pseudonymize("Proszę o wpłatę na nr konta: 45 1140 2004 0000 3702 7823 A176 tytułem opłaty.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "A176")
+        assertNotInOutput(r, "7823 A176")
+    }
+
+    @Test fun `numer konta bez PL z myslnikami i obca litera jest maskowany w calosci`() {
+        val r = pseudonymize("Rachunek: 61-1090-1014-0000-0712-1981-2A74 do przelewu zwrotnego.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "2A74")
+    }
+
     // =========================================================================
     // Potok 3c — ZADANIE 2: False positives — słowa pospolite i skróty
     // Każde słowo z WHITE_LIST dodane w Potoku 3c → osobny test.

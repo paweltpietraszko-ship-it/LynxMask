@@ -475,10 +475,19 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}[^\S\n]+\S{0,20}[^\S\n]*[:–\-][^\S\n]*(PL[\d\s]{24,34})\b"""),
     // IBAN garbled OCR — PL + 20–40 alfanum (bez lookahead — poprzedni wzorzec ReDoS na długim OCR)
     TOKEN_NUMER to Regex("""\bPL[A-Z0-9]{20,40}\b""", RegexOption.IGNORE_CASE),
+    // BUG-KONTO-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "nr konta: 45 1140 2004 0000 3702 7823 A176" zostawiało "A176" jawne): numer konta
+    // bez prefiksu PL nigdy nie dostał tolerancji CTX_STRAY którą mają PESEL/NIP/telefon —
+    // każda z 4-cyfrowych grup wymagała dosłownie \d{4}, bez miejsca na obcą literę OCR.
+    // Grupa4Stray: 4 znaki gdzie DOKŁADNIE jeden może być obcą literą (na dowolnej z 4 pozycji).
     // Konto bez prefiksu PL ze spacjami grupującymi (61 1090 1014 0000 0712 1981 2874)
-    TOKEN_NUMER to Regex("""\b\d{2}(?:\s\d{4}){5,6}\b"""),
+    TOKEN_NUMER to Regex(
+        """\b\d{2}(?:\s(?:\d{3}\d|\d{2}$CTX_STRAY\d|\d$CTX_STRAY\d{2}|$CTX_STRAY\d{3})){5,6}\b"""
+    ),
     // Konto bez prefiksu PL z myślnikami (61-1090-1014-0000-0712-1981-2874)
-    TOKEN_NUMER to Regex("""\b\d{2}-\d[\d\-]{20,28}\d\b"""),
+    TOKEN_NUMER to Regex(
+        """\b\d{2}-\d(?:[\d\-]|$CTX_STRAY(?=-?\d)){20,28}\d\b"""
+    ),
 
     // --- Numery rejestrowe firm ---
     // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* (KRS/HRB/BDO)
@@ -509,7 +518,16 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Bez tego linia \b\d{3}...\d{3}\b kradnie cyfry, zostawiając "tel." / "kom." na widoku.
     //
     // Rozszerzone słowa kluczowe: komórka, wew, gsm, nr tel
-    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|kom(?:órka)?|fax|faks|wew(?:nętrzny)?|gsm|nr[\s.]?tel)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
+    // BUG-TELEFON-OBCA-LITERA (zgłoszone przez Pawła 08.07, "numer telefonu 6O2 3r4 891"
+    // jawne w części "3r4 891"): telefon nigdy nie dostał tolerancji CTX_STRAY którą mają
+    // PESEL i NIP — "r" nie jest D-klasą, więc wartość urywała się w środku numeru.
+    // Przy okazji: \w*+ (possessive) zamiast (?:efon)?/(?:órka)? na słowach-kotwicach —
+    // toleruje odmienione formy ("telefonu", "komórki") tak jak już robi to AnchorEngine A.3,
+    // ten sam mechanizm co "tel\w*+" tam (patrz komentarz przy A.3 o backtrackingu w D-klasę).
+    TOKEN_NUMER to Regex(
+        """(?i)\b(?:tel\w*+|kom(?:[oó]rk)?\w*+|fax\w*+|faks\w*+|wew\w*+|gsm\w*+|nr[\s.]?tel\w*+)\.?""" +
+        """(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d(?:[\d\s\-.()]|$CTX_STRAY(?=[ \t]?\d)){5,20}\d\b"""
+    ),
     // +48 / +4B (OCR: 8→B) z prefiksem
     TOKEN_NUMER to Regex("""\+4[8Bb][-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}(?!\d)"""),
     // samo 48 jako prefix (bez +) — np. "48 601 234 567" w OCR bez znaku plusa
