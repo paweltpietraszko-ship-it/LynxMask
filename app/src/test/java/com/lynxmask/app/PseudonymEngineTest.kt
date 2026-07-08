@@ -114,14 +114,17 @@ class PseudonymEngineTest {
     }
 
     @Test fun `NIP po OCR_NIP_SPLIT jest jednym tokenem nie dwoma`() {
-        val r = pseudonymize("NIP: 740-61 7-82-26")
+        val r = PseudonymEngine.pseudonymize("NIP: 740-61 7-82-26", traceMode = true)
+        val traceDump = r.trace.joinToString("\n") { "  [${it.layer}/${it.rule}] \"${it.matchedText}\" -> ${it.token}" }
         assertEquals(
-            "Powinien być dokładnie 1 token NUMER",
+            "Powinien być dokładnie 1 token NUMER, wynik: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
             1,
             r.tokenMap.keys.count { it.startsWith("NUMER") }
         )
-        assertFalse(r.pseudonymizedText.contains("740"))
-        assertFalse(r.pseudonymizedText.contains("82-26"))
+        assertFalse("'740' zostało jawne: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
+            r.pseudonymizedText.contains("740"))
+        assertFalse("'82-26' zostało jawne: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
+            r.pseudonymizedText.contains("82-26"))
     }
 
     @Test fun `NIP po OCR_NIP_SPLIT z newline jest jednym tokenem`() {
@@ -1597,6 +1600,19 @@ class PseudonymEngineTest {
         val r = pseudonymize("PESEL 90051512340 00-001 Warszawa NIP 526-021-15-81")
         assertFalse("PESEL nie powinien zawierac fragmentu kodu pocztowego",
             r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
+    }
+
+    // BUG-NIP-OBCA-LITERA (zgłoszone przez Pawła 08.07, zrzut ekranu — "NIP: 426-1A1-78-03"
+    // jawne mimo dokładnie 1 tokena w dokumencie): komentarz przy NIP mówił "analogicznie do
+    // PESEL" ale NIGDY nie dostał tolerancji CTX_STRAY z 07.07 — dwa sztywne wzorce grupowe
+    // (\d{3} dosłowne) wymagały prawdziwej cyfry w każdej pozycji. Scalone w jeden elastyczny
+    // wzorzec, ten sam mechanizm co PESEL.
+    @Test fun `NIP z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "4261417803" -> "4261A17803" ("4" rozpoznane jako "A")
+        val r = pseudonymize("Dłużnik zamieszkały przy Polnej 4 NIP: 426-1A1-78-03 zarejestrowany w Krakowie.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "426-1A1-78-03")
+        assertNotInOutput(r, "1A1")
     }
 
     // =========================================================================

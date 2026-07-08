@@ -315,9 +315,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
     // Wzorce NIE są w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
     // (?:[^\S\n]+\w+)? — opcjonalny modyfikator: "NIP nabywcy:", "NIP świadka:", "NIP sprzedawcy:"
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
-    // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX)
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
+    // BUG-NIP-OBCA-LITERA (zgłoszone przez Pawła 08.07, "426-1A1-78-03" jawne): NIP miał
+    // komentarz "analogicznie do PESEL" ale NIGDY nie dostał tolerancji CTX_STRAY którą PESEL
+    // dostał 07.07 (BUG-PESEL-OBCA-LITERA) — dwa sztywne wzorce grupowe (3-3-2-2 i 3-2-2-3,
+    // \d{3} dosłowne) wymagały PRAWDZIWEJ cyfry w każdej pozycji, żadna nie tolerowała
+    // pojedynczej obcej litery OCR ("4"→"A"). Scalone w jeden elastyczny wzorzec (ten sam
+    // styl co PESEL) — nie dba o konkretne grupowanie, tylko o łączną długość cyfr+separatorów,
+    // z tolerancją jednej obcej litery gdy zaraz po niej jest znowu prawdziwa cyfra.
+    TOKEN_NUMER to Regex(
+        """(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*""" +
+        """\d(?:[\d \t\-.]|$CTX_STRAY(?=[ \t]?\d)){6,14}\d\b"""
+    ),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
