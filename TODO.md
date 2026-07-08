@@ -8,57 +8,42 @@
 
 ---
 
-## PRIORYTET NASTĘPNEJ SESJI — `\b` (granica słowa) nie rozpoznaje polskich liter diakrytycznych
+## PRIORYTET NASTĘPNEJ SESJI — sprawdzić wyniki benchmarku 08.07 (fresh+stały+v2)
 
-Odkryte 07.07 wieczór podczas diagnozy KWOTA ("15 000,00 zł" niezamaskowane mimo poprawnego
-wzorca). **Potwierdzone Javą, nie domysł:** `\b` w Kotlinie/Javie domyślnie używa ASCII-only
-definicji `\w` — polskie litery (ą,ć,ę,ł,ń,ó,ś,ź,ż) NIE są "literami słowa" dla `\b`. Każdy
-wzorzec kończący się dosłownie na takiej literze tuż przed `\b` (np. `zł\b`) ma granicę słowa
-która NIGDY nie występuje → całe dopasowanie pęka, bez wyjątku, zawsze. To nie jest
-przypadkowa degradacja OCR — to bug obecny od zawsze (potwierdzone: identyczny kod na
-gałęzi `master`, git blame pokazuje że `\b` było tam od początku wzorca).
+Paweł odpalił benchmark PO wszystkich fixach z 08.07 (commit `1b0d7b4`), porównując z
+baseline z rana tego samego dnia. Zacznij od `benchmark_results/fresh/2026-07-08_*`,
+`staly/2026-07-08_*`, `v2/2026-07-08_*` (najnowsze katalogi) — sprawdź KWOTA recall
+(oczekiwana poprawa: cross-newline fix + A.9c/A.9d + O-run normalizer) i czy któryś z
+33 fixów w commicie nie wprowadził regresu gdzie indziej (NUMER, ADRES, OSOBA).
 
-**Znane potwierdzone miejsca (grep, nie wyczerpujące):**
-- `StructuralEngine.kt:512` i `:522` — sufiks/prefiks waluty KWOTA (`...zł|PLN|...)\b`)
-- `StructuralEngine.kt:676` — kwota słownie (`...zł|groszy|grosze|grosz)\b`)
-- `NameEngine.kt:349` (VERB_ENDINGS) — końcówki czasowników, wiele alternatyw kończy się na
-  ą/ę/ł (`ał|ała|...|ują|ę|ą|...)\b`) — używane do rozpoznawania granic zdań, wpływ na OSOBA
-  nieprzebadany
-- `NameEngine.kt:363` (TITLE_ADJECTIVE_ENDINGS) — ten sam kształt (`...ową)\b`)
-- `NameEngine.kt:401, 413, 457` — dopasowania nazwisk kończące się klasą `[a-ząćęłńóśźż...]+\b`
-  — jeśli nazwisko/wyraz akurat kończy się na diakrytyk, granica może nie zadziałać (nie
-  potwierdzone czy realnie odbija się na recall — OSOBA ma wysoki recall w benchmarku, więc
-  albo rzadko trafia, albo inne warstwy łapią mimo tego)
+## ZAMKNIĘTE 08.07 — `\b` diakrytyki + cross-newline + KWOTA bez waluty (commit 1b0d7b4)
 
-**Dlaczego NIE naprawione dziś:** brak jednego miejsca w kodzie żeby to zamknąć raz — każdy
-regex budowany osobno przez `Regex("""...""")`, zero wspólnej fabryki. Zamiast łatać każde
-miejsce z osobna (dokładnie ten błąd co Paweł zabronił dziś przy IBAN) — potrzebna JEDNA
-współdzielona stała (np. `NOT_PL_WORD = """(?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9_])"""`, ten sam
-mechanizm co już istnieje w AnchorEngine A.9 dla dokładnie tego samego przypadku KWOTA —
-`(?![a-ząćęłńóśźż])` zamiast `\b`) i podmiana `\b` na nią we wszystkich potwierdzonych
-miejscach na raz, świadomie, nie punktowo.
+Priorytet z 07.07 wieczór (`\b` nie rozpoznaje polskich liter diakrytycznych) w pełni
+zamknięty, plus odkryty i naprawiony osobny, większy bug tego samego dnia (cross-newline
+w KWOTA). Pełna lista w treści commita `1b0d7b4` — skrót:
+- `WORD_START_UNICODE`/`WORD_END_UNICODE` (StructuralEngine.kt) — wiodący/końcowy `\b`
+  ASCII-only zamieniony we wszystkich potwierdzonych miejscach (KWOTA, NameEngine,
+  AddressEngine, ID_CARD).
+- BUG-KWOTA-CROSS-NEWLINE + audyt ogólny (33 miejsca, 4 pliki): keyword + goły `\s` +
+  wartość kradło kotwicę z sąsiedniej, niepowiązanej linii — potwierdzone traceMode.
+- A.9c/A.9d (AnchorEngine): KWOTA bez waluty/keywordu — sam kształt (przecinek+2 cyfry,
+  albo cyfra+mnożnik słowny tysiąc/milion/miliard) wystarczy, decyzja Pawła.
+- OCR_ZERO_RUN_IN_AMOUNT (OcrNormalizer): run 2+ liter O w kwocie → zera, u źródła.
+- Ogólny cleanup ogonów bez spacji po tokenie w AnchorEngine (token+"/"+tekst → token).
+- Guard `MIASTO_NIEZAMASKOWANE` (OutputGuard) — gołe miasto bez kodu = YELLOW, nie
+  auto-mask (decyzja produktowa Pawła).
+- Nowa zasada robocza: drobne bugi znalezione przy okazji naprawiać od razu, bez pytania
+  (patrz `feedback_fix_small_bugs_without_asking.md` w pamięci Claude).
 
-**Do zrobienia następnej sesji:**
-1. Pełny audyt (nie tylko grep na literał+\b — alternacje z `|` maskują to, trzeba przejrzeć
-   ręcznie każdą regułę z `\b` na końcu i sprawdzić czy JAKAKOLWIEK alternatywa/zakres znaków
-   może się skończyć na polskiej literze).
-2. Zdefiniować współdzieloną stałą (rozważyć wspólny plik/obiekt zamiast duplikować w każdym
-   z 3+ plików — NIE kopiować tej samej stałej do każdego pliku z osobna, to też byłoby
-   rozproszenie).
-3. Podmienić `\b` → stała, zweryfikować Javą PRZED Kotlinem (jak dziś).
-4. Rozważyć czy to nie uzasadnia jednego alternatywnego podejścia: `(?U)` (flaga
-   UNICODE_CHARACTER_CLASS) na poziomie kompilacji wzorca zamiast lookahead — sprawdzić czy
-   Kotlin/Java na to pozwala bez zmiany zachowania `\d`/`\w` gdzie indziej (ryzyko: `\d` pod
-   UNICODE_CHARACTER_CLASS może zacząć łapać cyfry spoza ASCII — do zweryfikowania Pythonem/
-   Javą przed wyborem tej drogi).
-
-**EMAIL — wątek NIEDOKOŃCZONY, osobny od powyższego:** `p1otr.wisn1ewski @ kance1aria .pl`
+**EMAIL — wątek NADAL NIEDOKOŃCZONY, nietknięty 08.07:** `p1otr.wisn1ewski @ kance1aria .pl`
 (spacje wokół @ ORAZ spacja przed .pl jednocześnie, z testu `test_anchor_full.txt` linia 10)
 wyszło niezamaskowane na telefonie, ale wzorzec AnchorEngine A.2 przetestowany w izolacji
 (Javą) DOPASOWUJE się poprawnie do tego dokładnego tekstu. Mechanizm awarii nieznany —
-prawdopodobnie inna warstwa wcześniej w potoku koliduje (ten sam wzorzec co dzisiejsze bugi
-PESEL/IBAN: coś kradnie fragment zanim AnchorEngine dostanie szansę). Nie diagnozowane do
-końca — do zrobienia następnym razem z pełnym `test_anchor_full.txt` jako punktem startu.
+prawdopodobnie inna warstwa wcześniej w potoku koliduje. Nie diagnozowane do końca — do
+zrobienia z pełnym `test_anchor_full.txt` jako punktem startu. Skoro dziś naprawiono
+analogiczny "coś kradnie kotwicę przed AnchorEngine" bug dla KWOTA (cross-newline) — warto
+sprawdzić czy EMAIL nie cierpi na TEN SAM defekt (audyt `\s` objął tylko keyword-patterns,
+nie sam wzorzec email A.2 — do zweryfikowania).
 
 ---
 
