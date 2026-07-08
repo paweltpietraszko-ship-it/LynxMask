@@ -200,8 +200,16 @@ internal fun applyAnchorEngine(
     // dalszego zdania (np. "...1963 roku zamieszkały w Krakowie" — stop po "1963").
     // ------------------------------------------------------------------
     // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* po dob/date of birth/data urodzenia -> [^\S\n]*
+    // BUG-DATA-UR-ZJADA-PESEL-FIX (08.07, znaleziony w benchmarku po fixach — nie regres,
+    // mechanizm istniał od 01.07/BUG-DATA-SLOWNA-FIX, naprawiony bez pytania): gdy OCR
+    // wstawia spację W ŚRODKU daty cyfrowej ("08. 07.1985"), to samo w sobie zużywa już
+    // 1 z 2 dozwolonych "dodatkowych słów" — zostaje miejsce na JESZCZE JEDNO, które może
+    // być zupełnie innym słowem-kotwicą ("PESEL"), zjedzonym razem z datą i odbierającym
+    // kontekst prawdziwemu numerowi PESEL zaraz po nim (doc_00417, dwa bugi na raz: BUG_SILNIKA
+    // dla daty + BRAK_W_OCR dla pesela bez kotwicy). Fix: (?!KEYWORD\b) przed każdym dodatkowym
+    // słowem — nie pozwól "dodatkowemu słowu" być znanym słowem-kotwicą innej encji.
     applyAll(
-        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+\S+){0,2}"""),
+        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+(?!(?:PESEL|NIP|REGON|IBAN|Nr|Numer|KRS|KW|PWZ)\b)\S+){0,2}"""),
         TOKEN_NUMER
     )
 

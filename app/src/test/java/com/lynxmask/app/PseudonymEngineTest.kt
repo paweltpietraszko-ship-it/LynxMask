@@ -271,6 +271,18 @@ class PseudonymEngineTest {
             r.pseudonymizedText.contains("500 złotych"))
     }
 
+    // BUG-DATA-UR-ZJADA-PESEL-FIX (08.07, znaleziony w benchmarku po fixach — pre-existing,
+    // nie regres tej sesji): data urodzenia z OCR-spacja w środku ("08. 07.1985") zjadała
+    // dodatkowo słowo "PESEL", zabierając kotwicę prawdziwemu numerowi PESEL zaraz po nim.
+    @Test fun `data urodzenia z rozbita spacja nie zjada slowa PESEL`() {
+        val r = pseudonymize("Data urodzenia 08. 07.1985 PESEL 44051401459")
+        assertFalse("Słowo PESEL nie powinno zniknąć wewnątrz tokenu daty: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("07.1985 PESEL"))
+        val peselStillMasked = !r.pseudonymizedText.contains("44051401459")
+        assertTrue("PESEL po naprawie powinien nadal mieć kotwicę i być zamaskowany: ${r.pseudonymizedText}",
+            peselStillMasked)
+    }
+
     // BUG-A9C-LISTA-KWOT-FIX (08.07, test telefon: tylko OSTATNIA z 3 kwot w jednej
     // linii się maskowała). Brak tolerancji spacji wokół przecinka + zbyt szeroki
     // lookahead (odrzucał kwotę gdy zaraz po niej był przecinek ROZDZIELAJĄCY listę,
