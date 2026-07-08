@@ -97,6 +97,29 @@ class CityLookupTest {
         }
     }
 
+    // BUG-DIAKRYTYKI-GRANICA + BUG-CITY-PREP-CASE-FIX (08.07, test telefon
+    // test_b_word_boundary_diacritics_08_07.txt, sekcje B7-B9): miasto po przyimku w formie
+    // NIEODMIENIONEJ kończącej się na polską literę diakrytyczną (ń, ź) zostawało jawne —
+    // dwa nałożone bugi: \b nie rozpoznawał granicy po diakrytyku (WORD_END_UNICODE fix),
+    // i globalne (?i) na całym CITY_PREP_REGEX pozwalało "opcjonalnemu drugiemu słowu"
+    // złapać dowolne małe słowo z dalszej części zdania ("Toruń dnia"), co psuło lookup
+    // w cityForms i cofało cały match.
+    @Test fun `miasto nieodmienione po przyimku z konczaca sie diakrytykiem nie zostaje jawne`() {
+        val cases = listOf(
+            "Umowa zawarta w Toruń dnia 01.01.2025." to "toruń",
+            "Zamawiający zamieszkały w Poznań od 2019 roku." to "poznań",
+            "Dostawa towaru do Łódź w terminie 14 dni." to "łódź"
+        )
+        for ((input, city) in cases) {
+            val result = PseudonymEngine.pseudonymize(input, emptyList())
+            assertFalse("Miasto '$city' zostało jawne (osierocone) w wyniku: ${result.pseudonymizedText}",
+                result.pseudonymizedText.lowercase().contains(city))
+            val adresTokens = result.tokenMap.filterKeys { it.startsWith("ADRES_") }
+            assertTrue("Miasto '$city' nie oznaczone jako ADRES w: $input  tokeny=$adresTokens",
+                adresTokens.values.any { it.lowercase().contains(city.take(4)) })
+        }
+    }
+
     @Test fun `miasto przed kodem pocztowym tagowane jako ADRES`() {
         val cases = listOf(
             "Warszawa, 00-001" to "Warszawa",

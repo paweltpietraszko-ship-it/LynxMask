@@ -323,4 +323,53 @@ class OutputGuardRedesignFpTpTest {
         assertTrue("PL_PREFIX nie powinien być flagowany (reguła usunięta)",
             yellow(guard("Konto PL6110900104000000712")).none { it.label == "PL_PREFIX" })
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // YELLOW: MIASTO_NIEZAMASKOWANE (08.07, brief Cursor — decyzja właściciela:
+    // gołe miasto ze słownika bez kontekstu strukturalnego = tylko ostrzeżenie,
+    // NIE auto-maskowanie — zbyt duży FP na wieloznacznych słowach typu "warszawski").
+    // ════════════════════════════════════════════════════════════════════════
+
+    private fun withCities(cities: Set<String>, streets: Set<String> = emptySet(), block: () -> Unit) {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(cities = cities, streets = streets)
+        try { block() } finally {
+            LookupTables.resetForTesting()
+            LookupTables.initializeForTesting()
+        }
+    }
+
+    @Test fun miastoNiezamaskowaneGoleMiastoFlagged() = withCities(setOf("gdańsk")) {
+        assertTrue(hasLabel(yellow(guard("Siedziba: Gdańsk")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoNiezamaskowanePoPrzyimkuFlagged() = withCities(setOf("krakowie")) {
+        // symuluje stan SPRZED fixu CITY_PREP — miasto po przyimku zostało jawne
+        assertTrue(hasLabel(yellow(guard("Klient mieszka w Krakowie.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoJuzZamaskowaneWTejSamejLinniNieFlagowane() = withCities(setOf("warszawie")) {
+        // symuluje stan PO silniku: linia ma już token ADRES_NNN, nie duplikuj ostrzeżenia
+        assertFalse("Linia z istniejącym ADRES_001 nie powinna dodatkowo dostać MIASTO_NIEZAMASKOWANE",
+            hasLabel(yellow(guard("Działalność prowadzona w Warszawie, ADRES_001.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun zwykleSloWoBezCityFormsNieFlagowane() = withCities(setOf("gdańsk")) {
+        assertFalse(hasLabel(yellow(guard("Zamawiający zlecił wykonanie Usługi.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoBedaceTakzeUlicaNieFlagowaneJakoMiasto() =
+        withCities(cities = setOf("gdańska"), streets = setOf("gdańska")) {
+            // "Gdańska" jako nazwa ulicy — zostaw ocenę Guardowi ulicy, nie duplikuj jako miasto
+            assertFalse(hasLabel(yellow(guard("Zamieszkały przy ul. Gdańska 5.")), "MIASTO_NIEZAMASKOWANE"))
+        }
+
+    @Test fun miastoDwuwyrazoweNiezamaskowaneFlagged() = withCities(setOf("zielona góra")) {
+        assertTrue(hasLabel(yellow(guard("Siedziba spółki: Zielona Góra")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoZaczynajaceSieNaDiakrytykFlagged() = withCities(setOf("łódź")) {
+        // regresja wiodącego \b — "Łódź" jako pierwsze słowo zdania
+        assertTrue(hasLabel(yellow(guard("Łódź to duże miasto.")), "MIASTO_NIEZAMASKOWANE"))
+    }
 }

@@ -209,4 +209,65 @@ class OcrNormalizerDigitContextTest {
         assertTrue("'Wars zawa' nadal powinno być sklejone do 'Warszawa'",
             result.normalizedText.contains("Warszawa"))
     }
+
+    // ── OCR_ZERO_RUN_IN_AMOUNT (krok 14b, 08.07) — run 2+ liter O w kwocie ──────
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT naprawia OOO oddzielone spacja od cyfry`() {
+        // OCR_DIGIT_IN_CONTEXT nie łapie tego — spacja przed "OOO" łamie lookbehind (?<=\d)
+        val result = OcrNormalizer.normalize("kwota: 15 OOO,OO zł")
+        assertTrue(result.normalizedText.contains("15 000,00"))
+        assertFalse(result.normalizedText.contains("OOO"))
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT naprawia cala kwote bez etykiety`() {
+        val result = OcrNormalizer.normalize("15 OOO,OO zł")
+        assertTrue(result.normalizedText.contains("15 000,00"))
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT naprawia druga grupe ktora nie dotyka cyfry bezposrednio`() {
+        // "23O 5OO PLN" — historyczny przypadek (test_anchor_full.txt): stary
+        // OCR_DIGIT_IN_CONTEXT naprawiał tylko "23O" (bo "3" jest tuż przed "O"), nie
+        // dotykał "5OO" bo po nim jest "PLN" (litery), nie cyfra — wymóg lookaheadu (?=\d)
+        // nie był spełniony. Nowa reguła łapie CAŁE wyrażenie liczbowe naraz.
+        val result = OcrNormalizer.normalize("23O 5OO PLN")
+        assertTrue("Oczekiwano '230 500 PLN', wynik: ${result.normalizedText}",
+            result.normalizedText.contains("230 500"))
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT naprawia kwote ze spacjami wokol przecinka`() {
+        val result = OcrNormalizer.normalize("15 OOO , OO")
+        assertTrue("Oczekiwano '15 000 , 00', wynik: ${result.normalizedText}",
+            result.normalizedText.contains("15 000 , 00"))
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT nie rusza pojedynczej litery O`() {
+        // Tylko RUN 2+ liter O jest sygnałem OCR dla TEJ reguły — pojedyncze "O" zostaje
+        // nietknięte przez OCR_ZERO_RUN_IN_AMOUNT, zbyt duże ryzyko FP.
+        // UWAGA (druga poprawka tego testu, 08.07): "5O1" (litera MIĘDZY dwiema cyframi)
+        // to dokładnie kształt który OSOBNA, WCZEŚNIEJSZA reguła OCR_DIGIT_IN_CONTEXT
+        // (krok 14, sprzed dzisiejszej sesji) świadomie konwertuje — pierwsza wersja tego
+        // testu myliła to z moją nową regułą. "5O" na końcu wyrazu (bez cyfry zaraz po)
+        // nie dotyka ANI OCR_DIGIT_IN_CONTEXT ANI OCR_PHONE_AFTER_KW — zweryfikowane Javą.
+        val result = OcrNormalizer.normalize("zebrał 5O punktów")
+        assertTrue("Pojedyncze 'O' na końcu liczby (bez cyfry po nim) nie powinno być zamienione: ${result.normalizedText}",
+            result.normalizedText.contains("5O"))
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT nie rusza czystego tekstu bez cyfr`() {
+        val result = OcrNormalizer.normalize("dr Kowalski")
+        assertEquals("Tekst bez cyfr na początku nie powinien się zmienić",
+            "dr Kowalski", result.normalizedText)
+    }
+
+    @Test
+    fun `OCR_ZERO_RUN_IN_AMOUNT nie psuje czystej kwoty bez liter O`() {
+        val result = OcrNormalizer.normalize("49 999,99 zł")
+        assertTrue(result.normalizedText.contains("49 999,99"))
+    }
 }

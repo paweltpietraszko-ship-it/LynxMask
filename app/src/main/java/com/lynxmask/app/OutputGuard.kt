@@ -117,6 +117,41 @@ internal fun runOutputGuard(
             hits += hit("OSOBA_NIEZAMASKOWANE", "YELLOW", m)
     }
 
+    // ── YELLOW: miasto ze słownika zostało jawne (bez auto-maskowania) ──────
+    // Decyzja właściciela (08.07, brief Cursor): NIE auto-maskować gołych miast bez
+    // kontekstu strukturalnego (kod pocztowy/ul./przyimek — to już robi AddressEngine/
+    // CITY_PREP) — zbyt duży FP na wieloznacznych słowach ("warszawski", "Gdański port",
+    // nazwy instytucji). Guard tylko OSTRZEGA, nie maskuje.
+    // Działa na pseudonymizedText (RAW, nie na `text` z podmienionymi ⟦TOKEN⟧) — potrzebuje
+    // widzieć prawdziwe tokeny ADRES_NNN żeby wykryć "ta sama linia ma już adres" i uniknąć
+    // podwójnego flagowania tego samego fragmentu. Wiodący/końcowy \b zastąpiony przez
+    // WORD_START_UNICODE/WORD_END_UNICODE (StructuralEngine.kt) — nazwa miasta może zaczynać
+    // się lub kończyć na polską literę diakrytyczną (Łódź, Żywiec, Ostrów).
+    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+        val cityWordRe = Regex(
+            """$WORD_START_UNICODE([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})""" +
+                """(?:[^\S\n]([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,}))?$WORD_END_UNICODE"""
+        )
+        val adresTokenRe = Regex("""\bADRES_\d{3}\b""")
+        cityWordRe.findAll(pseudonymizedText).forEach { m ->
+            val first = m.groupValues[1]
+            val second = m.groupValues[2]
+            val matchedCity = when {
+                second.isNotEmpty() && LookupTables.cityForms.contains("${first.lowercase()} ${second.lowercase()}") -> m.value
+                LookupTables.cityForms.contains(first.lowercase()) -> first
+                else -> null
+            } ?: return@forEach
+            // Nazwa jest jednocześnie ulicą (np. "Gdańska") — zostaw ocenę kontekstu Guardowi ADRES/ulicy, nie duplikuj.
+            if (LookupTables.streetForms.contains(matchedCity.lowercase())) return@forEach
+            val lineStart = pseudonymizedText.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
+            val lineEnd = pseudonymizedText.indexOf('\n', m.range.last).let { if (it < 0) pseudonymizedText.length else it }
+            val line = pseudonymizedText.substring(lineStart, lineEnd)
+            if (adresTokenRe.containsMatchIn(line)) return@forEach
+            val start = m.range.first
+            hits += GuardHit("MIASTO_NIEZAMASKOWANE", "YELLOW", matchedCity, start, start + matchedCity.length)
+        }
+    }
+
     // ── YELLOW bezwarunkowe (kontekst wbudowany w regex) ─────────────────────
     val yellowPatterns = listOf(
         // PESEL — silnik z S5 waliduje sumę kontrolną; co zostaje w tekście to albo błędna suma

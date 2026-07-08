@@ -116,10 +116,12 @@ internal fun applyAnchorEngine(
     // StructuralEngine R1 (linia 359, plain \d) już obsługuje ten wariant z jednym
     // dodatkowym słowem — jeśli R1 nie złapie, wolimy brak matcha niż śmieć.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* na kotwicach mobile/gsm/t —
+    // bez tego "mobile"/"gsm"/"t" na końcu linii kradnie cyfry z POCZĄTKU zupełnie innej linii.
     applyAll(
         Regex(
             """(?i)(?:\+4[8Bb]|0048|tel\w*+\.?|kom[oó]rk\w*+|kom\.?|fax\.?""" +
-            """|mobile\s*:?|gsm\s*:?|wew\.?|\bt\s*:)[^\S\n]*:?[^\S\n]*\(?$D(?:[\s\-.()]?$D)*""" +
+            """|mobile[^\S\n]*:?|gsm[^\S\n]*:?|wew\.?|\bt[^\S\n]*:)[^\S\n]*:?[^\S\n]*\(?$D(?:[\s\-.()]?$D)*""" +
             """(?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
         ),
         TOKEN_NUMER
@@ -197,8 +199,9 @@ internal fun applyAnchorEngine(
     // przed końcówką roku) na "12.O3". Limit {0,2} dodatkowych słów zapobiega zjadaniu
     // dalszego zdania (np. "...1963 roku zamieszkały w Krakowie" — stop po "1963").
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* po dob/date of birth/data urodzenia -> [^\S\n]*
     applyAll(
-        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob\s*:?|d\.o\.b\.?|date\s+of\s+birth\s*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data\s+urodzenia\s*:?)[^\S\n]*$D\S*(?:[^\S\n]+\S+){0,2}"""),
+        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+\S+){0,2}"""),
         TOKEN_NUMER
     )
 
@@ -236,15 +239,18 @@ internal fun applyAnchorEngine(
     // A.8  SYGNATURA — kotwica: keyword sygn. / KRS / KW
     // Widzę kotwicę → co po niej do końca linii (lub pierwszej spacji dla KRS/KW) → maskuję.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* przed [^\n]+ -> [^\S\n]* — "sygn." na
+    // końcu linii nie może przełknąć \n i skonsumować całą NASTĘPNĄ, niepowiązaną linię.
     applyAll(
-        Regex("""(?i)sygn\.?\s*(?:akt\.?)?\s*:?\s*[^\n]+"""),
+        Regex("""(?i)sygn\.?[^\S\n]*(?:akt\.?)?[^\S\n]*:?[^\S\n]*[^\n]+"""),
         TOKEN_NUMER
     )
     // BUG-KW-KWOTA-FIX (Cursor 01.07): \bKW\b zamiast gołego KW — bez granicy słowa,
     // (?i) sprawiał że "kw" wewnątrz zwykłego słowa "kwota" pasował do (?:KRS|KW),
     // zjadając kotwicę "kwota:" zanim A.9b (KWOTA prefix) dostał szansę jej użyć.
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]*
     applyAll(
-        Regex("""(?i)(?:\bKRS\b|\bKW\b)\s*:?\s*\S+"""),
+        Regex("""(?i)(?:\bKRS\b|\bKW\b)[^\S\n]*:?[^\S\n]*\S+"""),
         TOKEN_NUMER
     )
 
@@ -279,17 +285,67 @@ internal fun applyAnchorEngine(
     )
 
     // ------------------------------------------------------------------
+    // A.9c KWOTA — kotwica: SAM KSZTAŁT, bez waluty/keywordu (Paweł 08.07)
+    // Zasada właściciela: cyfry + [,.] + dokładnie 2 cyfry = kwota, koniec dyskusji —
+    // ten kształt (separator dziesiętny + 2 miejsca po przecinku) w polskim dokumencie
+    // prawie zawsze oznacza pieniądze, nawet bez "zł"/"PLN" obok. Biegnie PO A.9/A.9b
+    // (kotwica walutowa ma pierwszeństwo, precyzyjniejsza) — łapie tylko to, czego tamte
+    // dwie reguły NIE skonsumowały (matchOverlapsToken + fakt że kotwica walutowa już
+    // by to zabrała). To jedyna reguła w AnchorEngine gdzie kotwicą jest sam KSZTAŁT
+    // liczby, nie słowo — świadome odstępstwo, decyzja właściciela.
+    // Znane kompromisy (zaakceptowane, nie naprawiane punktowo):
+    //   - procent "23,50%" złapie się jako kwota (kosmetyczny FP, nie wyciek PII)
+    //   - data z 2-cyfrowym rokiem "15.03.24" złapie ogon "03,24" jako kwotę (rzadkie
+    //     w dokumentach formalnych — te używają 4-cyfrowego roku, który NIE pasuje
+    //     do wymogu "dokładnie 2 cyfry po separatorze")
+    // (?!D|[,.]D) na końcu — pełna data "15.03.2024" (4-cyfrowy rok) NIE łapie się jako
+    // "15,03" bo zaraz po "03" jest kolejna kropka+CYFRA (kontynuacja, nie koniec liczby).
+    // BUG-A9C-LISTA-KWOT-FIX (08.07, test PDF Pawła: "15 000,00 15000,00, 15 000,00"
+    // trzy kwoty w jednej linii, tylko OSTATNIA się maskowała): dwa braki naprawione —
+    // (1) [^\S\n]?[,.][^\S\n]? zamiast gołego [,.] — tolerancja spacji WOKÓŁ przecinka
+    // ("15 000 , 00", OCR rozjeżdża odstępy); (2) lookahead zawężony z "cokolwiek D lub
+    // przecinek" do "D LUB przecinek+D" — poprzednia wersja odrzucała kwotę gdy zaraz po
+    // niej był przecinek ROZDZIELAJĄCY listę kolejnych kwot (nie kontynuacja tej samej
+    // liczby), więc każda kwota oprócz ostatniej w linii ginęła.
+    // ------------------------------------------------------------------
+    applyAll(
+        Regex("""(?<![0-9OolIiSsBbZz])[0-9OolIiSsBbZz]{1,6}(?:(?:[.,]|[^\S\n])[0-9OolIiSsBbZz]{3})*[^\S\n]?[,.][^\S\n]?[0-9OolIiSsBbZz]{2}(?![0-9OolIiSsBbZz]|[,.][0-9OolIiSsBbZz])"""),
+        TOKEN_KWOTA
+    )
+
+    // ------------------------------------------------------------------
+    // A.9d KWOTA — kotwica: cyfra + mnożnik słowny (tysiąc/milion/miliard), bez
+    // wymogu keywordu (Paweł 08.07, mały bug naprawiony od razu bez pytania).
+    // Ten sam pomysł co A.9c (sam kształt wystarczy), tylko dla mnożnika słownego
+    // zamiast separatora dziesiętnego. Rozwiązuje trzy zgłoszone naraz przypadki:
+    //   - "15 tysięcy 30 milionów" bez żadnego keywordu (S4-A w StructuralEngine
+    //     wymaga keywordu typu "wysokości"/"kwota" — to jest fallback bez niego)
+    //   - to samo rozbite na dwie linie (każdy fragment łapie się osobno, nie
+    //     trzeba przekraczać \n — każda linia ma swój własny mnożnik)
+    //   - "15tysięcy" bez spacji między cyfrą a słowem (S4-A wymagało [^\S\n]+
+    //     czyli PRAWDZIWEJ spacji; tu separator jest opcjonalny [^\S\n]?)
+    // Guard (?<![0-9OolIiSsBbZz]) — nie zaczynaj w środku innej liczby.
+    // ------------------------------------------------------------------
+    applyAll(
+        Regex("""(?<![0-9OolIiSsBbZz])[0-9OolIiSsBbZz]{1,6}[^\S\n]?(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4})(?![\p{L}\p{N}_])""", RegexOption.IGNORE_CASE),
+        TOKEN_KWOTA
+    )
+
+    // ------------------------------------------------------------------
     // A.10 OSOBA — kotwica: tytuł dr / mgr / adw. / mec. / lek. / prof.
     // Widzę tytuł → 1–2 tokeny z wielkiej litery po nim → maskuję.
     // NameEngine obsługuje pary imię+nazwisko. AnchorEngine łapie resztki po OCR.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s+ -> [^\S\n]+ — tytuł ("dr"/"prof" itd.) na
+    // końcu linii nie może przełknąć \n i wziąć przypadkowego wielkoliterowego słowa
+    // z POCZĄTKU zupełnie innej, niepowiązanej linii jako rzekome imię/nazwisko.
     applyAll(
         Regex(
-            """(?i)(?:dr\s+(?:hab\.?\s+)?|prof\.?\s+|mgr\s+(?:inż\.?\s+)?|inż\.?\s+""" +
-            """|adw\.?\s+|mec\.?\s+|lek\.?\s+(?:med\.?\s+)?)""" +
+            """(?i)(?:dr[^\S\n]+(?:hab\.?[^\S\n]+)?|prof\.?[^\S\n]+|mgr[^\S\n]+(?:inż\.?[^\S\n]+)?|inż\.?[^\S\n]+""" +
+            """|adw\.?[^\S\n]+|mec\.?[^\S\n]+|lek\.?[^\S\n]+(?:med\.?[^\S\n]+)?)""" +
             """(?!(?:OSOBA|FIRMA|NUMER|EMAIL|KWOTA|ADRES)_)""" +
             """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,30}""" +
-            """(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
+            """(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
         ),
         TOKEN_OSOBA
     )
@@ -494,12 +550,28 @@ internal fun applyAnchorEngine(
     // Runda 1 (StructuralEngine) może zostawić: "+", "+4B", "tel.", "kom." przed tokenem.
     // Usuwamy je — sama cyfra jest już zamaskowana, prefix nie jest PII.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* — prefiks na końcu linii nie
+    // może zostać skasowany bo "przypadkiem" jest w pobliżu tokenu z zupełnie innej linii.
     val tok = """(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}"""
-    t = Regex("""\+4[8Bb]\s*(?=$tok)""").replace(t, "")   // "+4B NUMER_016" → "NUMER_016"
-    t = Regex("""\+\s*(?=$tok)""").replace(t, "")          // "+NUMER_013"    → "NUMER_013"
-    t = Regex("""(?i)(?:tel\.?|kom\.?|fax\.?)\s*(?=$tok)""").replace(t, "")  // "tel.NUMER_017" → "NUMER_017"
+    t = Regex("""\+4[8Bb][^\S\n]*(?=$tok)""").replace(t, "")   // "+4B NUMER_016" → "NUMER_016"
+    t = Regex("""\+[^\S\n]*(?=$tok)""").replace(t, "")          // "+NUMER_013"    → "NUMER_013"
+    t = Regex("""(?i)(?:tel\.?|kom\.?|fax\.?)[^\S\n]*(?=$tok)""").replace(t, "")  // "tel.NUMER_017" → "NUMER_017"
     // "ul. ADRES_003" → "ADRES_003", "adres: ul. ADRES_003" → "ADRES_003"
-    t = Regex("""(?i)(?:adres\s*:?\s*)?(?:ul[.,]|al\.|os\.|pl\.|u\.)[^\S\n]*(?=ADRES_\d{3})""").replace(t, "")
+    t = Regex("""(?i)(?:adres[^\S\n]*:?[^\S\n]*)?(?:ul[.,]|al\.|os\.|pl\.|u\.)[^\S\n]*(?=ADRES_\d{3})""").replace(t, "")
+
+    // ------------------------------------------------------------------
+    // CLEANUP: sierocące ogony BEZ SPACJI po istniejących tokenach (Paweł 08.07)
+    // Runda 1 wstawia spację po tokenie tylko gdy następny znak to litera/cyfra
+    // (assignToken pre/suf) — ale NIE gdy to interpunkcja typu "/"/"-"/"." (np. "FV 12/06/
+    // 2026/WAW" → wzorzec daty zabiera "12/06/2026", zostaje "NUMER_002/WAW" ze skrawkiem
+    // po sklejeniu bezpośrednio przecinkiem). Ten sam mechanizm bugu co historyczne
+    // BUG-NR-SIEROTA/BUG-NUMER-FAKTURA-* — zamiast łatać każdy wzorzec z osobna (Structural
+    // ma ich dziesiątki), jeden ogólny "sprzątacz" tutaj: token + "/"/"-"/"." bez spacji +
+    // ciąg alfanumeryczny → dociągamy ogon do tokenu (znika, tak jak reszta wartości).
+    // Guard (?!$tok\b) — dwa PRAWDZIWE sąsiadujące tokeny (np. "NUMER_009/NUMER_006",
+    // realny przypadek z testu PDF) NIE mogą być ucięte w połowie drugiego tokenu.
+    // ------------------------------------------------------------------
+    t = Regex("""($tok)(?:[/\-.](?!$tok\b)[A-Za-z0-9]+)+""").replace(t) { it.groupValues[1] }
 
     return t
 }

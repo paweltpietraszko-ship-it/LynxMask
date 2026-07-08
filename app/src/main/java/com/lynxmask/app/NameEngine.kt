@@ -506,8 +506,18 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
+// BUG-DIAKRYTYKI-GRANICA (StructuralEngine.kt, WORD_END_UNICODE): \b końcowy zastąpiony —
+// nazwa miasta po przyimku ("do Łodzi", "w Gdyni") może kończyć się polską literą diakrytyczną.
+// BUG-CITY-PREP-CASE-FIX (08.07, brief Cursor): globalne (?i) na całym wzorcu znosiło wymóg
+// wielkiej litery na DRUGIM (opcjonalnym) słowie miasta dwuwyrazowego — "w Toruń dnia" łapało
+// "Toruń dnia" jako jeden kandydat (bo "dnia" pod IGNORE_CASE też pasuje do [A-ZŁŚŹĆŃĄĘÓŻ]),
+// cityForms.contains("toruń dnia") zawodził, cały match odrzucony, "Toruń" zostawało jawne.
+// (?i:...) ograniczone TYLKO do przyimka — reszta wzorca (Title-Case miasta) zostaje
+// świadomie case-sensitive, zgodnie z przeznaczeniem.
+// BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s w lookbehind -> [^\S\n] — przyimek na końcu
+// linii + nazwa własna na początku ZUPEŁNIE INNEJ linii nie może być brana za "miasto po przyimku".
 internal val CITY_PREP_REGEX = Regex(
-    """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
+    """(?<=\b(?i:w|z|do|ze|we|nad|pod|przy|przez|na)[^\S\n])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)$WORD_END_UNICODE"""
 )
 // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): STREET_NAME_CHARS (StructuralEngine.kt) — wspólne
 // źródło znaków nazwy ulicy. Współdzielone z AddressEngine.kt (Blok 1, STREET_DICT) — jedyny
@@ -541,11 +551,15 @@ private fun applyCityLookup(
 // Pola dowodu osobistego — maskują TYLKO wartość, etykieta zostaje w tekście.
 // Obsługują ALL-CAPS (stary dowód) i mixed-case (nowy dowód).
 // ID_CARD_PARENT przed FIRSTNAME — bardziej szczegółowy wzorzec ma pierwszeństwo.
+// BUG-DIAKRYTYKI-GRANICA: \b końcowy -> WORD_END_UNICODE — imię może kończyć się diakrytykiem
+// (np. "Stanisława", odmiana dopełniacza kończąca się na "ą"/"ę" itp.).
+// BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s -> [^\S\n] — "imię (ojca/matki)" to kotwica,
+// nie może przełknąć \n i ukraść imienia z zupełnie innej, niepowiązanej linii/akapitu.
 private val ID_CARD_PARENT_REGEX = Regex(
-    """(?i)\bimi[eę]\s+(?:ojca|matki|rodzica)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+    """(?i)\bimi[eę][^\S\n]+(?:ojca|matki|rodzica)[^\S\n]*:?[^\S\n]*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})$WORD_END_UNICODE"""
 )
 private val ID_CARD_FIRSTNAME_REGEX = Regex(
-    """(?i)\bimi[eę](?!\s+(?:ojca|matki|rodzica)\b)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+    """(?i)\bimi[eę](?![^\S\n]+(?:ojca|matki|rodzica)\b)[^\S\n]*:?[^\S\n]*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})$WORD_END_UNICODE"""
 )
 
 // PERF-FIX v1.6: titlePattern jako lazy val — poprzednio był kompilowany na nowo

@@ -1,0 +1,80 @@
+TEST — KWOTA regresja (15 tys. niezakryte mimo zielonych testów jednostkowych, 08.07.2026)
+Cel: rozdzielić przypadki jeden-na-linię żeby wiedzieć DOKŁADNIE która odmiana psuje się na
+telefonie, skoro PseudonymEngineTest jest zielony dla tych samych wartości w izolacji.
+
+Jak czytać wynik:
+- JAWNE = cała kwota widoczna w tekście (problem)
+- CZĘŚCIOWO JAWNE = token powstał, ale kawałek liczby/waluty został obok jawny (problem)
+- TOKEN = pełny token KWOTA, zero jawnych cyfr/liter kwoty (OK)
+- Zapisz DOKŁADNIE który wariant (numer w nawiasie []) jest jawny — to najważniejsza informacja
+
+================================================================================
+GRUPA 1 — kontrolne kwoty które (wg Ciebie) DZIAŁAJĄ poprawnie
+================================================================================
+
+[K1]
+230 500 PLN
+
+[K2]
+kwota: 49 999,99 zł
+
+[K3]
+wartość: 1 250 000,00 zł
+
+================================================================================
+GRUPA 2 — "15 tysięcy" w różnych zapisach, KAŻDY NA WŁASNEJ LINII (izolowany)
+================================================================================
+
+[K4] czyste cyfry, bez etykiety
+15 000,00 zł
+
+[K5] litera O zamiast zer, bez etykiety
+15 OOO,OO zł
+
+[K6] czyste cyfry, Z etykietą "kwota:"
+kwota: 15 000,00 zł
+
+[K7] litera O zamiast zer, Z etykietą "kwota:"
+kwota: 15 OOO,OO zł
+
+[K8] czyste cyfry, bez grosze (całe złote)
+15 000 zł
+
+[K9] litera O zamiast zer, bez grosze
+15 OOO zł
+
+================================================================================
+GRUPA 3 — czy liczba "15" akurat koliduje z czymś (kontrola z INNĄ liczbą, ten sam kształt)
+================================================================================
+
+[K10] ten sam kształt co K4, liczba 22 zamiast 15
+22 000,00 zł
+
+[K11] ten sam kształt co K5, liczba 22 zamiast 15
+22 OOO,OO zł
+
+================================================================================
+GRUPA 4 — dokładnie ten sam blok co w test_anchor_full.txt (linie 104-114), RAZEM
+Cel: sprawdzić czy problem pojawia się TYLKO gdy linie sąsiadują ze sobą (interakcja
+międzyliniowa / matchOverlapsToken), a nie gdy każda linia jest testowana osobno wyżej.
+================================================================================
+
+[K12] cały blok razem
+15 000,00 zł
+230 500 PLN
+kwota: 49 999,99 zł
+wartość: 1 250 000,00 zł
+15 OOO,OO zł
+23O 5OO PLN
+kwota: 49 999,99 z1
+wartość: 1 25O OOO,OO zł
+15.000,00 zł
+kwota:49 999,99 zł
+
+================================================================================
+NOTATKA DLA TESTERA
+Po pseudonimizacji wklej do wyniki_testy_reczne.txt:
+- dla KAŻDEGO numeru [K1]-[K12]: JAWNE / CZĘŚCIOWO JAWNE / TOKEN
+- jeśli JAWNE lub CZĘŚCIOWO — wklej dokładny fragment jaki widzisz (skopiuj z podglądu)
+- kolor tokenów (zielony/niebieski) jeśli DEBUG
+================================================================================

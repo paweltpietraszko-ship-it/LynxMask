@@ -363,8 +363,11 @@ object OcrNormalizer {
     // Przykład: "PESE1: T2030375656" → "PESE1: 72030375656"
     // Przykład: "PESEL T2030375656"  → "PESEL 72030375656"
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} (keyword->wartość, oba wystąpienia)
+    // -> [^\S\n]{0,3} — "PESEL" na końcu linii nie może wziąć 11 cyfropodobnych znaków
+    // z POCZĄTKU zupełnie innej, niepowiązanej linii.
     private val OCR_PESEL_WORD = Regex(
-        """(?i)(?<![a-zA-Z0-9])P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3}([TIlOSBGZ0-9]{11})(?!\d)"""
+        """(?i)(?<![a-zA-Z0-9])P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|][^\S\n]{0,3}:?[^\S\n]{0,3}([TIlOSBGZ0-9]{11})(?!\d)"""
     )
     private val OCR_NUMERIC_CHAR_MAP = mapOf(
         'T' to '7', 'I' to '1', 'l' to '1',
@@ -404,8 +407,12 @@ object OcrNormalizer {
     // zamiast prostej klasy znaków ze spacją — spacja dozwolona jako separator TYLKO
     // gdy nie zaczyna kształtu kodu pocztowego (\d{2}-).
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): pierwsze dwa \s{0,3} (keyword->wartość) ->
+    // [^\S\n]{0,3}. WEWNĘTRZNY \s(?!\d{2}-) (kontynuacja cyfr WEWNĄTRZ wartości PESEL,
+    // BUG-PESEL-KOD-SKLEJENIE-FIX 01.07) zostaje bez zmian — inny podtyp, świadomie
+    // toleruje \n między cyframi tej samej wartości.
     private val OCR_PESEL_SPLIT = Regex(
-        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|][^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -413,8 +420,9 @@ object OcrNormalizer {
     // Obsługuje "NIP:" i "NIP modyfikator:" (nabywcy, świadka, sprzedawcy itp.).
     // Gr. 1 = keyword + opcjonalny modyfikator + separator; Gr. 2 = garbled cyfry.
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} -> [^\S\n]{0,3}
     private val OCR_NIP_DIGITS = Regex(
-        """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+        """(?i)(NIP[^\S\n]{0,3}(?:\w{1,16}[^\S\n]{0,3})?:?[^\S\n]{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
     )
 
     // ----------------------------------------------------------
@@ -540,8 +548,9 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} -> [^\S\n]{0,3}
     private val OCR_REGON_DIGITS = Regex(
-        """(?i)(?<=REGON\s{0,3}:?\s{0,3})([TIlOSBGZ0-9]{9}(?:[TIlOSBGZ0-9]{5})?)(?!\d)"""
+        """(?i)(?<=REGON[^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOSBGZ0-9]{9}(?:[TIlOSBGZ0-9]{5})?)(?!\d)"""
     )
 
     // ----------------------------------------------------------
@@ -581,6 +590,20 @@ object OcrNormalizer {
     private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOIo]+(?=[\s\-./]*\d)""")
 
     // ----------------------------------------------------------
+    // OCR_ZERO_RUN_IN_AMOUNT (krok 14b, Paweł 08.07): OCR_DIGIT_IN_CONTEXT wymaga cyfry
+    // BEZPOŚREDNIO przed literą — nie łapie "15 OOO,OO" (spacja między "15" a "OOO" łamie
+    // lookbehind) ani "5OO" gdy po nim nie ma już cyfry tylko waluta ("5OO PLN"). Zasada
+    // Pawła: w wyrażeniu zaczynającym się od cyfry, RUN 2+ wielkich liter "O" to prawie na
+    // pewno zera (prawdziwe polskie słowo nigdy nie ma "OO"/"OOO" pod rząd) — dotyczy to
+    // całego wyrażenia liczbowego (grupy tysięcy + część dziesiętna), nie tylko sąsiedztwa
+    // pojedynczej cyfry. Fix u źródła (Warstwa 0) zamiast w D-klasie każdego silnika osobno.
+    // Pojedyncze "O" (bez rundy 2+) NIE jest konwertowane — zbyt duże ryzyko FP na "5O1" itp.
+    // ----------------------------------------------------------
+    private val OCR_ZERO_RUN_IN_AMOUNT = Regex(
+        """\b\d[\dO]{0,5}(?:[^\S\n][\dO]{3,4}){0,4}(?:[^\S\n]?[,.][^\S\n]?[\dO]{1,2})?\b"""
+    )
+
+    // ----------------------------------------------------------
     // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
     // literą — tylko gdy wynik trafia w słownik imion lub nazwisk.
     // "Be4ta" → "Beata", "Krzy5zt0f" → "Krzysztof", "N0w1ck1" → "Nowicki"
@@ -611,12 +634,16 @@ object OcrNormalizer {
     // Bez lookbehind — Android ICU wymaga bounded lookbehind; \w* / \s* w (?<=…) crashuje test.
     // {24,32} = max middle dla PL IBAN z spacjami (P + 32 + last = 34 znaków total).
     // Bez (?!\w): regex matchuje nawet gdy IBAN przylega bez separatora do kolejnego tokenu.
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,1}/\s+/\s{0,3} -> [^\S\n] warianty —
+    // "IBAN"/"konto" na końcu linii nie może wziąć znaków z POCZĄTKU innej, niepowiązanej linii.
     private val OCR_IBAN_DIGITS = Regex(
-        """(?i)((?:IBAN|Nr\s{0,1}kont\w{0,6}|kont\w{0,4}|N\s+kort\w{0,6})\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,32}[TIlOSBGZ0-9A-Z])"""
+        """(?i)((?:IBAN|Nr[^\S\n]{0,1}kont\w{0,6}|kont\w{0,4}|N[^\S\n]+kort\w{0,6})[^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,32}[TIlOSBGZ0-9A-Z])"""
     )
 
     // OCR_IBAN_PL_LOOSE: zdeformowany PL… bez poprawnej struktury (benchmark lvl 1–2)
-    private val OCR_IBAN_PL_LOOSE = Regex("""\bPL([TIlOSBGZ0-9A-Za-z\s]{20,40})\b""")
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s w klasie wartości -> spacja/tab dosłowne
+    // (bez \n) — "PL" na końcu linii nie może wciągnąć całej NASTĘPNEJ, niepowiązanej linii.
+    private val OCR_IBAN_PL_LOOSE = Regex("""\bPL([TIlOSBGZ0-9A-Za-z \t]{20,40})\b""")
 
     private fun isGarbledPlIban(raw: String): Boolean {
         val body = raw.drop(2)
@@ -955,6 +982,15 @@ object OcrNormalizer {
         text = OCR_DIGIT_IN_CONTEXT.replace(text) { m ->
             val fixed = m.value.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.value) corrections++
+            fixed
+        }
+
+        // 14b. OCR: run 2+ liter "O" w wyrażeniu liczbowym (nawet oddzielonym spacją od
+        // cyfry) → zera. Patrz OCR_ZERO_RUN_IN_AMOUNT wyżej.
+        text = OCR_ZERO_RUN_IN_AMOUNT.replace(text) { m ->
+            if (!m.value.contains("OO")) return@replace m.value
+            val fixed = m.value.map { if (it == 'O') '0' else it }.joinToString("")
+            corrections++
             fixed
         }
 

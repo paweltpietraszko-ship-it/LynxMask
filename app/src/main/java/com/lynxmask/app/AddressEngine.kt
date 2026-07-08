@@ -146,8 +146,11 @@ internal fun applyAddressEngine(
         // skleić z tekstem z NASTĘPNEJ linii (np. etykietą testu). [^\S\n] = spacja/tab,
         // nigdy nowa linia. Ten sam błąd istnieje w oryginale (nie naprawiany teraz — poza
         // scope v0), tu naprawiony dla nowego silnika.
+        // BUG-DIAKRYTYKI-GRANICA: \b końcowy -> WORD_END_UNICODE (StructuralEngine.kt) —
+        // nazwa miasta na końcu adresu może kończyć się polską literą diakrytyczną
+        // (np. "Łódź"), zwykły \b jest ASCII-only i wtedy nigdy się nie dopasowuje.
         val streetFullRe = Regex(
-            """((?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+            """((?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}$WORD_END_UNICODE"""
         )
         t = streetFullRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) return@fold acc
