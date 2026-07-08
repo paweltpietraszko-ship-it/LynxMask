@@ -145,4 +145,25 @@ class AddressEngineTest {
         assertNotInOutput(r, "00-001")
         assertTokenExists(r, TOKEN_ADRES)
     }
+
+    // BUG-ADRES-ZLEPIONY-BEZ-SPACJI (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "ul.Polna8,00-950Warszawa" w ogóle się nie odpalało): prefiks→nazwa, nazwa→numer,
+    // przecinek→kod, kod→miasto wszystkie wymagały co najmniej jednej spacji. Przy pełnym
+    // sklejeniu (bez spacji wcale) cały adres zostawał jawny, a nazwa ulicy trafiała do
+    // NameEngine i była błędnie maskowana jako nazwisko (OSOBA zamiast ADRES).
+    @Test fun `adres calkowicie zlepiony bez spacji jest maskowany jednym tokenem`() {
+        val r = pseudonymize("ul.Lipowa8,00-950Warszawa")
+        assertNotInOutput(r, "Lipowa")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-950")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse("Nazwa ulicy nie powinna trafić do OSOBA",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+    }
+
+    @Test fun `adres zlepiony bez kodu pocztowego jest maskowany`() {
+        val r = pseudonymize("Proszę o kontakt: ul.Lipowa8 to mój adres.")
+        assertNotInOutput(r, "Lipowa")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
 }
