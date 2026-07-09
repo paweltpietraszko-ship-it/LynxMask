@@ -8,6 +8,34 @@
 
 ---
 
+## PRIORYTET NASTĘPNEJ SESJI (09.07 wieczór) — Document Rebuilder: alignment raw↔normalized
+
+Gałąź `feature/document-export`. Pełny stan w memory Claude:
+`project_document_rebuilder_state.md` (**zacznij tu**), chronologia w
+`project_session_wrapup_2026-07-09.md`.
+
+Skrót: DOCX round-trip zbudowany, 3 luki PII zamknięte, 2 bugi silnika naprawione
+(AnchorEngine A.8 SYGNATURA na prozie, sklejanie zdań w pre-processingu emaili) — ale
+eksport DOCX odmawia zapisu (`MissingTokens`) dla KAŻDEGO tekstu, gdzie `OcrNormalizer`/
+pre-processing poprawi choć jeden znak (potwierdzone na 45-znakowym teście: "Be4ta
+Kamińska B3ata Woźniak 48 60l 234 567" → 0/4 encji zapisanych). Powód: poprawki dzieją
+się WEWNĄTRZ `pseudonymize()`, `DocxWriter` szuka w surowym tekście sprzed poprawek.
+
+**Plan (b) od Cursora, gotowy do implementacji (2-4 dni):**
+1. `PseudonymEngine.pseudonymize()` — zapisać `maskingBaseText` (tekst po normalizacji,
+   przed podmianą na tokeny).
+2. Nowa funkcja alignmentu (diff surowy↔`maskingBaseText`) w `document/`.
+3. `PseudonymResult.tokenRawRanges` (opcjonalne, tylko ścieżka DOCX).
+4. `DocxWriter.locateTokenRanges` — użyć zakresów gdy dostępne, fallback `indexOf` gdy nie.
+
+Test docelowy: dokument "Be4ta"/"60l" → `Success` zamiast `MissingTokens`.
+
+Odrzucone warianty: (a) pełna mapa pozycji przez każdy krok normalizacji (2-4 tygodnie,
+za drogie), (c) sama bramka "wyłącz normalizację dla DOCX" (niewystarczająca — silnik by
+w ogóle nie wykrył degradacji jak "Be4ta"/"60l").
+
+---
+
 ## PRIORYTET STRATEGICZNY (09.07, decyzja Pawła) — napraw "chory termometr" PRZED wersją angielską
 
 Paweł: dopóki benchmark testuje polskie dokumenty, może sam złapać kłamstwo benchmarku (czyta
