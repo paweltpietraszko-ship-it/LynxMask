@@ -49,6 +49,18 @@ internal fun rememberDocxExportLauncher(scope: CoroutineScope): (DocxArtifact, M
             val writeResult = context.contentResolver.openOutputStream(uri)?.use { out ->
                 writeDocxArtifact(export.artifact, export.tokenMap, export.sourceText, out)
             } ?: DocxWriteResult.Error("Nie udało się otworzyć pliku do zapisu")
+            // BUG-DOCX-PUSTY-PLIK-FIX (09.07, zgłoszenie Pawła z telefonu): CreateDocument
+            // tworzy plik w momencie wyboru lokalizacji, ZANIM cokolwiek do niego wpiszemy —
+            // przy odmowie zapisu (fail-closed) zostawał więc pusty, zepsuty plik na dysku,
+            // mylące razem z komunikatem błędu. Sprzątamy go, gdy zapis się nie powiódł.
+            if (writeResult !is DocxWriteResult.Success) {
+                try {
+                    context.contentResolver.delete(uri, null, null)
+                } catch (_: Exception) {
+                    // Sprzątanie best-effort — brak uprawnień/nieobsługiwany URI nie może
+                    // przesłonić prawdziwego komunikatu o odmowie zapisu niżej.
+                }
+            }
             withContext(Dispatchers.Main) {
                 val message = when (writeResult) {
                     is DocxWriteResult.Success -> "DOCX zapisany"
