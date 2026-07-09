@@ -35,9 +35,19 @@ private fun locateTokenRanges(plainText: String, tokenMap: Map<String, String>):
     return located.sortedBy { it.first.first }
 }
 
+/** Wynik zapisu — [missingTokens] niepuste = ODMOWA zapisu, nie ostrzeżenie po fakcie. */
+internal sealed interface DocxWriteResult {
+    data object Success : DocxWriteResult
+    /** Wartość z tokenMap nie znaleziona w plainText — zwykle OcrNormalizer coś zmienił
+     *  (patrz PseudonymEngine.kt:129, normalize() woła się WEWNĄTRZ pseudonymize, poza
+     *  kontrolą wołającego) — plainText w artefakcie jest SUROWY, tokenMap odnosi się do
+     *  tekstu PO normalizacji. Fail-closed: wolimy odmówić zapisu niż cicho zostawić PII
+     *  jawne w wyeksportowanym DOCX. Diagnoza Cursor 09.07. */
+    data class MissingTokens(val tokens: Set<String>) : DocxWriteResult
+    data class Error(val message: String) : DocxWriteResult
+}
+
 /**
- * @return true jeśli zapis się powiódł.
- *
  * BUG-DOCX-SPLIT-RUN (Faza 1a, znane ograniczenie): jeśli Word rozbił jedną frazę na kilka
  * `<w:t>` (segmentów), a dopasowana encja obejmuje więcej niż jeden segment — pierwszy
  * dostaje token, reszta jest czyszczona (pusty string), żeby fraza nie została zdublowana
@@ -47,9 +57,19 @@ internal suspend fun writeDocxArtifact(
     artifact: DocxArtifact,
     tokenMap: Map<String, String>,
     outputStream: OutputStream,
-): Boolean = withContext(Dispatchers.IO) {
+): DocxWriteResult = withContext(Dispatchers.IO) {
     try {
         val located = locateTokenRanges(artifact.plainText, tokenMap)
+
+        // BUG-DOCX-NORMALIZER-MISMATCH-FIX (09.07, diagnoza Cursor): jeśli jakiś token z
+        // tokenMap nie ma ANI JEDNEGO wystąpienia w plainText, znaczy że OcrNormalizer
+        // zmienił tekst na tyle, że wartość już nie pasuje 1:1 — nie wiemy CZY i GDZIE
+        // ta encja realnie wylądowała w dokumencie. Fail-closed zamiast eksportu z dziurą.
+        val missing = tokenMap.keys.filterNot { token -> located.any { it.second == token } }.toSet()
+        if (missing.isNotEmpty()) {
+            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — brak dopasowania dla: $missing")
+            return@withContext DocxWriteResult.MissingTokens(missing)
+        }
 
         // index w artifact.segments -> nowy tekst (null = bez zmian).
         val replacement = arrayOfNulls<String>(artifact.segments.size)
@@ -64,7 +84,9 @@ internal suspend fun writeDocxArtifact(
         }
 
         val documentXml = artifact.zipEntries[DOCX_DOCUMENT_PART]?.toString(Charsets.UTF_8)
-        if (artifact.segments.isNotEmpty() && documentXml == null) return@withContext false
+        if (artifact.segments.isNotEmpty() && documentXml == null) {
+            return@withContext DocxWriteResult.Error("Brak $DOCX_DOCUMENT_PART w artefakcie")
+        }
 
         // Segmenty są już w kolejności XML (kolejność regex.findAll przy ekstrakcji) —
         // patchujemy OD KOŃCA, żeby wcześniejsze wtRange zostały prawidłowe mimo że
@@ -91,9 +113,9 @@ internal suspend fun writeDocxArtifact(
             }
         }
         DebugLogBuffer.log("DocxWriter", "Zapisano DOCX: ${located.size} podmian")
-        true
+        DocxWriteResult.Success
     } catch (e: Exception) {
         DebugLogBuffer.log("DocxWriter", "BŁĄD: ${e.javaClass.simpleName}: ${e.message}")
-        false
+        DocxWriteResult.Error("${e.javaClass.simpleName}: ${e.message}")
     }
 }

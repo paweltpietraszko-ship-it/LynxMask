@@ -29,63 +29,68 @@ private fun decodeXmlEntities(raw: String): String =
     raw.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
         .replace("&quot;", "\"").replace("&apos;", "'")
 
+/**
+ * Rdzeń parsujący — CZYSTA funkcja, zero zależności od Androida (żadnego Uri/Context).
+ * Testowalna w zwykłym teście JVM (src/test) bez Robolectrica. Cała logika offsetów/
+ * segmentów żyje tutaj; [extractDocxArtifact] niżej to tylko cienki wrapper I/O.
+ */
+internal fun parseDocxDocument(zipEntries: Map<String, ByteArray>): DocxArtifact? {
+    val xmlBytes = zipEntries[DOCX_DOCUMENT_PART] ?: run {
+        DebugLogBuffer.log("DocxExtractor", "Brak $DOCX_DOCUMENT_PART w archiwum")
+        return null
+    }
+    val xml = xmlBytes.toString(Charsets.UTF_8)
+
+    val plainText = StringBuilder()
+    val segments = mutableListOf<DocxTextSegment>()
+    DOCX_TOKEN_REGEX.findAll(xml).forEach { match ->
+        val textGroup = match.groups[1]
+        if (textGroup != null) {
+            val decoded = decodeXmlEntities(textGroup.value)
+            if (decoded.isNotEmpty()) {
+                val plainStart = plainText.length
+                plainText.append(decoded)
+                segments += DocxTextSegment(
+                    partPath = DOCX_DOCUMENT_PART,
+                    wtRange = XmlRange(textGroup.range.first, textGroup.range.last + 1),
+                    plainStart = plainStart,
+                    plainEnd = plainText.length,
+                    text = decoded,
+                )
+            }
+        } else {
+            // </w:p> lub <w:br/> — jeden \n, bez duplikatów pod rząd.
+            if (plainText.isNotEmpty() && plainText.last() != '\n') plainText.append('\n')
+        }
+    }
+
+    DebugLogBuffer.log(
+        "DocxExtractor",
+        "$DOCX_DOCUMENT_PART: ${segments.size} segmentów, ${plainText.length} znaków"
+    )
+    return DocxArtifact(
+        zipEntries = zipEntries,
+        plainText = plainText.toString(),
+        segments = segments,
+    )
+}
+
+/** Cienki wrapper I/O — czyta ZIP z Uri, deleguje parsowanie do [parseDocxDocument]. */
 internal suspend fun extractDocxArtifact(uri: Uri, context: Context): DocxArtifact? =
     withContext(Dispatchers.IO) {
         try {
             val zipEntries = mutableMapOf<String, ByteArray>()
-            var documentXmlBytes: ByteArray? = null
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zip ->
                     var entry = zip.nextEntry
                     while (entry != null) {
-                        val name = entry.name
-                        val bytes = zip.readBytes()
-                        zipEntries[name] = bytes
-                        if (name == DOCX_DOCUMENT_PART) documentXmlBytes = bytes
+                        zipEntries[entry.name] = zip.readBytes()
                         zip.closeEntry()
                         entry = zip.nextEntry
                     }
                 }
             }
-            val xmlBytes = documentXmlBytes ?: run {
-                DebugLogBuffer.log("DocxExtractor", "Brak $DOCX_DOCUMENT_PART w archiwum")
-                return@withContext null
-            }
-            val xml = xmlBytes.toString(Charsets.UTF_8)
-
-            val plainText = StringBuilder()
-            val segments = mutableListOf<DocxTextSegment>()
-            DOCX_TOKEN_REGEX.findAll(xml).forEach { match ->
-                val textGroup = match.groups[1]
-                if (textGroup != null) {
-                    val decoded = decodeXmlEntities(textGroup.value)
-                    if (decoded.isNotEmpty()) {
-                        val plainStart = plainText.length
-                        plainText.append(decoded)
-                        segments += DocxTextSegment(
-                            partPath = DOCX_DOCUMENT_PART,
-                            wtRange = XmlRange(textGroup.range.first, textGroup.range.last + 1),
-                            plainStart = plainStart,
-                            plainEnd = plainText.length,
-                            text = decoded,
-                        )
-                    }
-                } else {
-                    // </w:p> lub <w:br/> — jeden \n, bez duplikatów pod rząd.
-                    if (plainText.isNotEmpty() && plainText.last() != '\n') plainText.append('\n')
-                }
-            }
-
-            DebugLogBuffer.log(
-                "DocxExtractor",
-                "$DOCX_DOCUMENT_PART: ${segments.size} segmentów, ${plainText.length} znaków"
-            )
-            DocxArtifact(
-                sourceUri = uri,
-                zipEntries = zipEntries,
-                plainText = plainText.toString(),
-                segments = segments,
-            )
+            parseDocxDocument(zipEntries)?.copy(sourceUri = uri)
         } catch (e: Exception) {
             DebugLogBuffer.log("DocxExtractor", "BŁĄD: ${e.javaClass.simpleName}: ${e.message}")
             null

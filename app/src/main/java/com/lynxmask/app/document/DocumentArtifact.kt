@@ -34,10 +34,12 @@ internal data class DocxTextSegment(
  * patch dotyczy tylko [segments], reszta (styles.xml, media, rels) przechodzi 1:1.
  */
 internal data class DocxArtifact(
-    val sourceUri: Uri,
     val zipEntries: Map<String, ByteArray>,
     val plainText: String,
     val segments: List<DocxTextSegment>,
+    // Nullable celowo: rdzeń parsujący (parseDocxDocument) jest czysty, testowalny w JVM
+    // bez Androida — nie dotyka Uri. sourceUri dokleja dopiero cienki wrapper I/O.
+    val sourceUri: Uri? = null,
 ) : DocumentArtifact
 
 /** Wspólny typ nośny dla wszystkich formatów round-trip (DOCX teraz, PDF w fazie 2). */
