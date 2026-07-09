@@ -27,9 +27,32 @@ w pamięci Claude — 7. instancja "chorego termometru"). Fix: `fpByLayer` w
 `BenchmarkInstrumentedTest.kt` teraz grupuje po `layer/rule/typ_tokenu`, więc rozróżnienie
 widać wprost w raporcie bez czytania kodu silnika.
 
-**Do zrobienia dalej w tym samym priorytecie (nie zaczęte):** audyt czy inne warstwy
-(STRUCTURAL/ANCHOR/ADDRESS_ENGINE) mają podobne zlepione rule-labels obejmujące różne typy
-tokenu — sprawdzić systematycznie zamiast czekać aż kolejny przypadek wypłynie punktowo.
+**ZAMKNIĘTE 09.07 (commit `d923a83`) — audyt Cursora, Faza 1+2:** płaski licznik FP mieszał
+zamierzone overmasking (KWOTA/NUMER/adres-fragment ponad GT) z realnym problemem czytelności.
+`classifyExtraToken()` w `BenchmarkInstrumentedTest.kt` dzieli każdy token spoza GT na
+EXTRA_MASK_OK / EXTRA_MASK_POLICY / UX_FP / REVIEW — realny KPI czytelności to tylko UX_FP.
+PRECISION/F1 przeniesione do sekcji informacyjnej z etykietą "metryka GT-gap, nie jakość
+silnika". Zweryfikowane Pythonem, build+install OK. Usunięte też `benchmark_mobile.py` (v1)
+i `run.bat` — martwe artefakty.
+
+**Świadomie odłożone (Faza 3+4 z planu Cursora, "nie teraz"):**
+- Faza 3 — GT opcjonalnie bogatsze (`acceptable_extra_types`/`benchmark_policy` per dokument) —
+  robić stopniowo, nie blocker.
+- Faza 4 — jedna wspólna implementacja comparatora (Kotlin+Python współdzielą regułę) —
+  dopiero po ustabilizowaniu reguł z Fazy 2.
+
+**Audyt innych warstw ZAMKNIĘTY 09.07 (bez zmian kodu — fix już wystarczał):** przejrzane
+wszystkie wywołania `assignToken` w całym silniku (grep, wszystkie pliki). STRUCTURAL/
+STRUCTURAL_R2/ANCHOR mają `rule = tokenType` (rule JEST typem, zero ambiguacji z konstrukcji).
+ADDRESS_ENGINE zawsze `TOKEN_ADRES` (jeden typ, rule różnicuje tylko wzorzec). Jedyne dwa
+miejsca ze zlepionym rule="CONTEXTUAL" (wiele typów pod jedną etykietą): NAME_ENGINE (już
+naprawione 09.07) i **NAME_ENGINE_R2** (Runda 2, ten sam mechanizm — `applyContextualBlacklist`
+wołane drugi raz). Fix z dziś (`${tok.type}` dopisany do etykiety FP w
+`BenchmarkInstrumentedTest.kt`) jest UNIWERSALNY — działa niezależnie od tego, czy `rule` jest
+ambiwalentny czy nie, więc NAME_ENGINE_R2 jest już poprawnie rozróżniane bez dodatkowej zmiany.
+DICT/USER_DICTIONARY (słownik użytkownika, dowolny typ) też był potencjalnie ambiwalentny —
+też już pokryte tym samym fixem. Wniosek: "chory termometr" (etykiety FP) zamknięty całościowo,
+nie tylko punktowo dla NAME_ENGINE.
 
 ---
 
