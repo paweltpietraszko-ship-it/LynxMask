@@ -8,6 +8,31 @@
 
 ---
 
+## PRIORYTET STRATEGICZNY (09.07, decyzja Pawła) — napraw "chory termometr" PRZED wersją angielską
+
+Paweł: dopóki benchmark testuje polskie dokumenty, może sam złapać kłamstwo benchmarku (czyta
+wynik, sprawdza na telefonie). Przy wersji angielskiej straci tę możliwość — będzie musiał
+wklejać mi wszystko do sprawdzenia, co jest "mega obciążające". Więc: fundament (poprawność
+samego narzędzia pomiarowego) trzeba naprawić TERAZ, kiedy jeszcze można to zweryfikować jego
+oczami, nie później.
+
+Zamknięte 09.07 w ramach tego priorytetu: **BUG-FP-LABEL-TYPE-ZLEPIONY** — `benchmark_bugs.txt`
+grupował FP tylko po `layer/rule` (np. "NAME_ENGINE/CONTEXTUAL"), a ten sam rule-label jest
+współdzielony przez różne typy tokenu (OSOBA/FIRMA/ADRES w `applyContextualBlacklist`,
+NameEngine.kt). Efekt: "GAMMA Sp. z o.o." i "Warszawie" wyglądały jak firma/miasto błędnie
+zamaskowane jako OSOBA — a naprawdę dostały poprawne, osobne tokeny (TOKEN_FIRMA, TOKEN_ADRES),
+tylko report tego nie pokazywał. Potwierdzone ręcznie na telefonie (100% poprawne) PRZED
+poprawką reportu (patrz `feedback_real_test_methodology.md`/`feedback_validate_the_benchmark_tool_itself.md`
+w pamięci Claude — 7. instancja "chorego termometru"). Fix: `fpByLayer` w
+`BenchmarkInstrumentedTest.kt` teraz grupuje po `layer/rule/typ_tokenu`, więc rozróżnienie
+widać wprost w raporcie bez czytania kodu silnika.
+
+**Do zrobienia dalej w tym samym priorytecie (nie zaczęte):** audyt czy inne warstwy
+(STRUCTURAL/ANCHOR/ADDRESS_ENGINE) mają podobne zlepione rule-labels obejmujące różne typy
+tokenu — sprawdzić systematycznie zamiast czekać aż kolejny przypadek wypłynie punktowo.
+
+---
+
 ## PRIORYTET NASTĘPNEJ SESJI — przywrócić słownik nazwisk STOPNIOWO, z benchmarkiem po każdym kroku
 
 Kontekst pełny w memory Claude: `project_session_wrapup_2026-07-08_dictionary_revert.md`.
@@ -130,7 +155,10 @@ Paweł: "na tym etapie benchmark musi pokazywać frazę z bugiem" — zamiast zm
 
 2× PESEL `OCR_ZNIEKSZTAŁCONY` (doc_00025, doc_00355) zdiagnozowane i zamknięte dzięki temu
 kontekstowi — patrz wpis "ZAMKNIĘTE 07.07 — ostatnie 2× PESEL OCR_ZNIEKSZTAŁCONY" niżej.
-1× Guard RED (IBAN) jeszcze nie zdiagnozowany — do sprawdzenia przy najbliższej okazji.
+1× Guard RED (IBAN) — Paweł 09.07: to Guard robi co ma robić (dokument lvl3 tak zdegradowany,
+że słusznie łapie RED zamiast fałszywie maskować) — nie traktować automatycznie jako bug do
+naprawy w silniku. Jeśli powtórzy się jako wzorzec (nie pojedynczy dokument) — wtedy dopiero
+diagnoza.
 
 ---
 
