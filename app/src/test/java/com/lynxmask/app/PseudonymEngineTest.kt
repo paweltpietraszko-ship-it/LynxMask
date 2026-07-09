@@ -1835,6 +1835,45 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "II C 1234/2023")
     }
 
+    // =========================================================================
+    // BUG-SYGNATURA-PROZA — AnchorEngine A.8 nie odrzucał zwykłych słów po "sygnatura"
+    // (09.07, testy Pawła na telefonie: dokument o SETI "Wizja Claude 2")
+    // =========================================================================
+
+    @Test fun `sygnatura biologiczna w prozie naukowej nie jest maskowana`() {
+        val r = pseudonymize("Ziemia ma spektroskopowa sygnatura biologiczna od miliardow lat.")
+        assertFalse("'sygnatura biologiczna' to proza, nie kod sygnatury sądowej",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_NUMER) })
+    }
+
+    @Test fun `sygnatura zakonczona kropka nie jest maskowana`() {
+        val r = pseudonymize("To jest sygnatura. Ponieważ tak zdecydowano.")
+        assertTrue("Zdanie po kropce powinno zostać jawne",
+            r.pseudonymizedText.contains("Ponieważ"))
+    }
+
+    @Test fun `sygnatura z przecinkiem i przyslowkiem nie jest maskowana`() {
+        val r = pseudonymize("Ta sygnatura, oczywiście, nie jest kodem sądowym.")
+        assertTrue("Przysłówek 'oczywiście' powinien zostać jawny",
+            r.pseudonymizedText.contains("oczywiście"))
+    }
+
+    @Test fun `sygnatura akt z pelnym slowem nadal maskowana`() {
+        // "sygnatura akt" (pełne słowo, nie skrót "sygn.") — "akt" ma być pomijany
+        // jako kotwica strukturalna, nie odrzucać dopasowania.
+        val r = pseudonymize("Proszę podać sygnatura akt I C 234/24 do wniosku.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "I C 234/24")
+    }
+
+    @Test fun `sygn akt bez pelnego slowa sygnatura nietkniete walidacja`() {
+        // Gałąź "sygn."/"sygn akt" (skrót) nie przechodzi przez Morfologik w ogóle —
+        // regresja na już istniejące v19 testy potwierdza to wyżej w tym pliku.
+        val r = pseudonymize("Sygn akt Km 555/2024 zostaje utrzymana.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "Km 555/2024")
+    }
+
     @Test fun `v19 data urodzenia kontekst DD-MM-YYYY jest maskowana`() {
         // DATA-UR-FIX: brak wzorca na datę urodzenia → dodany kontekst dat[aą] ur...
         val r = pseudonymize("Data urodzenia: 21.05.1979")
