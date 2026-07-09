@@ -13,16 +13,53 @@ package com.lynxmask.app
 
 private const val D = """[0-9OolIiSsBbZz]"""
 
+// BUG-SYGNATURA-PROZA-FIX (09.07, testy Pawła na telefonie: "sygnatura biologiczna",
+// "sygnatura. Ponieważ", "sygnatura, oczywiście Pawle" — wszystkie fałszywie maskowane).
+// Mechanizm dograny z Cursorem: walidacja dotyczy TYLKO gałęzi `atur\w*` regexu A.8 (pełne
+// słowo "sygnatura..."), NIE gałęzi "sygn."/"sygn"+"akt" (skrót prawny, zero walidacji jak
+// dotąd — to świadome, celowe odstępstwo TYLKO dla tej jednej reguły od generalnej zasady
+// AnchorEngine "kotwica zachłanna, zero walidacji", patrz feedback_anchor_greedy_no_checksum).
+private val SYGNATURA_ANCHOR_PREFIX = Regex("""(?i)^sygnatur\w*""")
+
+// Pomija "akt" (kotwica strukturalna regexu, nie kod wydziału — nie trzeba go wypisywać
+// na allowliście) i wiodącą interpunkcję/białe znaki, żeby dojść do PIERWSZEGO prawdziwego
+// słowa po kotwicy "sygnatura".
+private val SYGNATURA_TAIL_FIRST_WORD = Regex("""^[^\p{L}]*(?:akt\.?[^\p{L}]*)?(\p{L}+)""", RegexOption.IGNORE_CASE)
+
+// Prawdziwe kody sygnatur sądowych/administracyjnych — krótka lista, nie próba wyliczenia
+// każdego możliwego skrótu wydziału (por. StructuralEngine.kt, te same rodziny liter).
+private val SYGNATURA_COURT_CODES = setOf(
+    "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII",
+    "Km", "Co", "Ns", "Ka", "Ds",
+)
+
+/**
+ * true = maskuj (kod sygnatury albo skrót prawny), false = odrzuć (zwykłe zdanie prozy).
+ * Działa TYLKO na dopasowaniach zaczynających się od pełnego słowa "sygnatur..." — gałęzie
+ * "sygn."/"sygn akt" (skrót bez pełnego słowa) zawsze przechodzą bez walidacji.
+ */
+private fun isSygnaturaA8Acceptable(m: MatchResult): Boolean {
+    val anchor = SYGNATURA_ANCHOR_PREFIX.find(m.value) ?: return true
+    val tail = m.value.substring(anchor.value.length)
+    val word = SYGNATURA_TAIL_FIRST_WORD.find(tail)?.groupValues?.get(1) ?: return true
+    if (word in SYGNATURA_COURT_CODES) return true
+    return MorfologikHelper.tags(word).isEmpty()
+}
+
 internal fun applyAnchorEngine(
     text: String,
     assignToken: (value: String, tokenType: String) -> String
 ): String {
     var t = text
 
-    fun applyAll(re: Regex, tokenType: String) {
+    // validate: opcjonalna walidacja PER DOPASOWANIE, poza samym kształtem regexu — domyślnie
+    // no-op ({ true }), zero zmian dla reguł które jej nie używają. Dodane 09.07 dla A.8
+    // (patrz niżej) na rekomendację Cursora — prostsze niż osobna pętla poza applyAll dla
+    // jednej reguły, bo overlap/padding/token-assignment zostają w jednym miejscu.
+    fun applyAll(re: Regex, tokenType: String, validate: (MatchResult) -> Boolean = { true }) {
         val hits = re.findAll(t).toList().ifEmpty { return }
         t = hits.asReversed().fold(t) { acc, m ->
-            if (matchOverlapsToken(acc, m.range)) acc
+            if (matchOverlapsToken(acc, m.range) || !validate(m)) acc
             else {
                 val token = assignToken(m.value.trim(), tokenType)
                 val before = acc.getOrElse(m.range.first - 1) { ' ' }
@@ -289,7 +326,8 @@ internal fun applyAnchorEngine(
     // bo to ten sam wyraz co prawny "sygnatura akt", nie da się rozstrzygnąć samym regexem.
     applyAll(
         Regex("""(?i)\bsygn(?:\.|(?=[^\S\n]*akt\b)|atur\w*)[^\S\n]*(?:akt\.?)?[^\S\n]*:?[^\S\n]*[^\n]+"""),
-        TOKEN_NUMER
+        TOKEN_NUMER,
+        validate = ::isSygnaturaA8Acceptable
     )
     // BUG-KW-KWOTA-FIX (Cursor 01.07): \bKW\b zamiast gołego KW — bez granicy słowa,
     // (?i) sprawiał że "kw" wewnątrz zwykłego słowa "kwota" pasował do (?:KRS|KW),
