@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Visibility
@@ -58,7 +59,12 @@ fun PseudonymResultPanel(
     onCancel: (() -> Unit)? = null,
     onDebugLog: (() -> Unit)? = null,
     onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null,
-    onOpenLibrary: (() -> Unit)? = null
+    onOpenLibrary: (() -> Unit)? = null,
+    // Document Rebuilder (feature/document-export): dostępny tylko gdy źródłem był DOCX.
+    // Przekazujemy EFEKTYWNĄ mapę tokenów (patrz effectiveTokenMap niżej), nie result.tokenMap
+    // wprost — inaczej ręczne odsłonięcia/dodatkowe maskowania z podglądu (revealedTokens/
+    // manualMasks) rozjadą się z tym co faktycznie trafi do zapisanego pliku.
+    onSaveDocx: ((Map<String, String>) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showDisclaimer by remember { mutableStateOf(false) }
@@ -100,6 +106,13 @@ fun PseudonymResultPanel(
 
     val maskedDisplayText by remember(maskedOutputText, result) {
         derivedStateOf { maskedOutputText.removePrefix("SESJA_${result.sessionId}\n") }
+    }
+
+    // Ten sam efektywny stan maskowania co outputText widziany na ekranie — bez tego
+    // eksport DOCX pokazałby co innego niż podgląd (token, który user właśnie odsłonił,
+    // albo brak tokenu dla czegoś co user właśnie ręcznie zamaskował).
+    val effectiveTokenMap by remember(revealedTokens, manualMasks, result) {
+        derivedStateOf { result.tokenMap.filterKeys { it !in revealedTokens } + manualMasks }
     }
 
     fun nextToken(type: String): String {
@@ -303,7 +316,8 @@ fun PseudonymResultPanel(
                 }
             },
             onDebugLog = onDebugLog,
-            onOpenLibrary = onOpenLibrary
+            onOpenLibrary = onOpenLibrary,
+            onSaveDocx = onSaveDocx?.let { save -> { save(effectiveTokenMap) } }
         )
     }
 
@@ -481,7 +495,8 @@ private fun BottomActionBar(
     onCopy: () -> Unit,
     onForward: (() -> Unit)?,
     onDebugLog: (() -> Unit)?,
-    onOpenLibrary: (() -> Unit)? = null
+    onOpenLibrary: (() -> Unit)? = null,
+    onSaveDocx: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -561,6 +576,24 @@ private fun BottomActionBar(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Wyślij do AI", maxLines = 1)
                         }
+                    }
+                }
+            }
+
+            if (onSaveDocx != null) {
+                BlockedActionSlot(
+                    enabled = canExport,
+                    onBlockedClick = onBlockedClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LynxSecondaryButton(
+                        onClick = onSaveDocx,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canExport
+                    ) {
+                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Zapisz DOCX")
                     }
                 }
             }

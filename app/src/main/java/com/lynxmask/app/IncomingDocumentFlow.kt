@@ -23,6 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lynxmask.app.document.DocumentArtifact
+import com.lynxmask.app.document.DocxArtifact
+import com.lynxmask.app.document.extractDocxArtifact
+import com.lynxmask.app.document.rememberDocxExportLauncher
 import com.lynxmask.app.ui.components.*
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxSpacing
@@ -34,7 +38,15 @@ private const val TAG = "LynxMask_IncomingDoc"
 
 private sealed class IncomingDocState {
     object Loading : IncomingDocState()
-    data class Review(val rawText: String, val ocrConfidence: Float? = null) : IncomingDocState()
+    data class Review(
+        val rawText: String,
+        val ocrConfidence: Float? = null,
+        // Document Rebuilder: przeżywa ręczną korektę, żeby DOCX export był dostępny po
+        // Scanned. Jeśli user zmieni encję podczas review — DocxWriter i tak odmówi zapisu
+        // fail-closed (patrz writeDocxArtifact), nie trzeba tego blokować tutaj.
+        val artifact: DocumentArtifact? = null,
+        val sourceUri: Uri? = null
+    ) : IncomingDocState()
     data class ImageRedact(
         val bitmap: Bitmap,
         val regions: List<RedactionRegion>,
@@ -45,7 +57,9 @@ private sealed class IncomingDocState {
     data class Scanned(
         val result: PseudonymResult,
         val sourceText: String,
-        val ocrConfidence: Float? = null
+        val ocrConfidence: Float? = null,
+        val artifact: DocumentArtifact? = null,
+        val sourceUri: Uri? = null
     ) : IncomingDocState()
     data class Error(val message: String) : IncomingDocState()
     data class OcrRejected(val conf: Float?) : IncomingDocState()
@@ -64,6 +78,7 @@ fun IncomingDocumentFlow(
     var state by remember(intent) { mutableStateOf<IncomingDocState>(IncomingDocState.Loading) }
     var progressLabel by remember { mutableStateOf("Wczytuję...") }
     var savedLibrarySessionId by remember { mutableStateOf<String?>(null) }
+    val saveDocx = rememberDocxExportLauncher(scope)
 
     remember { UserDictionary.load(context) }
     remember { GuardAllowlist.load(context) }
@@ -94,7 +109,9 @@ fun IncomingDocumentFlow(
         when (val s = state) {
             is IncomingDocState.Scanned -> state = IncomingDocState.Review(
                 rawText = s.sourceText,
-                ocrConfidence = s.ocrConfidence
+                ocrConfidence = s.ocrConfidence,
+                artifact = s.artifact,
+                sourceUri = s.sourceUri
             )
             else -> onFinished()
         }
@@ -159,7 +176,9 @@ fun IncomingDocumentFlow(
                                 state = IncomingDocState.Scanned(
                                     result = result,
                                     sourceText = correctedText,
-                                    ocrConfidence = s.ocrConfidence
+                                    ocrConfidence = s.ocrConfidence,
+                                    artifact = s.artifact,
+                                    sourceUri = s.sourceUri
                                 )
                             }
                         }
@@ -270,6 +289,9 @@ fun IncomingDocumentFlow(
                             LynxPendingNav.requestLibrary(s.result.sessionId)
                             onFinished()
                         }
+                    },
+                    onSaveDocx = (s.artifact as? DocxArtifact)?.let { docxArtifact ->
+                        { effectiveTokenMap: Map<String, String> -> saveDocx(docxArtifact, effectiveTokenMap) }
                     }
                 )
         }
@@ -310,8 +332,11 @@ private suspend fun processIncomingIntent(
             type = mime
             putExtra(Intent.EXTRA_STREAM, uri)
         }
-        val (rawText, isOcr, ocrConf) = extractRawText(synthetic, context, onProgress)
-        finishWithText(rawText, isOcr, ocrConf, setState, context)
+        val extracted = extractRawText(synthetic, context, onProgress)
+        finishWithText(
+            extracted.text, extracted.goToReview, extracted.confidence, setState, context,
+            extracted.artifact, extracted.sourceUri
+        )
         return
     }
 
@@ -348,8 +373,11 @@ private suspend fun processIncomingIntent(
         return
     }
 
-    val (rawText, isOcr, ocrConf) = extractRawText(intent, context, onProgress)
-    finishWithText(rawText, isOcr, ocrConf, setState, context)
+    val extracted = extractRawText(intent, context, onProgress)
+    finishWithText(
+        extracted.text, extracted.goToReview, extracted.confidence, setState, context,
+        extracted.artifact, extracted.sourceUri
+    )
 }
 
 private suspend fun finishWithText(
@@ -357,7 +385,9 @@ private suspend fun finishWithText(
     goToReview: Boolean,
     mlKitConfidence: Float?,
     setState: (IncomingDocState) -> Unit,
-    context: android.content.Context
+    context: android.content.Context,
+    artifact: DocumentArtifact? = null,
+    sourceUri: Uri? = null
 ) {
     if (rawText.isBlank()) {
         setState(IncomingDocState.Error(
@@ -367,7 +397,7 @@ private suspend fun finishWithText(
     }
     DebugLogBuffer.log("IncomingDoc", "Tekst: ${rawText.length} znaków, review=$goToReview")
     if (goToReview) {
-        setState(IncomingDocState.Review(rawText, ocrConfidence = mlKitConfidence))
+        setState(IncomingDocState.Review(rawText, mlKitConfidence, artifact, sourceUri))
         return
     }
     LynxAppInit.ensureReady(context.applicationContext)
@@ -380,7 +410,7 @@ private suspend fun finishWithText(
         )
     }
     DebugLogBuffer.logOcrAnalysis(rawText, result)
-    setState(IncomingDocState.Scanned(result, rawText, mlKitConfidence))
+    setState(IncomingDocState.Scanned(result, rawText, mlKitConfidence, artifact, sourceUri))
 }
 
 private suspend fun routeImageInput(
@@ -485,11 +515,19 @@ private suspend fun openImageRedact(
     }
 }
 
+private data class ExtractedDocument(
+    val text: String,
+    val goToReview: Boolean,
+    val confidence: Float?,
+    val artifact: DocumentArtifact? = null,
+    val sourceUri: Uri? = null
+)
+
 private suspend fun extractRawText(
     intent: Intent,
     context: android.content.Context,
     onProgress: (String) -> Unit
-): Triple<String, Boolean, Float?> {
+): ExtractedDocument {
     val mimeType = intent.type ?: ""
     val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
@@ -508,9 +546,18 @@ private suspend fun extractRawText(
 
     return when {
         isDocx -> {
-            if (uri == null) return Triple("", false, null)
+            if (uri == null) return ExtractedDocument("", false, null)
             onProgress("Czytam umowę DOCX...")
-            Triple(extractTextFromDocx(uri, context), true, null)
+            // Document Rebuilder: nowy parser z pamięcią pozycji (do "Zapisz DOCX" po
+            // maskowaniu). Fallback do starego regexu jeśli nowy zawiedzie (np. plik bez
+            // word/document.xml w oczekiwanej formie) — nigdy nie regresuj poniżej tego co
+            // działało wcześniej, DOCX export po prostu nie będzie dostępny dla tego pliku.
+            val artifact = extractDocxArtifact(uri, context)
+            if (artifact != null) {
+                ExtractedDocument(artifact.plainText, true, null, artifact, uri)
+            } else {
+                ExtractedDocument(extractTextFromDocx(uri, context), true, null)
+            }
         }
         mimeType == "text/plain" -> {
             onProgress("Odczytuję tekst...")
@@ -519,18 +566,18 @@ private suspend fun extractRawText(
             } else {
                 intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
             }
-            Triple(text, true, null)
+            ExtractedDocument(text, true, null)
         }
         mimeType == "application/pdf" -> {
-            if (uri == null) return Triple("", false, null)
+            if (uri == null) return ExtractedDocument("", false, null)
             onProgress("Otwieram PDF...")
             val (text, conf) = ocrFromPdfUri(uri, context, onProgress)
-            Triple(text, true, conf)
+            ExtractedDocument(text, true, conf)
         }
         else -> {
             val text = if (uri != null) extractTextFromDocx(uri, context)
             else (intent.getStringExtra(Intent.EXTRA_TEXT) ?: "")
-            Triple(text, text.isNotBlank(), null)
+            ExtractedDocument(text, text.isNotBlank(), null)
         }
     }
 }
