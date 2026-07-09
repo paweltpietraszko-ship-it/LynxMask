@@ -40,6 +40,11 @@ internal data class DocxArtifact(
     // Nullable celowo: rdzeń parsujący (parseDocxDocument) jest czysty, testowalny w JVM
     // bez Androida — nie dotyka Uri. sourceUri dokleja dopiero cienki wrapper I/O.
     val sourceUri: Uri? = null,
+    // Audyt Cursora 09.07 (KRYTYCZNE #3): faza 1a patchuje TYLKO word/document.xml. Jeśli
+    // nagłówek/stopka/przypis/komentarz ma jakikolwiek tekst, mogą tam siedzieć dane, które
+    // export NIGDY nie dotknie — true blokuje "Zapisz DOCX" całkowicie (fail-closed, nie
+    // tylko ostrzeżenie które można zignorować).
+    val hasUnhandledTextParts: Boolean = false,
 ) : DocumentArtifact
 
 /** Wspólny typ nośny dla wszystkich formatów round-trip (DOCX teraz, PDF w fazie 2). */

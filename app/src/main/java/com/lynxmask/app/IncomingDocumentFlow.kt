@@ -291,7 +291,9 @@ fun IncomingDocumentFlow(
                         }
                     },
                     onSaveDocx = (s.artifact as? DocxArtifact)?.let { docxArtifact ->
-                        { effectiveTokenMap: Map<String, String> -> saveDocx(docxArtifact, effectiveTokenMap) }
+                        { effectiveTokenMap: Map<String, String> ->
+                            saveDocx(docxArtifact, effectiveTokenMap, s.sourceText)
+                        }
                     }
                 )
         }

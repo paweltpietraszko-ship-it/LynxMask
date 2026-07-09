@@ -54,7 +54,7 @@ class DocxRoundTripTest {
 
         val out = ByteArrayOutputStream()
         val writeResult = runBlocking {
-            writeDocxArtifact(artifact, engineResult.tokenMap, out)
+            writeDocxArtifact(artifact, engineResult.tokenMap, artifact.plainText, out)
         }
         assertTrue("Zapis powinien się udać: $writeResult", writeResult is DocxWriteResult.Success)
 
@@ -88,12 +88,100 @@ class DocxRoundTripTest {
 
         val out = ByteArrayOutputStream()
         val writeResult = runBlocking {
-            writeDocxArtifact(artifact, fakeTokenMap, out)
+            writeDocxArtifact(artifact, fakeTokenMap, artifact.plainText, out)
         }
         assertTrue(
             "Powinno odmówić zapisu gdy token nie ma dopasowania: $writeResult",
             writeResult is DocxWriteResult.MissingTokens
         )
         assertEquals(setOf("OSOBA_099"), (writeResult as DocxWriteResult.MissingTokens).tokens)
+    }
+
+    // Audyt Cursora 09.07 (KRYTYCZNE #1): user edytuje tekst na ekranie Review PRZED
+    // maskowaniem — jeśli edycja usunie fragment PII, silnik go nie zobaczy, tokenMap nic
+    // o nim nie wie, a bez tej blokady writeDocxArtifact skopiowałby oryginalny, jawny
+    // fragment do wyniku ze statusem Success.
+    @Test
+    fun `sourceText rozny od artifact plainText odmawia zapisu (Review edycja)`() {
+        val artifact = parseDocxDocument(syntheticZipEntries())!!
+        val editedText = artifact.plainText.replace("Jan Kowalski", "X")
+        val engineResult = PseudonymEngine.pseudonymize(editedText)
+
+        val out = ByteArrayOutputStream()
+        val writeResult = runBlocking {
+            writeDocxArtifact(artifact, engineResult.tokenMap, editedText, out)
+        }
+        assertTrue(
+            "Powinno odmówić zapisu gdy sourceText != artifact.plainText: $writeResult",
+            writeResult is DocxWriteResult.SourceTextMismatch
+        )
+    }
+
+    // Audyt Cursora 09.07 (KRYTYCZNE #3): faza 1a patchuje tylko word/document.xml — jeśli
+    // nagłówek ma tekst, mogłoby tam siedzieć PII którego eksport nigdy nie dotknie.
+    @Test
+    fun `naglowek z tekstem odmawia zapisu`() {
+        val zipEntries = syntheticZipEntries() + mapOf(
+            "word/header1.xml" to """<w:hdr xmlns:w="ns"><w:p><w:r><w:t>Kancelaria XYZ</w:t></w:r></w:p></w:hdr>"""
+                .toByteArray(Charsets.UTF_8)
+        )
+        val artifact = parseDocxDocument(zipEntries)!!
+        assertTrue("Artefakt powinien wykryć tekst w nagłówku", artifact.hasUnhandledTextParts)
+
+        val engineResult = PseudonymEngine.pseudonymize(artifact.plainText)
+        val out = ByteArrayOutputStream()
+        val writeResult = runBlocking {
+            writeDocxArtifact(artifact, engineResult.tokenMap, artifact.plainText, out)
+        }
+        assertTrue(
+            "Powinno odmówić zapisu gdy nagłówek ma tekst: $writeResult",
+            writeResult is DocxWriteResult.UnhandledDocumentParts
+        )
+    }
+
+    // Pusty nagłówek (bez realnego tekstu w <w:t>) nie powinien fałszywie blokować eksportu.
+    @Test
+    fun `pusty naglowek nie blokuje zapisu`() {
+        val zipEntries = syntheticZipEntries() + mapOf(
+            "word/header1.xml" to """<w:hdr xmlns:w="ns"><w:p><w:r><w:t></w:t></w:r></w:p></w:hdr>"""
+                .toByteArray(Charsets.UTF_8)
+        )
+        val artifact = parseDocxDocument(zipEntries)!!
+        assertFalse("Pusty nagłówek nie powinien ustawiać flagi", artifact.hasUnhandledTextParts)
+    }
+
+    // Audyt Cursora 09.07 (WYSOKIE #5): krótka wartość nie może trafić w środek innego słowa.
+    @Test
+    fun `token nie podmienia sie w srodku niepowiazanego slowa`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <w:document xmlns:w="ns"><w:body>
+              <w:p><w:r><w:t>Rezydencja Lisowski nie jest tym samym co Lis</w:t></w:r></w:p>
+            </w:body></w:document>
+        """.trimIndent()
+        val zipEntries = mapOf(DOCX_DOCUMENT_PART to xml.toByteArray(Charsets.UTF_8))
+        val artifact = parseDocxDocument(zipEntries)!!
+        // "Lis" jako fikcyjny token — nie powinien trafić w środek "Lisowski".
+        val tokenMap = mapOf("OSOBA_001" to "Lis")
+
+        val out = ByteArrayOutputStream()
+        val writeResult = runBlocking {
+            writeDocxArtifact(artifact, tokenMap, artifact.plainText, out)
+        }
+        assertTrue("Zapis powinien się udać: $writeResult", writeResult is DocxWriteResult.Success)
+
+        val writtenEntries = mutableMapOf<String, String>()
+        ZipInputStream(out.toByteArray().inputStream()).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                writtenEntries[entry.name] = zip.readBytes().toString(Charsets.UTF_8)
+                zip.closeEntry()
+                entry = zip.nextEntry
+            }
+        }
+        val outXml = writtenEntries[DOCX_DOCUMENT_PART]!!
+        assertTrue("Lisowski powinien zostać nietknięty", outXml.contains("Lisowski"))
+        assertTrue("Samotne Lis powinno zostać podmienione na token", outXml.contains("OSOBA_001"))
+        assertFalse("Samotne słowo Lis nie powinno zostać jawne", outXml.contains(Regex("""\bLis\b""")))
     }
 }

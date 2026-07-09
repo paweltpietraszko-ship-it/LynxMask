@@ -25,6 +25,14 @@ import java.util.zip.ZipInputStream
 private val DOCX_TOKEN_REGEX = Regex("""<w:t(?:\s[^>]*)?>([^<]*)</w:t>|</w:p>|<w:br[^/]*/?>""")
 internal const val DOCX_DOCUMENT_PART = "word/document.xml"
 
+// Audyt Cursora 09.07 (KRYTYCZNE #3): części OOXML, które faza 1a NIE patchuje. Jeśli
+// którakolwiek ma tekst — export musi się zablokować, inaczej "Success" fałszywie sugeruje
+// że cały dokument jest bezpieczny.
+private val DOCX_UNHANDLED_TEXT_PARTS = Regex("""word/(header|footer|footnotes|endnotes|comments)\d*\.xml""")
+
+private fun partHasVisibleText(xml: String): Boolean =
+    DOCX_TOKEN_REGEX.findAll(xml).any { m -> m.groups[1]?.value?.isNotBlank() == true }
+
 private fun decodeXmlEntities(raw: String): String =
     raw.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
         .replace("&quot;", "\"").replace("&apos;", "'")
@@ -64,14 +72,20 @@ internal fun parseDocxDocument(zipEntries: Map<String, ByteArray>): DocxArtifact
         }
     }
 
+    val hasUnhandledText = zipEntries.any { (name, bytes) ->
+        DOCX_UNHANDLED_TEXT_PARTS.matches(name) && partHasVisibleText(bytes.toString(Charsets.UTF_8))
+    }
+
     DebugLogBuffer.log(
         "DocxExtractor",
-        "$DOCX_DOCUMENT_PART: ${segments.size} segmentów, ${plainText.length} znaków"
+        "$DOCX_DOCUMENT_PART: ${segments.size} segmentów, ${plainText.length} znaków, " +
+            "nagłówek/stopka z tekstem=$hasUnhandledText"
     )
     return DocxArtifact(
         zipEntries = zipEntries,
         plainText = plainText.toString(),
         segments = segments,
+        hasUnhandledTextParts = hasUnhandledText,
     )
 }
 

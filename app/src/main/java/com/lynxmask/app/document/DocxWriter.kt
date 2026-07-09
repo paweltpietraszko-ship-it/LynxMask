@@ -16,6 +16,19 @@ private fun escapeXmlText(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 /**
+ * Audyt Cursora 09.07 (WYSOKIE #5): goły `indexOf` bez granic słów mógł trafić w środek
+ * niepowiązanego, dłuższego słowa (np. krótkie nazwisko jako podciąg czegoś innego) —
+ * fałszywa podmiana. Znak przed/po dopasowaniem nie może być literą/cyfrą.
+ */
+private fun isWordChar(c: Char): Boolean = c.isLetterOrDigit()
+
+private fun hasWordBoundary(text: String, start: Int, endExclusive: Int): Boolean {
+    val before = text.getOrNull(start - 1)
+    val after = text.getOrNull(endExclusive)
+    return (before == null || !isWordChar(before)) && (after == null || !isWordChar(after))
+}
+
+/**
  * Każdy token może wystąpić w plainText WIĘCEJ NIŻ RAZ — silnik dedupluje (ta sama wartość
  * → ten sam token), ale każde wystąpienie w tekście trzeba podmienić osobno. Zwraca listę
  * (zakres w plainText, token) posortowaną po pozycji.
@@ -28,14 +41,20 @@ private fun locateTokenRanges(plainText: String, tokenMap: Map<String, String>):
         while (true) {
             val idx = plainText.indexOf(original, searchFrom)
             if (idx < 0) break
-            located += (idx until (idx + original.length)) to token
-            searchFrom = idx + original.length
+            val end = idx + original.length
+            if (hasWordBoundary(plainText, idx, end)) {
+                located += (idx until end) to token
+                searchFrom = end
+            } else {
+                // Trafienie w środku innego słowa — nie liczy się, szukaj dalej od następnego znaku.
+                searchFrom = idx + 1
+            }
         }
     }
     return located.sortedBy { it.first.first }
 }
 
-/** Wynik zapisu — [missingTokens] niepuste = ODMOWA zapisu, nie ostrzeżenie po fakcie. */
+/** Wynik zapisu — każdy wariant poza [Success] = ODMOWA zapisu, nie ostrzeżenie po fakcie. */
 internal sealed interface DocxWriteResult {
     data object Success : DocxWriteResult
     /** Wartość z tokenMap nie znaleziona w plainText — zwykle OcrNormalizer coś zmienił
@@ -44,6 +63,16 @@ internal sealed interface DocxWriteResult {
      *  tekstu PO normalizacji. Fail-closed: wolimy odmówić zapisu niż cicho zostawić PII
      *  jawne w wyeksportowanym DOCX. Diagnoza Cursor 09.07. */
     data class MissingTokens(val tokens: Set<String>) : DocxWriteResult
+    /** Audyt Cursora 09.07 (KRYTYCZNE #1): tekst faktycznie zamaskowany przez silnik (np.
+     *  po ręcznej korekcie na ekranie Review) różni się od artifact.plainText. Jeśli user
+     *  USUNĄŁ fragment PII podczas edycji — silnik nigdy go nie zobaczył, więc tokenMap
+     *  o nim nie wie, a writeDocxArtifact skopiowałby oryginalny, jawny fragment 1:1 do
+     *  wyniku ze statusem Success. Sprawdzane TUTAJ (nie tylko w UI) — druga linia obrony. */
+    data object SourceTextMismatch : DocxWriteResult
+    /** Audyt Cursora 09.07 (KRYTYCZNE #3): nagłówek/stopka/przypis/komentarz ma tekst, którego
+     *  faza 1a nie patchuje (tylko word/document.xml) — mógłby tam siedzieć PII, eksport
+     *  by tego nie zauważył. */
+    data object UnhandledDocumentParts : DocxWriteResult
     data class Error(val message: String) : DocxWriteResult
 }
 
@@ -52,13 +81,27 @@ internal sealed interface DocxWriteResult {
  * `<w:t>` (segmentów), a dopasowana encja obejmuje więcej niż jeden segment — pierwszy
  * dostaje token, reszta jest czyszczona (pusty string), żeby fraza nie została zdublowana
  * w wyniku. Faza 1b doda scalanie segmentów PRZED wyszukiwaniem, żeby to nie było potrzebne.
+ *
+ * @param sourceText dokładny tekst, który poszedł do PseudonymEngine.pseudonymize() —
+ * MUSI być identyczny z artifact.plainText, inaczej tokenMap nie odpowiada temu co jest
+ * w artefakcie (patrz SourceTextMismatch).
  */
 internal suspend fun writeDocxArtifact(
     artifact: DocxArtifact,
     tokenMap: Map<String, String>,
+    sourceText: String,
     outputStream: OutputStream,
 ): DocxWriteResult = withContext(Dispatchers.IO) {
     try {
+        if (artifact.hasUnhandledTextParts) {
+            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — nagłówek/stopka/przypis z tekstem poza document.xml")
+            return@withContext DocxWriteResult.UnhandledDocumentParts
+        }
+        if (sourceText != artifact.plainText) {
+            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — tekst po review różni się od artefaktu")
+            return@withContext DocxWriteResult.SourceTextMismatch
+        }
+
         val located = locateTokenRanges(artifact.plainText, tokenMap)
 
         // BUG-DOCX-NORMALIZER-MISMATCH-FIX (09.07, diagnoza Cursor): jeśli jakiś token z

@@ -22,47 +22,55 @@ import kotlinx.coroutines.withContext
 private const val DOCX_MIME =
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
+private data class PendingExport(val artifact: DocxArtifact, val tokenMap: Map<String, String>, val sourceText: String)
+
 /**
- * @return callback do wywołania z ekranu wyniku: `onSaveDocx(artifact, tokenMap)`.
+ * @return callback do wywołania z ekranu wyniku: `onSaveDocx(artifact, tokenMap, sourceText)`.
+ * [sourceText] to dokładny tekst wysłany do silnika (po ewentualnej ręcznej korekcie na
+ * Review) — writeDocxArtifact porówna go z artifact.plainText i odmówi zapisu jeśli się
+ * różnią (audyt Cursora 09.07, KRYTYCZNE #1).
+ *
  * Sam launcher SAF jest zarejestrowany tutaj (wymóg Compose — bezwarunkowo w drzewie
- * kompozycji), artefakt+tokenMap przechodzą przez wewnętrzny stan między kliknięciem
- * przycisku a callbackiem `CreateDocument`.
+ * kompozycji), dane przechodzą przez wewnętrzny stan między kliknięciem przycisku
+ * a callbackiem `CreateDocument`.
  */
 @Composable
-internal fun rememberDocxExportLauncher(scope: CoroutineScope): (DocxArtifact, Map<String, String>) -> Unit {
+internal fun rememberDocxExportLauncher(scope: CoroutineScope): (DocxArtifact, Map<String, String>, String) -> Unit {
     val context = LocalContext.current
-    var pending by remember { mutableStateOf<Pair<DocxArtifact, Map<String, String>>?>(null) }
+    var pending by remember { mutableStateOf<PendingExport?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(DOCX_MIME)
     ) { uri ->
-        val (artifact, tokenMap) = pending ?: return@rememberLauncherForActivityResult
+        val export = pending ?: return@rememberLauncherForActivityResult
         pending = null
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch(Dispatchers.IO) {
             val writeResult = context.contentResolver.openOutputStream(uri)?.use { out ->
-                writeDocxArtifact(artifact, tokenMap, out)
+                writeDocxArtifact(export.artifact, export.tokenMap, export.sourceText, out)
             } ?: DocxWriteResult.Error("Nie udało się otworzyć pliku do zapisu")
             withContext(Dispatchers.Main) {
-                when (writeResult) {
-                    is DocxWriteResult.Success ->
-                        Toast.makeText(context, "DOCX zapisany", Toast.LENGTH_SHORT).show()
+                val message = when (writeResult) {
+                    is DocxWriteResult.Success -> "DOCX zapisany"
                     is DocxWriteResult.MissingTokens ->
-                        Toast.makeText(
-                            context,
-                            "Część danych nie dopasowała się do dokumentu — eksport przerwany, " +
-                                "żeby nic nie zostało jawne. Użyj Kopiuj/Wyślij zamiast tego.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    is DocxWriteResult.Error ->
-                        Toast.makeText(context, "Błąd zapisu: ${writeResult.message}", Toast.LENGTH_LONG).show()
+                        "Część danych nie dopasowała się do dokumentu — eksport przerwany, " +
+                            "żeby nic nie zostało jawne. Użyj Kopiuj/Wyślij zamiast tego."
+                    is DocxWriteResult.SourceTextMismatch ->
+                        "Tekst został ręcznie poprawiony przed maskowaniem — eksport DOCX " +
+                            "niedostępny dla edytowanej wersji. Użyj Kopiuj/Wyślij zamiast tego."
+                    is DocxWriteResult.UnhandledDocumentParts ->
+                        "Ten dokument ma tekst w nagłówku/stopce/przypisach, których faza 1a " +
+                            "nie maskuje — eksport DOCX zablokowany dla bezpieczeństwa. Użyj Kopiuj/Wyślij."
+                    is DocxWriteResult.Error -> "Błąd zapisu: ${writeResult.message}"
                 }
+                val duration = if (writeResult is DocxWriteResult.Success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                Toast.makeText(context, message, duration).show()
             }
         }
     }
 
-    return { artifact, tokenMap ->
-        pending = artifact to tokenMap
+    return { artifact, tokenMap, sourceText ->
+        pending = PendingExport(artifact, tokenMap, sourceText)
         launcher.launch("zamaskowany.docx")
     }
 }
