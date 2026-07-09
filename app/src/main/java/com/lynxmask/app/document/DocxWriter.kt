@@ -114,16 +114,40 @@ internal suspend fun writeDocxArtifact(
             return@withContext DocxWriteResult.MissingTokens(missing)
         }
 
-        // index w artifact.segments -> nowy tekst (null = bez zmian).
-        val replacement = arrayOfNulls<String>(artifact.segments.size)
+        // BUG-DOCX-WHOLE-SEGMENT-WIPE-FIX (09.07, test "Lisowski" złapał to na żywo): pierwsza
+        // wersja zamieniała CAŁY segment na token, gdy dopasowanie w niego trafiało — dla
+        // segmentu z jednym zdaniem ("Kontakt: jan@wp.pl lub telefonicznie" w jednym <w:t>)
+        // kasowała cały otaczający tekst, nie tylko dopasowany fragment. Teraz: precyzyjna
+        // podmiana WEWNĄTRZ tekstu segmentu (localStart/localEnd), reszta zdania zostaje.
+        data class SegmentEdit(val localStart: Int, val localEnd: Int, val replacement: String)
+        val editsPerSegment = mutableMapOf<Int, MutableList<SegmentEdit>>()
         for ((range, token) in located) {
             val overlapIdx = artifact.segments.indices.filter { i ->
                 val seg = artifact.segments[i]
                 seg.plainStart < range.last + 1 && range.first < seg.plainEnd
             }
-            if (overlapIdx.isEmpty()) continue
-            replacement[overlapIdx.first()] = token
-            overlapIdx.drop(1).forEach { i -> replacement[i] = "" }
+            overlapIdx.forEachIndexed { pos, segIdx ->
+                val seg = artifact.segments[segIdx]
+                val localStart = maxOf(range.first, seg.plainStart) - seg.plainStart
+                val localEnd = minOf(range.last + 1, seg.plainEnd) - seg.plainStart
+                // BUG-DOCX-SPLIT-RUN (znane ograniczenie 1a): fraza rozbita przez Word na
+                // kilka <w:t> — pierwszy segment dostaje token, reszta pustkę (nie duplikuje
+                // frazy). Faza 1b doda scalanie segmentów PRZED wyszukiwaniem.
+                val replacementText = if (pos == 0) token else ""
+                editsPerSegment.getOrPut(segIdx) { mutableListOf() } += SegmentEdit(localStart, localEnd, replacementText)
+            }
+        }
+
+        // index w artifact.segments -> nowy PEŁNY tekst segmentu (null = bez zmian).
+        val replacement = arrayOfNulls<String>(artifact.segments.size)
+        for ((segIdx, edits) in editsPerSegment) {
+            val seg = artifact.segments[segIdx]
+            val newText = StringBuilder(seg.text)
+            // Od końca — wcześniejsze localStart/localEnd zostają prawidłowe mimo zmiany długości.
+            edits.sortedByDescending { it.localStart }.forEach { edit ->
+                newText.replace(edit.localStart, edit.localEnd, edit.replacement)
+            }
+            replacement[segIdx] = newText.toString()
         }
 
         val documentXml = artifact.zipEntries[DOCX_DOCUMENT_PART]?.toString(Charsets.UTF_8)
