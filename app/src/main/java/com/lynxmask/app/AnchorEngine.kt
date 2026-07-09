@@ -76,13 +76,40 @@ internal fun applyAnchorEngine(
     // TLD) po pojedynczej spacji, ale TYLKO gdy poprzedni fragment urwał się na kropce
     // (lookbehind `(?<=\.)`) — to gwarantuje że nie połyka zwykłego słowa po poprawnym mailu
     // (np. "jan@wp.pl do jutra" — "do" zostaje jawne, bo "wp.pl" nie kończy się kropką).
+    //
+    // BUG-EMAIL-TOKEN-PREFIX-FIX (09.07, diagnoza Cursor traceMode, test_email_izolowany_09_07.txt
+    // linia 9 w pliku wieloliniowym): `[^\s\n@]*` jest wystarczająco pojemny (litery/cyfry/
+    // podkreślnik/kropka), żeby połknąć istniejący token z POPRZEDNIEJ linii (np. "EMAIL_001")
+    // jako rzekomy "local-part" — cały match wtedy nakłada się na już przypisany token,
+    // `matchOverlapsToken` odrzuca go w CAŁOŚCI, co gubi też prawdziwy, niepowiązany email na
+    // kolejnej linii zamiast tylko odciąć token z prefiksu.
+    //
+    // BUG-EMAIL-TOKEN-PREFIX-FIX v2 (09.07, druga runda diagnozy Cursor traceMode): pierwsza
+    // wersja (negative lookahead PO opcjonalnym prefiksie) nie wystarczyła — opcjonalny prefiks
+    // `[\p{L}0-9]+\s+` sam potrafi połknąć SAME CYFRY z ogona tokenu ("001" z "EMAIL_001",
+    // dozwolone przez `0-9`) + newline, więc match i tak zaczynał się od pozycji nakładającej
+    // się na token, ZANIM lookahead w ogóle dostał szansę sprawdzić. Prawdziwy local-part-prefix
+    // (np. "marek" w "marek wozniak@...") zawsze zaczyna się LITERĄ, nigdy samą cyfrą — wymuszenie
+    // litery na start (`[\p{L}][\p{L}0-9]*` zamiast `[\p{L}0-9]+`) blokuje "001" jako kandydata
+    // na prefiks z konstrukcji, bez osłabiania oryginalnego zastosowania (BUG-EMAIL-LOCALPART-
+    // SPACJA-FIX, 05.07). Negative lookahead na sam token zostaje jako dodatkowe zabezpieczenie
+    // (przypadek glueowany bez newline). A.2b (osierocona domena) i tak łapie glueowany przypadek
+    // "EMAIL_001@domena.pl" bez lewej ekspansji, więc to nie zabiera mu roboty.
     // ------------------------------------------------------------------
-    applyAll(Regex("""(?:[\p{L}0-9]+\s+)?[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*(?:(?<=\.)[^\S\n][a-zA-Z]{2,4}\b)?"""), TOKEN_EMAIL)
+    applyAll(Regex("""(?:[\p{L}][\p{L}0-9]*\s+)?(?!(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b)[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*(?:(?<=\.)[^\S\n][a-zA-Z]{2,4}\b)?"""), TOKEN_EMAIL)
 
     // A.2b EMAIL — osierocona domena po istniejącym tokenie
     // EMAIL_001@nfz.gov.pl → A.2 skipped (TOKEN_RE), tu łapiemy @nfz.gov.pl
     // Wymaga minimum jednej kropki w domenie — nie matchuje @TOKEN_001 bez rozszerzenia.
-    applyAll(Regex("""@[^\s\n@]+(?:\.[^\s\n@]+)+"""), TOKEN_EMAIL)
+    //
+    // BUG-EMAIL-A2B-SPACJA-DOMENA-FIX (09.07, Paweł: "jeżli po spacji jest .pl/.com/.app to
+    // jest email"): A.2 już toleruje spację przed kolejnym segmentem domeny (linia wyżej,
+    // `(?:\s*\.[^\s\n]+)*`) — A.2b tej samej tolerancji nie miał, więc gdy A.2 z jakiegoś
+    // powodu nie złapał całości (np. overlap z tokenem), A.2b jako fallback urywał się na
+    // pierwszej spacji ("@kancelaria .pl" → tylko "@kancelaria", " .pl" zostawało jawne).
+    // Ta sama ogólna reguła co w A.2 (dowolny kolejny segment domeny, nie enumeracja TLD),
+    // [^\S\n]* zamiast \s* — spacja tylko w tej samej linii, bez mostkowania \n.
+    applyAll(Regex("""@[^\s\n@]+(?:[^\S\n]*\.[^\s\n@]+)+"""), TOKEN_EMAIL)
 
     // ------------------------------------------------------------------
     // A.3  TELEFON — kotwica: warianty jakie ludzie faktycznie piszą

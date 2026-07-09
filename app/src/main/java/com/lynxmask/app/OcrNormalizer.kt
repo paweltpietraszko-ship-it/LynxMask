@@ -266,13 +266,20 @@ object OcrNormalizer {
     )
 
     // OCR_EMAIL_COMPACT (krok 0b): spacje wewnątrz emaila przed pozostałymi krokami email
-    private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)\s+([a-zA-Z0-9])""")
+    // BUG-EMAIL-CROSS-NEWLINE-FIX (09.07, diagnoza: test_email_izolowany_09_07.txt, linie
+    // 1-6 sklejały się w jeden token): goły \s+ w tych trzech wzorcach obejmował \n, więc
+    // "naprawa spacji" mostkowała koniec jednego maila (np. "...kancelaria.pl") przez znak
+    // nowej linii do POCZĄTKU zupełnie innego, niepowiązanego maila w kolejnej linii
+    // ("m.kowalczyk@...") i sklejała je w jeden zdegradowany ciąg. Ten sam mechanizm co
+    // BUG-KWOTA-CROSS-NEWLINE-FIX/BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07) — [^\S\n]+ zamiast
+    // \s+, żeby "napraw spację w tej linii" nie mostkowało do sąsiedniej.
+    private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)[^\S\n]+([a-zA-Z0-9])""")
     // Tylko typowe artefakty OCR — nie skleja "krzysztof nowakowski@" (→ LOCALSPACE _)
     private val OCR_EMAIL_SPACE_BEFORE_AT_DOT = Regex(
-        """([a-zA-Z0-9._%+\-]*\.[a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]+@)"""
+        """([a-zA-Z0-9._%+\-]*\.[a-zA-Z0-9._%+\-]+)[^\S\n]+([a-zA-Z0-9._%+\-]+@)"""
     )
     private val OCR_EMAIL_SPACE_BEFORE_AT_DIGITS = Regex(
-        """([a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]*\d[a-zA-Z0-9._%+\-]*@)"""
+        """([a-zA-Z0-9._%+\-]+)[^\S\n]+([a-zA-Z0-9._%+\-]*\d[a-zA-Z0-9._%+\-]*@)"""
     )
 
     // ----------------------------------------------------------
