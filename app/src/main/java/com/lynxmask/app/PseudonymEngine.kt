@@ -172,7 +172,20 @@ object PseudonymEngine {
         // [^\S\n]+ zamiast \s+ — ten sam wzorzec co wcześniejsze fixy cross-newline w tym
         // tygodniu (KWOTA, EMAIL, kotwice keyword). Intencja tych trzech regexów (sklejanie
         // maila rozbitego spacją NA TEJ SAMEJ linii) zostaje w pełni zachowana.
-        text = Regex("""(?<=[a-z0-9]{2})([a-z0-9])\.[^\S\n]+([a-z0-9])""", RegexOption.IGNORE_CASE) // anna. nowak → anna.nowak
+        //
+        // BUG-KROPKA-JAKO-ZDEGRADOWANE-AT-FIX (09.07, Paweł: "usunąć możliwość że program
+        // uzna kropkę jako zdegradowany @"): ten regex — w przeciwieństwie do DWÓCH
+        // pozostałych w tym bloku (linie niżej, obie wymagają literalnego "@" w dopasowaniu)
+        // — zakładał że KAŻDA kropka mogła być zdegradowanym "@", bez żadnego dowodu że
+        // w pobliżu w ogóle jest mail. W zwykłej prozie "X. Y" (koniec zdania, nowe zdanie)
+        // jest wszędzie i dawało fałszywe sklejenia ("lat. Sonda" → "lat.Sonda"). Fix
+        // (mechanizm potwierdzony z Cursorem): wymagane realne "@" w oknie 25 znaków PO
+        // dopasowaniu — sprawdzone na oryginalnych przykładach z komentarza wyżej ("anna.
+        // nowak(@wp.pl" — @ ~6 znaków dalej), zwykła proza nigdy nie ma "@" w tej odległości.
+        text = Regex(
+            """(?<=[a-z0-9]{2})([a-z0-9])\.[^\S\n]+([a-z0-9])(?=[^\n]{0,25}@)""",
+            RegexOption.IGNORE_CASE
+        ) // anna. nowak(@... → anna.nowak(@...
             .replace(text) { m -> "${m.groupValues[1]}.${m.groupValues[2]}" }
         text = Regex("""@[^\S\n]+([a-z0-9])""", RegexOption.IGNORE_CASE)               // @ wp → @wp
             .replace(text) { m -> "@${m.groupValues[1]}" }

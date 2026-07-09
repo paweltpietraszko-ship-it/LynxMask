@@ -1874,6 +1874,24 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "Km 555/2024")
     }
 
+    // =========================================================================
+    // BUG-KROPKA-JAKO-ZDEGRADOWANE-AT — pre-processing sklejania emaili wymaga
+    // teraz realnego "@" w pobliżu (09.07, zgłoszenie Pawła)
+    // =========================================================================
+
+    @Test fun `zdanie prozy zakonczone kropka nie zostaje sklejone z kolejnym`() {
+        val r = pseudonymize("Sonda dotarła w pobliże celu. Kolejny etap misji rozpocznie się wkrótce.")
+        assertTrue("Zdanie po kropce ma zostać jawne z zachowaną spacją",
+            r.pseudonymizedText.contains("celu. Kolejny"))
+    }
+
+    @Test fun `email rozbity spacja przed nawiasem at nadal sklejany`() {
+        // Oryginalny motywujący przypadek fixu (komentarz w PseudonymEngine.kt) — @ jest
+        // w rozsądnej odległości, więc sklejanie ma dalej działać.
+        val r = pseudonymize("Kontakt: anna. nowak(@wp.pl w sprawie oferty.")
+        assertTokenExists(r, TOKEN_EMAIL)
+    }
+
     @Test fun `v19 data urodzenia kontekst DD-MM-YYYY jest maskowana`() {
         // DATA-UR-FIX: brak wzorca na datę urodzenia → dodany kontekst dat[aą] ur...
         val r = pseudonymize("Data urodzenia: 21.05.1979")
