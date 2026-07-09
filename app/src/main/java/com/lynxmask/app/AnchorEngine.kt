@@ -276,8 +276,19 @@ internal fun applyAnchorEngine(
     // ------------------------------------------------------------------
     // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* przed [^\n]+ -> [^\S\n]* — "sygn." na
     // końcu linii nie może przełknąć \n i skonsumować całą NASTĘPNĄ, niepowiązaną linię.
+    //
+    // BUG-SYGNATURA-SLOWO-FIX (09.07, zgłoszenie Pawła: dokument o SETI "Wizja Claude 2" —
+    // 14 fałszywych trafień, całe zdania zjedzone jako NUMER): `sygn\.?` bez granicy słowa
+    // i bez wymogu kropki/kontekstu łapało gołe 4 litery "sygn" — pasuje do POCZĄTKU każdego
+    // zwykłego polskiego słowa zaczynającego się tak samo ("sygnał", "sygnalizuje"), a nawet
+    // w ŚRODKU słowa złożonego ("techno[sygn]atur") bo brakowało \b. Naprawione: wymagane
+    // ALBO "sygn." z kropką (prawdziwy skrót), ALBO "sygn" bezpośrednio przed "akt" (kotwica
+    // bez kropki), ALBO pełny rdzeń "sygnatur..." (rodzina słowa "sygnatura", nie "sygnał").
+    // Rdzeń "sygnatur" wciąż koliduje z technicznym/naukowym użyciem tego samego słowa
+    // (np. "sygnatura biologiczna" w tekście o astrobiologii) — świadomie zaakceptowane,
+    // bo to ten sam wyraz co prawny "sygnatura akt", nie da się rozstrzygnąć samym regexem.
     applyAll(
-        Regex("""(?i)sygn\.?[^\S\n]*(?:akt\.?)?[^\S\n]*:?[^\S\n]*[^\n]+"""),
+        Regex("""(?i)\bsygn(?:\.|(?=[^\S\n]*akt\b)|atur\w*)[^\S\n]*(?:akt\.?)?[^\S\n]*:?[^\S\n]*[^\n]+"""),
         TOKEN_NUMER
     )
     // BUG-KW-KWOTA-FIX (Cursor 01.07): \bKW\b zamiast gołego KW — bez granicy słowa,
