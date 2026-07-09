@@ -162,11 +162,21 @@ object PseudonymEngine {
         // ADDR-EMAIL-FIX: lookbehind (?<=[a-z0-9]{2}) wyklucza 2-literowe skróty adresowe
         // (al., ul., pl., os.) — bez niego "al. Jerozolimskie" → "al.Jerozolimskie"
         // i AddressEngine STREET_NO_ZIP ([^\S\n]+ po skrócie) nie może dopasować.
-        text = Regex("""(?<=[a-z0-9]{2})([a-z0-9])\.\s+([a-z0-9])""", RegexOption.IGNORE_CASE) // anna. nowak → anna.nowak
+        //
+        // BUG-SKLEJANIE-AKAPITOW-FIX (09.07, diagnoza Cursor traceMode na "Wizja Caude 2.docx"):
+        // \s+ we wszystkich trzech regexach obejmowało \n — na czystym DOCX (bez żadnej
+        // degradacji OCR do naprawienia) sklejało koniec zdania z początkiem NASTĘPNEGO
+        // akapitu ("ludzi.\nMimo" → "ludzi.Mimo"), co potem dawało AnchorEngine A.8 (SYGNATURA,
+        // [^\n]+) fałszywie długi zasięg przez kilka akapitów i psuło eksport DOCX
+        // (MissingTokens — tokenMap odnosił się do sklejonego tekstu, nie surowego artefaktu).
+        // [^\S\n]+ zamiast \s+ — ten sam wzorzec co wcześniejsze fixy cross-newline w tym
+        // tygodniu (KWOTA, EMAIL, kotwice keyword). Intencja tych trzech regexów (sklejanie
+        // maila rozbitego spacją NA TEJ SAMEJ linii) zostaje w pełni zachowana.
+        text = Regex("""(?<=[a-z0-9]{2})([a-z0-9])\.[^\S\n]+([a-z0-9])""", RegexOption.IGNORE_CASE) // anna. nowak → anna.nowak
             .replace(text) { m -> "${m.groupValues[1]}.${m.groupValues[2]}" }
-        text = Regex("""@\s+([a-z0-9])""", RegexOption.IGNORE_CASE)               // @ wp → @wp
+        text = Regex("""@[^\S\n]+([a-z0-9])""", RegexOption.IGNORE_CASE)               // @ wp → @wp
             .replace(text) { m -> "@${m.groupValues[1]}" }
-        text = Regex("""([a-z0-9])\s+@([a-z0-9])""", RegexOption.IGNORE_CASE)    // abc @wp → abc@wp
+        text = Regex("""([a-z0-9])[^\S\n]+@([a-z0-9])""", RegexOption.IGNORE_CASE)    // abc @wp → abc@wp
             .replace(text) { m -> "${m.groupValues[1]}@${m.groupValues[2]}" }
 
         // --- Pre-processing: naprawa adresu podzielonego przez newline OCR ---
