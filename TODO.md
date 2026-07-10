@@ -8,7 +8,61 @@
 
 ---
 
-## PRIORYTET NASTĘPNEJ SESJI (10.07 wieczór) — bugi maskowania na esejach/długiej prozie
+## PRIORYTET NASTĘPNEJ SESJI (10.07 wieczór) — faktury: tokeny na obrazie zamiast czarnych pasków
+
+Paweł: 90% dokumentów w jego poczcie to faktury. Płaski tekst (dzisiejsze DOCX/PDF/Excel)
+niszczy strukturę tabeli faktury — kolumny/pozycje/kwoty stają się chaotycznym ciągiem
+krótkich linii. Ustalony z Pawłem kierunek: zamiast płaskiego tekstu, dla faktur/skanów
+(obraz) — **czarny prostokąt z BIAŁYM TEKSTEM TOKENU na nim** (np. "OSOBA_001"), w miejscu
+gdzie dziś jest tylko lity czarny pasek. Zachowuje realny układ faktury (bo to nadal obraz,
+nie tekst), a jednocześnie widać CO zostało zamaskowane, nie tylko że coś zamaskowano.
+
+**Ważna decyzja Pawła w trakcie ustalania zakresu:** ODRZUCONE uproszczone parowanie
+"pierwszy prostokąt → pierwszy token po kolei" (pozycyjne, bez sprawdzania treści) — Paweł
+świadomie zrezygnował mimo że prostsze, bo myli przy powtarzających się wartościach (ten
+sam NIP w nagłówku i stopce faktury dostaje jeden token w mapie silnika, ale DWA osobne
+prostokąty na obrazie — pozycyjne parowanie przesuwa etykiety od tego miejsca w dół).
+**Token musi być dopasowany do prostokąta PO TREŚCI (wartości), nie po kolejności.**
+Nie jest to ryzyko wycieku (czarny prostokąt i tak w 100% zakrywa wartość niezależnie od
+napisu) — tylko ryzyko mylącej etykiety — ale Paweł uznał że skoro robimy tokeny zamiast
+gołych pasków, mają być wiarygodne.
+
+**Co już istnieje (nie budować od zera) — `ImageRedactionPipeline.kt`:**
+- OCR (ML Kit) z bounding boxami per linia/element (`boundingBox: Rect`) — X/Y już liczone.
+- `RedactionRegion(rect: RectF, type, label)` — regiony do zamalowania już wyliczane.
+- `fillBlackRegion(canvas, rect)` — dziś tylko lity czarny prostokąt.
+- `detectRedactionRegions()` — już woła silnik maskujący per linia OCR, żeby zdecydować
+  czy dana linia ma być zamaskowana (`shouldMaskLine`) — ale dziś zna tylko KATEGORIĘ
+  (np. "PESEL"), nie konkretny token z `tokenMap`.
+
+**Co trzeba dopisać:**
+1. Dopasowanie regionu do KONKRETNEGO tokenu przez wartość (nie kategorię) — użyć
+   `PseudonymEngine.pseudonymize(..., traceMode = true)`, dopasować `DetectionTrace.matchedText`
+   (lub `canonicalValue`, ten sam mechanizm co `assignToken` w `PseudonymEngine.kt`) do
+   tekstu OCR danej linii/elementu, żeby wiedzieć KTÓRY token (`OSOBA_001` itd.) rysować.
+2. Nowa funkcja rysująca: czarny prostokąt (bez zmian) + biały tekst tokenu WYŚRODKOWANY
+   na nim, ze zmniejszaną czcionką aż się zmieści w `rect` (ten sam rodzaj logiki co
+   `justifiedPositions`/pomiar w `PdfWriter.kt` dziś — mierzyć `Paint.measureText`, zmniejszać
+   rozmiar w pętli aż zmieści się w szerokości i wysokości pola).
+3. **Faktury jako PDF** (nie tylko zdjęcie/PNG): dziś PDF idzie ścieżką czysto tekstową
+   (`ocrFromPdfUri` → płaski tekst → `PdfWriter`). Dla tego trybu trzeba PRZEŁĄCZYĆ na
+   ścieżkę obrazową — renderować stronę PDF jako bitmapę (już mamy `PdfRenderer`, używany
+   w `ocrFromPdfUri`, DocumentExtractor.kt), przepuścić przez ten sam pipeline co zdjęcie/PNG
+   (regiony + tokeny na obrazie), potem złożyć strony z powrotem w PDF (Android `PdfDocument`,
+   tak jak już robi `PdfWriter.writePdfFromText` dla tekstu — tu zamiast tekstu strona to
+   `Canvas.drawBitmap` zamaskowanego obrazu).
+4. Rozstrzygnąć: to nowy, trzeci tryb eksportu (obok płaskiego tekstu i istniejącego
+   czarnego paska) — czy PODSTAWIĆ go jako domyślny dla faktur/skanów, czy dać wybór? Nie
+   ustalone z Pawłem, dopytać na starcie.
+
+**Kiedy sięgnąć po Cursora:** to dotyka kilku plików naraz (`ImageRedactionPipeline.kt`,
+`PdfWriter.kt`/nowy plik, `DocumentExtractor.kt`, ewentualnie `IncomingDocumentFlow.kt`) —
+jeśli po rozpoczęciu coś nie gra (np. dopasowanie tekst→token zawodzi na realnym skanie),
+skonsultować zamiast łatać punktowo — ten sam playbook co reszta tygodnia.
+
+---
+
+## OTWARTE, DRUGIE W KOLEJCE — bugi maskowania na esejach/długiej prozie
 
 Paweł puścił przez silnik kolejny esej (po "Wizja Claude 2.docx", która ujawniła
 BUG-WIZJA-PROZA-DOB i SYGNATURA-proza) — zapowiada, że wynik "jeży włos", czyli engine
@@ -50,20 +104,43 @@ zapisie — standardowe Protected View, nie bug).
 
 Pełny stan: `memory/project_document_rebuilder_state.md`.
 
-## NASTĘPNE — PDF i Excel, ten sam minimalistyczny wzorzec
+## ZAMKNIĘTE 10.07 — PDF i Excel, ten sam minimalistyczny wzorzec co DOCX
 
-Brief `CLAUDE_BRIEF_PDF_Faza2_2026-07-10.md` (katalog główny) **już zaktualizowany 10.07**
-pod nowe, minimalistyczne założenie — czytać sekcję "AKTUALIZACJA 10.07 wieczór" na górze
-pliku przed startem. Dla PDF z warstwą tekstu (nie skan) ten sam wzorzec co dziś w DOCX: wyciągnij tekst →
-zamaskuj → zapisz jako nowy, minimalny PDF z tekstem w akapitach. PDF ze skanu (obraz,
-bez warstwy tekstu) to osobny mechanizm, już częściowo istnieje (`ImageRedactionPipeline.kt`,
-czarne prostokąty na bitmapie) — nie dotyczy dzisiejszej decyzji.
+`PdfWriter.kt`/`XlsxWriter.kt`/`XlsxExtractor.kt` (nowe pliki) + `AndroidManifest.xml`
+(brakujący intent-filter dla XLSX — appka w ogóle nie pojawiała się jako opcja udostępniania
+dla .xlsx, naprawione). PDF idzie przez istniejący OCR (`ocrFromPdfUri`, PDF zawsze
+traktowany jak skan) — bez potrzeby nowego parsera warstwy tekstu PDF.
 
-Excel: analogicznie wykonalne, prawdopodobnie prościej niż PDF — wyciągnąć tekst komórek,
-zamaskować, zapisać jako świeży, minimalny xlsx (bez formuł/formatowania).
+**PDF dostał dodatkowo kilka rund dopracowania typografii (10.07, zgłoszenia Pawła na
+żywym dokumencie — umowa najmu + regulamin sklepu):**
+- czcionka sans-serif + łamanie po rzeczywistej szerokości (`Paint.measureText`), nie po
+  stałej liczbie znaków — usunęło "wygląd wydruku z lat 70",
+- paginacja licząca rzeczywistą wysokość (nie linie sztukami) — eliminuje przedwczesne
+  puste miejsce na dole strony,
+- usunięta własna stopka "Strona X z Y" — kolidowała z istniejącym znacznikiem stron
+  źródłowych z OCR (`── Strona N ──`, DocumentExtractor.kt:140); ten znacznik teraz
+  wymusza PRAWDZIWY podział strony w wyniku zamiast być zwykłym tekstem,
+- wyśrodkowane nagłówki: `§N` (z opcjonalnym krótkim tytułem, np. "§3 Definicje") oraz
+  zamknięta lista słów-kotwic dokumentów (regulamin/umowa/zaświadczenie/itd.) gdy stoją
+  SAMOTNIE w linii — reguła OGÓLNA (pierwsze słowo + limit długości + brak interpunkcji
+  zdania na końcu), nie lista konkretnych fraz,
+- prawdziwe justowanie (wyrównanie do obu marginesów) zwykłych linii akapitu — ostatnia
+  linia akapitu zostaje do lewej (standard typograficzny).
 
-Desktop (osobny projekt) może pójść dalej w stronę pełnego odwzorowania — tam biblioteki
-i budżet czasu na to pozwalają.
+Wszystko w `document/PdfWriter.kt`, testowalne w JVM (`PdfWriterTest.kt`) poza samym
+rysowaniem Canvas/PdfDocument (Android-only, sprawdzane na telefonie).
+
+**Świadomie NIE naprawiane w tej rundzie:** dokumenty czysto tabelaryczne/formularzowe
+(zaświadczenia, faktury) nadal wyglądają jak chaotyczny ciąg krótkich linii — płaski tekst
+niszczy strukturę tabeli. To osobny, większy temat — patrz priorytet na górze tego pliku
+("faktury: tokeny na obrazie zamiast czarnych pasków").
+
+Bug przy okazji: obraz mniejszy niż 32×32 px dawał surowy angielski wyjątek ML Kit wprost
+w UI — naprawione (`IncomingDocumentFlow.kt`, `tooSmallForMlKitMessage`), teraz czytelny
+polski komunikat z rzeczywistymi wymiarami.
+
+Desktop (osobny projekt) może pójść dalej w stronę pełnego odwzorowania formatowania —
+tam biblioteki i budżet czasu na to pozwalają.
 
 ---
 

@@ -65,7 +65,7 @@ class DocxRoundTripTest {
 
         val out = ByteArrayOutputStream()
         val writeResult = runBlocking { writeDocxFromText(engineResult.pseudonymizedText, out) }
-        assertTrue("Zapis powinien się udać: $writeResult", writeResult is DocxWriteResult.Success)
+        assertTrue("Zapis powinien się udać: $writeResult", writeResult is DocumentWriteResult.Success)
 
         val outXml = readZip(out.toByteArray())["word/document.xml"] ?: error("Brak document.xml w wyniku")
         assertFalse("Jan Kowalski nie powinien zostać jawny w XML", outXml.contains("Jan Kowalski"))
@@ -107,7 +107,7 @@ class DocxRoundTripTest {
     fun `pusta linia nie wywala zapisu`() {
         val out = ByteArrayOutputStream()
         val writeResult = runBlocking { writeDocxFromText("Przed\n\nPo", out) }
-        assertTrue(writeResult is DocxWriteResult.Success)
+        assertTrue(writeResult is DocumentWriteResult.Success)
         val xml = readZip(out.toByteArray())["word/document.xml"]!!
         assertEquals(3, Regex("""<w:p>""").findAll(xml).count())
     }

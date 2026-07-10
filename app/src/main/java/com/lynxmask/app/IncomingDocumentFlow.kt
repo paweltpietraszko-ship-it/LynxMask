@@ -25,8 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.document.DocumentArtifact
 import com.lynxmask.app.document.DocxArtifact
+import com.lynxmask.app.document.PdfArtifact
+import com.lynxmask.app.document.XlsxArtifact
 import com.lynxmask.app.document.extractDocxArtifact
+import com.lynxmask.app.document.extractXlsxArtifact
 import com.lynxmask.app.document.rememberDocxExportLauncher
+import com.lynxmask.app.document.rememberPdfExportLauncher
+import com.lynxmask.app.document.rememberXlsxExportLauncher
 import com.lynxmask.app.ui.components.*
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxSpacing
@@ -35,6 +40,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val TAG = "LynxMask_IncomingDoc"
+
+// BUG-OBRAZ-ZA-MALY (10.07, zgłoszenie Pawła — surowy angielski wyjątek ML Kit
+// "InputImage width and height should be at least 32!" wyciekał wprost do użytkownika).
+// Sprawdzamy PRZED wywołaniem ML Kit, jeden punkt prawdy dla obu miejsc ładowania obrazu
+// (routeImageInput/openImageRedact) — zamiast dublować limit i komunikat w dwóch miejscach.
+private const val MIN_MLKIT_IMAGE_DIMENSION = 32
+
+private fun tooSmallForMlKitMessage(bmp: Bitmap): String? {
+    if (bmp.width >= MIN_MLKIT_IMAGE_DIMENSION && bmp.height >= MIN_MLKIT_IMAGE_DIMENSION) return null
+    return "Obraz jest za mały do przetworzenia (${bmp.width}×${bmp.height} px, " +
+        "minimum ${MIN_MLKIT_IMAGE_DIMENSION}×${MIN_MLKIT_IMAGE_DIMENSION} px) — spróbuj innego pliku."
+}
 
 private sealed class IncomingDocState {
     object Loading : IncomingDocState()
@@ -79,6 +96,8 @@ fun IncomingDocumentFlow(
     var progressLabel by remember { mutableStateOf("Wczytuję...") }
     var savedLibrarySessionId by remember { mutableStateOf<String?>(null) }
     val saveDocx = rememberDocxExportLauncher(scope)
+    val savePdf = rememberPdfExportLauncher(scope)
+    val saveXlsx = rememberXlsxExportLauncher(scope)
 
     remember { UserDictionary.load(context) }
     remember { GuardAllowlist.load(context) }
@@ -256,12 +275,22 @@ fun IncomingDocumentFlow(
                     onSaveDescription = if (isExpress) null else { maskedText, description ->
                         scope.launch(Dispatchers.IO) {
                             val cleanText = maskedText.removePrefix("SESJA_${s.result.sessionId}\n")
+                            // Document Rebuilder (10.07): zapamiętaj format źródłowy, żeby
+                            // Biblioteka mogła później zaproponować "Zapisz DOCX/PDF/Excel"
+                            // zamiast tylko podglądu tekstu (patrz SessionDetailScreen).
+                            val sourceFormat = when (s.artifact) {
+                                is DocxArtifact -> SessionStore.SOURCE_FORMAT_DOCX
+                                is PdfArtifact -> SessionStore.SOURCE_FORMAT_PDF
+                                is XlsxArtifact -> SessionStore.SOURCE_FORMAT_XLSX
+                                else -> null
+                            }
                             val saved = SessionStore.save(
                                 context = context,
                                 sesjaId = s.result.sessionId,
                                 tokenMapJson = s.result.tokenMapJson(),
                                 tokenCount = s.result.tokenMap.size,
-                                maskedText = cleanText
+                                maskedText = cleanText,
+                                sourceFormat = sourceFormat
                             )
                             if (!saved) {
                                 withContext(Dispatchers.Main) {
@@ -292,6 +321,12 @@ fun IncomingDocumentFlow(
                     },
                     onSaveDocx = if (s.artifact is DocxArtifact) {
                         { text: String -> saveDocx(text) }
+                    } else null,
+                    onSavePdf = if (s.artifact is PdfArtifact) {
+                        { text: String -> savePdf(text) }
+                    } else null,
+                    onSaveXlsx = if (s.artifact is XlsxArtifact) {
+                        { text: String -> saveXlsx(text) }
                     } else null
                 )
         }
@@ -391,7 +426,7 @@ private suspend fun finishWithText(
 ) {
     if (rawText.isBlank()) {
         setState(IncomingDocState.Error(
-            "Nie udało się odczytać treści dokumentu.\nObsługiwane formaty: DOCX, PDF, obrazy, tekst."
+            "Nie udało się odczytać treści dokumentu.\nObsługiwane formaty: DOCX, PDF, Excel, obrazy, tekst."
         ))
         return
     }
@@ -429,6 +464,11 @@ private suspend fun routeImageInput(
     val bmp = loadBitmapExifAware(context, uri)
     if (bmp == null) {
         setState(IncomingDocState.Error("Nie udało się wczytać obrazu"))
+        return
+    }
+    tooSmallForMlKitMessage(bmp)?.let { message ->
+        bmp.recycle()
+        setState(IncomingDocState.Error(message))
         return
     }
 
@@ -495,6 +535,11 @@ private suspend fun openImageRedact(
         setState(IncomingDocState.Error("Nie udało się wczytać obrazu"))
         return
     }
+    tooSmallForMlKitMessage(bmp)?.let { message ->
+        bmp.recycle()
+        setState(IncomingDocState.Error(message))
+        return
+    }
     try {
         val ocrScan = withContext(Dispatchers.Default) { ImageRedactionPipeline.runOcrOnce(bmp) }
         val profile = redactionProfileFor(ImageInputKind.CARD, ocrScan.plainText)
@@ -543,6 +588,9 @@ private suspend fun extractRawText(
     val isDocx = mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         || fileName.endsWith(".docx", ignoreCase = true)
         || (mimeType == "application/octet-stream" && fileName.endsWith(".docx", ignoreCase = true))
+    val isXlsx = mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        || fileName.endsWith(".xlsx", ignoreCase = true)
+        || (mimeType == "application/octet-stream" && fileName.endsWith(".xlsx", ignoreCase = true))
 
     return when {
         isDocx -> {
@@ -559,6 +607,16 @@ private suspend fun extractRawText(
                 ExtractedDocument(extractTextFromDocx(uri, context), true, null)
             }
         }
+        isXlsx -> {
+            if (uri == null) return ExtractedDocument("", false, null)
+            onProgress("Czytam arkusz Excel...")
+            val artifact = extractXlsxArtifact(uri, context)
+            if (artifact != null) {
+                ExtractedDocument(artifact.plainText, true, null, artifact, uri)
+            } else {
+                ExtractedDocument("", false, null)
+            }
+        }
         mimeType == "text/plain" -> {
             onProgress("Odczytuję tekst...")
             val text = if (uri != null) {
@@ -572,7 +630,7 @@ private suspend fun extractRawText(
             if (uri == null) return ExtractedDocument("", false, null)
             onProgress("Otwieram PDF...")
             val (text, conf) = ocrFromPdfUri(uri, context, onProgress)
-            ExtractedDocument(text, true, conf)
+            ExtractedDocument(text, true, conf, PdfArtifact(text, uri), uri)
         }
         else -> {
             val text = if (uri != null) extractTextFromDocx(uri, context)

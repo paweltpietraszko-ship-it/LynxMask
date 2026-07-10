@@ -73,6 +73,12 @@ object SessionStore {
     const val CONTENT_KIND_TEXT = "text"
     const val CONTENT_KIND_IMAGE = "image"
 
+    // Document Rebuilder (10.07): wartości source_format, muszą się zgadzać z tym co
+    // IncomingDocumentFlow.kt wyprowadza z DocumentArtifact (DocxArtifact/PdfArtifact/XlsxArtifact).
+    const val SOURCE_FORMAT_DOCX = "docx"
+    const val SOURCE_FORMAT_PDF = "pdf"
+    const val SOURCE_FORMAT_XLSX = "xlsx"
+
     @Volatile private var initialized = false
     @Volatile private var cachedDb: SQLiteDatabase? = null
 
@@ -123,6 +129,11 @@ object SessionStore {
                 try {
                     db.execSQL("ALTER TABLE sessions ADD COLUMN redacted_image_enc BLOB")
                 } catch (_: Exception) { /* kolumna już istnieje */ }
+                // MIGRACJA v1.7 (10.07): format źródłowy dokumentu ("docx"/"pdf"/"xlsx"/null) —
+                // pozwala Bibliotece zaproponować "Zapisz DOCX/PDF/Excel" zamiast tylko podglądu.
+                try {
+                    db.execSQL("ALTER TABLE sessions ADD COLUMN source_format TEXT")
+                } catch (_: Exception) { /* kolumna już istnieje */ }
                 cachedDb = db
                 initialized = true
                 Log.i(TAG, "SessionStore zainicjalizowany: ${context.getDatabasePath(DB_NAME).absolutePath}")
@@ -142,7 +153,7 @@ object SessionStore {
      * AUD-M05 FIX: zwraca false przy błędzie (Keystore/AES-GCM) zamiast cichego null.
      */
     fun save(context: Context, sesjaId: String, tokenMapJson: String, tokenCount: Int,
-             maskedText: String = ""): Boolean {
+             maskedText: String = "", sourceFormat: String? = null): Boolean {
         return try {
             ensureInit(context)
             val key = getOrCreateKey()
@@ -152,14 +163,15 @@ object SessionStore {
             if (maskedText.isNotEmpty()) {
                 val maskedEnc = encryptBytes(key, maskedText.toByteArray(Charsets.UTF_8))
                 db.execSQL(
-                    """INSERT INTO sessions (sesja_id, token_map_enc, token_count, created_at, masked_text_enc)
-                       VALUES (?, ?, ?, ?, ?)
+                    """INSERT INTO sessions (sesja_id, token_map_enc, token_count, created_at, masked_text_enc, source_format)
+                       VALUES (?, ?, ?, ?, ?, ?)
                        ON CONFLICT(sesja_id) DO UPDATE SET
                            token_map_enc   = excluded.token_map_enc,
                            token_count     = excluded.token_count,
                            created_at      = excluded.created_at,
-                           masked_text_enc = excluded.masked_text_enc""",
-                    arrayOf(sesjaId, encBlob, tokenCount.toString(), now, maskedEnc)
+                           masked_text_enc = excluded.masked_text_enc,
+                           source_format   = excluded.source_format""",
+                    arrayOf(sesjaId, encBlob, tokenCount.toString(), now, maskedEnc, sourceFormat)
                 )
             } else {
                 db.execSQL(
@@ -286,7 +298,8 @@ object SessionStore {
         val tokenCount: Int,
         val createdAt: String,
         val description: String = "",
-        val contentKind: String = CONTENT_KIND_TEXT
+        val contentKind: String = CONTENT_KIND_TEXT,
+        val sourceFormat: String? = null
     ) {
         val isImage: Boolean get() = contentKind == CONTENT_KIND_IMAGE
     }
@@ -298,18 +311,19 @@ object SessionStore {
         return try {
             ensureInit(context)
             getDb(context).rawQuery(
-                "SELECT sesja_id, token_count, created_at, description, content_kind FROM sessions ORDER BY created_at DESC",
+                "SELECT sesja_id, token_count, created_at, description, content_kind, source_format FROM sessions ORDER BY created_at DESC",
                 null
             ).use { cursor ->
                 val list = mutableListOf<SessionRecord>()
                 while (cursor.moveToNext()) {
                     list.add(
                         SessionRecord(
-                            sesjaId     = cursor.getString(0),
-                            tokenCount  = cursor.getInt(1),
-                            createdAt   = cursor.getString(2),
-                            description = cursor.getString(3),
-                            contentKind = cursor.getString(4) ?: CONTENT_KIND_TEXT
+                            sesjaId      = cursor.getString(0),
+                            tokenCount   = cursor.getInt(1),
+                            createdAt    = cursor.getString(2),
+                            description  = cursor.getString(3),
+                            contentKind  = cursor.getString(4) ?: CONTENT_KIND_TEXT,
+                            sourceFormat = cursor.getString(5)
                         )
                     )
                 }

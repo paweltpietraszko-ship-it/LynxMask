@@ -60,11 +60,14 @@ fun PseudonymResultPanel(
     onDebugLog: (() -> Unit)? = null,
     onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null,
     onOpenLibrary: (() -> Unit)? = null,
-    // Document Rebuilder (feature/document-export): dostępny tylko gdy źródłem był DOCX.
+    // Document Rebuilder: dostępny tylko gdy źródłem był odpowiedni format (DOCX/PDF/XLSX).
     // Przekazujemy gotowy tekst (outputText — ten sam co użytkownik widzi/kopiuje, z
     // uwzględnieniem ręcznych odsłonięć/dodatkowych maskowań) — writer zapisuje go wprost
-    // jako nowy plik, bez szukania czegokolwiek w oryginalnym dokumencie (patrz DocxWriter.kt).
-    onSaveDocx: ((String) -> Unit)? = null
+    // jako nowy plik, bez szukania czegokolwiek w oryginalnym dokumencie (patrz
+    // DocxWriter/PdfWriter/XlsxWriter.kt).
+    onSaveDocx: ((String) -> Unit)? = null,
+    onSavePdf: ((String) -> Unit)? = null,
+    onSaveXlsx: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showDisclaimer by remember { mutableStateOf(false) }
@@ -310,7 +313,9 @@ fun PseudonymResultPanel(
             },
             onDebugLog = onDebugLog,
             onOpenLibrary = onOpenLibrary,
-            onSaveDocx = onSaveDocx?.let { save -> { save(outputText) } }
+            onSaveDocx = onSaveDocx?.let { save -> { save(outputText) } },
+            onSavePdf = onSavePdf?.let { save -> { save(outputText) } },
+            onSaveXlsx = onSaveXlsx?.let { save -> { save(outputText) } }
         )
     }
 
@@ -489,7 +494,9 @@ private fun BottomActionBar(
     onForward: (() -> Unit)?,
     onDebugLog: (() -> Unit)?,
     onOpenLibrary: (() -> Unit)? = null,
-    onSaveDocx: (() -> Unit)? = null
+    onSaveDocx: (() -> Unit)? = null,
+    onSavePdf: (() -> Unit)? = null,
+    onSaveXlsx: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -573,6 +580,8 @@ private fun BottomActionBar(
                 }
             }
 
+            // Tylko jeden z trzech (artefakt wskazuje format źródłowy dokumentu) — ale
+            // każdy niezależnie opcjonalny, ten sam wzorzec co onSaveDocx.
             if (onSaveDocx != null) {
                 BlockedActionSlot(
                     enabled = canExport,
@@ -587,6 +596,40 @@ private fun BottomActionBar(
                         Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Zapisz DOCX")
+                    }
+                }
+            }
+            if (onSavePdf != null) {
+                BlockedActionSlot(
+                    enabled = canExport,
+                    onBlockedClick = onBlockedClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LynxSecondaryButton(
+                        onClick = onSavePdf,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canExport
+                    ) {
+                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Zapisz PDF")
+                    }
+                }
+            }
+            if (onSaveXlsx != null) {
+                BlockedActionSlot(
+                    enabled = canExport,
+                    onBlockedClick = onBlockedClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LynxSecondaryButton(
+                        onClick = onSaveXlsx,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canExport
+                    ) {
+                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Zapisz Excel")
                     }
                 }
             }

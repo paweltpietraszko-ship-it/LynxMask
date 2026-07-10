@@ -9,6 +9,7 @@ package com.lynxmask.app
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,6 +39,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import com.lynxmask.app.document.rememberDocxExportLauncher
+import com.lynxmask.app.document.rememberPdfExportLauncher
+import com.lynxmask.app.document.rememberXlsxExportLauncher
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.components.LynxDangerTextButton
@@ -238,6 +242,14 @@ private fun SessionDetailScreen(
     val context        = LocalContext.current
     val clipboard      = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
+
+    // Document Rebuilder (10.07): eksport z Biblioteki dla sesji, które pochodzą z
+    // DOCX/PDF/Excel — ten sam zapis co z ekranu wyniku, tylko wołany stąd. Rejestrujemy
+    // wszystkie trzy bezwarunkowo (wymóg Compose — launcher musi być zarejestrowany zawsze,
+    // niezależnie od tego, czy przycisk się akurat pokaże).
+    val saveDocx = rememberDocxExportLauncher(coroutineScope)
+    val savePdf = rememberPdfExportLauncher(coroutineScope)
+    val saveXlsx = rememberXlsxExportLauncher(coroutineScope)
 
     var responses       by remember { mutableStateOf<List<SessionStore.ResponseRecord>>(emptyList()) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -443,6 +455,28 @@ private fun SessionDetailScreen(
                         }
                         SessionActionButton(label = "Dodaj odpowiedź AI") {
                             onDepseudo(DepseudoMode.AI_RESPONSE)
+                        }
+                        val exportLabel = when (session.sourceFormat) {
+                            SessionStore.SOURCE_FORMAT_DOCX -> "Zapisz DOCX"
+                            SessionStore.SOURCE_FORMAT_PDF -> "Zapisz PDF"
+                            SessionStore.SOURCE_FORMAT_XLSX -> "Zapisz Excel"
+                            else -> null
+                        }
+                        if (exportLabel != null) {
+                            SessionActionButton(label = exportLabel) {
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    val text = SessionStore.loadMaskedText(context, session.sesjaId)
+                                    withContext(Dispatchers.Main) {
+                                        if (text == null) {
+                                            Toast.makeText(context, "Nie udało się wczytać tekstu sesji", Toast.LENGTH_SHORT).show()
+                                        } else when (session.sourceFormat) {
+                                            SessionStore.SOURCE_FORMAT_DOCX -> saveDocx(text)
+                                            SessionStore.SOURCE_FORMAT_PDF -> savePdf(text)
+                                            SessionStore.SOURCE_FORMAT_XLSX -> saveXlsx(text)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     SessionActionButton(label = "Zmień nazwę") {

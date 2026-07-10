@@ -59,11 +59,6 @@ private fun buildDocumentXml(text: String): String {
 </w:document>"""
 }
 
-internal sealed interface DocxWriteResult {
-    data object Success : DocxWriteResult
-    data class Error(val message: String) : DocxWriteResult
-}
-
 /**
  * Zapisuje [text] (gotowy, już zamaskowany tekst — dokładnie ten, który user widzi w
  * podglądzie) jako nowy, samodzielny plik docx. Nie dotyka żadnego oryginalnego pliku —
@@ -72,7 +67,7 @@ internal sealed interface DocxWriteResult {
 internal suspend fun writeDocxFromText(
     text: String,
     outputStream: OutputStream,
-): DocxWriteResult = withContext(Dispatchers.IO) {
+): DocumentWriteResult = withContext(Dispatchers.IO) {
     try {
         val documentXml = buildDocumentXml(text)
         ZipOutputStream(outputStream).use { zip ->
@@ -87,9 +82,9 @@ internal suspend fun writeDocxFromText(
             zip.closeEntry()
         }
         DebugLogBuffer.log("DocxWriter", "Zapisano nowy DOCX: ${text.length} znaków")
-        DocxWriteResult.Success
+        DocumentWriteResult.Success
     } catch (e: Exception) {
         DebugLogBuffer.log("DocxWriter", "BŁĄD: ${e.javaClass.simpleName}: ${e.message}")
-        DocxWriteResult.Error("${e.javaClass.simpleName}: ${e.message}")
+        DocumentWriteResult.Error("${e.javaClass.simpleName}: ${e.message}")
     }
 }
