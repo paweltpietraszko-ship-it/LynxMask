@@ -8,6 +8,29 @@
 
 ---
 
+## Niskopriorytetowe, znalezione przy diagnozie PDF (10.07, doz_zamaskowany.pdf, 21 stron)
+
+- **BUG-ULICA-IMIENNA-JAKO-OSOBA:** "ul. Jana Pawła II" (i podobne ulice nazwane od osób) —
+  AddressEngine nie łapie takiej nazwy ulicy, więc trafia do NameEngine i dostaje token
+  OSOBA zamiast ADRES. Nie wyciek (dana zamaskowana, zły typ tokenu), znany od 30.06,
+  świadomie niski priorytet — Paweł potwierdził 10.07 że zostaje kosmetyką na później.
+- **BUG-KOD-POCZTOWY-BEZ-MYSLNIKA:** "94102 Łódź" (OCR zgubił myślnik z "94-102") zostaje
+  jawne — wzorzec kodu pocztowego wymaga myślnika, nie toleruje jego braku. To realna luka
+  w maskowaniu (nie kosmetyka jak reszta tej sekcji), ale znaleziona przy okazji, nie
+  potwierdzona jak częsta w praktyce.
+- **Kosmetyka OCR:** "wŁodzi" zamiast "w Łodzi" (sklejona spacja) — nie dotyczy maskowania,
+  tylko czytelności.
+- **Znane ograniczenie OCR, NIE do naprawienia bezpiecznie:** pomieszana kolejność słów w
+  ~5 miejscach na 780 liniach tego dokumentu (np. "tego, / zdarzenie / wcześniej. / które"
+  zamiast "tego, które zdarzenie nastąpi wcześniej") — zawsze przy liście punktowanej
+  (a/b/c/d/e) sąsiadującej z akapitem. Potwierdzone: to NIE błąd `PdfWriter.kt` (kod nigdy
+  nie zmienia kolejności słów/linii, tylko przekazuje dalej) — to ograniczenie odczytu ML
+  Kit na tym układzie. Bez bezpiecznego automatycznego fixu (rekonstrukcja kolejności słów
+  w dokumencie prawnym = zgadywanie treści, sprzeczne z zasadą "silnik maskuje, nie
+  poprawia dokumentu"). Jedyna droga: ręczna korekta na ekranie Review przed maskowaniem.
+
+---
+
 ## BUG-ZIELONA-GORA-ODMIANA — niekonsekwentne maskowanie "Zielona Góra" w odmienionych formach
 
 Znalezione przy okazji diagnozy PDF (10.07, `zamaskowany.pdf` realnego pisma urzędowego z
