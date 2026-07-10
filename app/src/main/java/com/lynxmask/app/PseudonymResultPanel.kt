@@ -61,10 +61,10 @@ fun PseudonymResultPanel(
     onSaveDescription: ((maskedText: String, description: String) -> Unit)? = null,
     onOpenLibrary: (() -> Unit)? = null,
     // Document Rebuilder (feature/document-export): dostępny tylko gdy źródłem był DOCX.
-    // Przekazujemy EFEKTYWNĄ mapę tokenów (patrz effectiveTokenMap niżej), nie result.tokenMap
-    // wprost — inaczej ręczne odsłonięcia/dodatkowe maskowania z podglądu (revealedTokens/
-    // manualMasks) rozjadą się z tym co faktycznie trafi do zapisanego pliku.
-    onSaveDocx: ((Map<String, String>) -> Unit)? = null
+    // Przekazujemy gotowy tekst (outputText — ten sam co użytkownik widzi/kopiuje, z
+    // uwzględnieniem ręcznych odsłonięć/dodatkowych maskowań) — writer zapisuje go wprost
+    // jako nowy plik, bez szukania czegokolwiek w oryginalnym dokumencie (patrz DocxWriter.kt).
+    onSaveDocx: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showDisclaimer by remember { mutableStateOf(false) }
@@ -106,13 +106,6 @@ fun PseudonymResultPanel(
 
     val maskedDisplayText by remember(maskedOutputText, result) {
         derivedStateOf { maskedOutputText.removePrefix("SESJA_${result.sessionId}\n") }
-    }
-
-    // Ten sam efektywny stan maskowania co outputText widziany na ekranie — bez tego
-    // eksport DOCX pokazałby co innego niż podgląd (token, który user właśnie odsłonił,
-    // albo brak tokenu dla czegoś co user właśnie ręcznie zamaskował).
-    val effectiveTokenMap by remember(revealedTokens, manualMasks, result) {
-        derivedStateOf { result.tokenMap.filterKeys { it !in revealedTokens } + manualMasks }
     }
 
     fun nextToken(type: String): String {
@@ -317,7 +310,7 @@ fun PseudonymResultPanel(
             },
             onDebugLog = onDebugLog,
             onOpenLibrary = onOpenLibrary,
-            onSaveDocx = onSaveDocx?.let { save -> { save(effectiveTokenMap) } }
+            onSaveDocx = onSaveDocx?.let { save -> { save(outputText) } }
         )
     }
 

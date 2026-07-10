@@ -42,8 +42,8 @@ private sealed class IncomingDocState {
         val rawText: String,
         val ocrConfidence: Float? = null,
         // Document Rebuilder: przeżywa ręczną korektę, żeby DOCX export był dostępny po
-        // Scanned. Jeśli user zmieni encję podczas review — DocxWriter i tak odmówi zapisu
-        // fail-closed (patrz writeDocxArtifact), nie trzeba tego blokować tutaj.
+        // Scanned. Eksport zapisuje gotowy zamaskowany tekst wprost (patrz DocxWriter.kt) —
+        // korekta w Review trafia do silnika normalnie, nic dodatkowego nie trzeba tu robić.
         val artifact: DocumentArtifact? = null,
         val sourceUri: Uri? = null
     ) : IncomingDocState()
@@ -290,11 +290,9 @@ fun IncomingDocumentFlow(
                             onFinished()
                         }
                     },
-                    onSaveDocx = (s.artifact as? DocxArtifact)?.let { docxArtifact ->
-                        { effectiveTokenMap: Map<String, String> ->
-                            saveDocx(docxArtifact, effectiveTokenMap, s.sourceText)
-                        }
-                    }
+                    onSaveDocx = if (s.artifact is DocxArtifact) {
+                        { text: String -> saveDocx(text) }
+                    } else null
                 )
         }
     }

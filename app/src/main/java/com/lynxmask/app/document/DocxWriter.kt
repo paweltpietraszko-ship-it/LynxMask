@@ -7,179 +7,86 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-// DocxWriter.kt — Faza 1a Document Rebuildera. Podmienia w [DocxArtifact] tekst odpowiadający
-// wartościom z tokenMap (wynik PseudonymEngine.pseudonymize) na same tokeny, zapisuje nowy
-// DOCX. Silnik NIETKNIĘTY — ta funkcja tylko wyszukuje w plainText gdzie wylądowały już
-// znalezione przez silnik wartości, nie robi własnej detekcji PII.
+// DocxWriter.kt — Document Rebuilder, wersja uproszczona (10.07).
+//
+// DECYZJA WŁAŚCICIELA (10.07): pełne odwzorowanie oryginalnego formatowania (tabele,
+// pogrubienia, obrazki, nagłówki) to poziom ambicji "chmurowej konkurencji" — dla appki
+// lokalnej na telefonie wystarczy, żeby zamaskowany tekst z tokenami dało się otworzyć i
+// edytować jako docx. Poprzednia wersja (patchowanie oryginalnego word/document.xml przez
+// dopasowanie zakresów) wymagała dokładnego zlokalizowania każdej wartości z tokenMap w
+// SUROWYM tekście — a normalizacja OCR w PseudonymEngine (Warstwa 0, wewnątrz
+// pseudonymize()) zmienia ten tekst, więc dopasowanie non-trywialnie zawodziło (patrz
+// historia BUG-DOCX-NORMALIZER-MISMATCH w commitach 09.07). Ta wersja tego problemu nie ma:
+// zapisujemy WPROST gotowy, już zamaskowany tekst (ten sam co widać w podglądzie) jako
+// świeży, minimalny docx — bez szukania czegokolwiek w oryginalnym pliku.
+//
+// Bezpieczeństwo: skoro nic z oryginalnego dokumentu nie jest kopiowane 1:1 do wyniku
+// (nagłówki/stopki/przypisy po prostu nie trafiają do nowego pliku), znika cała klasa ryzyk
+// z poprzedniej wersji (MissingTokens, SourceTextMismatch, UnhandledDocumentParts,
+// word-boundary w surowym XML) — nie ma czego przeoczyć, bo nie kopiujemy niczego poza
+// tekstem, który PseudonymEngine już przetworzył.
 
 private fun escapeXmlText(s: String): String =
     s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-/**
- * Audyt Cursora 09.07 (WYSOKIE #5): goły `indexOf` bez granic słów mógł trafić w środek
- * niepowiązanego, dłuższego słowa (np. krótkie nazwisko jako podciąg czegoś innego) —
- * fałszywa podmiana. Znak przed/po dopasowaniem nie może być literą/cyfrą.
- */
-private fun isWordChar(c: Char): Boolean = c.isLetterOrDigit()
+private const val CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>"""
 
-private fun hasWordBoundary(text: String, start: Int, endExclusive: Int): Boolean {
-    val before = text.getOrNull(start - 1)
-    val after = text.getOrNull(endExclusive)
-    return (before == null || !isWordChar(before)) && (after == null || !isWordChar(after))
-}
+private const val ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>"""
 
-/**
- * Każdy token może wystąpić w plainText WIĘCEJ NIŻ RAZ — silnik dedupluje (ta sama wartość
- * → ten sam token), ale każde wystąpienie w tekście trzeba podmienić osobno. Zwraca listę
- * (zakres w plainText, token) posortowaną po pozycji.
- */
-private fun locateTokenRanges(plainText: String, tokenMap: Map<String, String>): List<Pair<IntRange, String>> {
-    val located = mutableListOf<Pair<IntRange, String>>()
-    for ((token, original) in tokenMap) {
-        if (original.isEmpty()) continue
-        var searchFrom = 0
-        while (true) {
-            val idx = plainText.indexOf(original, searchFrom)
-            if (idx < 0) break
-            val end = idx + original.length
-            if (hasWordBoundary(plainText, idx, end)) {
-                located += (idx until end) to token
-                searchFrom = end
-            } else {
-                // Trafienie w środku innego słowa — nie liczy się, szukaj dalej od następnego znaku.
-                searchFrom = idx + 1
-            }
+/** Buduje word/document.xml — jeden akapit `<w:p>` na linię tekstu (podział po "\n"). */
+private fun buildDocumentXml(text: String): String {
+    val body = StringBuilder()
+    for (line in text.split("\n")) {
+        body.append("<w:p>")
+        if (line.isNotEmpty()) {
+            body.append("<w:r><w:t xml:space=\"preserve\">")
+            body.append(escapeXmlText(line))
+            body.append("</w:t></w:r>")
         }
+        body.append("</w:p>")
     }
-    return located.sortedBy { it.first.first }
+    return """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>$body<w:sectPr/></w:body>
+</w:document>"""
 }
 
-/** Wynik zapisu — każdy wariant poza [Success] = ODMOWA zapisu, nie ostrzeżenie po fakcie. */
 internal sealed interface DocxWriteResult {
     data object Success : DocxWriteResult
-    /** Wartość z tokenMap nie znaleziona w plainText — zwykle OcrNormalizer coś zmienił
-     *  (patrz PseudonymEngine.kt:129, normalize() woła się WEWNĄTRZ pseudonymize, poza
-     *  kontrolą wołającego) — plainText w artefakcie jest SUROWY, tokenMap odnosi się do
-     *  tekstu PO normalizacji. Fail-closed: wolimy odmówić zapisu niż cicho zostawić PII
-     *  jawne w wyeksportowanym DOCX. Diagnoza Cursor 09.07. */
-    data class MissingTokens(val tokens: Set<String>) : DocxWriteResult
-    /** Audyt Cursora 09.07 (KRYTYCZNE #1): tekst faktycznie zamaskowany przez silnik (np.
-     *  po ręcznej korekcie na ekranie Review) różni się od artifact.plainText. Jeśli user
-     *  USUNĄŁ fragment PII podczas edycji — silnik nigdy go nie zobaczył, więc tokenMap
-     *  o nim nie wie, a writeDocxArtifact skopiowałby oryginalny, jawny fragment 1:1 do
-     *  wyniku ze statusem Success. Sprawdzane TUTAJ (nie tylko w UI) — druga linia obrony. */
-    data object SourceTextMismatch : DocxWriteResult
-    /** Audyt Cursora 09.07 (KRYTYCZNE #3): nagłówek/stopka/przypis/komentarz ma tekst, którego
-     *  faza 1a nie patchuje (tylko word/document.xml) — mógłby tam siedzieć PII, eksport
-     *  by tego nie zauważył. */
-    data object UnhandledDocumentParts : DocxWriteResult
     data class Error(val message: String) : DocxWriteResult
 }
 
 /**
- * BUG-DOCX-SPLIT-RUN (Faza 1a, znane ograniczenie): jeśli Word rozbił jedną frazę na kilka
- * `<w:t>` (segmentów), a dopasowana encja obejmuje więcej niż jeden segment — pierwszy
- * dostaje token, reszta jest czyszczona (pusty string), żeby fraza nie została zdublowana
- * w wyniku. Faza 1b doda scalanie segmentów PRZED wyszukiwaniem, żeby to nie było potrzebne.
- *
- * @param sourceText dokładny tekst, który poszedł do PseudonymEngine.pseudonymize() —
- * MUSI być identyczny z artifact.plainText, inaczej tokenMap nie odpowiada temu co jest
- * w artefakcie (patrz SourceTextMismatch).
+ * Zapisuje [text] (gotowy, już zamaskowany tekst — dokładnie ten, który user widzi w
+ * podglądzie) jako nowy, samodzielny plik docx. Nie dotyka żadnego oryginalnego pliku —
+ * nie ma więc czego przeoczyć ani czym wyciec.
  */
-internal suspend fun writeDocxArtifact(
-    artifact: DocxArtifact,
-    tokenMap: Map<String, String>,
-    sourceText: String,
+internal suspend fun writeDocxFromText(
+    text: String,
     outputStream: OutputStream,
 ): DocxWriteResult = withContext(Dispatchers.IO) {
     try {
-        if (artifact.hasUnhandledTextParts) {
-            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — nagłówek/stopka/przypis z tekstem poza document.xml")
-            return@withContext DocxWriteResult.UnhandledDocumentParts
-        }
-        if (sourceText != artifact.plainText) {
-            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — tekst po review różni się od artefaktu")
-            return@withContext DocxWriteResult.SourceTextMismatch
-        }
-
-        val located = locateTokenRanges(artifact.plainText, tokenMap)
-
-        // BUG-DOCX-NORMALIZER-MISMATCH-FIX (09.07, diagnoza Cursor): jeśli jakiś token z
-        // tokenMap nie ma ANI JEDNEGO wystąpienia w plainText, znaczy że OcrNormalizer
-        // zmienił tekst na tyle, że wartość już nie pasuje 1:1 — nie wiemy CZY i GDZIE
-        // ta encja realnie wylądowała w dokumencie. Fail-closed zamiast eksportu z dziurą.
-        val missing = tokenMap.keys.filterNot { token -> located.any { it.second == token } }.toSet()
-        if (missing.isNotEmpty()) {
-            DebugLogBuffer.log("DocxWriter", "ODMOWA zapisu — brak dopasowania dla: $missing")
-            return@withContext DocxWriteResult.MissingTokens(missing)
-        }
-
-        // BUG-DOCX-WHOLE-SEGMENT-WIPE-FIX (09.07, test "Lisowski" złapał to na żywo): pierwsza
-        // wersja zamieniała CAŁY segment na token, gdy dopasowanie w niego trafiało — dla
-        // segmentu z jednym zdaniem ("Kontakt: jan@wp.pl lub telefonicznie" w jednym <w:t>)
-        // kasowała cały otaczający tekst, nie tylko dopasowany fragment. Teraz: precyzyjna
-        // podmiana WEWNĄTRZ tekstu segmentu (localStart/localEnd), reszta zdania zostaje.
-        data class SegmentEdit(val localStart: Int, val localEnd: Int, val replacement: String)
-        val editsPerSegment = mutableMapOf<Int, MutableList<SegmentEdit>>()
-        for ((range, token) in located) {
-            val overlapIdx = artifact.segments.indices.filter { i ->
-                val seg = artifact.segments[i]
-                seg.plainStart < range.last + 1 && range.first < seg.plainEnd
-            }
-            overlapIdx.forEachIndexed { pos, segIdx ->
-                val seg = artifact.segments[segIdx]
-                val localStart = maxOf(range.first, seg.plainStart) - seg.plainStart
-                val localEnd = minOf(range.last + 1, seg.plainEnd) - seg.plainStart
-                // BUG-DOCX-SPLIT-RUN (znane ograniczenie 1a): fraza rozbita przez Word na
-                // kilka <w:t> — pierwszy segment dostaje token, reszta pustkę (nie duplikuje
-                // frazy). Faza 1b doda scalanie segmentów PRZED wyszukiwaniem.
-                val replacementText = if (pos == 0) token else ""
-                editsPerSegment.getOrPut(segIdx) { mutableListOf() } += SegmentEdit(localStart, localEnd, replacementText)
-            }
-        }
-
-        // index w artifact.segments -> nowy PEŁNY tekst segmentu (null = bez zmian).
-        val replacement = arrayOfNulls<String>(artifact.segments.size)
-        for ((segIdx, edits) in editsPerSegment) {
-            val seg = artifact.segments[segIdx]
-            val newText = StringBuilder(seg.text)
-            // Od końca — wcześniejsze localStart/localEnd zostają prawidłowe mimo zmiany długości.
-            edits.sortedByDescending { it.localStart }.forEach { edit ->
-                newText.replace(edit.localStart, edit.localEnd, edit.replacement)
-            }
-            replacement[segIdx] = newText.toString()
-        }
-
-        val documentXml = artifact.zipEntries[DOCX_DOCUMENT_PART]?.toString(Charsets.UTF_8)
-        if (artifact.segments.isNotEmpty() && documentXml == null) {
-            return@withContext DocxWriteResult.Error("Brak $DOCX_DOCUMENT_PART w artefakcie")
-        }
-
-        // Segmenty są już w kolejności XML (kolejność regex.findAll przy ekstrakcji) —
-        // patchujemy OD KOŃCA, żeby wcześniejsze wtRange zostały prawidłowe mimo że
-        // podmieniany tekst ma inną długość niż oryginał (ten sam trik co applyAll
-        // w AnchorEngine.kt — fold od końca, wcześniejsze indeksy się nie przesuwają).
-        val patchedXml = documentXml?.let { StringBuilder(it) }
-        if (patchedXml != null) {
-            for (i in artifact.segments.indices.reversed()) {
-                val newText = replacement[i] ?: continue
-                val seg = artifact.segments[i]
-                patchedXml.replace(seg.wtRange.start, seg.wtRange.end, escapeXmlText(newText))
-            }
-        }
-
+        val documentXml = buildDocumentXml(text)
         ZipOutputStream(outputStream).use { zip ->
-            for ((name, bytes) in artifact.zipEntries) {
-                zip.putNextEntry(ZipEntry(name))
-                if (name == DOCX_DOCUMENT_PART && patchedXml != null) {
-                    zip.write(patchedXml.toString().toByteArray(Charsets.UTF_8))
-                } else {
-                    zip.write(bytes)
-                }
-                zip.closeEntry()
-            }
+            zip.putNextEntry(ZipEntry("[Content_Types].xml"))
+            zip.write(CONTENT_TYPES.toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+            zip.putNextEntry(ZipEntry("_rels/.rels"))
+            zip.write(ROOT_RELS.toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+            zip.putNextEntry(ZipEntry("word/document.xml"))
+            zip.write(documentXml.toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
         }
-        DebugLogBuffer.log("DocxWriter", "Zapisano DOCX: ${located.size} podmian")
+        DebugLogBuffer.log("DocxWriter", "Zapisano nowy DOCX: ${text.length} znaków")
         DocxWriteResult.Success
     } catch (e: Exception) {
         DebugLogBuffer.log("DocxWriter", "BŁĄD: ${e.javaClass.simpleName}: ${e.message}")

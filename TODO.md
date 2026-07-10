@@ -8,31 +8,39 @@
 
 ---
 
-## PRIORYTET NASTĘPNEJ SESJI (09.07 wieczór) — Document Rebuilder: alignment raw↔normalized
+## ZAMKNIĘTE 10.07 — Document Rebuilder DOCX: zmiana architektury, uproszczone
 
-Gałąź `feature/document-export`. Pełny stan w memory Claude:
-`project_document_rebuilder_state.md` (**zacznij tu**), chronologia w
-`project_session_wrapup_2026-07-09.md`.
+Gałąź `feature/document-export`. **Decyzja właściciela (10.07):** zrezygnowano z
+odwzorowania oryginalnego formatowania (tabele/pogrubienia/obrazki) — to poziom "chmurowej
+konkurencji", zbędny dla lokalnej appki mobile. Zamiast tego: eksport zapisuje gotowy,
+już zamaskowany tekst (ten sam co w podglądzie) jako świeży, minimalny docx — jeden akapit
+na linię, bez szukania czegokolwiek w oryginalnym pliku.
 
-Skrót: DOCX round-trip zbudowany, 3 luki PII zamknięte, 2 bugi silnika naprawione
-(AnchorEngine A.8 SYGNATURA na prozie, sklejanie zdań w pre-processingu emaili) — ale
-eksport DOCX odmawia zapisu (`MissingTokens`) dla KAŻDEGO tekstu, gdzie `OcrNormalizer`/
-pre-processing poprawi choć jeden znak (potwierdzone na 45-znakowym teście: "Be4ta
-Kamińska B3ata Woźniak 48 60l 234 567" → 0/4 encji zapisanych). Powód: poprawki dzieją
-się WEWNĄTRZ `pseudonymize()`, `DocxWriter` szuka w surowym tekście sprzed poprawek.
+To CAŁKOWICIE eliminuje problem z sesji 09.07 (`MissingTokens` przez normalizację OCR
+psującą dopasowanie do surowego tekstu) — nie ma już czego dopasowywać, więc alignment
+raw↔normalized (plan (b), diff, `tokenRawRanges`) **stał się zbędny i NIE został
+zaimplementowany, celowo**. `DocxWriter.kt` przepisany od zera (`writeDocxFromText`),
+`DocumentArtifact.kt`/`DocxExtractor.kt` uproszczone (bez segmentów/XmlRange/zipEntries),
+`DocumentExportCoordinator.kt` i UI (`IncomingDocumentFlow.kt`, `PseudonymResultPanel.kt`)
+zaktualizowane. Testy zielone, potwierdzone na telefonie (Word otwiera, edytowalny po
+zapisie — standardowe Protected View, nie bug).
 
-**Plan (b) od Cursora, gotowy do implementacji (2-4 dni):**
-1. `PseudonymEngine.pseudonymize()` — zapisać `maskingBaseText` (tekst po normalizacji,
-   przed podmianą na tokeny).
-2. Nowa funkcja alignmentu (diff surowy↔`maskingBaseText`) w `document/`.
-3. `PseudonymResult.tokenRawRanges` (opcjonalne, tylko ścieżka DOCX).
-4. `DocxWriter.locateTokenRanges` — użyć zakresów gdy dostępne, fallback `indexOf` gdy nie.
+Pełny stan: `memory/project_document_rebuilder_state.md`.
 
-Test docelowy: dokument "Be4ta"/"60l" → `Success` zamiast `MissingTokens`.
+## NASTĘPNE — PDF i Excel, ten sam minimalistyczny wzorzec
 
-Odrzucone warianty: (a) pełna mapa pozycji przez każdy krok normalizacji (2-4 tygodnie,
-za drogie), (c) sama bramka "wyłącz normalizację dla DOCX" (niewystarczająca — silnik by
-w ogóle nie wykrył degradacji jak "Be4ta"/"60l").
+Brief `CLAUDE_BRIEF_PDF_Faza2_2026-07-10.md` (katalog główny) **wymaga aktualizacji przed
+startem** — zakładał stare, trudniejsze podejście (alignment, bbox, zachowanie layoutu).
+Dla PDF z warstwą tekstu (nie skan) ten sam wzorzec co dziś w DOCX: wyciągnij tekst →
+zamaskuj → zapisz jako nowy, minimalny PDF z tekstem w akapitach. PDF ze skanu (obraz,
+bez warstwy tekstu) to osobny mechanizm, już częściowo istnieje (`ImageRedactionPipeline.kt`,
+czarne prostokąty na bitmapie) — nie dotyczy dzisiejszej decyzji.
+
+Excel: analogicznie wykonalne, prawdopodobnie prościej niż PDF — wyciągnąć tekst komórek,
+zamaskować, zapisać jako świeży, minimalny xlsx (bez formuł/formatowania).
+
+Desktop (osobny projekt) może pójść dalej w stronę pełnego odwzorowania — tam biblioteki
+i budżet czasu na to pozwalają.
 
 ---
 
