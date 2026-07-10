@@ -8,6 +8,29 @@
 
 ---
 
+## PRIORYTET NASTĘPNEJ SESJI (10.07 wieczór) — bugi maskowania na esejach/długiej prozie
+
+Paweł puścił przez silnik kolejny esej (po "Wizja Claude 2.docx", która ujawniła
+BUG-WIZJA-PROZA-DOB i SYGNATURA-proza) — zapowiada, że wynik "jeży włos", czyli engine
+robi coś niepokojącego na długim, swobodnym tekście. **Konkretne przypadki jeszcze NIE
+opisane w tym pliku — do zebrania na starcie następnej sesji od Pawła** (poprosić o
+dokument + zrzut/opis co dokładnie jest nie tak, tak jak przy poprzednich esejach).
+
+Kontekst ważny dla podejścia: to NIE jest zaskoczenie że eseje/proza ujawniają więcej
+bugów niż benchmark — benchmark (`BenchmarkInstrumentedTest.kt`) testuje wyłącznie
+OCR→PNG na strukturalnych dokumentach (umowy, faktury), nigdy swobodną prozę. Bez pracy
+nad Document Rebuilderem (DOCX export) NIE mielibyśmy w ogóle metody testowania silnika
+na tego typu tekście — Paweł explicite: "bez pracy nad docx wypuścilibyśmy bubel".
+Oczekuj: to może być pierwsza z serii sesji, bo długa proza to inny profil ryzyka niż
+dokumenty urzędowe (więcej okazji do kolizji kotwic z językiem naturalnym — patrz
+[[lessons_anchor_regex_pitfalls]], [[feedback_general_rules_not_examples]]).
+
+Kolejność: **architektura najpierw (już zamknięta 10.07, patrz sekcja niżej), bugi potem**
+— explicite ustalone przez Pawła na zamknięcie tej sesji, nie zaczynać od łatania
+punktowego zanim nie zobaczy się pełnego zakresu problemu na nowym eseju.
+
+---
+
 ## ZAMKNIĘTE 10.07 — Document Rebuilder DOCX: zmiana architektury, uproszczone
 
 Gałąź `feature/document-export`. **Decyzja właściciela (10.07):** zrezygnowano z
@@ -29,9 +52,9 @@ Pełny stan: `memory/project_document_rebuilder_state.md`.
 
 ## NASTĘPNE — PDF i Excel, ten sam minimalistyczny wzorzec
 
-Brief `CLAUDE_BRIEF_PDF_Faza2_2026-07-10.md` (katalog główny) **wymaga aktualizacji przed
-startem** — zakładał stare, trudniejsze podejście (alignment, bbox, zachowanie layoutu).
-Dla PDF z warstwą tekstu (nie skan) ten sam wzorzec co dziś w DOCX: wyciągnij tekst →
+Brief `CLAUDE_BRIEF_PDF_Faza2_2026-07-10.md` (katalog główny) **już zaktualizowany 10.07**
+pod nowe, minimalistyczne założenie — czytać sekcję "AKTUALIZACJA 10.07 wieczór" na górze
+pliku przed startem. Dla PDF z warstwą tekstu (nie skan) ten sam wzorzec co dziś w DOCX: wyciągnij tekst →
 zamaskuj → zapisz jako nowy, minimalny PDF z tekstem w akapitach. PDF ze skanu (obraz,
 bez warstwy tekstu) to osobny mechanizm, już częściowo istnieje (`ImageRedactionPipeline.kt`,
 czarne prostokąty na bitmapie) — nie dotyczy dzisiejszej decyzji.
