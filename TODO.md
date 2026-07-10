@@ -8,6 +8,28 @@
 
 ---
 
+## BUG-ZIELONA-GORA-ODMIANA — niekonsekwentne maskowanie "Zielona Góra" w odmienionych formach
+
+Znalezione przy okazji diagnozy PDF (10.07, `zamaskowany.pdf` realnego pisma urzędowego z
+Prezydenta Miasta Zielona Góra) — WAŻNIEJSZE niż formatowanie, prawdziwa luka w silniku,
+nie tylko kosmetyka:
+
+- "PREZYDENT MIASTA ZIELONA **OSOBA_004**" — "Góra" (nominativ, osobno od "Zielona" w
+  layoucie) trafiło w zwykłe wykrywanie nazwiska zamiast reguły city_surname_overlap dla
+  ADRES (ta reguła zadziałała poprawnie gdzie indziej w tym samym dokumencie — "ADRES_006"
+  pojawia się kilka razy poprawnie).
+- "w **Zielonej Górze**" (locativus, odmieniona forma) — w DWÓCH miejscach w ogóle NIE
+  zamaskowane, całkowicie jawne. Ani reguła ADRES, ani żadna inna nie złapała odmienionej
+  formy miasta.
+
+Nie diagnozowane głębiej (późna pora, inny obszar niż dzisiejsza praca nad eksportem) —
+prawdopodobnie luka w `cities_forms.json`/`city_surname_overlap.json` dla tej konkretnej
+odmiany, albo w regule NameEngine która ich używa. Sprawdzić na starcie: czy "Górze"/"Górą"
+itd. w ogóle są w `cities_forms.json` (patrz `project_city_declension_task.md` w pamięci —
+powinny być, plik ma pełną odmianę Morfeusz2 z 05.07).
+
+---
+
 ## PRIORYTET NASTĘPNEJ SESJI (10.07 wieczór) — faktury: tokeny na obrazie zamiast czarnych pasków
 
 Paweł: 90% dokumentów w jego poczcie to faktury. Płaski tekst (dzisiejsze DOCX/PDF/Excel)

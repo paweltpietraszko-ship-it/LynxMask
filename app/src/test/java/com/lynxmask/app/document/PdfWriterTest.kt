@@ -170,6 +170,51 @@ class PdfWriterTest {
         assertEquals(wl("Treść."), pages[0])
     }
 
+    @Test fun `BUG-PDF-PUSTA-STRONA-1 - naglowek sesji plus pierwszy znacznik nie tworzy prawie pustej strony`() {
+        // Realny przypadek Pawła: "SESJA_XXXXXX" (linia dodana przez silnik) + OD RAZU
+        // "── Strona 1 ──" (OCR wstawia go też dla PIERWSZEJ strony, nie tylko kolejnych)
+        // — pierwsza wersja wymuszała podział TUTAJ, zostawiając stronę 1 z samym nagłówkiem
+        // sesji i całą resztą treści od strony 2.
+        val lines = listOf(
+            WrappedLine("SESJA_1A9BE4", isParagraphEnd = true),
+            WrappedLine("── Strona 1 ──", isParagraphEnd = true),
+            WrappedLine("Treść dokumentu.", isParagraphEnd = true)
+        )
+        val pages = paginateLines(lines, usableHeight = 1000f, lineHeight = 10f, paragraphGap = 16f)
+        assertEquals("Nie powinno być osobnej, prawie pustej pierwszej strony", 1, pages.size)
+        assertEquals(wl("SESJA_1A9BE4", "Treść dokumentu."), pages[0])
+    }
+
+    @Test fun `tylko PIERWSZY znacznik Strona 1 jest zwolniony z wymuszania podzialu`() {
+        // Gdyby "Strona 1" pojawiła się DRUGI raz (nie powinno się zdarzyć w realnym
+        // pipeline, ale reguła ma być odporna) — tylko naprawdę pierwsze wystąpienie jest
+        // zwolnione, nie każde "Strona 1".
+        val lines = listOf(
+            WrappedLine("A", isParagraphEnd = true),
+            WrappedLine("── Strona 1 ──", isParagraphEnd = true),
+            WrappedLine("B", isParagraphEnd = true),
+            WrappedLine("── Strona 1 ──", isParagraphEnd = true),
+            WrappedLine("C", isParagraphEnd = true)
+        )
+        val pages = paginateLines(lines, usableHeight = 1000f, lineHeight = 10f, paragraphGap = 16f)
+        assertEquals(2, pages.size)
+        assertEquals(wl("A", "B"), pages[0])
+        assertEquals(wl("C"), pages[1])
+    }
+
+    @Test fun `znacznik Strona 2 jako pierwszy napotkany nadal wymusza podzial (nie jest zwolniony)`() {
+        // Tylko numer 1 jest traktowany jako "początek dokumentu" — jeśli z jakiegoś powodu
+        // pierwszy napotkany znacznik to "Strona 2" (np. strona 1 nie miała tekstu z OCR),
+        // to WCIĄŻ oznacza prawdziwe przejście, nie jest zwalniany.
+        val lines = listOf(
+            WrappedLine("Treść strony 1.", isParagraphEnd = true),
+            WrappedLine("── Strona 2 ──", isParagraphEnd = true),
+            WrappedLine("Treść strony 2.", isParagraphEnd = true)
+        )
+        val pages = paginateLines(lines, usableHeight = 1000f, lineHeight = 10f, paragraphGap = 16f)
+        assertEquals(2, pages.size)
+    }
+
     @Test fun `justowanie rozciaga odstepy tak zeby ostatnie slowo konczylo sie na maxWidth`() {
         // 3 słowa po 5 jednostek każde = 15, maxWidth=27 -> 12 do rozdzielenia na 2 odstępy = 6 każdy.
         val positions = justifiedPositions(listOf("aaaaa", "bbbbb", "ccccc"), maxWidth = 27f, measure = charWidthMeasure)

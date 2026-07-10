@@ -91,8 +91,10 @@ internal fun isCenteredHeading(line: String): Boolean = isSectionMarker(line) ||
 // PDF-a znacznik "── Strona N ──" — rozpoznajemy go i wymuszamy PRAWDZIWY podział strony w
 // wyniku w tym miejscu (patrz paginateLines), więc granice stron wynikowego PDF-a odpowiadają
 // oryginałowi. Sam znacznik znika z tekstu — nowa strona SAMA W SOBIE jest tym podziałem.
-private val PAGE_MARKER_RE = Regex("""^──\s*Strona\s+\d+\s*──$""")
+private val PAGE_MARKER_RE = Regex("""^──\s*Strona\s+(\d+)\s*──$""")
 internal fun isPageMarker(line: String): Boolean = PAGE_MARKER_RE.matches(line.trim())
+internal fun pageMarkerNumber(line: String): Int? =
+    PAGE_MARKER_RE.find(line.trim())?.groupValues?.get(1)?.toIntOrNull()
 
 /**
  * Łamie jeden akapit na linie mieszczące się w [maxWidth], mierzone przez [measure]
@@ -158,9 +160,19 @@ internal fun paginateLines(
     val pages = mutableListOf<List<WrappedLine>>()
     var current = mutableListOf<WrappedLine>()
     var height = 0f
+    var sawAnyMarker = false
     for (line in lines) {
         if (isPageMarker(line.text)) {
-            if (current.isNotEmpty()) {
+            // BUG-PDF-PUSTA-STRONA-1 (10.07, zrzut Pawła — realny dokument, strona 1
+            // wychodziła prawie pusta): OCR wstawia "── Strona 1 ──" ZAWSZE, nawet dla
+            // pierwszej strony źródła — a nie tylko między kolejnymi. Ten pierwszy
+            // znacznik nigdy nie opisuje prawdziwego przejścia (jesteśmy i tak dopiero na
+            // początku wyniku) — wymuszał podział zaraz po samym nagłówku "SESJA_XXXXXX",
+            // zostawiając stronę 1 z jedną linią. Fix: pierwszy napotkany znacznik "Strona
+            // 1" nic nie wymusza; KAŻDY kolejny (Strona 2, 3, ...) działa jak wcześniej.
+            val isRedundantFirstMarker = !sawAnyMarker && pageMarkerNumber(line.text) == 1
+            sawAnyMarker = true
+            if (!isRedundantFirstMarker && current.isNotEmpty()) {
                 pages += current
                 current = mutableListOf()
                 height = 0f
