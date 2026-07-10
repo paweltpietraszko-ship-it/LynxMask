@@ -272,8 +272,13 @@ internal fun applyAnchorEngine(
     // kontekst prawdziwemu numerowi PESEL zaraz po nim (doc_00417, dwa bugi na raz: BUG_SILNIKA
     // dla daty + BRAK_W_OCR dla pesela bez kotwicy). Fix: (?!KEYWORD\b) przed każdym dodatkowym
     // słowem — nie pozwól "dodatkowemu słowu" być znanym słowem-kotwicą innej encji.
+    // BUG-WIZJA-PROZA-DOB-FIX (10.07, esej Pawła "Wizja Claude 2"): "dob" bez \b przed nim
+    // łapało się W ŚRODKU zwykłych polskich słów ("prawdopo[dob]ieństwo") — litera zaraz po
+    // nim (i/o/s/...) to klasa D, więc regex brał to za start numeru i zjadał 2 kolejne
+    // słowa zdania jako "resztę daty". Fix: \bdob\b — ta sama klasa błędu co inne kotwice
+    // bez granicy słowa (patrz feedback_general_rules_not_examples, lessons_anchor_regex_pitfalls).
     applyAll(
-        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+(?!(?:PESEL|NIP|REGON|IBAN|Nr|Numer|KRS|KW|PWZ)\b)\S+){0,2}"""),
+        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|\bdob\b[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+(?!(?:PESEL|NIP|REGON|IBAN|Nr|Numer|KRS|KW|PWZ)\b)\S+){0,2}"""),
         TOKEN_NUMER
     )
 

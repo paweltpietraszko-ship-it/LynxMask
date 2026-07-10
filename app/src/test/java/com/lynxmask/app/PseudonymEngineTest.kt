@@ -2646,4 +2646,26 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_OSOBA)
         assertNotInOutput(r, "Góra")
     }
+
+    // =========================================================================
+    // BUG-WIZJA-PROZA — esej DOCX "Wizja Caude 2.docx" (09.07, zrzut Pawła)
+    // =========================================================================
+
+    @Test fun `esej proza prawdopodobienstwo hipotez Antropocentryzm nie jest maskowana`() {
+        val excerpt = "Auditor jest odporny na ten spór z konstrukcji: ranking mierzy pokrycie " +
+            "obserwacyjne, nie aprioryczne prawdopodobieństwo hipotez. Antropocentryzm mógłby " +
+            "skrzywić wyłącznie dobór listy regionów - a lista pokrywa obie klasy."
+        val r = PseudonymEngine.pseudonymize(excerpt, traceMode = true)
+        val bad = r.trace.filter { trace ->
+            val m = trace.matchedText.lowercase()
+            m.contains("prawdopodobie") || m.contains("antropocentryzm") ||
+                m.contains("hipotez") && m.contains("antropo")
+        }
+        assertTrue(
+            "Proza eseju nie powinna być tokenem (trace: $bad)",
+            bad.isEmpty()
+        )
+        assertTrue("prawdopodobieństwo jawne", r.pseudonymizedText.contains("prawdopodobieństwo"))
+        assertTrue("Antropocentryzm jawne", r.pseudonymizedText.contains("Antropocentryzm"))
+    }
 }
