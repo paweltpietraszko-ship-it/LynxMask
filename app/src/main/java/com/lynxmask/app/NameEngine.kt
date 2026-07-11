@@ -422,6 +422,20 @@ private fun isFirstNameOnlyNotSurname(word: String): Boolean {
         POLISH_FIRST_NAMES.contains(lower)
 }
 
+// BUG-PROZA-SKLEJANIE-DOWOLNYCH-SLOW (11.07, diagnoza na realnym dokumencie właściciela):
+// bloki łączące dwa słowa w OSOBA wymagały dictionary-dowodu TYLKO dla jednej strony
+// (imię ze słownika) — druga strona ("nazwisko") mogła być DOWOLNYM słowem z wielkiej
+// litery, byle nie przymiotnikiem/nie za krótkim/nie na denylist. W umowach to działa,
+// bo "Jan Kowalski" — oba człony naprawdę są imieniem i nazwiskiem. W wolnym tekście
+// (eseje, dokumenty techniczne) sąsiadem bywa dowolny wyraz z definicji terminu/nagłówka
+// ("Zasada Pawła", "Teza Pawła") — regex zgarniał go bez pytania. Fix ogólny: druga
+// strona też musi mieć dowód w słowniku nazwisk (surnamesForms) — dla złożonych nazwisk
+// z myślnikiem ("Kowalska-Nowak") wystarczy że JEDEN człon jest potwierdzony.
+private fun hasSurnameEvidence(word: String): Boolean {
+    if (!LookupTables.initialized) return true  // brak słownika = nie blokuj (fallback jak gdzie indziej)
+    return word.lowercase().split("-").any { LookupTables.surnamesForms.contains(it) }
+}
+
 // ============================================================
 // Warstwa 3a — Cached regex do detekcji imion (budowany raz)
 // ============================================================
@@ -687,6 +701,7 @@ internal fun applyContextualBlacklist(
         if (isFirstNameOnlyNotSurname(surnamePart)) return@replace match.value
         if (surnamePart.length < 4) return@replace match.value
         if (surnamePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surnamePart)) return@replace match.value
         "${match.groupValues[1]} ${assignToken("$namePart $surnamePart", TOKEN_OSOBA)}"
     }
 
@@ -718,6 +733,7 @@ internal fun applyContextualBlacklist(
         // Nie dotyczy namePart (imię) — buildNamePattern ma własny filtr ≥3 znaków.
         if (surname.length < 4) return@replace match.value
         if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surname)) return@replace match.value
         assignToken(match.value, TOKEN_OSOBA)
     }
 
@@ -747,6 +763,7 @@ internal fun applyContextualBlacklist(
         // nie są realnymi nazwiskami.
         if (surname.length < 4) return@replace match.value
         if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surname)) return@replace match.value
         assignToken(match.value, TOKEN_OSOBA)
     }
 

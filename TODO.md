@@ -70,15 +70,43 @@ głębiej niż jeden bug.
 - **Niejednoznaczne prawdziwe nazwiska bez pewnej odpowiedzi:** Marszałkowski, Sądowy,
   Biała — mogą być nazwiskiem LUB częścią nazwy urzędu/miasta, brak silnego sygnału.
 
-**Następny krok (uzgodniony z właścicielem):** benchmark "czysty" dla DOCX/XLSX/TXT —
-te formaty NIE przechodzą przez OCR (sprawdzone w kodzie, `IncomingDocumentFlow.kt`),
-więc degradacja obrazu używana w benchmarku fresh/stały jest dla nich bez sensu. Etap 1:
-generator tekstu (bez obrazów) z NOWYMI szablonami prozy (esej/list/skarga — PII wplecione
-w naturalne odmienione zdania, nie tylko pola "etykieta: wartość" jak dziś w generator.py)
-+ istniejące szablony biznesowe, świeże losowanie za każdym uruchomieniem, pełne pokrycie
-typów encji (nie tylko OSOBA). Etap 2: instrumentalny test porównujący z ground truth przez
-PRAWDZIWĄ ścieżkę appki (bez OCR — czysty sygnał, miss = zawsze bug silnika). Etap 3: prawdziwe
-pliki .docx/.xlsx (nie tylko .txt), żeby przetestować też parsery DocxArtifact/XlsxArtifact.
+**Benchmark "czysty" dla DOCX/XLSX/TXT** — te formaty NIE przechodzą przez OCR (sprawdzone
+w kodzie, `IncomingDocumentFlow.kt`), więc degradacja obrazu z benchmarku fresh/stały jest
+dla nich bez sensu. **Etap 1 ZROBIONY** (`generator_clean.py`, commit `7df8e8e`): generator
+tekstu bez obrazów, reużywa encje+szablony biznesowe z `generator.py`, dokłada 4 NOWE
+szablony prozy (esej/list_osobisty/skarga/wspomnienie) z PII w naturalnych odmienionych
+zdaniach, ręczne tabele deklinacji (pula imion/nazwisk/miast w generator.py jest mała i
+zamknięta — dokładne, nie algorytmiczne). 200 dokumentów w `dataset_clean/`. **Etap 2
+(instrumentalny test na telefonie) i Etap 3 (prawdziwe .docx/.xlsx) — jutro.**
+
+**ZNALEZISKO STRATEGICZNE 11.07 wieczór (na realnym dokumencie właściciela, esej techniczny
+SETI, nie umowa) — priorytet PRZED dalszym Etapem 2:** rozszerzone słowniki (nazwiska
+1000→39k, imiona 199→3,6k) generują w długiej, różnorodnej prozie znacznie więcej kolizji
+niż na wąskim, powtarzalnym benchmarku fresh/stały (wyłącznie dokumenty urzędowe) —
+"Zasada Pawła", "Formalna Rada", "Rola", "Belt", "Ale", "Jest", "Lata" złapane jako OSOBA
+w jednym dokumencie. Każde dodatkowe unikalne słowo z wielkiej litery to kolejny rzut
+kostką przeciw 39k-pozycyjnej liście dobranej wyłącznie progiem częstości (≥100 w rejestrze
+PESEL), bez kuracji znaczeniowej — **lista kolizji nie jest skończona, nowy gatunek tekstu
+zawsze znajdzie nowe.** Dotychczasowe "0 UX_FP" mierzyło tylko wąski gatunek dokumentów
+urzędowych, nie ogólną precyzję.
+
+Naprawione dziś (zostaje, reguła OGÓLNA nie lista słów): bloki łączące dwa słowa w OSOBA
+("Imię Nazwisko" itp.) wymagały dowodu słownikowego TYLKO dla jednej strony — druga mogła
+być dowolnym słowem z wielkiej litery. Teraz obie strony wymagają dowodu w `surnamesForms`
+(`hasSurnameEvidence()`, NameEngine.kt) — eliminuje całą klasę "Zasada Pawła"/"Formalna Rada"
+bez dotykania pojedynczych słów.
+
+**NIE zrobione, celowo odrzucone jako złe podejście:** dopisywanie pojedynczych słów
+("ale"/"jest"/"kamo"/"rada"/"lata"/"rola"/"belt"/"zasada") do `OSOBA_DENYLIST` — to
+dokładnie ten sam wzorzec whack-a-mole co "rodo"/"data"/"dane" wcześniej, tylko z nową
+etykietą "systematyczne". Właściciel to złapał i jednoznacznie odrzucił — patrz
+`feedback_general_rules_not_examples.md` w pamięci Claude.
+
+**Priorytet jutro (PRZED Etapem 2/3):** zmierzyć, nie zgadywać — czy powiększone słowniki
+(39k/3,6k) faktycznie się opłacają. Porównać recall vs. liczbę kolizji na TYM SAMYM
+korpusie prozy (dataset_clean) przy małym słowniku (1000/199) i dużym — dopiero na
+podstawie liczb decydować: cofnąć rozmiar, zostawić z dodatkowym ograniczeniem
+strukturalnym, czy zaakceptować koszt.
 
 ---
 
