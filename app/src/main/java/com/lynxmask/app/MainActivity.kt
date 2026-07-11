@@ -18,7 +18,16 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +38,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalClipboard
@@ -45,7 +58,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.core.view.WindowCompat
-import com.lynxmask.app.ui.components.LynxNavButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.components.LynxGhostButton
@@ -62,6 +74,16 @@ import androidx.compose.foundation.lazy.items
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.cos
+import kotlin.math.sin
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
 
@@ -101,8 +123,26 @@ class MainActivity : FragmentActivity() {
             notifyShareFromIntent(intent)
         }
 
-        var appReady = false
-        splashScreen.setKeepOnScreenCondition { !appReady }
+        // BUG-SHARE-CZARNY-EKRAN + animowana ikona (11.07): natywny splash Androida trzyma
+        // się tylko do pierwszej klatki Compose (krótko, standard) — WŁASNY animowany ekran
+        // ładowania (LynxLoadingScreen) przejmuje pałeczkę i jest widoczny przez cały czas
+        // ensureReady(), niezależnie czy wejście jest z ikony czy ze ścieżki Share (to zwykła
+        // treść okna MainActivity, nie natywny splash — nie zależy od przenoszenia splasha
+        // między taskami, co się psuło). Realna gotowość (appReady) steruje WYŁĄCZNIE tym co
+        // widać; gating przed prawdziwym maskowaniem (ensureReady, AppNavigation) nietknięty —
+        // patrz BUG-ENSUREREADY 29.06, nie powtarzać tamtego błędu.
+        splashScreen.setKeepOnScreenCondition { false }
+        var appReady by mutableStateOf(false)
+
+        setContent {
+            LynxMaskTheme {
+                if (appReady) {
+                    AppNavigation()
+                } else {
+                    LynxLoadingScreen()
+                }
+            }
+        }
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -110,11 +150,6 @@ class MainActivity : FragmentActivity() {
                 getExternalFilesDir("bench")?.mkdirs()
             }
             appReady = true
-            setContent {
-                LynxMaskTheme {
-                    AppNavigation()
-                }
-            }
         }
     }
 
@@ -129,6 +164,67 @@ class MainActivity : FragmentActivity() {
         notifyLibraryOpenFromIntent(intent)
         notifyShareFromIntent(intent)
         MainActivitySignals.newIntentTick.intValue++
+    }
+}
+
+/**
+ * Ekran ładowania (11.07) — animowana wersja ikony LynxMask (yin/yang maskowania,
+ * ic_launcher_foreground.xml): token (kropka) krąży po tym samym pierścieniu co w
+ * statycznej ikonie i pulsuje, symbolizując dane przechodzące w stan zamaskowany.
+ * W pełni oryginalne, budowane z istniejących elementów marki — zero zewnętrznych
+ * assetów. Pętla ~2,4s, powtarzana przez cały czas ensureReady() (patrz onCreate).
+ */
+@Composable
+private fun LynxLoadingScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F1117)),
+        contentAlignment = Alignment.Center
+    ) {
+        val transition = rememberInfiniteTransition(label = "lynxLoading")
+        val angle by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2400, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "angle"
+        )
+        val pulse by transition.animateFloat(
+            initialValue = 0.7f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1200, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulse"
+        )
+        // 192.dp — zgodne z natywnym rozmiarem ikony splasha Androida (system default),
+        // 96.dp poprzednio było strzałem na oko, wyraźnie mniejsze niż oryginał.
+        Box(modifier = Modifier.size(192.dp), contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Geometria zgodna z ic_launcher_foreground.xml: viewport 108x108,
+                // środek pierścienia (54,54) = środek ikony, promień pierścienia 32.
+                val ringRadius = (size.minDimension / 2f) * (32f / 54f)
+                val rad = Math.toRadians(angle.toDouble())
+                val dotCenter = Offset(
+                    x = center.x + ringRadius * cos(rad).toFloat(),
+                    y = center.y + ringRadius * sin(rad).toFloat()
+                )
+                drawCircle(
+                    color = LynxColors.BlueLight,
+                    radius = 9.dp.toPx() * pulse,
+                    center = dotCenter
+                )
+            }
+        }
     }
 }
 
@@ -330,9 +426,18 @@ private fun MainTabNav(
             when (appScreen) {
                 AppScreen.MAIN -> HubScreen(
                     onFileClick = {
+                        // BUG-PICKER-XLSX-NIEWIDOCZNY (11.07): ACTION_OPEN_DOCUMENT filtruje
+                        // ŚCIŚLE po MIME zgłoszonym przez dostawcę dokumentów — część menedżerów
+                        // plików zgłasza xlsx jako octet-stream zamiast prawdziwego MIME (ten sam
+                        // problem co docx przy Share, naprawiony wcześniej w AndroidManifest.xml
+                        // komentarzem "niektóre menedżery plików wysyłają DOCX jako octet-stream").
+                        // Bez tego wpisu plik po prostu nie pojawia się na liście, nie da się go
+                        // wybrać żadnym innym sposobem w tym pickerze.
                         filePickerLauncher.launch(arrayOf(
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            "application/pdf", "text/plain", "image/*"
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "application/pdf", "text/plain", "image/*",
+                            "application/octet-stream"
                         ))
                     },
                     onTextSubmit = { text ->
@@ -403,6 +508,77 @@ private fun MainTabNav(
                 }
             }
         )
+    }
+}
+
+// ── Hub — komponenty wizualne (11.07, redesign zaakceptowany na makiecie) ─────
+// Jedna wypełniona akcja główna (HubPrimaryCta) + płaskie wiersze bez ramek
+// (HubFlatRow) zamiast jednakowo obramowanych przycisków w zagnieżdżonej karcie.
+@Composable
+private fun HubPrimaryCta(
+    icon: ImageVector,
+    label: String,
+    caption: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+        color = LynxColors.Blue,
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+        ) {
+            Icon(icon, contentDescription = null, tint = Color.White)
+            Column {
+                Text(label, fontFamily = LynxTypography.Sans, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(caption, fontFamily = LynxTypography.Sans, fontSize = 11.5.sp, color = Color.White.copy(alpha = 0.85f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun HubFlatRow(
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.fillMaxWidth(),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (enabled) LynxColors.BlueLight else LynxColors.TextDim.copy(alpha = 0.5f)
+            )
+            Text(
+                label,
+                fontFamily = LynxTypography.Sans,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (enabled) LynxColors.TextPrimary else LynxColors.TextDim
+            )
+        }
     }
 }
 
@@ -493,47 +669,36 @@ private fun HubScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(LynxSpacing.lg))
+            Spacer(Modifier.height(LynxSpacing.xl))
 
-            Card(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(LynxShapes.CardRadius),
-                colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
             ) {
-                Column(
-                    modifier = Modifier.padding(LynxSpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-                ) {
-                    LynxPrimaryButton(
-                        onClick = onFileClick,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Wybierz plik")
-                    }
-                    Text(
-                        "PDF · DOCX · TXT · obraz",
-                        modifier = Modifier.fillMaxWidth(),
-                        fontSize = 11.sp,
-                        color = LynxColors.TextDim,
-                        textAlign = TextAlign.Center
+                    HubPrimaryCta(
+                        icon = Icons.Outlined.UploadFile,
+                        label = "Wybierz plik",
+                        caption = "PDF · DOCX · XLSX · TXT · obraz",
+                        onClick = onFileClick
                     )
 
-                    HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+                    HorizontalDivider(
+                        color = LynxColors.Border,
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(vertical = 10.dp)
+                    )
 
                     if (pastedText.isBlank() && !manualEdit) {
-                        LynxSecondaryButton(
-                            onClick = { pasteFromClipboard() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Wklej ze schowka")
-                        }
-                        LynxSecondaryButton(
-                            onClick = { manualEdit = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Wpisz ręcznie")
-                        }
+                        HubFlatRow(
+                            icon = Icons.Outlined.ContentPaste,
+                            label = "Wklej ze schowka",
+                            onClick = { pasteFromClipboard() }
+                        )
+                        HubFlatRow(
+                            icon = Icons.Outlined.Keyboard,
+                            label = "Wpisz ręcznie",
+                            onClick = { manualEdit = true }
+                        )
                     } else if (manualEdit) {
                         OutlinedTextField(
                             value = pastedText,
@@ -592,17 +757,24 @@ private fun HubScreen(
                         }
                     }
 
-                    LynxPrimaryButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            onTextSubmit(pastedText)
-                        },
-                        enabled = pastedText.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Pseudonimizuj")
+                    if (pastedText.isNotBlank()) {
+                        HubPrimaryCta(
+                            icon = Icons.Outlined.Shield,
+                            label = "Pseudonimizuj",
+                            caption = "Zamaskuj i przejdź do podglądu",
+                            onClick = {
+                                focusManager.clearFocus()
+                                onTextSubmit(pastedText)
+                            }
+                        )
+                    } else {
+                        HubFlatRow(
+                            icon = Icons.Outlined.Shield,
+                            label = "Pseudonimizuj",
+                            enabled = false,
+                            onClick = {}
+                        )
                     }
-                }
             }
         }
 
@@ -687,10 +859,10 @@ private fun BottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = LynxSpacing.sm, vertical = LynxSpacing.xs),
-            horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
         ) {
-            NavButton(
+            HubNavItem(
+                icon     = Icons.Outlined.AutoAwesome,
                 label    = "Odp. AI",
                 selected = current == AppScreen.DEPSEUDO,
                 modifier = Modifier.weight(1f),
@@ -698,18 +870,20 @@ private fun BottomNavBar(
                     if (current != AppScreen.DEPSEUDO) onNavigate(AppScreen.DEPSEUDO)
                 }
             )
-            NavButton(
-                label        = "Biblioteka",
-                selected     = current == AppScreen.LIBRARY,
-                modifier     = Modifier.weight(1f),
-                brandPalette = true,
-                onClick      = {
+            HubNavItem(
+                icon     = Icons.AutoMirrored.Outlined.LibraryBooks,
+                label    = "Biblioteka",
+                selected = current == AppScreen.LIBRARY,
+                modifier = Modifier.weight(1f),
+                onClick  = {
                     if (current != AppScreen.LIBRARY) onNavigate(AppScreen.LIBRARY)
                 }
             )
-            NavButton(
+            HubNavItem(
+                icon     = Icons.Outlined.Shield,
                 label    = "Zabezp.",
                 selected = false,
+                accent   = LynxColors.Green,
                 modifier = Modifier.weight(1f),
                 onClick  = { if (isExpress) showExpressLocked = true else showSecurity = true }
             )
@@ -717,20 +891,53 @@ private fun BottomNavBar(
     }
 }
 
+// Prawdziwy pasek nawigacji (ikona + etykieta, pigułka aktywnej zakładki) zamiast
+// trzech ręcznie obramowanych przycisków (11.07, redesign zaakceptowany na makiecie).
+// Zabezpieczenia dostają świadomie inny, stały kolor (accent) — zielony zamiast
+// niebieskiego, żeby wyróżnić bramę do wrażliwej części apki (import słownika,
+// wymazanie danych) bez sugerowania ostrzeżenia/awarii (żółty/czerwony).
 @Composable
-private fun NavButton(
+private fun HubNavItem(
+    icon: ImageVector,
     label: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
-    brandPalette: Boolean = false,
+    accent: Color = LynxColors.Blue,
     onClick: () -> Unit
-) = LynxNavButton(
-    label = label,
-    selected = selected,
-    onClick = onClick,
-    modifier = modifier,
-    brandPalette = brandPalette
-)
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(LynxShapes.ButtonRadius))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(46.dp)
+                .height(26.dp)
+                .clip(RoundedCornerShape(100))
+                .background(if (selected) accent.copy(alpha = 0.28f) else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (selected) Color.White else accent.copy(alpha = 0.75f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Text(
+            label,
+            fontFamily = LynxTypography.Sans,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (selected) LynxColors.TextPrimary else LynxColors.TextDim,
+            maxLines = 1
+        )
+    }
+}
 
 // ── Polityka prywatności — dialog wbudowany ───────────────────────────────────
 @Composable
