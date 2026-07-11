@@ -30,10 +30,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import com.lynxmask.app.ui.components.LynxFilledButton
 import com.lynxmask.app.ui.components.LynxGhostButton
-import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.components.LynxScreenHeader
-import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
@@ -231,12 +230,13 @@ fun DepseudonymizationScreen(
                     verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
                 ) {
                     if (errorMessage.isNotEmpty()) {
-                        Text(errorMessage, fontSize = 14.sp, color = LynxColors.Red, lineHeight = 20.sp)
+                        Text(errorMessage, fontFamily = LynxTypography.Sans, fontSize = 14.sp, color = LynxColors.Red, lineHeight = 20.sp)
                     } else {
                         CircularProgressIndicator(color = LynxColors.Blue, modifier = Modifier.align(Alignment.CenterHorizontally))
                         Text(
                             "Ładowanie…",
                             modifier = Modifier.align(Alignment.CenterHorizontally),
+                            fontFamily = LynxTypography.Sans,
                             color = LynxColors.TextMuted,
                             fontSize = 14.sp
                         )
@@ -252,6 +252,7 @@ fun DepseudonymizationScreen(
                 ) {
                     Text(
                         "Wklej odpowiedź z asystenta AI. Tekst musi zawierać tokeny z tej sesji.",
+                        fontFamily = LynxTypography.Sans,
                         fontSize = 14.sp,
                         lineHeight = 21.sp,
                         color = LynxColors.TextSecondary
@@ -265,7 +266,7 @@ fun DepseudonymizationScreen(
                         onValueChange = { inputText = it },
                         modifier      = Modifier.fillMaxWidth().heightIn(min = 160.dp),
                         placeholder   = {
-                            Text("Wklej tutaj odpowiedź AI…", color = LynxColors.TextDim, fontSize = 13.sp)
+                            Text("Wklej tutaj odpowiedź AI…", fontFamily = LynxTypography.Sans, color = LynxColors.TextDim, fontSize = 13.sp)
                         },
                         shape  = RoundedCornerShape(LynxShapes.CardRadius),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -274,11 +275,12 @@ fun DepseudonymizationScreen(
                         )
                     )
                     if (errorMessage.isNotEmpty()) {
-                        Text(errorMessage, fontSize = 13.sp, color = LynxColors.Red)
+                        Text(errorMessage, fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.Red)
                     }
                     if (inputText.isBlank()) {
                         Text(
                             "Po wklejeniu wynik pojawi się automatycznie.",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 13.sp,
                             color = LynxColors.TextMuted
                         )
@@ -300,12 +302,14 @@ fun DepseudonymizationScreen(
                     Column(Modifier.padding(LynxSpacing.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             "Wklej odpowiedź AI z tokenami (OSOBA_001…). LynxMask odblokuje dane na telefonie.",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 14.sp,
                             lineHeight = 21.sp,
                             color = LynxColors.TextPrimary
                         )
                         Text(
                             "Cały dokument? Biblioteka → dokument → Podgląd zamaskowanego lub Przywróć oryginał.",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 13.sp,
                             lineHeight = 19.sp,
                             color = LynxColors.TextSecondary
@@ -322,6 +326,7 @@ fun DepseudonymizationScreen(
                     placeholder   = {
                         Text(
                             "Wklej odpowiedź z ChatGPT / Claude / Gemini…",
+                            fontFamily = LynxTypography.Sans,
                             color = LynxColors.TextDim, fontSize = 13.sp, lineHeight = 18.sp
                         )
                     },
@@ -366,7 +371,7 @@ fun DepseudonymizationScreen(
                 }
 
                 if (errorMessage.isNotEmpty()) {
-                    Text(errorMessage, fontSize = 13.sp, color = LynxColors.Red)
+                    Text(errorMessage, fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.Red)
                 }
 
                 Text(
@@ -375,6 +380,7 @@ fun DepseudonymizationScreen(
                         activeSessionId == null -> "Wybierz sesję pasującą do tokenów."
                         else -> "Przetwarzam po wklejeniu…"
                     },
+                    fontFamily = LynxTypography.Sans,
                     fontSize = 13.sp,
                     color = LynxColors.TextMuted
                 )
@@ -384,6 +390,7 @@ fun DepseudonymizationScreen(
                     LynxGhostButton(onClick = onBack) {
                         Text(
                             if (fromLibrary) "← Dokument" else "← Hub",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 14.sp,
                             color = LynxColors.BlueLight
                         )
@@ -409,6 +416,7 @@ fun DepseudonymizationScreen(
                         Text(
                             text       = restoredText,
                             modifier   = Modifier.verticalScroll(rememberScrollState()),
+                            fontFamily = LynxTypography.Sans,
                             fontSize   = 14.sp,
                             color      = LynxColors.TextPrimary,
                             lineHeight = 22.sp
@@ -427,14 +435,13 @@ fun DepseudonymizationScreen(
                 ) {
                     if (currentMode == DepseudoMode.MASKED_VIEW && fromLibrary) {
                         onRestoreOriginal?.let { restore ->
-                            LynxPrimaryButton(
+                            LynxFilledButton(
+                                label = "Przywróć oryginał",
                                 onClick = restore,
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Przywróć oryginał")
-                            }
+                            )
                         }
-                        LynxSecondaryButton(
+                        LynxGhostButton(
                             onClick = {
                                 coroutineScope.launch {
                                     clipboard.setClipEntry(
@@ -445,14 +452,15 @@ fun DepseudonymizationScreen(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Kopiuj zamaskowany tekst")
+                            Text("Kopiuj zamaskowany tekst", fontFamily = LynxTypography.Sans, color = LynxColors.BlueLight)
                         }
                     }
 
                     if (currentMode == DepseudoMode.AI_RESPONSE) {
-                    LynxPrimaryButton(
+                    LynxFilledButton(
+                        label = if (savedDone) "Zapisano" else if (fromLibrary) "Zapisz odpowiedź AI" else "Zapisz w bibliotece",
                         onClick  = {
-                            val sesId = activeSessionId ?: return@LynxPrimaryButton
+                            val sesId = activeSessionId ?: return@LynxFilledButton
                             coroutineScope.launch(Dispatchers.IO) {
                                 SessionStore.saveResponse(context, sesId, restoredText)
                                 withContext(Dispatchers.Main) {
@@ -465,21 +473,18 @@ fun DepseudonymizationScreen(
                         },
                         enabled  = !savedDone && activeSessionId != null,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            if (savedDone) "Zapisano" else if (fromLibrary) "Zapisz odpowiedź AI" else "Zapisz w bibliotece",
-                            color = if (savedDone) LynxColors.Green else LynxColors.TextPrimary
-                        )
-                    }
+                    )
                     }
 
                     if (currentMode != DepseudoMode.MASKED_VIEW) {
-                    LynxSecondaryButton(
+                    LynxGhostButton(
                         onClick  = { showDownloadWarning = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            if (currentMode == DepseudoMode.SOURCE_DOCUMENT) "Pobierz oryginał" else "Pobierz plik"
+                            if (currentMode == DepseudoMode.SOURCE_DOCUMENT) "Pobierz oryginał" else "Pobierz plik",
+                            fontFamily = LynxTypography.Sans,
+                            color = LynxColors.BlueLight
                         )
                     }
                     }
@@ -499,6 +504,7 @@ fun DepseudonymizationScreen(
                     ) {
                         Text(
                             if (fromLibrary) "← Dokument" else "Wklej inny tekst",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 14.sp,
                             color = if (fromLibrary) LynxColors.BlueLight else LynxColors.TextDim
                         )
@@ -511,18 +517,21 @@ fun DepseudonymizationScreen(
     if (showDownloadWarning) {
         AlertDialog(
             onDismissRequest = { showDownloadWarning = false },
-            title = { Text("Pobierasz odkryty tekst") },
-            text  = { Text("Plik będzie zawierał oryginalne dane osobowe w formie jawnej (PII plaintext). Upewnij się, że zapisujesz go w bezpiecznym miejscu.") },
+            title = { Text("Pobierasz odkryty tekst", fontFamily = LynxTypography.Sans) },
+            text  = { Text("Plik będzie zawierał oryginalne dane osobowe w formie jawnej (PII plaintext). Upewnij się, że zapisujesz go w bezpiecznym miejscu.", fontFamily = LynxTypography.Sans) },
             confirmButton = {
-                LynxPrimaryButton(onClick = {
-                    showDownloadWarning = false
-                    val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
-                    pendingDownloadText = restoredText
-                    saveFileLauncher.launch(fileName)
-                }) { Text("Pobierz") }
+                LynxFilledButton(
+                    label = "Pobierz",
+                    onClick = {
+                        showDownloadWarning = false
+                        val fileName = "odkryty_${activeSessionId ?: "dokument"}_${System.currentTimeMillis()}.txt"
+                        pendingDownloadText = restoredText
+                        saveFileLauncher.launch(fileName)
+                    }
+                )
             },
             dismissButton = {
-                LynxGhostButton(onClick = { showDownloadWarning = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showDownloadWarning = false }) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             }
         )
     }
@@ -544,7 +553,7 @@ private fun SessionStatusRow(label: String, ok: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
     ) {
         Text(if (ok) "\u2713" else "\u2715",
-            color = if (ok) LynxColors.Green else LynxColors.Red, fontSize = 14.sp)
+            fontFamily = LynxTypography.Sans, color = if (ok) LynxColors.Green else LynxColors.Red, fontSize = 14.sp)
         Text(label, fontFamily = LynxTypography.Mono, fontSize = 13.sp,
             color = if (ok) LynxColors.Green else LynxColors.Red)
     }
@@ -579,7 +588,7 @@ private fun SessionDropdown(
         ) {
             if (sessionList.isEmpty()) {
                 DropdownMenuItem(
-                    text    = { Text("Brak sesji", fontSize = 13.sp, color = LynxColors.TextDim) },
+                    text    = { Text("Brak sesji", fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextDim) },
                     onClick = {},
                     enabled = false
                 )
@@ -589,7 +598,7 @@ private fun SessionDropdown(
                         text = {
                             Column {
                                 Text(session.description.ifEmpty { session.sesjaId },
-                                    fontSize = 13.sp, color = LynxColors.TextPrimary)
+                                    fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextPrimary)
                                 Text(session.sesjaId,
                                     fontFamily = LynxTypography.Mono, fontSize = 11.sp,
                                     color = LynxColors.TextDim)

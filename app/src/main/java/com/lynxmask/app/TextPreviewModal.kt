@@ -9,10 +9,13 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -23,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.lynxmask.app.ui.components.LynxPrimaryButton
+import com.lynxmask.app.ui.components.LynxFilledButton
 import com.lynxmask.app.ui.theme.LynxColors
+import com.lynxmask.app.ui.theme.LynxTypography
+import kotlinx.coroutines.launch
 
 private const val TOKEN_ANNOTATION = "TOKEN"
 
@@ -46,7 +51,7 @@ internal fun TextPreviewModal(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.surface
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -63,13 +68,15 @@ internal fun TextPreviewModal(
                     }
                     Text(
                         "Podgląd tekstu",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = LynxTypography.Sans,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
                         color = LynxColors.Blue
                     )
                     Text(
                         "${displayText.length} zn.",
-                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = LynxTypography.Sans,
+                        fontSize = 11.sp,
                         color = LynxColors.TextDim,
                         modifier = Modifier.padding(end = 12.dp)
                     )
@@ -78,7 +85,8 @@ internal fun TextPreviewModal(
 
                 Text(
                     "Dotknij tokenu (np. OSOBA_001) aby odkryć — dotknij ponownie aby ukryć. Zaznacz fragment i wklej poniżej aby zamaskować.",
-                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = LynxTypography.Sans,
+                    fontSize = 11.sp,
                     color = LynxColors.TextMuted,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -87,7 +95,8 @@ internal fun TextPreviewModal(
                 if (BuildConfig.DEBUG && tokenLayers.isNotEmpty()) {
                     Text(
                         "Zielony = AddressEngine (nowy) | Niebieski = stary silnik | Czerwony = odkryty",
-                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = LynxTypography.Sans,
+                        fontSize = 11.sp,
                         color = LynxColors.TextMuted,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                     )
@@ -191,6 +200,14 @@ internal fun ManualTokenSection(
     var inputText by remember(selectedText) { mutableStateOf(selectedText) }
     var selectedType by remember { mutableStateOf(TOKEN_OSOBA) }
     val types = listOf(TOKEN_OSOBA, TOKEN_FIRMA, TOKEN_ADRES, TOKEN_NUMER, TOKEN_KWOTA)
+    // BUG-BRAK-AUTOWYPELNIANIA (11.07): prawdziwa "automatyka" po zaznaczeniu tekstu nie jest
+    // bezpiecznie osiągalna (Compose nie daje dostępu do aktywnego zaznaczenia w
+    // SelectionContainer, a ciche czytanie schowka w tle Android 10+ traktuje jako zagrożenie
+    // prywatności i pokazuje systemowy komunikat). Kompromis: jeden świadomy dotyk zamiast
+    // ręcznego wpisywania — zaznacz → systemowe "Kopiuj" → "Wklej zaznaczenie" tutaj.
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -203,18 +220,32 @@ internal fun ManualTokenSection(
         ) {
             Text(
                 "Ręczne maskowanie",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = LynxTypography.Sans,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
                 color = LynxColors.TextSecondary
             )
             OutlinedTextField(
                 value = inputText,
                 onValueChange = { inputText = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Tekst do zamaskowania") },
-                placeholder = { Text("Wklej zaznaczony fragment") },
+                label = { Text("Tekst do zamaskowania", fontFamily = LynxTypography.Sans) },
+                placeholder = { Text("Wklej zaznaczony fragment", fontFamily = LynxTypography.Sans) },
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium
+                // BUG-POLE-KWADRATOWE (11.07): brak jawnego shape → domyślny (mniej zaokrąglony)
+                // róg Material3, niepasujący do karty (12dp) która to pole otacza.
+                shape = RoundedCornerShape(12.dp),
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = LynxTypography.Sans, fontSize = 14.sp, color = LynxColors.TextPrimary),
+                trailingIcon = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            val clip = clipboard.getClipEntry()?.clipData?.getItemAt(0)?.coerceToText(context)?.toString()
+                            if (!clip.isNullOrBlank()) inputText = clip.trim()
+                        }
+                    }) {
+                        Icon(Icons.Outlined.ContentPaste, contentDescription = "Wklej zaznaczenie", tint = LynxColors.BlueLight)
+                    }
+                }
             )
             Row(
                 modifier = Modifier
@@ -226,7 +257,7 @@ internal fun ManualTokenSection(
                     FilterChip(
                         selected = selectedType == type,
                         onClick = { selectedType = type },
-                        label = { Text(type) },
+                        label = { Text(type, fontFamily = LynxTypography.Sans) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = LynxColors.Blue.copy(alpha = 0.15f),
                             selectedLabelColor = LynxColors.Blue
@@ -234,7 +265,8 @@ internal fun ManualTokenSection(
                     )
                 }
             }
-            LynxPrimaryButton(
+            LynxFilledButton(
+                label = "Maskuj",
                 onClick = {
                     if (inputText.isNotBlank()) {
                         onMask(inputText.trim(), selectedType)
@@ -243,9 +275,7 @@ internal fun ManualTokenSection(
                 },
                 enabled = inputText.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Maskuj", fontSize = 15.sp)
-            }
+            )
         }
     }
 }

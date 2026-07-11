@@ -61,8 +61,15 @@ object LookupTables {
     // słowniki (cities_forms.json / surnames_top1000.json), nie utrzymywać ręcznie.
     val citySurnameOverlap: Set<String> get() = _citySurnameOverlap
 
+    // PERF-PRÓBA (11.07): zrównoleglenie 7 niezależnych słowników przez coroutines
+    // (Dispatchers.Default) było TU WOLNIEJSZE niż sekwencyjnie na telefonie (23,9s vs 9,4s) —
+    // zmierzone na realnym urządzeniu, nie na desktopie. Prawdopodobna przyczyna: budowanie
+    // kilku ogromnych zbiorów stringów naraz (343k+ + 30k+ elementów jednocześnie w pamięci)
+    // winduje presję GC bardziej niż oszczędza na współbieżności przy ograniczonej liczbie
+    // rdzeni telefonu. Wniosek zapisany, NIE próbować ponownie bez nowego pomiaru na telefonie.
     fun initialize(context: Context) {
         if (_initialized) return
+        val tA0 = System.currentTimeMillis()
         val names = loadFormsFromAsset(context, "names_inflected.json")
         val baseSurnames = loadFormsFromAsset(context, "surnames_top1000.json")
         val streets = loadFormsFromAsset(context, "street_names.json")
@@ -80,6 +87,9 @@ object LookupTables {
         _medForms      = med.withAsciiVariants()
         _citySurnameOverlap = overlap.withAsciiVariants()
         _surnameSuffixes = suffixes
+        val tA1 = System.currentTimeMillis()
+        if (BuildConfig.DEBUG) android.util.Log.d("LynxTiming",
+            "sequential-init=${tA1-tA0}ms surnames.size=${_surnamesForms.size}")
 
         // INIT-FIX v1.1: initialized tylko gdy krytyczne pliki załadowane.
         // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
@@ -218,9 +228,15 @@ object LookupTables {
         return this + ascii
     }
 
+    // PERF-FIX (11.07): regex kompilowany RAZ, nie przy każdym wywołaniu stripDiacritics —
+    // funkcja woła się per-słowo dla każdej formy w każdym słowniku (setki tysięcy razy przy
+    // 39k słowniku nazwisk + 30k miast), kompilacja regexa w pętli dominowała czas startu apki
+    // (22s init → w tym ~20s w withAsciiVariants/stripDiacritics, zmierzone LynxTiming).
+    private val COMBINING_MARKS_REGEX = Regex("\\p{InCombiningDiacriticalMarks}+")
+
     private fun stripDiacritics(s: String): String =
         java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
-            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+            .replace(COMBINING_MARKS_REGEX, "")
             // Ł/ł ma kreską (stroke, U+0141/U+0142) — nie jest combining mark,
             // NFD jej nie rozkłada. Ręczna konwersja żeby "łukasz" → "lukasz".
             .replace('ł', 'l').replace('Ł', 'L')

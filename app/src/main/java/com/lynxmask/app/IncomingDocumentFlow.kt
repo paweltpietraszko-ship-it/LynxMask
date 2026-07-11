@@ -8,6 +8,8 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,7 +36,9 @@ import com.lynxmask.app.document.rememberPdfExportLauncher
 import com.lynxmask.app.document.rememberXlsxExportLauncher
 import com.lynxmask.app.ui.components.*
 import com.lynxmask.app.ui.theme.LynxColors
+import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
+import com.lynxmask.app.ui.theme.LynxTypography
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -124,17 +128,12 @@ fun IncomingDocumentFlow(
         }
     }
 
-    BackHandler {
-        when (val s = state) {
-            is IncomingDocState.Scanned -> state = IncomingDocState.Review(
-                rawText = s.sourceText,
-                ocrConfidence = s.ocrConfidence,
-                artifact = s.artifact,
-                sourceUri = s.sourceUri
-            )
-            else -> onFinished()
-        }
-    }
+    // BUG-WSTECZ-DO-ORYGINALU (11.07, zgłoszone przez Pawła): Wstecz z ekranu wyniku
+    // (Scanned) wracał do edycji oryginalnego tekstu (Review) zamiast do Hub. Nielogiczne —
+    // ręczna korekta/domaskowanie dzieje się PRZED pierwszą pseudonimizacją (na ekranie
+    // Review), nie po obejrzeniu już zamaskowanego wyniku i podglądu wydruku. Wstecz zawsze
+    // kończy flow, niezależnie od stanu — bez wyjątku dla Scanned.
+    BackHandler { onFinished() }
 
     savedLibrarySessionId?.let { sesjaId ->
         AlertDialog(
@@ -142,10 +141,11 @@ fun IncomingDocumentFlow(
                 savedLibrarySessionId = null
                 onFinished()
             },
-            title = { Text("Zapisano w bibliotece", color = LynxColors.TextPrimary) },
+            title = { Text("Zapisano w bibliotece", fontFamily = LynxTypography.Sans, color = LynxColors.TextPrimary) },
             text = {
                 Text(
                     "Sesja zapisana. Możesz ją otworzyć w Bibliotece lub wrócić do ekranu głównego.",
+                    fontFamily = LynxTypography.Sans,
                     color = LynxColors.TextSecondary
                 )
             },
@@ -154,22 +154,28 @@ fun IncomingDocumentFlow(
                     LynxPendingNav.requestLibrary(sesjaId)
                     savedLibrarySessionId = null
                     onFinished()
-                }) { Text("Otwórz bibliotekę") }
+                }) { Text("Otwórz bibliotekę", fontFamily = LynxTypography.Sans) }
             },
             dismissButton = {
                 LynxGhostButton(onClick = {
                     savedLibrarySessionId = null
                     onFinished()
-                }) { Text("Zamknij") }
+                }) { Text("Zamknij", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
     }
 
+    // BUG-BIALE-PASKI-INSET (11.07, poprawka poprzedniej próby): statusBarsPadding/
+    // navigationBarsPadding NA SAMYM Surface kurczy też jego TŁO do obszaru bezpiecznego —
+    // pasek statusu/nawigacji wypada wtedy POZA Surface i pokazuje surowe (jasne) tło
+    // systemowe. Tło zostaje na pełny ekran (bez paddingu), padding przenosi się na
+    // wewnętrzny Box, który tnie tylko TREŚĆ, nie farbę.
     Surface(
-        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         when (val s = state) {
             is IncomingDocState.Loading ->
                 IncomingLoadingContent(label = progressLabel)
@@ -329,6 +335,7 @@ fun IncomingDocumentFlow(
                         { text: String -> saveXlsx(text) }
                     } else null
                 )
+        }
         }
     }
 }
@@ -651,7 +658,7 @@ private fun IncomingLoadingContent(label: String) {
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(16.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -677,7 +684,7 @@ private fun IncomingReviewContent(
                 Text(
                     if (isLow) "Słaba jakość skanu ($pct%)" else "Niska jakość skanu ($pct%) — sprawdź tekst",
                     modifier = Modifier.padding(12.dp),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = LynxTypography.Sans),
                     color = cardColor,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -685,23 +692,27 @@ private fun IncomingReviewContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Text("Sprawdź tekst przed pseudonimizacją", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("Sprawdź tekst przed pseudonimizacją", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = editableText,
             onValueChange = { editableText = it },
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodySmall,
-            label = { Text("Tekst ze skanera") }
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = LynxTypography.Sans),
+            shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+            label = { Text("Tekst ze skanera", fontFamily = LynxTypography.Sans) }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LynxSecondaryButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text("Anuluj") }
-            LynxPrimaryButton(onClick = { onConfirm(editableText) }, modifier = Modifier.weight(2f)) {
-                Text("Pseudonimizuj")
-            }
+        LynxFilledButton(
+            label = "Pseudonimizuj",
+            icon = Icons.Outlined.Shield,
+            onClick = { onConfirm(editableText) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        LynxGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+            Text("Anuluj", fontFamily = LynxTypography.Sans, color = LynxColors.TextDim)
         }
     }
 }
@@ -714,11 +725,11 @@ private fun IncomingErrorContent(message: String, onDismiss: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Nie udało się przetworzyć", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("Nie udało się przetworzyć", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(message, style = MaterialTheme.typography.bodySmall.copy(fontFamily = LynxTypography.Sans), color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(24.dp))
-        LynxPrimaryButton(onClick = onDismiss) { Text("Zamknij") }
+        LynxPrimaryButton(onClick = onDismiss) { Text("Zamknij", fontFamily = LynxTypography.Sans) }
     }
 }
 
@@ -729,11 +740,11 @@ private fun IncomingOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Dokument zbyt słabej jakości", fontWeight = FontWeight.Bold, fontSize = 18.sp, textAlign = TextAlign.Center)
+        Text("Dokument zbyt słabej jakości", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 18.sp, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             "Nie możemy zagwarantować bezpiecznego maskowania — zrób nowe zdjęcie.",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
@@ -741,13 +752,13 @@ private fun IncomingOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Jakość OCR: ${"%.0f%%".format(conf * 100)}",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = LynxTypography.Sans),
                 color = MaterialTheme.colorScheme.error
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
         LynxPrimaryButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-            Text("Zamknij i zrób nowe zdjęcie")
+            Text("Zamknij i zrób nowe zdjęcie", fontFamily = LynxTypography.Sans)
         }
     }
 }

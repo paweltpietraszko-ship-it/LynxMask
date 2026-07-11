@@ -56,11 +56,16 @@
             </intent-filter>
         </activity>
 
-        <!-- ShareTargetActivity — cel share sheet i otwieranie plików -->
+        <!-- ShareTargetActivity — cel share sheet i otwieranie plików. Motyw .Starting
+             (nie zwykły .LynxMask) — to jest cold-start entry point przy "Udostępnij", Android
+             12+ i tak wymusza splash dla każdego cold startu; bez tego motywu system pokazywał
+             domyślny czarny ekran zanim trampolina zdążyła przekazać do MainActivity (wyglądało
+             jak zawieszenie). Aktywność nic nie rysuje (brak setContentView), więc to czysto
+             kosmetyczna zmiana, zero ryzyka dla logiki init/gotowości. -->
         <activity
             android:name=".ShareTargetActivity"
             android:exported="true"
-            android:theme="@style/Theme.LynxMask"
+            android:theme="@style/Theme.LynxMask.Starting"
             android:label="LynxMask — Sprawdź przed wysłaniem"
             android:taskAffinity="com.lynxmask.app.share"
             android:launchMode="singleTop"

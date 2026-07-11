@@ -59,9 +59,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.core.view.WindowCompat
 import com.lynxmask.app.ui.components.LynxPrimaryButton
-import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.components.LynxGhostButton
 import com.lynxmask.app.ui.components.LynxDangerTextButton
+import com.lynxmask.app.ui.components.LynxFilledButton
+import com.lynxmask.app.ui.components.LynxFlatRow
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxMaskTheme
 import com.lynxmask.app.ui.theme.LynxShapes
@@ -78,11 +79,17 @@ import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class AppScreen { MAIN, LIBRARY, DEPSEUDO }
@@ -310,22 +317,22 @@ fun AppNavigation() {
 private fun CrashReportDialog(onSend: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nieoczekiwany błąd", fontWeight = FontWeight.Bold) },
+        title = { Text("Nieoczekiwany błąd", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold) },
         text = {
             Text(
                 "Aplikacja napotkała nieoczekiwany błąd podczas poprzedniego uruchomienia.\n\n" +
                 "Raport nie zawiera żadnych danych osobowych — tylko informacje techniczne o urządzeniu.",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans)
             )
         },
         confirmButton = {
             LynxPrimaryButton(onClick = onSend, modifier = Modifier.fillMaxWidth()) {
-                Text("Wyślij raport")
+                Text("Wyślij raport", fontFamily = LynxTypography.Sans)
             }
         },
         dismissButton = {
             LynxGhostButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text("Pomiń", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Pomiń", fontFamily = LynxTypography.Sans, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -511,78 +518,10 @@ private fun MainTabNav(
     }
 }
 
-// ── Hub — komponenty wizualne (11.07, redesign zaakceptowany na makiecie) ─────
-// Jedna wypełniona akcja główna (HubPrimaryCta) + płaskie wiersze bez ramek
-// (HubFlatRow) zamiast jednakowo obramowanych przycisków w zagnieżdżonej karcie.
-@Composable
-private fun HubPrimaryCta(
-    icon: ImageVector,
-    label: String,
-    caption: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
-        color = LynxColors.Blue,
-        tonalElevation = 0.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = LynxSpacing.md, vertical = LynxSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-        ) {
-            Icon(icon, contentDescription = null, tint = Color.White)
-            Column {
-                Text(label, fontFamily = LynxTypography.Sans, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(caption, fontFamily = LynxTypography.Sans, fontSize = 11.5.sp, color = Color.White.copy(alpha = 0.85f))
-            }
-        }
-    }
-}
-
-@Composable
-private fun HubFlatRow(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.fillMaxWidth(),
-        color = Color.Transparent
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (enabled) LynxColors.BlueLight else LynxColors.TextDim.copy(alpha = 0.5f)
-            )
-            Text(
-                label,
-                fontFamily = LynxTypography.Sans,
-                fontSize = 14.5.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (enabled) LynxColors.TextPrimary else LynxColors.TextDim
-            )
-        }
-    }
-}
-
 // ── Hub — strona startowa ─────────────────────────────────────────────────────
+// Komponenty wizualne (wypełniony przycisk / płaski wiersz) — patrz
+// ui/components/LynxButtons.kt: LynxFilledButton / LynxFlatRow (11.07, redesign
+// zaakceptowany na makiecie, wspólne dla Hub/Login/Biblioteka).
 @Composable
 private fun HubScreen(
     onFileClick: () -> Unit,
@@ -624,6 +563,7 @@ private fun HubScreen(
             Text(
                 "${BuildConfig.VERSION_NAME}  LynxMask Mobile",
                 modifier = Modifier.align(Alignment.CenterEnd),
+                fontFamily = LynxTypography.Sans,
                 fontSize = 10.sp,
                 color = LynxColors.TextDim
             )
@@ -664,6 +604,7 @@ private fun HubScreen(
             Spacer(Modifier.height(10.dp))
             Text(
                 "Pseudonimizacja dokumentów",
+                fontFamily = LynxTypography.Sans,
                 fontSize = 13.sp,
                 color = LynxColors.TextSecondary,
                 textAlign = TextAlign.Center
@@ -675,7 +616,7 @@ private fun HubScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
             ) {
-                    HubPrimaryCta(
+                    LynxFilledButton(
                         icon = Icons.Outlined.UploadFile,
                         label = "Wybierz plik",
                         caption = "PDF · DOCX · XLSX · TXT · obraz",
@@ -689,12 +630,12 @@ private fun HubScreen(
                     )
 
                     if (pastedText.isBlank() && !manualEdit) {
-                        HubFlatRow(
+                        LynxFlatRow(
                             icon = Icons.Outlined.ContentPaste,
                             label = "Wklej ze schowka",
                             onClick = { pasteFromClipboard() }
                         )
-                        HubFlatRow(
+                        LynxFlatRow(
                             icon = Icons.Outlined.Keyboard,
                             label = "Wpisz ręcznie",
                             onClick = { manualEdit = true }
@@ -705,7 +646,7 @@ private fun HubScreen(
                             onValueChange = { pastedText = it },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 160.dp),
                             placeholder = {
-                                Text("Wklej lub wpisz tekst…", color = LynxColors.TextDim, fontSize = 14.sp)
+                                Text("Wklej lub wpisz tekst…", fontFamily = LynxTypography.Sans, color = LynxColors.TextDim, fontSize = 14.sp)
                             },
                             shape = RoundedCornerShape(LynxShapes.ButtonRadius),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -722,7 +663,7 @@ private fun HubScreen(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Gotowe", fontSize = 13.sp, color = LynxColors.TextDim)
+                            Text("Gotowe", fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextDim)
                         }
                     } else {
                         Text(
@@ -731,6 +672,7 @@ private fun HubScreen(
                                 .fillMaxWidth()
                                 .heightIn(max = 120.dp)
                                 .verticalScroll(rememberScrollState()),
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 13.sp,
                             lineHeight = 20.sp,
                             color = LynxColors.TextPrimary
@@ -746,19 +688,19 @@ private fun HubScreen(
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Wyczyść", fontSize = 13.sp, color = LynxColors.TextDim)
+                                Text("Wyczyść", fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextDim)
                             }
                             LynxGhostButton(
                                 onClick = { manualEdit = true },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Edytuj", fontSize = 13.sp, color = LynxColors.TextDim)
+                                Text("Edytuj", fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextDim)
                             }
                         }
                     }
 
                     if (pastedText.isNotBlank()) {
-                        HubPrimaryCta(
+                        LynxFilledButton(
                             icon = Icons.Outlined.Shield,
                             label = "Pseudonimizuj",
                             caption = "Zamaskuj i przejdź do podglądu",
@@ -768,7 +710,7 @@ private fun HubScreen(
                             }
                         )
                     } else {
-                        HubFlatRow(
+                        LynxFlatRow(
                             icon = Icons.Outlined.Shield,
                             label = "Pseudonimizuj",
                             enabled = false,
@@ -793,10 +735,11 @@ private fun ExpressLockedTab(onLogin: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("🔒", fontSize = 40.sp)
+        Text("🔒", fontFamily = LynxTypography.Sans, fontSize = 40.sp)
         Spacer(Modifier.height(LynxSpacing.md))
         Text(
             "Dostępne po zalogowaniu",
+            fontFamily = LynxTypography.Sans,
             fontSize = 16.sp,
             color = LynxColors.TextSecondary,
             textAlign = TextAlign.Center
@@ -804,6 +747,7 @@ private fun ExpressLockedTab(onLogin: () -> Unit) {
         Spacer(Modifier.height(LynxSpacing.xs))
         Text(
             "Tryb Express nie obejmuje tej sekcji.",
+            fontFamily = LynxTypography.Sans,
             fontSize = 13.sp,
             color = LynxColors.TextDim,
             textAlign = TextAlign.Center
@@ -813,7 +757,7 @@ private fun ExpressLockedTab(onLogin: () -> Unit) {
             onClick  = onLogin,
             modifier = Modifier.fillMaxWidth(0.6f)
         ) {
-            Text("Zaloguj się", fontSize = 14.sp)
+            Text("Zaloguj się", fontFamily = LynxTypography.Sans, fontSize = 14.sp)
         }
     }
 }
@@ -837,15 +781,15 @@ private fun BottomNavBar(
     if (showExpressLocked) {
         AlertDialog(
             onDismissRequest = { showExpressLocked = false },
-            title   = { Text("Funkcja niedostępna", color = LynxColors.TextPrimary) },
-            text    = { Text("Ta sekcja wymaga pełnej wersji. Zaloguj się, aby odblokować zabezpieczenia.", color = LynxColors.TextSecondary) },
+            title   = { Text("Funkcja niedostępna", fontFamily = LynxTypography.Sans, color = LynxColors.TextPrimary) },
+            text    = { Text("Ta sekcja wymaga pełnej wersji. Zaloguj się, aby odblokować zabezpieczenia.", fontFamily = LynxTypography.Sans, color = LynxColors.TextSecondary) },
             confirmButton = {
                 LynxPrimaryButton(onClick = { showExpressLocked = false; onExitExpress() }) {
-                    Text("Zaloguj się")
+                    Text("Zaloguj się", fontFamily = LynxTypography.Sans)
                 }
             },
             dismissButton = {
-                LynxGhostButton(onClick = { showExpressLocked = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showExpressLocked = false }) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface,
             shape = RoundedCornerShape(LynxShapes.CardRadius)
@@ -974,6 +918,7 @@ internal fun PrivacyPolicyDialog(onDismiss: () -> Unit) {
                     )
                     Text(
                         body,
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
@@ -984,7 +929,7 @@ internal fun PrivacyPolicyDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             LynxGhostButton(onClick = onDismiss) {
-                Text("Zamknij", color = LynxColors.Blue)
+                Text("Zamknij", fontFamily = LynxTypography.Sans, color = LynxColors.Blue)
             }
         }
     )
@@ -1083,12 +1028,13 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { if (!deleteInProgress) showDeleteConfirm = false },
-            title = { Text("Usun\u0105\u0107 wszystkie dane?") },
+            title = { Text("Usun\u0105\u0107 wszystkie dane?", fontFamily = LynxTypography.Sans) },
             text  = {
                 Text(
                     "Ta operacja jest nieodwracalna.\n\n" +
                     "Wszystkie sesje, mapy token\u00f3w i odpowiedzi AI zostan\u0105 " +
                     "trwale usuni\u0119te z urz\u0105dzenia.",
+                    fontFamily = LynxTypography.Sans,
                     fontSize = 13.sp, lineHeight = 19.sp
                 )
             },
@@ -1118,6 +1064,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     } else {
                         Text(
                             "Usu\u0144 wszystko",
+                            fontFamily = LynxTypography.Sans,
                             color      = LynxColors.Red,
                             fontWeight = FontWeight.Bold
                         )
@@ -1128,7 +1075,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                 LynxGhostButton(
                     onClick  = { showDeleteConfirm = false },
                     enabled  = !deleteInProgress
-                ) { Text("Anuluj") }
+                ) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
@@ -1141,34 +1088,37 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                 showChangePassword = false
                 oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
             },
-            title = { Text("Zmień hasło") },
+            title = { Text("Zmień hasło", fontFamily = LynxTypography.Sans) },
             text  = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (changePasswordError != null) {
-                        Text(changePasswordError!!, color = LynxColors.Red, fontSize = 12.sp)
+                        Text(changePasswordError!!, fontFamily = LynxTypography.Sans, color = LynxColors.Red, fontSize = 12.sp)
                     }
                     androidx.compose.material3.OutlinedTextField(
                         value = oldPassword,
                         onValueChange = { oldPassword = it; changePasswordError = null },
-                        label = { Text("Aktualne hasło", fontSize = 12.sp) },
+                        label = { Text("Aktualne hasło", fontFamily = LynxTypography.Sans, fontSize = 12.sp) },
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         singleLine = true,
+                        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
                         modifier = Modifier.fillMaxWidth()
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it; changePasswordError = null },
-                        label = { Text("Nowe hasło (min. 4 znaki)", fontSize = 12.sp) },
+                        label = { Text("Nowe hasło (min. 4 znaki)", fontFamily = LynxTypography.Sans, fontSize = 12.sp) },
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         singleLine = true,
+                        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
                         modifier = Modifier.fillMaxWidth()
                     )
                     androidx.compose.material3.OutlinedTextField(
                         value = newPasswordConfirm,
                         onValueChange = { newPasswordConfirm = it; changePasswordError = null },
-                        label = { Text("Powtórz nowe hasło", fontSize = 12.sp) },
+                        label = { Text("Powtórz nowe hasło", fontFamily = LynxTypography.Sans, fontSize = 12.sp) },
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         singleLine = true,
+                        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -1190,14 +1140,14 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         }
                     }
                 }) {
-                    Text("Zmień", fontWeight = FontWeight.Bold)
+                    Text("Zmień", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 LynxGhostButton(onClick = {
                     showChangePassword = false
                     oldPassword = ""; newPassword = ""; newPasswordConfirm = ""; changePasswordError = null
-                }) { Text("Anuluj") }
+                }) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
@@ -1207,10 +1157,10 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
     if (showDictManager) {
         AlertDialog(
             onDismissRequest = { showDictManager = false; dictSearch = "" },
-            title = { Text("Słownik własny") },
+            title = { Text("Słownik własny", fontFamily = LynxTypography.Sans) },
             text = {
                 if (dictEntries.isEmpty()) {
-                    Text("Słownik jest pusty.", fontSize = 13.sp, color = LynxColors.TextSecondary)
+                    Text("Słownik jest pusty.", fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextSecondary)
                 } else {
                     val filtered = remember(dictEntries, dictSearch) {
                         if (dictSearch.isBlank()) dictEntries
@@ -1223,14 +1173,15 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     OutlinedTextField(
                         value = dictSearch,
                         onValueChange = { dictSearch = it },
-                        placeholder = { Text("Szukaj…", fontSize = 13.sp) },
+                        placeholder = { Text("Szukaj…", fontFamily = LynxTypography.Sans, fontSize = 13.sp) },
                         singleLine = true,
+                        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
                     )
                     if (filtered.isEmpty()) {
-                        Text("Brak wyników dla \"$dictSearch\".", fontSize = 13.sp,
+                        Text("Brak wyników dla \"$dictSearch\".", fontFamily = LynxTypography.Sans, fontSize = 13.sp,
                             color = LynxColors.TextSecondary)
                     } else {
                     LazyColumn(
@@ -1254,6 +1205,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                                 )
                                 Text(
                                     value,
+                                    fontFamily = LynxTypography.Sans,
                                     fontSize = 13.sp,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -1269,7 +1221,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                                     },
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text("×", fontSize = 18.sp, color = LynxColors.Red)
+                                    Text("×", fontFamily = LynxTypography.Sans, fontSize = 18.sp, color = LynxColors.Red)
                                 }
                             }
                         }
@@ -1279,7 +1231,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                 }
             },
             confirmButton = {
-                LynxGhostButton(onClick = { showDictManager = false; dictSearch = "" }) { Text("Zamknij") }
+                LynxGhostButton(onClick = { showDictManager = false; dictSearch = "" }) { Text("Zamknij", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
@@ -1299,7 +1251,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
             ) {
 
                 // Słownik — transfer Mobile ↔ Desktop (priorytet)
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         "SŁOWNIK",
                         fontFamily    = LynxTypography.Mono,
@@ -1310,37 +1262,26 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     Text(
                         "Eksport i import słownika własnego między telefonem a Desktop LynxMask. " +
                         "Format: plik .lynxdict (JSON). Zalecany przed zmianą urządzenia.",
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-                    ) {
-                        LynxSecondaryButton(
-                            onClick  = { exportDictionary() },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Eksportuj")
-                        }
-                        LynxSecondaryButton(
-                            onClick  = { importLauncher.launch(arrayOf("application/json", "*/*")) },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Importuj")
-                        }
-                    }
-                    LynxSecondaryButton(
-                        onClick = { showDictManager = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val n = dictEntries.size
-                        Text(
-                            if (n > 0) "Przeglądaj słownik ($n wpisów)"
-                            else "Słownik jest pusty"
-                        )
-                    }
+                    LynxFlatRow(
+                        label = "Eksportuj słownik",
+                        icon = Icons.Outlined.Download,
+                        onClick = { exportDictionary() }
+                    )
+                    LynxFlatRow(
+                        label = "Importuj słownik",
+                        icon = Icons.Outlined.UploadFile,
+                        onClick = { importLauncher.launch(arrayOf("application/json", "*/*")) }
+                    )
+                    LynxFlatRow(
+                        label = dictEntries.size.let { n -> if (n > 0) "Przeglądaj słownik ($n wpisów)" else "Słownik jest pusty" },
+                        icon = Icons.AutoMirrored.Outlined.MenuBook,
+                        onClick = { showDictManager = true }
+                    )
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
@@ -1359,6 +1300,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         "Has\u0142o: PBKDF2-HMAC-SHA256 (310 000 iter.)\n" +
                         "Dane wychodz\u0105ce: \u017cadne\n" +
                         "Baza: SQLCipher",
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 19.sp,
                         color      = LynxColors.TextSecondary
@@ -1368,7 +1310,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
                 // Polityka prywatności
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         "POLITYKA PRYWATNOŚCI",
                         fontFamily    = LynxTypography.Mono,
@@ -1378,16 +1320,16 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     )
                     Text(
                         "Dowiedz się, co LynxMask przechowuje na urządzeniu i jak chroni Twoje dane.",
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    LynxSecondaryButton(
-                        onClick  = { showPrivacyPolicy = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Otwórz politykę prywatności")
-                    }
+                    LynxFlatRow(
+                        label = "Otwórz politykę prywatności",
+                        icon = Icons.Outlined.Description,
+                        onClick = { showPrivacyPolicy = true }
+                    )
                     if (showPrivacyPolicy) {
                         PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
                     }
@@ -1396,7 +1338,7 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
                 // Zmiana hasła
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         "HASŁO",
                         fontFamily    = LynxTypography.Mono,
@@ -1406,22 +1348,22 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     )
                     Text(
                         "Zmiana hasła nie usuwa biblioteki dokumentów. Jeśli zapomnisz hasła i użyjesz opcji reset w ekranie logowania — biblioteka zostanie trwale usunięta.",
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    LynxSecondaryButton(
-                        onClick  = { showChangePassword = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Zmień hasło")
-                    }
+                    LynxFlatRow(
+                        label = "Zmień hasło",
+                        icon = Icons.Outlined.Lock,
+                        onClick = { showChangePassword = true }
+                    )
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
                 // Wylogowanie
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         "SESJA",
                         fontFamily    = LynxTypography.Mono,
@@ -1429,18 +1371,17 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                         color         = LynxColors.Blue,
                         letterSpacing = 1.sp
                     )
-                    LynxSecondaryButton(
-                        onClick  = { onDismiss(); onLogout() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Wyloguj się")
-                    }
+                    LynxFlatRow(
+                        label = "Wyloguj się",
+                        icon = Icons.AutoMirrored.Outlined.Logout,
+                        onClick = { onDismiss(); onLogout() }
+                    )
                 }
 
                 HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
 
                 // Usuwanie danych — Art. 17 RODO
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         "DANE",
                         fontFamily    = LynxTypography.Mono,
@@ -1450,26 +1391,24 @@ private fun SecurityModal(onDismiss: () -> Unit, onLogout: () -> Unit = {}) {
                     )
                     Text(
                         "Usu\u0144 wszystkie sesje, mapy token\u00f3w i odpowiedzi z urz\u0105dzenia.",
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 12.sp,
                         lineHeight = 17.sp,
                         color      = LynxColors.TextSecondary
                     )
-                    LynxSecondaryButton(
-                        onClick  = { showDeleteConfirm = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        accent = LynxColors.Red
-                    ) {
-                        Text(
-                            "Usu\u0144 wszystkie dane",
-                            color = LynxColors.Red
-                        )
-                    }
+                    LynxFlatRow(
+                        label = "Usu\u0144 wszystkie dane",
+                        icon = Icons.Outlined.DeleteForever,
+                        iconTint = LynxColors.Red,
+                        labelColor = LynxColors.Red,
+                        onClick = { showDeleteConfirm = true }
+                    )
                 }
             }
         },
         confirmButton = {
             LynxGhostButton(onClick = onDismiss) {
-                Text("Zamknij", color = LynxColors.Blue)
+                Text("Zamknij", fontFamily = LynxTypography.Sans, color = LynxColors.Blue)
             }
         },
         containerColor = LynxColors.Surface

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -154,6 +155,108 @@ fun LynxDangerTextButton(
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp
         )
+    }
+}
+
+// ── Wypełniony przycisk / płaski wiersz (11.07, redesign Hub+Login) ──────────
+// Zastępują LynxPrimaryButton/LynxSecondaryButton na ekranach przechodzących na nowy
+// wzorzec: jedna wypełniona akcja główna zamiast jednakowo obramowanych przycisków.
+// Migracja stopniowa ekran po ekranie — stare komponenty wyżej zostają nietknięte
+// dopóki wszystkie miejsca ich użycia nie przejdą na nowe.
+
+/** Wypełniony przycisk główny — ikona + etykieta + opcjonalny podpis. */
+@Composable
+fun LynxFilledButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    caption: String? = null,
+    color: Color = LynxColors.Blue,
+    enabled: Boolean = true,
+    loading: Boolean = false
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled && !loading,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+        color = if (enabled) color else color.copy(alpha = 0.35f),
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = LynxSpacing.md, vertical = if (caption != null) LynxSpacing.md else 14.dp),
+            horizontalArrangement = if (caption != null) Arrangement.Start else Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, tint = Color.White)
+                    Spacer(Modifier.width(LynxSpacing.sm))
+                }
+                if (caption != null) {
+                    Column {
+                        Text(label, fontFamily = LynxTypography.Sans, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(caption, fontFamily = LynxTypography.Sans, fontSize = 11.5.sp, color = Color.White.copy(alpha = 0.85f))
+                    }
+                } else {
+                    Text(label, fontFamily = LynxTypography.Sans, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        }
+    }
+}
+
+/** Płaski wiersz bez ramki/wypełnienia — akcja drugorzędna. */
+@Composable
+fun LynxFlatRow(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    iconTint: Color = LynxColors.BlueLight,
+    labelColor: Color? = null
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.fillMaxWidth(),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                // BUG-IKONY-SCHODKI (11.07): karty informacyjne (StatusBanner, MaskedSummaryCard)
+                // mają ~14-16dp wewnętrznego marginesu przed ikoną — ten wiersz miał 0, więc jego
+                // ikona siedziała wyraźnie bardziej z lewej niż reszta. 14dp wyrównuje lewą krawędź.
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            if (icon != null) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = if (enabled) iconTint else LynxColors.TextDim.copy(alpha = 0.5f)
+                )
+            }
+            Text(
+                label,
+                fontFamily = LynxTypography.Sans,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (!enabled) LynxColors.TextDim else (labelColor ?: LynxColors.TextPrimary)
+            )
+        }
     }
 }
 

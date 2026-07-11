@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.CreateNewFolder
@@ -29,18 +30,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.ui.components.LynxGhostButton
 import com.lynxmask.app.ui.components.LynxBrandButton
-import com.lynxmask.app.ui.components.LynxPrimaryButton
-import com.lynxmask.app.ui.components.LynxSecondaryButton
+import com.lynxmask.app.ui.components.LynxFilledButton
+import com.lynxmask.app.ui.components.LynxFlatRow
 import com.lynxmask.app.ui.components.LynxSuccessButton
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
+import com.lynxmask.app.ui.theme.LynxTypography
 import kotlinx.coroutines.launch
 
 enum class PanelMode { SHARE_SHEET }
@@ -180,11 +183,13 @@ fun PseudonymResultPanel(
         showTextPreview = false
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // BUG-BIALY-PASEK-STATUSU (11.07): jedyny wywołujący (IncomingDocumentFlow.kt) już
+    // opakowuje w Box z statusBarsPadding/navigationBarsPadding na pełnoekranowym Surface —
+    // tu tylko tło, bez drugiego statusBarsPadding (podwójny odstęp).
+    Box(modifier = Modifier.fillMaxSize().background(LynxColors.Background)) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
     ) {
         StatusBanner(
             status = panelStatus,
@@ -198,7 +203,12 @@ fun PseudonymResultPanel(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = LynxSpacing.md)
+                .padding(horizontal = LynxSpacing.md),
+            // BUG-PUSTKA-POD-OPISEM (11.07): treść krótsza niż ekran zostawiała pustą
+            // przestrzeń tylko na dole (kolumna wyrównana do góry z natury). Wyśrodkowanie
+            // dzieli nadmiar miejsca po równo góra/dół; przy dłuższej treści (alerty
+            // czerwone/żółte) scroll działa normalnie, wyśrodkowanie nie przeszkadza.
+            verticalArrangement = Arrangement.Center
         ) {
             result.qualityWarning?.let {
                 QualityWarningCard(it)
@@ -257,19 +267,16 @@ fun PseudonymResultPanel(
                 redHits.isEmpty()
             ) {
                 MaskedSummaryCard(tokenCount = maskedTokenCount)
-                Spacer(modifier = Modifier.height(LynxSpacing.sm))
+                Spacer(modifier = Modifier.height(LynxSpacing.lg))
             }
 
-            LynxTonalButton(
-                onClick = { showTextPreview = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Podgląd tekstu")
-            }
+            ActionSummaryCard(
+                label = "Podgląd tekstu",
+                icon = Icons.Outlined.Visibility,
+                onClick = { showTextPreview = true }
+            )
 
-            Spacer(modifier = Modifier.height(LynxSpacing.md))
+            Spacer(modifier = Modifier.height(LynxSpacing.lg))
 
             DescriptionSection(
                 value = descText,
@@ -426,8 +433,8 @@ private fun StatusBanner(
                 Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = color)
-                Text(subtitle, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.85f))
+                Text(title, fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = color)
+                Text(subtitle, fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = color.copy(alpha = 0.85f))
             }
         }
     }
@@ -447,7 +454,7 @@ private fun QualityWarningCard(warning: String) {
             verticalAlignment = Alignment.Top
         ) {
             Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = LynxColors.BlueLight, modifier = Modifier.size(16.dp))
-            Text(warning, style = MaterialTheme.typography.labelMedium, color = LynxColors.TextSecondary)
+            Text(warning, fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextSecondary)
         }
     }
 }
@@ -457,26 +464,44 @@ private fun DescriptionSection(
     value: String,
     onValueChange: (String) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             "Opis dokumentu (opcjonalnie)",
-            style = MaterialTheme.typography.labelSmall,
+            fontFamily = LynxTypography.Sans,
+            fontSize = 12.sp,
             color = LynxColors.TextDim
         )
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("np. Umowa najmu, Sąd — pozwoli znaleźć sesję w bibliotece") },
+            placeholder = {
+                Text(
+                    "np. Umowa najmu, Sąd — pozwoli znaleźć sesję w bibliotece",
+                    fontFamily = LynxTypography.Sans,
+                    fontSize = 13.sp
+                )
+            },
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodySmall,
+            textStyle = androidx.compose.ui.text.TextStyle(fontFamily = LynxTypography.Sans, fontSize = 13.sp, color = LynxColors.TextPrimary),
             shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+            // BUG-OPIS-SZARY (11.07): Surface (#2A2F38) odstawało jako jasna karta na
+            // bardzo ciemnym tle — Sidebar (#0D0F14) zamiast tego, zgodnie z prośbą "niech
+            // będzie czarny".
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = LynxColors.Surface,
-                unfocusedContainerColor = LynxColors.Surface,
+                focusedContainerColor = LynxColors.Sidebar,
+                unfocusedContainerColor = LynxColors.Sidebar,
                 focusedBorderColor = LynxColors.Blue,
                 unfocusedBorderColor = LynxColors.Border.copy(alpha = 0.7f)
-            )
+            ),
+            trailingIcon = if (value.isNotBlank()) {
+                {
+                    IconButton(onClick = { focusManager.clearFocus() }) {
+                        Icon(Icons.Outlined.Check, contentDescription = "Zatwierdź nazwę", tint = LynxColors.BlueLight)
+                    }
+                }
+            } else null
         )
     }
 }
@@ -524,19 +549,19 @@ private fun BottomActionBar(
                     ) {
                         Icon(Icons.Outlined.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (librarySaved) "Dodano do biblioteki" else "Dodaj do biblioteki")
+                        Text(if (librarySaved) "Dodano do biblioteki" else "Dodaj do biblioteki", fontFamily = LynxTypography.Sans)
                     }
                 }
                 if (librarySaved) {
                     Text(
                         "Zapisano — widoczny w Bibliotece",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = LynxTypography.Sans),
                         color = LynxColors.Green,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     onOpenLibrary?.let { openLib ->
                         LynxBrandButton(onClick = openLib, modifier = Modifier.fillMaxWidth()) {
-                            Text("Otwórz bibliotekę")
+                            Text("Otwórz bibliotekę", fontFamily = LynxTypography.Sans)
                         }
                     }
                 }
@@ -551,14 +576,14 @@ private fun BottomActionBar(
                     onBlockedClick = onBlockedClick,
                     modifier = Modifier.weight(1f)
                 ) {
-                    LynxSecondaryButton(
+                    LynxGhostButton(
                         onClick = onCopy,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = canExport
                     ) {
-                        Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.ContentCopy, contentDescription = null, tint = LynxColors.BlueLight, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (copied) "Skopiowano" else "Kopiuj", maxLines = 1)
+                        Text(if (copied) "Skopiowano" else "Kopiuj", fontFamily = LynxTypography.Sans, color = LynxColors.BlueLight, maxLines = 1)
                     }
                 }
                 if (showForward && onForward != null) {
@@ -567,14 +592,14 @@ private fun BottomActionBar(
                         onBlockedClick = onBlockedClick,
                         modifier = Modifier.weight(1f)
                     ) {
-                        LynxSecondaryButton(
+                        LynxGhostButton(
                             onClick = onForward,
                             modifier = Modifier.fillMaxWidth(),
                             enabled = canExport
                         ) {
-                            Icon(Icons.Outlined.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Send, contentDescription = null, tint = LynxColors.BlueLight, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Wyślij do AI", maxLines = 1)
+                            Text("Wyślij do AI", fontFamily = LynxTypography.Sans, color = LynxColors.BlueLight, maxLines = 1)
                         }
                     }
                 }
@@ -588,15 +613,13 @@ private fun BottomActionBar(
                     onBlockedClick = onBlockedClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    LynxSecondaryButton(
+                    LynxFlatRow(
+                        label = "Zapisz DOCX",
+                        icon = Icons.Outlined.Description,
                         onClick = onSaveDocx,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = canExport
-                    ) {
-                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Zapisz DOCX")
-                    }
+                        enabled = canExport,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
             if (onSavePdf != null) {
@@ -605,15 +628,13 @@ private fun BottomActionBar(
                     onBlockedClick = onBlockedClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    LynxSecondaryButton(
+                    LynxFlatRow(
+                        label = "Zapisz PDF",
+                        icon = Icons.Outlined.Description,
                         onClick = onSavePdf,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = canExport
-                    ) {
-                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Zapisz PDF")
-                    }
+                        enabled = canExport,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
             if (onSaveXlsx != null) {
@@ -622,15 +643,13 @@ private fun BottomActionBar(
                     onBlockedClick = onBlockedClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    LynxSecondaryButton(
+                    LynxFlatRow(
+                        label = "Zapisz Excel",
+                        icon = Icons.Outlined.Description,
                         onClick = onSaveXlsx,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = canExport
-                    ) {
-                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Zapisz Excel")
-                    }
+                        enabled = canExport,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
@@ -638,7 +657,7 @@ private fun BottomActionBar(
                 LynxGhostButton(onClick = onDebugLog, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Kopiuj logi diagnostyczne",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = LynxTypography.Sans),
                         color = LynxColors.TextDim
                     )
                 }
@@ -652,29 +671,31 @@ private fun DisclaimerDialog(onAccepted: () -> Unit) {
     AlertDialog(
         onDismissRequest = {},
         shape = RoundedCornerShape(LynxShapes.CardRadius),
-        title = { Text("Sprawdź wynik przed wysłaniem", fontWeight = FontWeight.Bold) },
+        title = { Text("Sprawdź wynik przed wysłaniem", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     "LynxMask automatycznie maskuje dane osobowe, lecz nie gwarantuje wykrycia każdego elementu.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans)
                 )
                 Text(
                     "Przed skopiowaniem lub wysłaniem przeczytaj zamaskowany tekst i upewnij się, że nie zawiera danych osobowych.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans)
                 )
                 Text(
                     "Klikając \"Rozumiem\" potwierdzasz, że zapoznałeś/-aś się z wynikiem.",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = LynxTypography.Sans),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Start
                 )
             }
         },
         confirmButton = {
-            LynxPrimaryButton(onClick = onAccepted, modifier = Modifier.fillMaxWidth()) {
-                Text("Rozumiem — sprawdziłem/-am wynik")
-            }
+            LynxFilledButton(
+                label = "Rozumiem — sprawdziłem/-am wynik",
+                onClick = onAccepted,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     )
 }
