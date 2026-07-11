@@ -297,6 +297,9 @@ private val OSOBA_DENYLIST: Set<String> = setOf(
     "ulica", "ulicy", "adres", "adresu",
     "imię", "nazwisko", "pesel", "numer",
     "miejscowość", "miejscowości",
+    // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07): "rodo" to odmieniona forma prawdziwego,
+    // rzadkiego nazwiska "Roda" w słowniku 39k (próg ≥100) — koliduje z akronimem RODO.
+    "rodo",
 )
 
 private val WHITE_LIST_CALENDAR: Set<String> = setOf(
@@ -720,6 +723,15 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
+            // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07, przywrócenie Warstwy 1, patrz 08.07):
+            // słownik 39k wciąga z rejestru PESEL rzadkie, ale prawdziwe nazwiska identyczne
+            // z pospolitymi słowami ("Osoba", "Łączna"). Stosuj Morfologika TYLKO gdy słowo
+            // NIE ma kształtu nazwiska (żaden sufiks nazwiskotwórczy) i nie jest na liście
+            // znanych kolizji miasto/nazwisko (citySurnameOverlap, np. "Góra" — zamierzone).
+            val lower = word.lowercase()
+            val hasSurnameShape = LookupTables.surnameSuffixes.any { lower.endsWith(it) }
+            val isProtectedOverlap = LookupTables.citySurnameOverlap.contains(lower)
+            if (!hasSurnameShape && !isProtectedOverlap && MorfologikHelper.isDefinitelyNotPerson(word)) return@replace match.value
             val token = assignToken(word, TOKEN_OSOBA)
             val before = result.getOrElse(match.range.first - 1) { ' ' }
             val after = result.getOrElse(match.range.last + 1) { ' ' }

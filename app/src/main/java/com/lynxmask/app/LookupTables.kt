@@ -35,6 +35,7 @@ object LookupTables {
     private var _cityForms: Set<String> = emptySet()
     private var _medForms: Set<String> = emptySet()
     private var _citySurnameOverlap: Set<String> = emptySet()
+    private var _surnameSuffixes: Set<String> = emptySet()
     private var _initialized = false
 
     val initialized: Boolean get() = _initialized
@@ -43,6 +44,13 @@ object LookupTables {
     val streetForms: Set<String> get() = _streetForms
     val cityForms: Set<String> get() = _cityForms
     val medForms: Set<String> get() = _medForms
+    // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07, przywrócenie Warstwy 1 po diagnozie "chorego
+    // termometru" 09.07): rozszerzony słownik nazwisk (39k, próg ≥100 w rejestrze PESEL/GUS)
+    // łapie sporo rzadkich, ale prawdziwych nazwisk identycznych z pospolitymi słowami
+    // ("Osoba", "Łączna"). Sufiks nazwiskotwórczy (ski/cki/owicz/ak/uk...) jako sygnał
+    // kształtu — używany TYLKO jako strażnik w NameEngine, żaden osobny mechanizm
+    // rdzeń+sufiks (Warstwa 2, 08.07) nie jest tu przywracany.
+    val surnameSuffixes: Set<String> get() = _surnameSuffixes
 
     // BUG-GORA-OSOBA-FIX (04.07): słowa będące jednocześnie drugim członem dwuwyrazowej
     // nazwy miejscowości (np. "Góra" w "Zielona Góra"/"Jelenia Góra") i nazwiskiem z
@@ -63,6 +71,7 @@ object LookupTables {
         }
         val med = loadFlatListFromAsset(context, "medical_facilities.json")
         val overlap = loadFlatListFromAsset(context, "city_surname_overlap.json")
+        val suffixes = loadFlatListFromAsset(context, "surname_suffixes.json")
 
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (baseSurnames + generateFeminineVariants(baseSurnames)).withAsciiVariants()
@@ -70,6 +79,7 @@ object LookupTables {
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
         _citySurnameOverlap = overlap.withAsciiVariants()
+        _surnameSuffixes = suffixes
 
         // INIT-FIX v1.1: initialized tylko gdy krytyczne pliki załadowane.
         // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
@@ -124,7 +134,8 @@ object LookupTables {
         med: Set<String> = setOf(
             "szpital", "klinika", "przychodnia", "poradnia", "ambulatorium"
         ),
-        citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa")
+        citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa"),
+        surnameSuffixes: Set<String> = setOf("ski", "ska", "cki", "cka", "owicz", "ak", "uk")
     ) {
         _namesForms    = names
         _surnamesForms = surnames
@@ -132,6 +143,7 @@ object LookupTables {
         _cityForms     = cities
         _medForms      = med
         _citySurnameOverlap = citySurnameOverlap
+        _surnameSuffixes = surnameSuffixes
         _initialized   = true
         resetRegexCache()
     }
@@ -148,12 +160,14 @@ object LookupTables {
         }
         val med      = loadFlatListFromClasspath("medical_facilities.json")
         val overlap  = loadFlatListFromClasspath("city_surname_overlap.json")
+        val suffixes = loadFlatListFromClasspath("surname_suffixes.json")
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
         _citySurnameOverlap = overlap.withAsciiVariants()
+        _surnameSuffixes = suffixes
         _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
         if (_initialized) resetRegexCache()
     }
@@ -188,6 +202,7 @@ object LookupTables {
         _cityForms     = emptySet()
         _medForms      = emptySet()
         _citySurnameOverlap = emptySet()
+        _surnameSuffixes = emptySet()
         _initialized   = false
         resetRegexCache()
     }
