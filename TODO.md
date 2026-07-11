@@ -8,6 +8,80 @@
 
 ---
 
+## ZAMKNIĘTE 11.07 wieczór — imiona/nazwiska: sklejanie, przymiotnik-pułapka, guard
+
+Ciąg dalszy sesji 11.07 (po redesignie UI). Punkt wyjścia: właściciel zgłosił że "Paweł
+Tomasz" (dwa imiona obok siebie) sklejają się w jeden token OSOBA. Diagnoza poszła dużo
+głębiej niż jeden bug.
+
+**Zamknięte:**
+- **Słownik imion 199→3609** — `names_inflected.json` przywrócony z tagu
+  `checkpoint-przed-revertem-slownika-2026-07-08` (był tam już wygenerowany 08.07, ale
+  nigdy nie przywrócony razem ze słownikiem nazwisk 11.07 rano). Usunięty jeden śmieć
+  ("brak danych" jako "imię" — błąd źródłowego rejestru PESEL).
+- **BUG-PRZYMIOTNIK-DIAKRYTYK:** `isAdjective()` (NameEngine.kt) miał regex-fallback bez
+  kotwicy początku — "iej" jako podciąg (nie tylko koniec) fałszywie wykrywał przymiotnik
+  w imionach kończących się na tę sylabę (Bartłomiej, Maciej, Andriej, Sergiej, Diego...).
+  Fix: namesForms sprawdzany PRZED regexem (ten sam wzorzec co surnamesForms już miał).
+- **BUG-DWA-IMIONA (3 wersje):** regex łączący "Imię Nazwisko" traktował DRUGIE słowo jako
+  nazwisko bez dowodu. v1 sprawdzał surnamesForms (za szeroki — "Tomasz"/"Piotr" też są w
+  39k jako rzadkie nazwiska, guard się sam wyłączał). v2: tylko POLISH_FIRST_NAMES (za wąski
+  — nie łapał zdrobnień, "Tomek Kasia" nadal się sklejało). v3 (final): pełny namesForms
+  (3,6k, czyste źródło dla imion).
+- **BUG-CASE-IGNORE-FORWARD:** `IGNORE_CASE` na całym regexie łączącym imię+nazwisko
+  sprawiał że `[A-Z...]` pasował też do małej litery — "Data wystawienia" (imię "Data" +
+  zwykłe słowo małą literą) sklejało się w fałszywy token. Brakująca kontrola wielkości
+  liter dodana we wszystkich 4 blokach łączących (wcześniej miał ją tylko jeden).
+- **BUG-DIAKRYTYKI-GRANICA (kolejne miejsce):** końcowy `\b` w regexie łączącym obcinał
+  ostatnią literę diakrytyczną nazwiska/imienia (Java `\b` nie zna "ł") — "Jan Paweł Nowak"
+  dawało token "Jan Pawe". Fix: `$WORD_END_UNICODE` (już używany gdzie indziej, tu brakował).
+- **BUG-SKLEJANIE-MIEDZYLINIOWE:** separator w regexie "Nazwisko Imię" kończył się gołym
+  `\s+` (przełyka `\n`) zamiast `[^\S\n]` jak wszędzie indziej w pliku — nazwisko z końca
+  jednej linii sklejało się z imieniem z POCZĄTKU zupełnie innej, niepowiązanej linii dalej
+  w dokumencie. Znalezione dopiero testem na CAŁYM pliku na telefonie (test JVM sprawdza
+  linie osobno, nie widzi tej klasy buga).
+- **Kolizje słów pospolitych ze słownikiem imion:** "Data"/"Dane"/"Danych"/"Nikach" (krótkie
+  imiona "Dana"/"Dato"/"Nika"/"Niko" mają odmianę pokrywającą się ze zwykłymi słowami) —
+  dodane do `OSOBA_DENYLIST`. Próbowany filtr semantyczny (Morfologik) okazał się zbyt
+  szeroki — blokował też "Tomka" (Morfologik zna zdrobnienie jako zwykły rzeczownik) —
+  COFNIĘTY na rzecz precyzyjnej listy.
+- **Nowe reguły Guard (OutputGuard.kt):** `NAZWISKO_NIEZAMASKOWANE`/`IMIE_NIEZAMASKOWANE`
+  (YELLOW) — gdy silnik świadomie nie maskuje słowa ze słownika (np. "Mazur" — też nazwa
+  tańca, blokowane przez Morfologika w warstwie nazwisk), Guard ostrzega zamiast milczeć.
+  Zmierzone PRZED wdrożeniem: wersja bez kotwicy dawała 25% słów-śmieci na realnym tekście
+  (`cena`/`organ`/`neto`) — realne ryzyko powrotu do fali 30 flag z wcześniejszej sesji.
+  Zawężone do tej samej kotwicy etykiety co istniejąca `OSOBA_NIEZAMASKOWANE`.
+- **Nowa infrastruktura testowa:** `NameEngineStickingTest.kt` +
+  `engine_golden_imiona_nazwiska.txt` (JVM, bez OCR, wielotagowy format `[OSOBA:x][OSOBA:y]`
+  wymusza RÓŻNE tokeny — test sklejania) + `testy/test_imiona_nazwiska_100_11_07.txt`
+  (102 linie, do ręcznego testu na telefonie na CAŁYM pliku naraz — to on złapał bug
+  międzyliniowy, którego JVM nie widzi).
+
+**Otwarte, świadomie odłożone:**
+- **BUG-MAZUR-NIEZAMASKOWANY:** "Mazur" (i klasa podobnych — słowo będące jednocześnie
+  nazwiskiem i inną częścią mowy) nie maskuje się wprost — strażnik Morfologika w warstwie
+  "Samo nazwisko" uznaje je za zbyt pospolite. Zamiast naprawiać wprost (ryzykowne, ten
+  sam mechanizm co niżej), mitygowane przez Guard YELLOW — ale TYLKO w pobliżu etykiety
+  danych osobowych. Gołe nazwisko w prozie bez etykiety nadal ucieka bez ostrzeżenia.
+- **Kolizje słownika NAZWISK (osobna sprawa od dzisiejszej, imion):** "Osoba"/"Łączna"/
+  "Działając"/"Zapłaty" nadal się maskują mimo że to zwykłe słowa — filtr Morfologika w
+  warstwie nazwisk działa niesymetrycznie (i za wąsko dla Mazura, i za szeroko dla tych).
+  Nieruszane dziś — wymaga osobnej decyzji, dotyka wrażliwej historii 08.07–10.07.
+- **Niejednoznaczne prawdziwe nazwiska bez pewnej odpowiedzi:** Marszałkowski, Sądowy,
+  Biała — mogą być nazwiskiem LUB częścią nazwy urzędu/miasta, brak silnego sygnału.
+
+**Następny krok (uzgodniony z właścicielem):** benchmark "czysty" dla DOCX/XLSX/TXT —
+te formaty NIE przechodzą przez OCR (sprawdzone w kodzie, `IncomingDocumentFlow.kt`),
+więc degradacja obrazu używana w benchmarku fresh/stały jest dla nich bez sensu. Etap 1:
+generator tekstu (bez obrazów) z NOWYMI szablonami prozy (esej/list/skarga — PII wplecione
+w naturalne odmienione zdania, nie tylko pola "etykieta: wartość" jak dziś w generator.py)
++ istniejące szablony biznesowe, świeże losowanie za każdym uruchomieniem, pełne pokrycie
+typów encji (nie tylko OSOBA). Etap 2: instrumentalny test porównujący z ground truth przez
+PRAWDZIWĄ ścieżkę appki (bez OCR — czysty sygnał, miss = zawsze bug silnika). Etap 3: prawdziwe
+pliki .docx/.xlsx (nie tylko .txt), żeby przetestować też parsery DocxArtifact/XlsxArtifact.
+
+---
+
 ## Niskopriorytetowe, znalezione przy diagnozie PDF (10.07, doz_zamaskowany.pdf, 21 stron)
 
 - **BUG-ULICA-IMIENNA-JAKO-OSOBA:** "ul. Jana Pawła II" (i podobne ulice nazwane od osób) —
@@ -50,6 +124,76 @@ prawdopodobnie luka w `cities_forms.json`/`city_surname_overlap.json` dla tej ko
 odmiany, albo w regule NameEngine która ich używa. Sprawdzić na starcie: czy "Górze"/"Górą"
 itd. w ogóle są w `cities_forms.json` (patrz `project_city_declension_task.md` w pamięci —
 powinny być, plik ma pełną odmianę Morfeusz2 z 05.07).
+
+---
+
+## ZAMKNIĘTE 11.07 — redesign UI całej apki (Hub → Login → Biblioteka → wynik → Zabezpieczenia)
+
+Gałąź `feature/document-export`, commity `61f6c6c` + `d979d70`. Zaczęte od krytyki Pawła
+("Hub wygląda jak lata 2000") → makieta HTML zaakceptowana → ten sam wzorzec rozniesiony
+mechanicznie na resztę apki, ekran po ekranie, z testem na telefonie po każdym.
+
+**Ustalony wzorzec (jeden na całą apkę):**
+- Jedna wypełniona akcja główna (niebieska, `LynxFilledButton`) zamiast kilku jednakowo
+  obramowanych przycisków. Reszta opcji jako płaskie wiersze bez ramek (`LynxFlatRow`,
+  ikona + etykieta). Nowe wspólne komponenty w `ui/components/LynxButtons.kt` — stare
+  `LynxPrimaryButton`/`LynxSecondaryButton`/`LynxTonalButton` usunięte tam gdzie już
+  niepotrzebne (`LynxTonalButton` skasowany całkowicie, był tylko aliasem starego stylu).
+- Jeden akcent niebieski wszędzie (spójny z logo PSE) — **nie** zielony na CTA (odrzucone
+  po uwadze Pawła, że gryzie się z niebieskim logo). Zielony **tylko** dla "Zabezpieczenia"
+  w nawigacji — świadomie inny kolor (nie ostrzegawczy jak żółty/czerwony) żeby zaciekawić,
+  bo to brama do wrażliwych akcji (import słownika, wymazanie danych).
+- Jawna `fontFamily = LynxTypography.Sans` na KAŻDYM Text — `Type.kt` (Material3 theme)
+  miesza `FontFamily.SansSerif` (część nadpisanych stylów) z domyślnym Compose (reszta),
+  bez jawnego ustawienia różne teksty na tym samym ekranie renderowały się różną czcionką.
+  Naprawione mechanicznie w 132 miejscach (agent, 7 plików) + osobno wcześniej ręcznie.
+- Jawny `shape = RoundedCornerShape(...)` na każdym Card/OutlinedTextField — bez tego pole
+  ma kwadratowe rogi obok zaokrąglonych sąsiadów (naprawione w 6 miejscach).
+- Karty informacyjne (StatusBanner, MaskedSummaryCard, nowy ActionSummaryCard) mają spójny
+  odstęp ikony od krawędzi (14dp) — inaczej "schodki" między ikonami w pionie.
+
+**Kolejność ekranów (każdy zatwierdzony na telefonie przed przejściem dalej):** Hub →
+ekran logowania (jeden wypełniony przycisk "Odblokuj aplikację" z ikoną odcisku palca
+zamiast powtórzonego tekstu + osobnego przycisku; animowana ikona ładowania — token krąży
+po pierścieniu logo yin/yang, pętla ~2,4s, zastępuje natywny splash Androida który i tak
+nie działał poprawnie przy starcie ze ścieżki Share) → Biblioteka (lista akcji sesji jako
+płaskie wiersze, "Usuń dokument" na czerwono za linią) → ekran wyniku pseudonimizacji
+(`PseudonymResultPanel`/`ResultPanelUi`) → podgląd tekstu z ręcznym maskowaniem
+(`TextPreviewModal`, dodany przycisk "Wklej zaznaczenie" — prawdziwe auto-wypełnianie po
+zaznaczeniu nie jest bezpiecznie osiągalne w Compose, patrz `feedback` niżej) → ekran
+"Odp. AI" spoza biblioteki (`DepseudonymizationScreen`) → "Zabezpieczenia" (`SecurityModal`
+w `MainActivity.kt`).
+
+**Przy okazji naprawione realne bugi (nie tylko wygląd):**
+- Czarny ekran przy starcie ze ścieżki Share (`ShareTargetActivity`) — cztery podejścia
+  (temat koloru tła, `installSplashScreen()`, ręczny Compose overlay) zanim znaleziono
+  prawdziwą przyczynę: oficjalny wzorzec Android "RoutingActivity" (`setKeepOnScreenCondition`)
+  zakłada trampolinę w TYM SAMYM tasku — `ShareTargetActivity` ma świadomie inny
+  `taskAffinity` od początku projektu, więc to nie zadziałało. Docelowe rozwiązanie:
+  animowany ekran ładowania jako zwykła treść Compose w `MainActivity`, niezależny od
+  natywnego splasha i przenoszenia się między taskami.
+- Biały pasek nad/pod treścią na ekranie review/wyniku — `.statusBarsPadding()` przyklejony
+  bezpośrednio do `Surface` kurczył też jego TŁO do obszaru bezpiecznego (nie tylko treść),
+  więc pasek statusu/nawigacji wypadał poza Surface i pokazywał surowe jasne tło systemowe.
+- Wstecz (systemowy przycisk) z ekranu wyniku wracał do edycji oryginalnego tekstu zamiast
+  do Hub — nielogiczne, bo ręczna korekta dzieje się przed pierwszą pseudonimizacją.
+- Picker plików ("Wybierz plik") nie pokazywał źródłowych XLSX — brakujący MIME w filtrze
+  + fallback `application/octet-stream` (menedżery plików czasem zgłaszają zły typ, ten sam
+  problem i fix co wcześniej dla DOCX na ścieżce Share).
+- `stripDiacritics()` w `LookupTables.kt` kompilował ten sam regex przy KAŻDYM wywołaniu
+  (setki tysięcy razy dla 39k słownika nazwisk) — start apki 22s → 9s. Próba zrównoleglenia
+  ładowania słowników była WOLNIEJSZA na telefonie (23,9s) niż sekwencyjnie — presja GC przy
+  budowaniu kilku dużych zbiorów naraz na ograniczonej liczbie rdzeni; nie próbować ponownie
+  bez nowego pomiaru na urządzeniu.
+
+**Świadomie NIE zrobione:** prawdziwe auto-wypełnianie pola "Tekst do zamaskowania" po
+zaznaczeniu tekstu w podglądzie — Compose nie daje dostępu do aktywnego zaznaczenia w
+`SelectionContainer`, a ciche czytanie schowka w tle Android 10+ traktuje jako zagrożenie
+prywatności (systemowy komunikat). Zastąpione jednym świadomym dotykiem (przycisk "Wklej
+zaznaczenie" czytający schowek TYLKO na żądanie użytkownika).
+
+Testy zielone po każdym kroku. Reszta apki (`AlertListSection.kt` i inne niewymienione
+wyżej pliki) świadomie NIE ruszona — poza zakresem dzisiejszej sesji.
 
 ---
 

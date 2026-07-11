@@ -1,0 +1,132 @@
+# ZŁOTY PLIK — IMIONA/NAZWISKA, SKLEJANIE, SŁOWA MYLĄCE (11.07)
+# Format: <tekst> [OSOBA:wartość] — jeden lub więcej tagów na linii.
+# Wiele tagów na linii = te wartości MUSZĄ trafić do RÓŻNYCH tokenów (test sklejania).
+# [NONE:wartość] = to słowo NIE MOŻE zostać zamaskowane (pospolite słowo, nie osoba).
+#
+# Celowo POMINIĘTE (osobny, jeszcze otwarty problem — kolizja słownika NAZWISK,
+# nie dzisiejsza sesja imion): Osoba, Łączna, Działając, Zapłaty.
+# Celowo POMINIĘTE (niejednoznaczne prawdziwe nazwiska, brak pewnej odpowiedzi):
+# Marszałkowski, Sądowy, Biała.
+# Celowo POMINIĘTE — Mazur (11.07): strażnik Morfologika blokuje maskowanie (rozpoznaje
+# jako nazwę tańca/regionu), świadomie NIE naprawione wprost — zamiast tego OutputGuard
+# flaguje YELLOW (NAZWISKO_NIEZAMASKOWANE) gdy w pobliżu jest etykieta danych osobowych.
+# Bez etykiety w pobliżu (jak samo "Mazur" niżej by wyglądało) nic go nie złapie — to
+# świadomie zaakceptowana luka, nie cel tego testu.
+
+=== Same imiona (różne końcówki, w tym klasa "-iej") ===
+Bartłomiej [OSOBA:Bartłomiej]
+Maciej [OSOBA:Maciej]
+Andrzej [OSOBA:Andrzej]
+Wojciech [OSOBA:Wojciech]
+Tomek [OSOBA:Tomek]
+Kasia [OSOBA:Kasia]
+Anna [OSOBA:Anna]
+Ewa [OSOBA:Ewa]
+Grażyna [OSOBA:Grażyna]
+Zbigniew [OSOBA:Zbigniew]
+Ignacy [OSOBA:Ignacy]
+Nikodem [OSOBA:Nikodem]
+Miłosz [OSOBA:Miłosz]
+Wiktoria [OSOBA:Wiktoria]
+Zuzanna [OSOBA:Zuzanna]
+Kalina [OSOBA:Kalina]
+Jagoda [OSOBA:Jagoda]
+Malina [OSOBA:Malina]
+
+=== Same nazwiska ===
+Kowalski [OSOBA:Kowalski]
+Nowak [OSOBA:Nowak]
+Wiśniewski [OSOBA:Wiśniewski]
+Wójcik [OSOBA:Wójcik]
+Kamiński [OSOBA:Kamiński]
+Lewandowski [OSOBA:Lewandowski]
+Zieliński [OSOBA:Zieliński]
+Szymański [OSOBA:Szymański]
+Woźniak [OSOBA:Woźniak]
+Dąbrowski [OSOBA:Dąbrowski]
+Kozłowski [OSOBA:Kozłowski]
+Jankowski [OSOBA:Jankowski]
+Kwiatkowski [OSOBA:Kwiatkowski]
+Krawczyk [OSOBA:Krawczyk]
+
+=== Imię + Nazwisko, szyk naturalny (jeden token, jedna osoba) ===
+Bartłomiej Kowalski [OSOBA:Bartłomiej Kowalski]
+Maciej Nowak [OSOBA:Maciej Nowak]
+Andrzej Wiśniewski [OSOBA:Andrzej Wiśniewski]
+Katarzyna Zielińska [OSOBA:Katarzyna Zielińska]
+Agnieszka Wójcik [OSOBA:Agnieszka Wójcik]
+Tomasz Kamiński [OSOBA:Tomasz Kamiński]
+Wojciech Lewandowski [OSOBA:Wojciech Lewandowski]
+Zofia Szymańska [OSOBA:Zofia Szymańska]
+Ewa Woźniak [OSOBA:Ewa Woźniak]
+Robert Dąbrowski [OSOBA:Robert Dąbrowski]
+
+=== Nazwisko + Imię, szyk odwrócony (jeden token, jedna osoba) ===
+Kowalski Bartłomiej [OSOBA:Kowalski Bartłomiej]
+Nowak Maciej [OSOBA:Nowak Maciej]
+Zielińska Katarzyna [OSOBA:Zielińska Katarzyna]
+Kamiński Tomasz [OSOBA:Kamiński Tomasz]
+Wójcik Agnieszka [OSOBA:Wójcik Agnieszka]
+Szymańska Zofia [OSOBA:Szymańska Zofia]
+
+=== Kowalski Data — nazwisko obok kolizyjnego słowa ze słownika imion ===
+Kowalski Data [OSOBA:Kowalski][NONE:Data]
+
+=== Podwójne nazwiska (jeden token, jedna osoba) ===
+Anna Kowalska-Nowak [OSOBA:Anna Kowalska-Nowak]
+Maria Wiśniewska-Zielińska [OSOBA:Maria Wiśniewska-Zielińska]
+Piotr Nowak-Kowalski [OSOBA:Piotr Nowak-Kowalski]
+Ewa Szymańska-Lewandowska [OSOBA:Ewa Szymańska-Lewandowska]
+Bartłomiej Kowalski-Zawadzki [OSOBA:Bartłomiej Kowalski-Zawadzki]
+Agnieszka Mazur-Krawczyk [OSOBA:Agnieszka Mazur-Krawczyk]
+
+=== Dwa imiona obok siebie bez kontekstu — test sklejania (MUSZĄ być rozdzielone) ===
+Paweł Tomasz [OSOBA:Paweł][OSOBA:Tomasz]
+Wiktoria Sylwia [OSOBA:Wiktoria][OSOBA:Sylwia]
+Bartłomiej Maciej [OSOBA:Bartłomiej][OSOBA:Maciej]
+Andrzej Wojciech [OSOBA:Andrzej][OSOBA:Wojciech]
+Anna Maria [OSOBA:Anna][OSOBA:Maria]
+Ewa Zofia [OSOBA:Ewa][OSOBA:Zofia]
+Marek Adam [OSOBA:Marek][OSOBA:Adam]
+Grażyna Zuzanna [OSOBA:Grażyna][OSOBA:Zuzanna]
+
+=== Dwa nazwiska obok siebie — test sklejania ===
+Kowalski Nowak [OSOBA:Kowalski][OSOBA:Nowak]
+Wiśniewski Zieliński [OSOBA:Wiśniewski][OSOBA:Zieliński]
+Szymański Wójcik [OSOBA:Szymański][OSOBA:Wójcik]
+Krawczyk Kwiatkowski [OSOBA:Krawczyk][OSOBA:Kwiatkowski]
+Kamiński Dąbrowski [OSOBA:Kamiński][OSOBA:Dąbrowski]
+
+=== Cztery słowa pod rząd — łańcuch, mocniejszy test sklejania ===
+Bartłomiej Kowalski Maciej Nowak [OSOBA:Bartłomiej Kowalski][OSOBA:Maciej Nowak]
+Robert Adam Julia Marta [OSOBA:Robert][OSOBA:Adam][OSOBA:Julia][OSOBA:Marta]
+Andrzej Wiśniewski Katarzyna Zielińska [OSOBA:Andrzej Wiśniewski][OSOBA:Katarzyna Zielińska]
+Kowalski Nowak Wiśniewski Zieliński [OSOBA:Kowalski][OSOBA:Nowak][OSOBA:Wiśniewski][OSOBA:Zieliński]
+
+=== Podwójne imię + nazwisko (realne dwuimienne osoby) ===
+Anna Maria Kowalska [OSOBA:Anna][OSOBA:Maria][OSOBA:Kowalska]
+Jan Paweł Nowak [OSOBA:Jan][OSOBA:Paweł][OSOBA:Nowak]
+Ewa Zofia Wiśniewska [OSOBA:Ewa][OSOBA:Zofia][OSOBA:Wiśniewska]
+Bartłomiej Maciej Kowalski [OSOBA:Bartłomiej][OSOBA:Maciej][OSOBA:Kowalski]
+
+=== Słowa pospolite, potwierdzone kolizje ze słownikiem imion (NIE mogą się maskować) ===
+Data [NONE:Data]
+Dane [NONE:Dane]
+Danych [NONE:Danych]
+Nikach [NONE:Nikach]
+
+=== Prawdziwe przymiotniki — kontrola negatywna (NIE mogą się maskować) ===
+Wielkiej [NONE:Wielkiej]
+Polskiej [NONE:Polskiej]
+Ładniejszej [NONE:Ładniejszej]
+Rejonowej [NONE:Rejonowej]
+Cennej [NONE:Cennej]
+Głównej [NONE:Głównej]
+
+=== Formy z Pan/Pani ===
+Pan Marek [OSOBA:Marek]
+Pani Halina [OSOBA:Halina]
+Pan Bartłomiej Kowalski [OSOBA:Bartłomiej Kowalski]
+Pani Zofia Szymańska [OSOBA:Zofia Szymańska]
+Pani Katarzyna [OSOBA:Katarzyna]
+Pan Maciej [OSOBA:Maciej]

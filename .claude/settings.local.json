@@ -442,7 +442,10 @@
       "Artifact",
       "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew.bat :app:compileDebugKotlin -q)",
       "Bash(awk -F: '$1 > 929')",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew :app:installDebug :app:installDebugAndroidTest)",
+      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" cd \"C:\\\\Projects\\\\LynxMask\")",
+      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew :app:compileDebugUnitTestKotlin -q)"
     ]
   },
   "hooks": {

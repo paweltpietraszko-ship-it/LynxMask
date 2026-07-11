@@ -1,0 +1,112 @@
+Bartłomiej
+Maciej
+Andrzej
+Wojciech
+Tomek
+Kasia
+Anna
+Ewa
+Grażyna
+Zbigniew
+Ignacy
+Nikodem
+Miłosz
+Aleksiej
+Sergiej
+Diego
+Wiktoria
+Zuzanna
+Kalina
+Jagoda
+
+Kowalski
+Nowak
+Wiśniewski
+Wójcik
+Kamiński
+Lewandowski
+Zieliński
+Szymański
+Woźniak
+Dąbrowski
+Kozłowski
+Jankowski
+Mazur
+Kwiatkowski
+Krawczyk
+
+Bartłomiej Kowalski
+Maciej Nowak
+Andrzej Wiśniewski
+Katarzyna Zielińska
+Agnieszka Wójcik
+Tomasz Kamiński
+Wojciech Lewandowski
+Zofia Szymańska
+Ewa Woźniak
+Robert Dąbrowski
+
+Kowalski Bartłomiej
+Nowak Maciej
+Zielińska Katarzyna
+Kamiński Tomasz
+Wójcik Agnieszka
+Szymańska Zofia
+
+Anna Kowalska-Nowak
+Maria Wiśniewska-Zielińska
+Piotr Nowak-Kowalski
+Ewa Szymańska-Lewandowska
+Bartłomiej Kowalski-Zawadzki
+Agnieszka Mazur-Krawczyk
+
+Paweł Tomasz
+Wiktoria Sylwia
+Bartłomiej Maciej
+Andrzej Wojciech
+Anna Maria
+Ewa Zofia
+Tomek Kasia
+Grażyna Zuzanna
+
+Kowalski Nowak
+Wiśniewski Zieliński
+Szymański Wójcik
+Mazur Krawczyk
+Kamiński Dąbrowski
+
+Bartłomiej Kowalski Maciej Nowak
+Tomek Kasia Anna Piotr
+Andrzej Wiśniewski Katarzyna Zielińska
+Kowalski Nowak Wiśniewski Zieliński
+
+Anna Maria Kowalska
+Jan Paweł Nowak
+Ewa Zofia Wiśniewska
+Bartłomiej Maciej Kowalski
+
+Data
+Dane
+Danych
+Nikach
+Osoba
+Łączna
+Działając
+Zapłaty
+Marszałkowski
+Sądowy
+Biała
+Wielkiej
+Polskiej
+Ładniejszej
+Rejonowej
+Cennej
+Głównej
+Malina
+
+Pan Marek
+Pani Halina
+Pan Bartłomiej Kowalski
+Pani Zofia Szymańska
+Pani Katarzyna
+Pan Maciej

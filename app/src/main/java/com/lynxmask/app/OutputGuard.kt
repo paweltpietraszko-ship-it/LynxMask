@@ -117,6 +117,34 @@ internal fun runOutputGuard(
             hits += hit("OSOBA_NIEZAMASKOWANE", "YELLOW", m)
     }
 
+    // ── YELLOW: POJEDYNCZE niezamaskowane imię/nazwisko ze słownika po etykiecie ────
+    // BUG-MAZUR-NIEZAMASKOWANY (11.07): silnik czasem ŚWIADOMIE nie maskuje słowa ze
+    // słownika nazwisk — strażnik Morfologika w NameEngine ("Samo nazwisko") uznaje np.
+    // "Mazur" za zbyt pospolite (nazwa tańca ludowego), mimo że to też częste prawdziwe
+    // nazwisko. Reguła OSOBA_NIEZAMASKOWANE wyżej wymaga PARY słów — nie złapie samego
+    // "Mazur" bez sąsiadującego imienia. Pomiar na realnym tekście dokumentów (11.07):
+    // wersja BEZ kotwicy etykiety dawała 25% słów z wielkiej litery jako trafienia w
+    // 39k-słownik (m.in. "cena"/"organ"/"neto" — realny powrót do fali 30 flag z
+    // wcześniejszej sesji). Ta sama kotwica CTX_OSOBA_LABEL co wyżej ogranicza skan do
+    // miejsc gdzie kontekst już mocno sugeruje dane osobowe — miasta/ulice odfiltrowane
+    // (mają własną regułę MIASTO_NIEZAMASKOWANE niżej), znane kolizje pospolite pomijane
+    // przez OSOBA_DENYLIST (NameEngine.kt).
+    if (LookupTables.initialized && (LookupTables.namesForms.isNotEmpty() || LookupTables.surnamesForms.isNotEmpty())) {
+        Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})\b""").findAll(text).forEach { m ->
+            val word = m.groupValues[1]
+            val lower = word.lowercase()
+            if (lower in NAMES_GUARD_CITY_SKIP) return@forEach
+            if (lower in OSOBA_DENYLIST) return@forEach
+            if (LookupTables.cityForms.contains(lower) || LookupTables.streetForms.contains(lower)) return@forEach
+            val isSurname = LookupTables.surnamesForms.contains(lower)
+            val isFirstName = LookupTables.namesForms.contains(lower)
+            if (!isSurname && !isFirstName) return@forEach
+            if (!CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first))) return@forEach
+            val label = if (isSurname) "NAZWISKO_NIEZAMASKOWANE" else "IMIE_NIEZAMASKOWANE"
+            hits += GuardHit(label, "YELLOW", word, m.range.first, m.range.first + word.length)
+        }
+    }
+
     // ── YELLOW: miasto ze słownika zostało jawne (bez auto-maskowania) ──────
     // Decyzja właściciela (08.07, brief Cursor): NIE auto-maskować gołych miast bez
     // kontekstu strukturalnego (kod pocztowy/ul./przyimek — to już robi AddressEngine/
@@ -151,6 +179,7 @@ internal fun runOutputGuard(
             hits += GuardHit("MIASTO_NIEZAMASKOWANE", "YELLOW", matchedCity, start, start + matchedCity.length)
         }
     }
+
 
     // ── YELLOW bezwarunkowe (kontekst wbudowany w regex) ─────────────────────
     val yellowPatterns = listOf(
