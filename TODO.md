@@ -86,10 +86,16 @@ głębiej niż jeden bug.
   "Samo nazwisko" uznaje je za zbyt pospolite. Zamiast naprawiać wprost (ryzykowne, ten
   sam mechanizm co niżej), mitygowane przez Guard YELLOW — ale TYLKO w pobliżu etykiety
   danych osobowych. Gołe nazwisko w prozie bez etykiety nadal ucieka bez ostrzeżenia.
-- **Kolizje słownika NAZWISK (osobna sprawa od dzisiejszej, imion):** "Osoba"/"Łączna"/
-  "Działając"/"Zapłaty" nadal się maskują mimo że to zwykłe słowa — filtr Morfologika w
-  warstwie nazwisk działa niesymetrycznie (i za wąsko dla Mazura, i za szeroko dla tych).
-  Nieruszane dziś — wymaga osobnej decyzji, dotyka wrażliwej historii 08.07–10.07.
+- **ZAMKNIĘTE 12.07 — Kolizje słownika NAZWISK:** "Osoba"/"Łączna"/"Zapłaty" (subst/adj) i
+  "Działający"/"Działając" (imiesłowy pact/pcon) nadal się maskowały mimo istniejącego
+  guardu `MorfologikHelper.isDefinitelyNotPerson()` — imiesłowy to osobna klasa gramatyczna,
+  nieobjęta listą warunków (rzeczowniki/przymiotniki już były pokryte, stąd Osoba/Łączna
+  fixowały się same, tylko imiesłowy przeciekały). Fix (commit `8668da0`): dopisana cała
+  rodzina imiesłowów (pact/pcon/pant/ppas) do `isDefinitelyNotPerson`, nie tylko te 2 tagi
+  z diagnozy. Test `MorfologikHelperOsobaTest` wzmocniony o realne asercje. Potwierdzone na
+  telefonie. `OSOBA_DENYLIST` sprawdzony — te słowa NIE zostały tam dopisane (obawa
+  właściciela że poprzednik "ułatwił sobie życie" listą słów — nieuzasadniona, to była
+  faktycznie ogólna reguła gramatyczna).
 - **Niejednoznaczne prawdziwe nazwiska bez pewnej odpowiedzi:** Marszałkowski, Sądowy,
   Biała — mogą być nazwiskiem LUB częścią nazwy urzędu/miasta, brak silnego sygnału.
 
