@@ -58,6 +58,10 @@ object MorfologikHelper {
             tag.startsWith("siebie") ||
             tag.startsWith("qub") ||
             tag.startsWith("ger") ||
+            tag.startsWith("pact") ||  // imiesłów przymiotnikowy czynny, np. "działający"
+            tag.startsWith("pcon") ||  // imiesłów przysłówkowy współczesny, np. "działając"
+            tag.startsWith("pant") ||  // imiesłów przysłówkowy uprzedni, np. "zrobiwszy"
+            tag.startsWith("ppas") ||  // imiesłów przymiotnikowy bierny, np. "zrobiony"
             tag.startsWith("subst")  // rzeczownik pospolity — nie jest osobą
         }
     }

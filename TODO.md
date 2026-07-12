@@ -8,6 +8,29 @@
 
 ---
 
+## DECYZJA ZAKRESU 12.07 — tylko dokumenty z PII w kontekście RODO, nie wolna proza
+
+Paweł: silnik ma być ograniczony do dokumentów formalnych/urzędowych/biznesowych (umowy,
+faktury, pisma urzędowe, wnioski) — NIE do wolnej prozy/dokumentów prywatnych (eseje, listy
+osobiste, wspomnienia). Powód: AnchorEngine celowo jest zachłanny bez sumy kontrolnej
+(kotwica + zgarnia w prawo, patrz sekcja "ZAMKNIĘTE 07.07 — NUMER_FAKTURY" niżej) — w prozie
+ten sam mechanizm łapie fałszywe alarmy (np. ukośnik → sygnatura). To świadomy kompromis
+projektowy pod dokumenty formalne, nie bug do łatania punktowo. Biznesowo: nikt nie
+potrzebuje maskowania prywatnej korespondencji.
+
+**Skutki:**
+- Priorytet z 11.07 wieczór ("zmierzyć słowniki 39k/3,6k na korpusie prozy") — ODRZUCONY,
+  nieaktualny.
+- `generator_clean.py` Etap 2/3 — szablony BIZNESOWE zostają w zakresie, 4 szablony WOLNEJ
+  PROZY (esej/list_osobisty/skarga/wspomnienie) ZAMROŻONE, nie rozwijać dalej.
+- Sekcja "OTWARTE, DRUGIE W KOLEJCE — bugi maskowania na esejach/długiej prozie" niżej —
+  ZDEZAKTUALIZOWANA tą decyzją, nie podejmować nowych zgłoszeń z dokumentów prywatnych.
+- Bugi silnika znalezione PRZY OKAZJI prozy (sklejanie imion/nazwisk 11.07) zostają
+  naprawione — to ogólne poprawki, nieszkodliwe dla dokumentów formalnych.
+- BUG-ZIELONA-GORA-ODMIANA (niżej) zostaje w zakresie — źródło to pismo urzędowe.
+
+---
+
 ## ZAMKNIĘTE 11.07 wieczór — imiona/nazwiska: sklejanie, przymiotnik-pułapka, guard
 
 Ciąg dalszy sesji 11.07 (po redesignie UI). Punkt wyjścia: właściciel zgłosił że "Paweł
@@ -102,11 +125,8 @@ dokładnie ten sam wzorzec whack-a-mole co "rodo"/"data"/"dane" wcześniej, tylk
 etykietą "systematyczne". Właściciel to złapał i jednoznacznie odrzucił — patrz
 `feedback_general_rules_not_examples.md` w pamięci Claude.
 
-**Priorytet jutro (PRZED Etapem 2/3):** zmierzyć, nie zgadywać — czy powiększone słowniki
-(39k/3,6k) faktycznie się opłacają. Porównać recall vs. liczbę kolizji na TYM SAMYM
-korpusie prozy (dataset_clean) przy małym słowniku (1000/199) i dużym — dopiero na
-podstawie liczb decydować: cofnąć rozmiar, zostawić z dodatkowym ograniczeniem
-strukturalnym, czy zaakceptować koszt.
+**ODRZUCONE 12.07 (decyzja zakresu, patrz sekcja na górze pliku):** pomiar słowników na
+korpusie prozy — nieaktualny, silnik nie celuje już w wolną prozę.
 
 ---
 
@@ -279,26 +299,11 @@ skonsultować zamiast łatać punktowo — ten sam playbook co reszta tygodnia.
 
 ---
 
-## OTWARTE, DRUGIE W KOLEJCE — bugi maskowania na esejach/długiej prozie
+## ZDEZAKTUALIZOWANE 12.07 (decyzja zakresu) — bugi maskowania na esejach/długiej prozie
 
-Paweł puścił przez silnik kolejny esej (po "Wizja Claude 2.docx", która ujawniła
-BUG-WIZJA-PROZA-DOB i SYGNATURA-proza) — zapowiada, że wynik "jeży włos", czyli engine
-robi coś niepokojącego na długim, swobodnym tekście. **Konkretne przypadki jeszcze NIE
-opisane w tym pliku — do zebrania na starcie następnej sesji od Pawła** (poprosić o
-dokument + zrzut/opis co dokładnie jest nie tak, tak jak przy poprzednich esejach).
-
-Kontekst ważny dla podejścia: to NIE jest zaskoczenie że eseje/proza ujawniają więcej
-bugów niż benchmark — benchmark (`BenchmarkInstrumentedTest.kt`) testuje wyłącznie
-OCR→PNG na strukturalnych dokumentach (umowy, faktury), nigdy swobodną prozę. Bez pracy
-nad Document Rebuilderem (DOCX export) NIE mielibyśmy w ogóle metody testowania silnika
-na tego typu tekście — Paweł explicite: "bez pracy nad docx wypuścilibyśmy bubel".
-Oczekuj: to może być pierwsza z serii sesji, bo długa proza to inny profil ryzyka niż
-dokumenty urzędowe (więcej okazji do kolizji kotwic z językiem naturalnym — patrz
-[[lessons_anchor_regex_pitfalls]], [[feedback_general_rules_not_examples]]).
-
-Kolejność: **architektura najpierw (już zamknięta 10.07, patrz sekcja niżej), bugi potem**
-— explicite ustalone przez Pawła na zamknięcie tej sesji, nie zaczynać od łatania
-punktowego zanim nie zobaczy się pełnego zakresu problemu na nowym eseju.
+Ten wątek dotyczył swobodnej prozy/dokumentów prywatnych — poza zakresem po decyzji 12.07
+(patrz góra pliku). Nie zbierać nowych zgłoszeń z esejów/listów osobistych. Zostawione dla
+historii, nie kontynuować.
 
 ---
 

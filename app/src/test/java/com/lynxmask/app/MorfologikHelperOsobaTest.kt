@@ -4,11 +4,12 @@ import org.junit.Test
 import org.junit.Assert.*
 
 /**
- * Diagnoza BUG-OSOBA-DZIALAJACY (11.07): "Osoba" i "Działający" maskowane jako OSOBA
- * mimo istniejącego guardu MorfologikHelper.isDefinitelyNotPerson() w NameEngine
- * (Warstwa "Samo nazwisko"). Test drukuje realne tagi Morfologika dla tych słów,
- * żeby ustalić czy guard faktycznie klasyfikuje je jako "nie-osoba", czy któryś tag
- * psuje `t.all { ... }`.
+ * Diagnoza + regresja BUG-OSOBA-DZIALAJACY (11.07): "Osoba" i "Działający" maskowane jako
+ * OSOBA mimo istniejącego guardu MorfologikHelper.isDefinitelyNotPerson() w NameEngine
+ * (Warstwa "Samo nazwisko"). Diagnoza (12.07) ujawniła że "działający"/"działając" mają
+ * tagi pact/pcon (imiesłowy) — osobna klasa gramatyczna, nieobjęta ówczesną listą
+ * warunków. Fix: dopisana cała rodzina imiesłowów (pact/pcon/pant/ppas) do
+ * MorfologikHelper.isDefinitelyNotPerson, nie tylko te dwa konkretne tagi.
  */
 class MorfologikHelperOsobaTest {
 
@@ -20,9 +21,18 @@ class MorfologikHelperOsobaTest {
             val notPerson = MorfologikHelper.isDefinitelyNotPerson(w)
             println("word=$w tags=$tags isDefinitelyNotPerson=$notPerson")
         }
-        assertTrue(
-            "'osoba' powinno być rozpoznane jako NIE-osoba (rzeczownik pospolity)",
-            MorfologikHelper.isDefinitelyNotPerson("osoba")
-        )
+    }
+
+    @Test
+    fun `rzeczowniki pospolite kolidujace z nazwiskami sa rozpoznawane jako NIE-osoba`() {
+        assertTrue("'osoba' (subst)", MorfologikHelper.isDefinitelyNotPerson("osoba"))
+        assertTrue("'łączna' (adj)", MorfologikHelper.isDefinitelyNotPerson("łączna"))
+        assertTrue("'zapłaty' (subst)", MorfologikHelper.isDefinitelyNotPerson("zapłaty"))
+    }
+
+    @Test
+    fun `imieslowy koliduja z nazwiskami i sa rozpoznawane jako NIE-osoba`() {
+        assertTrue("'działający' (pact)", MorfologikHelper.isDefinitelyNotPerson("działający"))
+        assertTrue("'działając' (pcon)", MorfologikHelper.isDefinitelyNotPerson("działając"))
     }
 }
