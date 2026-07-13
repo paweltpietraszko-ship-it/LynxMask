@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -179,6 +180,20 @@ fun PseudonymResultPanel(
         }
     }
 
+    // Triangulum (wysyłka zamaskowanego tekstu do analizy AI z triangulacją modeli)
+    // to osobny, płatny produkt — klient kupuje dostęp do własnego API, LynxMask nie
+    // pośredniczy. Dopóki nie ma systemu zakupu/klucza, przycisk jest ZAWSZE zablokowany
+    // — nie może wyglądać na aktywny. Gdy powstanie prawdziwy stan dostępu, zamień
+    // TRIANGULUM_UNLOCKED na realną wartość (np. z AppPrefs) w jednym miejscu.
+    fun showTriangulumLockedHint() {
+        snackbarScope.launch {
+            snackbarHostState.showSnackbar(
+                message = "Triangulum — osobna funkcja premium, wkrótce dostępna",
+                duration = SnackbarDuration.Long
+            )
+        }
+    }
+
     BackHandler(enabled = showTextPreview) {
         showTextPreview = false
     }
@@ -292,7 +307,9 @@ fun PseudonymResultPanel(
             librarySaved = librarySaved,
             showLibrary = onSaveDescription != null,
             showForward = onForward != null,
+            showTriangulum = onForward != null,
             onBlockedClick = { showBlockedHint() },
+            onTriangulumLockedClick = { showTriangulumLockedHint() },
             onLibrary = {
                 onSaveDescription?.invoke(maskedOutputText, descText)
                 librarySaved = true
@@ -513,7 +530,9 @@ private fun BottomActionBar(
     librarySaved: Boolean,
     showLibrary: Boolean,
     showForward: Boolean,
+    showTriangulum: Boolean,
     onBlockedClick: () -> Unit,
+    onTriangulumLockedClick: () -> Unit,
     onLibrary: () -> Unit,
     onCopy: () -> Unit,
     onForward: (() -> Unit)?,
@@ -601,6 +620,24 @@ private fun BottomActionBar(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Wyślij do AI", fontFamily = LynxTypography.Sans, color = LynxColors.BlueLight, maxLines = 1)
                         }
+                    }
+                }
+            }
+
+            if (showTriangulum) {
+                BlockedActionSlot(
+                    enabled = false,
+                    onBlockedClick = onTriangulumLockedClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LynxGhostButton(
+                        onClick = onTriangulumLockedClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = false
+                    ) {
+                        Icon(Icons.Outlined.Lock, contentDescription = null, tint = LynxColors.BlueLight, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Wyślij do Triangulum (wkrótce)", fontFamily = LynxTypography.Sans, color = LynxColors.BlueLight, maxLines = 1)
                     }
                 }
             }
