@@ -8,6 +8,197 @@
 
 ---
 
+## PRIORYTET NASTĘPNEJ SESJI (14.07 wieczór) — wynik benchmarków po dzisiejszym sprzątaniu
+
+**Benchmarki puszczone po całym dniu pracy (14.07): zero potwierdzonego regresu.**
+- `stress` (Cursor, 300 dok. stały zestaw): recall 98,8% identyczny co do encji vs 12.07,
+  precyzja płaska (73,7 vs 73,8%), te same top FP co przed zmianami.
+- `clean` (300 dok., pula ~25 nazwisk — ograniczona różnorodność): recall 99,4% identyczny
+  co do encji vs 12.07, precyzja lekko w dół (68,6 vs 69,3%) ale te same top FP co wcześniej
+  (Biała/Paweł/Poznaniu) — nie nowy szum.
+- `stały`/`fresh`/`v2` (telefon, ground_truth_lvl03.json): 96,5–97,2% recall, powyżej progu
+  release (≥90%). `UX_FP=0` (prawdziwy problem czytelności) w obu przebiegach `stały`.
+
+**BUG-CHORY-TERMOMETR (nowy, 14.07) — benchmark `stały` fałszywie oznacza doc_00026 jako
+blocker release.** `dowod_osobisty=LKW771657` oznaczone jako "OCR_ZNIEKSZTAŁCONY — bug
+silnika" — Paweł sprawdził na telefonie: **jest zamaskowane poprawnie, to fałszywy alarm
+narzędzia**. Powtarzalne (dwa identyczne przebiegi `stały`, ta sama liczba). Podejrzenie:
+pomieszane pola w WYGENEROWANYM dokumencie testowym (numer dowodu i PESEL zamienione w
+treści) — do zweryfikowania w `generator.py`, nie w silniku. Niepilne, nie blokuje niczego
+realnego (telefon rozstrzyga).
+
+**DO ZROBIENIA — ścieżka kontekstowa Guard nie w pełni korzysta z dzisiejszej poprawki
+Zając/Wróbel/Dudek/Biała.** W `benchmark_results/staly/2026-07-14_1521/benchmark_bugs.txt`,
+sekcja `NAME_ENGINE/CONTEXTUAL/OSOBA` — "Zajac", "Dudek", "Biała" nadal pojawiają się jako
+`[REVIEW]` (YELLOW, nie cichy wyciek, ale nie auto-maskowanie) w TEJ konkretnej ścieżce
+(dwuwyrazowy kontekstowy check w OutputGuard.kt, `OSOBA_NIEZAMASKOWANE` — różny od
+`NAZWISKO_NIEZAMASKOWANE`/`NAZWISKO_RZADKIE_NIEZAMASKOWANE` naprawionych dziś). Sprawdzić
+czy ten sam mechanizm (`NAMES_GUARD_CITY_SKIP`/`cityForms` early-return) blokuje też tu,
+analogicznie do naprawy z dzisiejszej sesji.
+
+**DO ZROBIENIA — 39/77 pozycji REVIEW w `stały` to adresy (ulica bez kodu + kod osobno).**
+Wygląda na graniczne dopasowanie tokenów względem ground truth, nie potwierdzony wyciek —
+wymaga osobnego, dokładniejszego przeglądu, nie zrobione dziś z braku czasu.
+
+**Stan repo: WSZYSTKO nadal niescommitowane** (patrz sekcje niżej — cały dzień pracy 14.07
++ dziedzictwo sprzed tej sesji). Cel dnia (przenieść na master) nieosiągnięty z braku
+czasu, nie z powodu problemów jakościowych — benchmarki i testy czyste. Zacząć następną
+sesję od: (1) commit w spójnych krokach, (2) merge do master.
+
+---
+
+## ZAMKNIĘTE 14.07 — plan A/B/C z sesji 12.07 (słownik + strażnik OSOBA skonsolidowany)
+
+Ciąg dalszy sesji 12.07, gdzie znaleziono że fix OCR_ONE_AS_L był łatką dopasowaną do
+jednego przykładu (kontrprzykład VIN) zamiast reguły ogólnej. Uzgodniony plan A/B/C wykonany:
+
+- **A (słownik zawężony do top-1000, próg ≥3296)** — zrobione w międzysesyjnym stanie
+  roboczym: `surnames_top1000.json` zawężony, `surnames_extended.json` (39k) dodany
+  OSOBNO tylko dla `OutputGuard` (YELLOW, nie auto-maskowanie) — `LookupTables.
+  surnamesFormsExtended`. Był untracked w gicie do dziś (14.07) — dodany.
+- **B (zamrożenie nowych wzorców OSOBA)** — dotrzymane, 14.07 to wyłącznie domykanie
+  dziur w ISTNIEJĄCYCH regułach, zero nowych wzorców.
+- **C (jeden strażnik `isCommonWordNotSurname`)** — DOKOŃCZONE 14.07. Funkcja była w 4
+  z 8 miejsc maskujących OSOBA (samo nazwisko, ALL-CAPS, inicjał+nazwisko, tytuł+słowo).
+  Brakowało jej w: parach "Imię Nazwisko"/"Nazwisko Imię"/"Honorifik+Imię+Nazwisko"
+  (NameEngine.kt) i w AnchorEngine A.10 (tytuł→OSOBA, miał ZERO strażnika w ogóle).
+  Dopisane wszystkie 4 brakujące miejsca + testy regresyjne (`engine_golden_imiona_
+  nazwiska.txt`: "Jan Osoba"/"Zapłata Marek"/"Pan Jan Osoba"/"dr Ważne").
+- **ZAMKNIĘTE 14.07 wieczór — DECYZJA WŁAŚCICIELA: usunięty filtr Morfologika
+  `isCommonWordNotSurname` w całości, zastąpiony precyzyjną listą `OSOBA_DENYLIST`.**
+  Historia tej samej doby: dodanie `isCommonWordNotSurname` do par (punkt wyżej) najpierw
+  zepsuło maskowanie odmienionych nazwisk w parze ("Jana Kowalskiego" dopełniacz) —
+  załatane pełną odmianą przymiotnikową (`DECLINED_SURNAME_SUFFIXES`). Ale realny test
+  na plikach `testy/*.txt` (`ManualTestRegressionTest`) ujawnił coś poważniejszego: TEN SAM
+  filtr Morfologika (nawet po naprawie odmiany) blokował maskowanie prawdziwych nazwisk
+  będących nazwami zwierząt/przedmiotów — Zając, Wróbel, Sowa, Kot, Karaś zostawały jawne
+  w kilkunastu miejscach w wielu plikach. Właściciel: **"Maskujemy nazwiska nawet jak grożą
+  FP"** — lepiej fałszywie zamaskować "zająca-zwierzę" niż zgubić "Zająca-nazwisko". Decyzja
+  zawężona (nie generalna): Osoba/Zapłata/Łączna/Działający (już znane, realne kłopoty w
+  fakturach) zostają zablokowane — ale przez PRECYZYJNĄ listę (`OSOBA_DENYLIST`, ten sam
+  mechanizm co istniejące "data/dane/danych/nikach"), nie szeroki filtr gramatyczny który nie
+  potrafi odróżnić tych dwóch klas słów. Usunięte: `isCommonWordNotSurname` (funkcja + 8
+  wywołań w NameEngine.kt/AnchorEngine.kt). `LookupTables.surnameSuffixes`/
+  `DECLINED_SURNAME_SUFFIXES` zostają załadowane ale NIEUŻYWANE (koszt pomijalny) — do
+  usunięcia jeśli nikt ich nie przywróci. AnchorEngine A.10 wraca do zachłannego zachowania
+  (blokuje tylko OSOBA_DENYLIST, jak reszta AnchorEngine).
+- **DODATEK — "Kot" (3 znaki) dalej jawny nawet po usunięciu filtra Morfologika.** Osobna
+  przyczyna: próg długości "≤3 znaki = skrót/artefakt OCR" (LENGTH-FIX z wcześniejszej sesji,
+  chroni przed "Sp"/"Ko"/"pl") blokował je wszędzie, niezależnie od isCommonWordNotSurname.
+  Właściciel: dość ogólnych reguł na ten temat, wrzucić do słownika i zamknąć wątek. Dodane:
+  `KNOWN_SHORT_SURNAMES` (NameEngine.kt, obecnie tylko "kot") + osobny, węższy regex (dokładnie
+  3 znaki) tuż przed blokiem "Samo nazwisko" — jawny wyjątek od progu długości, nie zmiana
+  progu globalnie. Dopisywać kolejne krótkie prawdziwe nazwiska tu, jeśli się pojawią.
+- **DODATEK 2 — BUG-MUSIAL-CZASOWNIK, znaleziony przez `ManualTestRegressionTest` po
+  usunięciu filtra Morfologika.** "MUSI" (zwykłe "musi coś zrobić") zaczęło się maskować
+  jako OSOBA w `test_faktura_20_warianty_07_07.txt` (plik wprost mówi "nie powinno się
+  zamaskować"). Przyczyna INNA niż Zając/Kot: wpis nazwiska "Musiał" w słowniku ma
+  zanieczyszczoną listę odmian formami czasownika "musieć" (błąd generatora danych z
+  wcześniejszej sesji, wcześniej niewidoczny bo filtr Morfologika przypadkiem go zasłaniał).
+  Doraźnie dopisane do `OSOBA_DENYLIST` (musi/musisz/musimy/musicie/muszę/muszą).
+
+- **ZAMKNIĘTE 14.07 wieczór — audyt agenta: WYCZYSZCZONY słownik, nie kolejna łatka.**
+  Właściciel poprosił o wysłanie agenta do wyczyszczenia słownika zamiast dalszego
+  domykania listą wyjątków. Agent przeszedł Morfeuszem2 wszystkie ~10 400 form w
+  `surnames_top1000.json` i potwierdził: **13 KOLEJNYCH nazwisk ma DOKŁADNIE ten sam
+  błąd co "Musiał"** — cała lista "odmian" to w rzeczywistości pełna koniugacja innego,
+  przypadkowo współbrzmiącego czasownika (nie kilka złych form, tylko 20-90 form na
+  wpis, praktycznie cała zawartość). Lista: `stępień/kalisz/domagała/gwóźdź/kula/chmiel/
+  maj/kuś/musiał/mika/bednarz/żyła/przybyła/przybył`. Najgroźniejsze praktycznie —
+  "żyła"→żyć, "przybył/przybyła"→przybyć, "domagała"→domagać, "kuś"→kusić — bardzo
+  częste słowa w pismach urzędowych/formalnych, ten sam typ ryzyka co oryginalny "musi".
+  **Decyzja: dane nie do naprawienia punktowo (prawie cała lista zła), więc usunięte
+  CAŁE te 14 wpisów z `surnames_top1000.json`** (main assets + test resources, teraz
+  986 zamiast 1000 kluczy) — czyszczenie danych u źródła, nie kolejny wpis w
+  `OSOBA_DENYLIST`. Testy dodane w `engine_golden_imiona_nazwiska.txt` (żyła/przybył/
+  domagała w typowych zdaniach urzędowych).
+  **ZAMKNIĘTE 14.07 (drugi agent, pełna weryfikacja Morfeuszem):** `surnames_extended.json`
+  (39 318 kluczy) wyczyszczony tą samą metodą — dwuetapowo: tanie sito końcówek
+  czasownikowych (2507 kandydatów), potem Morfeusz2 per-forma (próg >50% form czysto
+  czasownikowych, <20% z jakąkolwiek inną interpretacją). **535 kluczy usuniętych**
+  (39318→38783, main assets + test resources, zweryfikowane jako identyczne i poprawnie
+  zakodowane). Wśród nich realne nazwiska zdominowane przez odmianę homonimicznego
+  czasownika: Motyl/Grab/Gal/Grom/Głąb/Rój/Paś (78-100% form to czasownik, nie deklinacja
+  nazwiska). Pełna lista z metrykami w scratchpadzie agenta (nie w repo) — do wglądu jeśli
+  potrzebne, nie skopiowana do repo bo 535 pozycji.
+- **ZAMKNIĘTE 14.07 — BUG-TOMKIEM (diagnoza Cursor, potwierdzona i wdrożona).**
+  `EngineGoldenTest` failował na "Ustaliliśmy z Tomkiem termin spotkania" (0 tokenów OSOBA),
+  mimo że "Zadzwoniłem do Tomka wczoraj" (ten sam plik) przechodził. Przyczyna: wpis
+  "tomek" w `names_inflected.json` miał niepełną/popsutą listę odmian (brak narzędnika
+  "tomkiem", za to obce formy żeńskie "tomce"/"tomką"/"tomkę") — porównanie z poprawnymi
+  wzorcami "franek"/"bartek" (mają "frankiem"/"bartkiem", "-owi", "-owie") ujawniło
+  asymetrię. Naprawione: pełny męski paradygmat (main assets + test resources).
+  Migawki `testy/.golden/` dla 5 plików (`test_email_adres_hard/test_imiona_nazwiska_
+  100_11_07/test_lvl3_dane_wrazliwe/test_pesel_warianty/test_ui2_encje_silnik`) USUNIĘTE
+  celowo — po weryfikacji że różnice to same poprawki (przesunięcia numerków tokenów +
+  Kot/Wiśniewską teraz maskowane, zero nowych przecieków) — przy następnym uruchomieniu
+  `ManualTestRegressionTest` zapiszą się na nowo jako aktualny punkt odniesienia
+  ("NOWA MIGAWKA", nie błąd).
+- **Dodatkowo (poza planem, znaleziony przy okazji tego samego audytu):** `OutputGuard.kt`
+  wyciszał YELLOW dla realnych nazwisk kolidujących z nazwą miejscowości (Zając/Wróbel/
+  Sikora/Dudek — potwierdzone w `cities_forms.json`) bezwarunkowo. Naprawione: miasto/ulica
+  bez ŻADNEGO dowodu nazwiska nadal wyciszone (bez zmian), ale gdy słowo JEST znanym
+  nazwiskiem (małym lub rzadkim/extended), kolizja z miastem już nie milczy. Testy dodane
+  w `OutputGuardRedesignFpTpTest.kt`.
+
+**Fix OCR_ONE_AS_L z nocy 12.07** (przepisany na regułę ogólną — podmiana cyfra↔litera
+TYLKO gdy wynik staje się rozpoznawalnym słowem słownikowym) też jest częścią tego samego
+niescommitowanego stanu — patrz `OcrNormalizer.kt` (`fixDigitLetterConfusion`,
+`fixNameLetterConfusion`). Weryfikowany rozumowaniem + JVM, **wciąż wymaga testu na
+telefonie przed commitem** (nigdy nie potwierdzony przez Pawła na żywym urządzeniu).
+
+**ZAMKNIĘTE 14.07 — OcrDegradationTest "Kaminska mimo B3ata/Be4ta" — potwierdzone testem
+diagnostycznym, nie był to bug.** Test sprawdzał starą, zepsutą pisownię ("B3ata"/"Kamlnska")
+w wyniku — ale silnik POPRAWNIE naprawia ją przed maskowaniem i maskuje całe imię+nazwisko
+jako jeden token ("Beata Kaminska"). Potwierdzone realnym uruchomieniem (nie zgadywaniem):
+`TOKEN MAP: {OSOBA_001=Beata Kaminska}`, `surnamesForms zawiera 'kaminska': true`. Cursor
+dwa razy z rzędu błędnie twierdził "kaminski ∉ top-1000" — sprawdzone bezpośrednio w JSON,
+nieprawda. Asercje testu poprawione na sprawdzanie poprawionej pisowni (analogicznie do
+istniejącego testu "Nowicki mimo Krzyszt0f"), diagnostyczny test usunięty (spełnił rolę).
+
+**BUG-OGONKI-ADRES (12.07) — hipoteza MOOT, nie potwierdzona ani wykluczona testem.**
+Podejrzenie wiązało się z architekturą `wentThroughOcr`, która **nigdy nie została scalona**
+(potwierdzone grep-em w całym repo, 14.07) — więc TEN konkretny mechanizm regresji jest
+wykluczony z konstrukcji. `AddressEngine.kt`/`AnchorEngine.kt`/`PseudonymEngine.kt`
+(gdzie żyje `matchOverlapsToken`, fix oryginalnego BUG-ADRES-OGONY z 30.06) nie mają
+ŻADNYCH niescommitowanych zmian. Ale jedyny wiarygodny dowód że ogonki nie wróciły to
+**test na telefonie**, nie rozumowanie o kodzie — pierwszy krok przed commitem/mergem.
+Telefon obecnie ma STARY build (sprzed dzisiejszych poprawek) — trzeba zainstalować dzisiejszy
+stan, żeby test na telefonie w ogóle sprawdzał aktualny kod, nie stary.
+
+**SPOWOLNIENIE TESTÓW (zgłoszone 14.07, trwa "od kilku dni") — podejrzana przyczyna, nie
+naprawione.** Testy JVM trwają ~2 min zamiast ~30s. `surnames_extended.json` ma 39 318 kluczy
+i ~370 000 odmienionych form (7,8 MB, 35× więcej niż top-1000) — ładowany i przepuszczany przez
+kosztowną normalizację Unicode (`withAsciiVariants`) w `@Before` KAŻDEJ z 25 klas testowych,
+które wołają `initializeFromClasspath()`. To liczone od nowa 25× w jednym przebiegu, mimo że
+większość testów w ogóle nie używa `surnamesFormsExtended`. Kandydat na przyczynę, NIE
+zweryfikowany pomiarem (Claude nie odpala gradlew). Możliwy fix: cache przetworzonego słownika
+między klasami testowymi zamiast przeliczania za każdym razem. Priorytet do ustalenia z Pawłem.
+
+## Odłożone świadomie 14.07 (NIE blokują merge do master, dopisać jako osobne zadania)
+
+- **`numer_dzialki`** (numer działki geodezyjnej) — zero wzorca w silniku, nowy typ encji.
+- **Generator `generator.py`, `build_decyzja()`** — `numer_kw` trafia do ground truth w 25%
+  losowań, ale nigdy nie jest wstawiany do treści dokumentu → fałszywy "miss" w
+  `CleanBenchmarkTest`/`StressBenchmarkTest`. Naprawić w generatorze, nie w silniku.
+- **OcrNormalizer `fixDigitLetterConfusion`/`fixNameLetterConfusion`** nie sprawdzają
+  `surnamesFormsExtended` (39k), tylko mały słownik top-1000 — cichy brak, nieudokumentowany
+  jako świadoma decyzja (w przeciwieństwie do reszty splitu 1k/39k).
+- **Gradle wrapper 9.4→9.6.1** w tym samym niescommitowanym stanie — niezwiązane z silnikiem,
+  niejasne czy celowe (IDE?). Sprawdzić z Pawłem przed commitem czy zostaje czy revert.
+- **Ablewski** (nazwisko) — jawne, nie zbadane dlaczego.
+- **VIN samochodu** — jawny, nowy typ encji poza dotychczasowym scope.
+- **"15 tys" bez kotwicy** — kwota bez słowa-kotwicy jawna, spójne z zasadą projektu.
+- **Rodzina nazwisk -ak/-uk/-owicz (deklinacja rzeczownikowa) — TEORETYCZNIE ta sama klasa
+  buga co -ski/-ska (naprawione 14.07), ale NIEZWERYFIKOWANA żadnym failującym testem.**
+  Diagnoza Cursora (14.07) zasugerowała że odmienione formy tej rodziny (np. "Kowalaka"
+  dopełniacz) też mogą fałszywie trafiać do Morfologika jako "nie-osoba". Świadomie NIE
+  dopisane teraz — polska deklinacja rzeczownikowa ma pułapki (rodzina "-ec" ma ruchome "e":
+  "Kowalec"→dopełniacz "Kowalca", nie "Koweleca" — mechaniczne doklejenie końcówek jak przy
+  -ski byłoby błędne). Zrobić dopiero z testem-najpierw na konkretnym przykładzie, nie zgadywać.
+
+---
+
 ## DECYZJA ZAKRESU 12.07 — tylko dokumenty z PII w kontekście RODO, nie wolna proza
 
 Paweł: silnik ma być ograniczony do dokumentów formalnych/urzędowych/biznesowych (umowy,
