@@ -7,6 +7,12 @@ dataset_B/
 dataset_C/
 dataset_2026*/
 
+# Surowe dane źródłowe rejestru ulic (TERYT) — za duże dla GitHub (88MB+),
+# apka używa tylko przetworzonego tools/street_names.json. Regenerowalne
+# z oficjalnego rejestru, nie potrzeba trzymać w historii gita.
+tools/ULICE/
+tools/ULIC_Adresowy.csv
+
 *.iml
 .gradle
 /local.properties

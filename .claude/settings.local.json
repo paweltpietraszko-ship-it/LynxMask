@@ -445,7 +445,11 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew :app:installDebug :app:installDebugAndroidTest)",
       "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" cd \"C:\\\\Projects\\\\LynxMask\")",
-      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew :app:compileDebugUnitTestKotlin -q)"
+      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" ./gradlew :app:compileDebugUnitTestKotlin -q)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(sort -k4 -n -r)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat \"{}\"')"
     ]
   },
   "hooks": {
