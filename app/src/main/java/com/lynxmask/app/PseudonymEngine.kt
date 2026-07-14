@@ -20,20 +20,19 @@ package com.lynxmask.app
  *
  * Architektura (kolejność wykonania):
  *   Warstwa 0:   OcrNormalizer (normalizacja przed detekcją)
- *   === RUNDA 1 ===
  *   Warstwa 2:   Regex strukturalne → StructuralEngine.kt
  *   Warstwa 3:   Czarna lista kontekstowa + propagacja → NameEngine.kt
  *   Warstwa 3d:  Wzorce adresów (po NameEngine)
  *   === ZBIERACZE RESZTEK ===
  *   Warstwa 4a:  Słownik użytkownika (zbieracz resztek)
  *   Warstwa 4b:  AnchorEngine (zbieracz resztek kotwicowy) → AnchorEngine.kt
- *   === RUNDA 2 — ten sam assignToken, te same liczniki ===
- *   Warstwa 2':  Regex strukturalne (runda 2 — resztki po AnchorEngine)
- *   Warstwa 3':  Czarna lista kontekstowa (runda 2)
- *   Warstwa 3d': Wzorce adresów (runda 2)
  *   === FINALIZACJA ===
  *   Warstwa 5:   Detekcja algorytmiczna (TYLKO FLAGI) → NameEngine.kt
  *   Warstwa 6:   Output Guard + Risk Score → OutputGuard.kt
+ *
+ * "Runda 2" (pełne powtórzenie Warstw 2/3/3d po AnchorEngine) usunięta 14.07 —
+ * dowód w StressBenchmarkTest: 0 tokenów na 300 dokumentach, martwy kod odziedziczony
+ * po odejściu od oryginalnego briefu AnchorEngine v2.
  *
  * Tokeny zgodne z Triangulum:
  *   FIRMA_{nnn}, OSOBA_{nnn}, NUMER_{nnn}, KWOTA_{nnn}, ADRES_{nnn}
@@ -376,31 +375,12 @@ object PseudonymEngine {
             assignToken(value, tokenType, layer = "ANCHOR", rule = tokenType)
         }
 
-        // --- Runda 2: Structural + Name + Address na resztkach po AnchorEngine ---
-        // Ten sam assignToken (te same liczniki, ta sama tokenMap) — zero kolizji tokenów.
-        // TOKEN_RE w każdym silniku chroni już zamaskowane fragmenty przed ponownym przetworzeniem.
-        for ((tokenType, pattern) in STRUCTURAL_PATTERNS) {
-            text = pattern.replace(text) { matchResult ->
-                val match = matchResult.value
-                if (TOKEN_RE.containsMatchIn(match)) return@replace match
-                val digits = match.filter { it.isDigit() }
-                if (pattern.pattern in PESEL_PATTERN_STRINGS && !digits.startsWith("48")) {
-                    if (digits.length == 11 && !isValidPesel(digits)) return@replace match
-                }
-                if (pattern.pattern in NIP_PATTERN_STRINGS) {
-                    if (digits.length == 10 && !isValidNip(digits)) return@replace match
-                }
-                val token = assignToken(match, tokenType, layer = "STRUCTURAL_R2", rule = tokenType)
-                val before = if (matchResult.range.first > 0) text[matchResult.range.first - 1] else ' '
-                val after  = if (matchResult.range.last + 1 < text.length) text[matchResult.range.last + 1] else ' '
-                val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-                val suf = if (after.isLetterOrDigit()  || after  == '_') " " else ""
-                pre + token + suf
-            }
-        }
-        text = applyContextualBlacklist(text, { value, tokenType ->
-            assignToken(value, tokenType, layer = "NAME_ENGINE_R2", rule = "CONTEXTUAL")
-        }, profileType)
+        // BUG-RUNDA2-MARTWY-KOD-USUNIETE (14.07): pełne powtórzenie StructuralEngine+
+        // NameEngine po AnchorEngine ("Runda 2") usunięte — dowód zebrany w
+        // StressBenchmarkTest (trace.layer na 300 dokumentach): 0 tokenów przez
+        // STRUCTURAL_R2/NAME_ENGINE_R2 na całym korpusie. Odejście od oryginalnego briefu
+        // AnchorEngine v2 (miał być trywialną tokenizacją, nie pełnym powtórnym przebiegiem)
+        // — patrz memory feedback_round2_dismantling_decision.md / feedback_anchorengine_spec_violation.md.
 
         // --- Warstwa 5: Detekcja algorytmiczna → TYLKO FLAGI ---
         detectAlgorithmicFlags(text, flags, guardAllowlist)
