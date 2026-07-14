@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2021/0846
+
+Data wystawienia: 25.02.2020
+Numer klienta: KL-91830
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: pl. Wolności 188/33, 90-001 Lublin
+NIP: 619-712-84-70   REGON: 590580776
+Nr konta: PL51325000037956544209494079
+
+NABYWCA:
+Adam Pawłowski
+Adres: ul. Krakowska 148/3, 31-001 Gliwice
+NIP: 918-913-71-83
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         2     309   8%      618      667
+2.   Instalacja oprogramowania         5     321  23%     1605     1974
+3.   Instalacja oprogramowania         5      79   8%      395      427
+4.   Usługa projektowa                 3    1913   8%     5739     6198
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         9266 PLN
+
+Płatność przelewem: PL51325000037956544209494079
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

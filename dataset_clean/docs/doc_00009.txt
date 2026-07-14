@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr 1772/03/2022
+
+Data wystawienia: 24.10.2024
+Numer klienta: KL-15075
+
+----------------------------------------
+SPRZEDAWCA:
+Agencja Reklamowa KREACJA
+Adres: pl. Wolności 65, 02-200 Kraków
+NIP: 624-278-68-00   REGON: 720450533
+Nr konta: PL31114019873158692322602563
+
+NABYWCA:
+Monika Grabowska
+Adres: ul. Kopernika 109, 00-001 Kraków
+NIP: 212-805-98-29
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   4    1722  23%     6888     8472
+2.   Szkolenie zawodowe                5    1730   8%     8650     9342
+3.   Naprawa sprzętu                   1    1401   8%     1401     1513
+4.   Usługa transportowa               6     620   8%     3720     4018
+5.   Instalacja oprogramowania         6    1363  23%     8178    10059
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        33404 PLN
+
+Płatność przelewem: PL31114019873158692322602563
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

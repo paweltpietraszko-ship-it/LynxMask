@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-08665/07/2024
+
+Data wystawienia: 05.09.2024
+Numer klienta: KL-39188
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Zielona 134, 30-001 Bielsko-Biała
+NIP: 172-867-90-89   REGON: 165180178
+Nr konta: PL06109010144622656766182512
+
+NABYWCA:
+Ewa Kozłowska
+Adres: ul. Chopina 150, 41-200 Kielce
+NIP: 840-640-39-13
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa doradcza                   5     998  23%     4990     6138
+2.   Obsługa prawna                    7    1736   8%    12152    13124
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        19262 PLN
+
+Płatność przelewem: PL06109010144622656766182512
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

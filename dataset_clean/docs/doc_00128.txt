@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-05966/10/2020
+
+Data wystawienia: 16.01.2024
+Numer klienta: KL-52034
+
+----------------------------------------
+SPRZEDAWCA:
+ALFA Sp. z o.o.
+Adres: pl. Wolności 177, 02-200 Gdynia
+NIP: 600-528-12-77   REGON: 492855743
+Nr konta: PL25169010149821827448570862
+
+NABYWCA:
+Renata Zając
+Adres: ul. Ogrodowa 41, 87-100 Bielsko-Biała
+NIP: 340-778-48-72
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Obsługa prawna                    7     438  23%     3066     3771
+2.   Obsługa prawna                    3    1305  23%     3915     4815
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         8586 PLN
+
+Płatność przelewem: PL25169010149821827448570862
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

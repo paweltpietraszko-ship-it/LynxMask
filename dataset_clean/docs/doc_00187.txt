@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2020/04/2436
+
+Data wystawienia: 10.01.2021
+Numer klienta: KL-40128
+
+----------------------------------------
+SPRZEDAWCA:
+Przedsiębiorstwo Budowlane MARBUD S.A.
+Adres: ul. Słoneczna 3, 85-001 Katowice
+NIP: 511-800-53-77   REGON: 724150271
+Nr konta: PL61169010144564494856257287
+
+NABYWCA:
+Magdalena Krawczyk
+Adres: ul. Sienkiewicza 55, 90-001 Bytom
+NIP: 387-572-15-86
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         5     384  23%     1920     2362
+2.   Usługa transportowa               2    1883  23%     3766     4632
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         6994 PLN
+
+Płatność przelewem: PL61169010144564494856257287
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

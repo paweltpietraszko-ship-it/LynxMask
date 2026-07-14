@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2020/2880
+
+Data wystawienia: 09.08.2024
+Numer klienta: KL-87178
+
+----------------------------------------
+SPRZEDAWCA:
+Hurtownia Materiałów BUDMAT Sp. z o.o.
+Adres: ul. Leśna 49/14, 87-100 Poznań
+NIP: 718-446-26-70   REGON: 709314184
+Nr konta: PL32109010148615155423401636
+
+NABYWCA:
+Piotr Szymański
+Adres: ul. Krakowska 56, 10-100 Lublin
+NIP: 698-926-25-63
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            9     764  23%     6876     8457
+2.   Obsługa prawna                    5    1294   8%     6470     6988
+3.   Usługa doradcza                   3     701  23%     2103     2587
+4.   Usługa serwisowa                  6    1700  23%    10200    12546
+5.   Wynajem sprzętu biurowego        10     311  23%     3110     3825
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        34403 PLN
+
+Płatność przelewem: PL32109010148615155423401636
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

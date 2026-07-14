@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Tomasz Woźniak
+Data urodzenia:
+15.11.1969
+PESEL:
+82011513120
+Nr dowodu osobistego:
+DJU135775
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Kościuszki 51, 70-001 Toruń
+Telefon:
++48 734 929 955
+Adres e-mail:
+tomasz.wozniak32@interia.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+745-257-77-53
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

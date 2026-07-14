@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 9066/05/2020
+
+Data wystawienia: 08.11.2020
+Numer klienta: KL-48691
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Dębowa 95/47, 01-100 Szczecin
+NIP: 239-837-35-47   REGON: 485467854
+Nr konta: PL75150010134587717535560932
+
+NABYWCA:
+Zbigniew Wiśniewski
+Adres: ul. Nowa 97, 01-100 Zabrze
+NIP: 133-173-93-66
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                4     827   8%     3308     3573
+2.   Wynajem sprzętu biurowego         9    1390  23%    12510    15387
+3.   Instalacja oprogramowania         8    1531  23%    12248    15065
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        34025 PLN
+
+Płatność przelewem: PL75150010134587717535560932
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

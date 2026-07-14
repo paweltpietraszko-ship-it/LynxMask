@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2025/6595
+
+Data wystawienia: 10.01.2023
+Numer klienta: KL-75597
+
+----------------------------------------
+SPRZEDAWCA:
+Serwis AGD ELEKTRO Sp. z o.o.
+Adres: ul. Długa 151, 65-001 Białystok
+NIP: 434-123-28-19   REGON: 547134932
+Nr konta: PL33240101351832421024994717
+
+NABYWCA:
+Karolina Krawczyk
+Adres: ul. Kolejowa 16, 03-300 Zielona Góra
+NIP: 306-797-40-35
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         2    1274   8%     2548     2752
+2.   Usługa transportowa               6    1286  23%     7716     9491
+3.   Usługa doradcza                   2     518   8%     1036     1119
+4.   Instalacja oprogramowania        10     132   8%     1320     1426
+5.   Wynajem sprzętu biurowego         9    1384  23%    12456    15321
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        30109 PLN
+
+Płatność przelewem: PL33240101351832421024994717
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

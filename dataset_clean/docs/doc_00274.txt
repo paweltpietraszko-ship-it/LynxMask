@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2023/5748
+
+Data wystawienia: 23.09.2022
+Numer klienta: KL-96954
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: ul. Długa 181, 00-001 Zielona Góra
+NIP: 843-251-22-54   REGON: 220957905
+Nr konta: PL45240101353710094388221145
+
+NABYWCA:
+Marta Adamczyk
+Adres: ul. Kościuszki 48, 87-100 Bytom
+NIP: 820-765-02-47
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                8      77  23%      616      758
+2.   Instalacja oprogramowania         6    1875  23%    11250    13838
+3.   Konsultacja techniczna            5    1454   8%     7270     7852
+4.   Usługa serwisowa                  7    1803   8%    12621    13631
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        36079 PLN
+
+Płatność przelewem: PL45240101353710094388221145
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

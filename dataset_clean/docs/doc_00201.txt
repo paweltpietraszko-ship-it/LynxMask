@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 4226/06/2023
+
+Data wystawienia: 16.04.2020
+Numer klienta: KL-25855
+
+----------------------------------------
+SPRZEDAWCA:
+Serwis AGD ELEKTRO Sp. z o.o.
+Adres: ul. Sienkiewicza 137/2, 30-001 Lublin
+NIP: 289-569-07-01   REGON: 211824226
+Nr konta: PL88150010131246209520046152
+
+NABYWCA:
+Adam Wójcik
+Adres: ul. Ogrodowa 181, 41-200 Gliwice
+NIP: 662-608-56-44
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                  10    1250   8%    12500    13500
+2.   Wynajem sprzętu biurowego         9    1590  23%    14310    17601
+3.   Konsultacja techniczna            5     174  23%      870     1070
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        32171 PLN
+
+Płatność przelewem: PL88150010131246209520046152
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

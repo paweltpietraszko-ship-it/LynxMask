@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV-00439/11/2023
+
+Data wystawienia: 23.05.2023
+Numer klienta: KL-60152
+
+----------------------------------------
+SPRZEDAWCA:
+Zakład Ubezpieczeń POLISA S.A.
+Adres: ul. Piaskowa 46/44, 03-300 Toruń
+NIP: 226-691-21-54   REGON: 599465798
+Nr konta: PL66240101357842711477320101
+
+NABYWCA:
+Grzegorz Dudek
+Adres: ul. Wiosenna 113, 02-200 Bielsko-Biała
+NIP: 453-961-36-71
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa serwisowa                  5    1323   8%     6615     7144
+2.   Konsultacja techniczna            9    1621  23%    14589    17944
+3.   Wynajem sprzętu biurowego         4     651  23%     2604     3203
+4.   Wynajem sprzętu biurowego         9     585  23%     5265     6476
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        34767 PLN
+
+Płatność przelewem: PL66240101357842711477320101
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-07455/10/2021
+
+Data wystawienia: 03.02.2022
+Numer klienta: KL-60768
+
+----------------------------------------
+SPRZEDAWCA:
+Biuro Rachunkowe RACHMISTRZ
+Adres: ul. Nowa 14/10, 31-001 Bielsko-Biała
+NIP: 536-459-70-11   REGON: 479956351
+Nr konta: PL67102028921531363631797062
+
+NABYWCA:
+Justyna Lewandowska
+Adres: pl. Wolności 46/3, 80-001 Kraków
+NIP: 182-207-81-12
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         4    1344  23%     5376     6612
+2.   Instalacja oprogramowania         4     737   8%     2948     3184
+3.   Usługa doradcza                  10     172  23%     1720     2116
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        11912 PLN
+
+Płatność przelewem: PL67102028921531363631797062
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

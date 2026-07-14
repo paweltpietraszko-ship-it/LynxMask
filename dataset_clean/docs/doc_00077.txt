@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2021/11/2341
+
+Data wystawienia: 27.02.2023
+Numer klienta: KL-79534
+
+----------------------------------------
+SPRZEDAWCA:
+Biuro Rachunkowe RACHMISTRZ
+Adres: ul. Krakowska 148/32, 01-100 Katowice
+NIP: 341-541-52-09   REGON: 229387007
+Nr konta: PL68114019875162713611155426
+
+NABYWCA:
+Marcin Kozłowski
+Adres: ul. Leśna 26, 00-001 Sosnowiec
+NIP: 743-611-03-74
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 3     951  23%     2853     3509
+2.   Naprawa sprzętu                   3    1933  23%     5799     7133
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        10642 PLN
+
+Płatność przelewem: PL68114019875162713611155426
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

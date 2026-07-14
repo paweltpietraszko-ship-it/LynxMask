@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV-04991/10/2020
+
+Data wystawienia: 07.10.2023
+Numer klienta: KL-95799
+
+----------------------------------------
+SPRZEDAWCA:
+Agencja Reklamowa KREACJA
+Adres: ul. Chopina 180, 40-001 Radom
+NIP: 389-002-87-77   REGON: 486631770
+Nr konta: PL94169010149717751701660880
+
+NABYWCA:
+Elżbieta Grabowska
+Adres: pl. Wolności 89, 85-001 Olsztyn
+NIP: 317-535-40-80
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                6    1740   8%    10440    11275
+2.   Naprawa sprzętu                   8     729  23%     5832     7173
+3.   Szkolenie zawodowe                8     283   8%     2264     2445
+4.   Naprawa sprzętu                   1     749  23%      749      921
+5.   Instalacja oprogramowania         9    1119  23%    10071    12387
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        34201 PLN
+
+Płatność przelewem: PL94169010149717751701660880
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

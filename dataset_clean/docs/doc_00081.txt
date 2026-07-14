@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2022/6439
+
+Data wystawienia: 16.07.2022
+Numer klienta: KL-51688
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Kolejowa 63, 31-001 Gliwice
+NIP: 306-038-50-57   REGON: 124103860
+Nr konta: PL06114019875719182619906234
+
+NABYWCA:
+Beata Wieczorek
+Adres: al. Niepodległości 199/35, 40-001 Rybnik
+NIP: 164-138-36-79
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   2    1982   8%     3964     4281
+2.   Usługa serwisowa                 10     273   8%     2730     2948
+3.   Konsultacja techniczna            3     970  23%     2910     3579
+4.   Szkolenie zawodowe                7     297  23%     2079     2557
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        13365 PLN
+
+Płatność przelewem: PL06114019875719182619906234
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

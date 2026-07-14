@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr 8724/07/2022
+
+Data wystawienia: 11.01.2020
+Numer klienta: KL-51450
+
+----------------------------------------
+SPRZEDAWCA:
+Usługi Informatyczne Jan Kowalski
+Adres: ul. Nowa 127, 87-100 Bytom
+NIP: 598-728-39-97   REGON: 943089487
+Nr konta: PL33240101350605664187758030
+
+NABYWCA:
+Marta Kowalska
+Adres: ul. Polna 2/41, 03-300 Częstochowa
+NIP: 319-212-49-39
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   6     217   8%     1302     1406
+2.   Naprawa sprzętu                   7     202   8%     1414     1527
+3.   Naprawa sprzętu                   3     724  23%     2172     2672
+4.   Konsultacja techniczna            2     107  23%      214      263
+5.   Usługa transportowa               1    1263  23%     1263     1553
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         7421 PLN
+
+Płatność przelewem: PL33240101350605664187758030
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2024/02/6647
+
+Data wystawienia: 12.02.2023
+Numer klienta: KL-52712
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: ul. Krakowska 114/2, 01-100 Toruń
+NIP: 895-453-81-75   REGON: 429456251
+Nr konta: PL70169010145770171577245992
+
+NABYWCA:
+Wojciech Kozłowski
+Adres: ul. Kościuszki 99/28, 20-100 Częstochowa
+NIP: 317-174-77-30
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Instalacja oprogramowania         9     994  23%     8946    11004
+2.   Usługa projektowa                 7     538   8%     3766     4067
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        15071 PLN
+
+Płatność przelewem: PL70169010145770171577245992
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

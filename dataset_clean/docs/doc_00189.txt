@@ -1,0 +1,44 @@
+FORMULARZ DANYCH OSOBOWYCH
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Grzegorz Dudek
+Data urodzenia:
+21.05.1975
+PESEL:
+85051338207
+Nr dowodu osobistego:
+KEA177749
+Nr paszportu:
+MC0326642
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Kościuszki 85/44, 03-300 Bielsko-Biała
+Telefon:
++48 780 509 759
+Adres e-mail:
+grzegorz.dudek@wp.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+601-896-16-43
+
+DANE NIERUCHOMOŚCI
+
+Nr księgi wieczystej:
+BY1B/00850014/6
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

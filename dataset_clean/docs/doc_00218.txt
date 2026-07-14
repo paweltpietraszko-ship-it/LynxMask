@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV-04142/03/2023
+
+Data wystawienia: 01.04.2020
+Numer klienta: KL-76330
+
+----------------------------------------
+SPRZEDAWCA:
+Kancelaria Prawna LEGIS S.C.
+Adres: ul. Polna 2, 02-200 Sosnowiec
+NIP: 697-779-01-44   REGON: 776291605
+Nr konta: PL58102028922484137681511856
+
+NABYWCA:
+Karolina Woźniak
+Adres: ul. Sportowa 103, 44-100 Bydgoszcz
+NIP: 854-692-63-21
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa doradcza                   2    1358  23%     2716     3341
+2.   Usługa transportowa               6    1577  23%     9462    11638
+3.   Naprawa sprzętu                   7     127   8%      889      960
+4.   Instalacja oprogramowania         2    1502   8%     3004     3244
+5.   Szkolenie zawodowe                8    1042  23%     8336    10253
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        29436 PLN
+
+Płatność przelewem: PL58102028922484137681511856
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

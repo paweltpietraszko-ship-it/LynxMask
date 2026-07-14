@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr VAT/2024/8193
+
+Data wystawienia: 20.06.2023
+Numer klienta: KL-62326
+
+----------------------------------------
+SPRZEDAWCA:
+BETA S.A.
+Adres: ul. Kościuszki 53/9, 80-001 Warszawa
+NIP: 387-339-78-51   REGON: 228411732
+Nr konta: PL51109010149850344651241893
+
+NABYWCA:
+Magdalena Dudek
+Adres: al. Niepodległości 105, 70-001 Łódź
+NIP: 698-217-66-13
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Obsługa prawna                    2    1243  23%     2486     3058
+2.   Instalacja oprogramowania         1     116  23%      116      143
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         3201 PLN
+
+Płatność przelewem: PL51109010149850344651241893
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

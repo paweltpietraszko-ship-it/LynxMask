@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV-02763/11/2024
+
+Data wystawienia: 11.09.2023
+Numer klienta: KL-32439
+
+----------------------------------------
+SPRZEDAWCA:
+BETA S.A.
+Adres: ul. Wolności 127/36, 80-001 Gliwice
+NIP: 778-669-12-59   REGON: 368018242
+Nr konta: PL16102028922535841438424981
+
+NABYWCA:
+Barbara Szymańska
+Adres: ul. Dębowa 142/6, 60-001 Łódź
+NIP: 277-852-89-21
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 1    1740   8%     1740     1879
+2.   Konsultacja techniczna            1    1992  23%     1992     2450
+3.   Naprawa sprzętu                  10     903   8%     9030     9752
+4.   Wynajem sprzętu biurowego         9     643  23%     5787     7118
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        21199 PLN
+
+Płatność przelewem: PL16102028922535841438424981
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

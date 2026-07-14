@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr 7097/10/2021
+
+Data wystawienia: 01.03.2020
+Numer klienta: KL-75028
+
+----------------------------------------
+SPRZEDAWCA:
+Biuro Rachunkowe RACHMISTRZ
+Adres: ul. Słoneczna 41, 87-100 Białystok
+NIP: 235-680-44-22   REGON: 310032365
+Nr konta: PL98150010131994101372151070
+
+NABYWCA:
+Paweł Wójcik
+Adres: ul. Leśna 56, 10-100 Katowice
+NIP: 167-883-17-14
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               3     774   8%     2322     2508
+2.   Usługa serwisowa                  5     623  23%     3115     3831
+3.   Usługa serwisowa                  1    1307   8%     1307     1412
+4.   Instalacja oprogramowania         8     893  23%     7144     8787
+5.   Usługa doradcza                   2     622  23%     1244     1530
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        18068 PLN
+
+Płatność przelewem: PL98150010131994101372151070
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

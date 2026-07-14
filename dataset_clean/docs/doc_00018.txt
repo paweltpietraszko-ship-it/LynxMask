@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV/2025/05/9107
+
+Data wystawienia: 25.04.2025
+Numer klienta: KL-77715
+
+----------------------------------------
+SPRZEDAWCA:
+BETA S.A.
+Adres: ul. Kolejowa 31, 01-100 Gliwice
+NIP: 950-671-65-75   REGON: 794531478
+Nr konta: PL40102028927996507527354549
+
+NABYWCA:
+Beata Dudek
+Adres: ul. Piaskowa 137, 02-200 Gdynia
+NIP: 362-849-87-74
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            4    1524  23%     6096     7498
+2.   Wynajem sprzętu biurowego         9    1602   8%    14418    15571
+3.   Wynajem sprzętu biurowego         8     967   8%     7736     8355
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        31424 PLN
+
+Płatność przelewem: PL40102028927996507527354549
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

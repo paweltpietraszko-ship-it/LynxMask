@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr 2164/09/2025
+
+Data wystawienia: 10.05.2022
+Numer klienta: KL-55442
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: ul. Kościuszki 167, 65-001 Rybnik
+NIP: 654-864-01-54   REGON: 579513716
+Nr konta: PL83109010146241124127238046
+
+NABYWCA:
+Joanna Nowakowska
+Adres: ul. Zielona 180/48, 40-001 Rybnik
+NIP: 677-881-78-86
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa doradcza                   5     437   8%     2185     2360
+2.   Usługa doradcza                   4    1759  23%     7036     8654
+3.   Usługa transportowa              10     752  23%     7520     9250
+4.   Wynajem sprzętu biurowego        10    1413  23%    14130    17380
+5.   Wynajem sprzętu biurowego         5    1211   8%     6055     6539
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        44183 PLN
+
+Płatność przelewem: PL83109010146241124127238046
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................
