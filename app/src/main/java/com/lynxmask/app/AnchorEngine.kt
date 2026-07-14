@@ -535,8 +535,17 @@ internal fun applyAnchorEngine(
     // Kotwice: kod pocztowy w pobliżu LUB token ADRES w pobliżu
     //          LUB poprzednie słowo w słowniku POLISH_CITIES.
     // Bez kontekstu nie maskujemy — samo "4/6" to nie PII.
+    //
+    // BUG-A11E-KRADNIE-SEGMENTY-FIX (diagnoza Cursor+trace, 14.07): prawdziwy numer
+    // budynku/lokalu w Polsce ma ZAWSZE dokładnie 2 segmenty (budynek/lokal) — nigdy 3+.
+    // Bez tego warunku "Faktura VAT 26/06/006" (3 segmenty) łapało tylko "26/06" jeśli
+    // gdziekolwiek w oknie ±100 zn. był już token ADRES (np. z NIEPOWIĄZANEGO adresu w
+    // tym samym dokumencie) — zostawiało "/006" jawne i blokowało A.12 (numer dokumentu),
+    // który już jest zaprojektowany na dowolną liczbę segmentów. (?![/\-]\d) na końcu:
+    // jeśli zaraz po dopasowaniu jest kolejny segment /cyfra, to NIE jest numer budynku
+    // (za dużo segmentów) — oddaj sprawę A.12, nie łap częściowo.
     // ------------------------------------------------------------------
-    val buildingNumRe2 = Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?\b""")
+    val buildingNumRe2 = Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?\b(?![/\-]\d)""")
     t = buildingNumRe2.findAll(t).toList().asReversed().fold(t) { acc, m ->
         if (TOKEN_RE.containsMatchIn(m.value)) acc
         else {

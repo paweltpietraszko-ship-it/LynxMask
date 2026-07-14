@@ -2243,6 +2243,20 @@ class PseudonymEngineTest {
         assertTokenExists(r, TOKEN_NUMER)
     }
 
+    // BUG-A11E-KRADNIE-SEGMENTY-FIX (diagnoza Cursor+trace, 14.07): A.11e (numer budynku/lokalu,
+    // sztywno 2 segmenty) łapało tylko "26/06" z 3-segmentowego numeru faktury "26/06/006",
+    // jeśli gdziekolwiek w dokumencie był już token ADRES (nawet całkiem niepowiązany) —
+    // zostawiało "/006" jawne i blokowało A.12. Real numer budynku ma zawsze dokładnie 2
+    // segmenty, więc "widziany" trzeci segment (/006) jest sygnałem że to NIE jest adres.
+    @Test fun `faktura 3-segmentowa obok niepowiazanego adresu nie traci ostatniego segmentu`() {
+        val r = pseudonymize(
+            "Zamieszkały przy ul. Długiej 5, 00-001 Warszawa.\nFaktura VAT 26/06/006"
+        )
+        assertNotInOutput(r, "26/06/006")
+        assertNotInOutput(r, "26/06")
+        assertNotInOutput(r, "/006")
+    }
+
     // Regresja FP — "Nr"/"Numer" generyczne odniesienia (strona, punkt/rozdział) NIE mogą
     // być maskowane tylko dlatego że tolerujemy teraz słowa pośrednie po Nr/Numer.
     @Test fun `Nr strony i numer punktu nie sa maskowane jako NUMER dokumentu`() {
