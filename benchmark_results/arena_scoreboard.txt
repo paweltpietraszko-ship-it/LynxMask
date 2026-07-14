@@ -1,7 +1,7 @@
 === SCOREBOARD Cursor vs Claude Code ===
-CC:     12
+CC:     16
 Cursor: 0
-Ostatni: 2026-07-14_1454 → CC +1 (PASSED)
+Ostatni: 2026-07-14_2115 → CC +1 (PASSED)
 
 Reguly: Cursor pisze testy/progi, CC pisze kod silnika.
 Odpal: run_stress_benchmark.bat

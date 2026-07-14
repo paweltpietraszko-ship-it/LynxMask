@@ -1,4 +1,4 @@
-BENCHMARK STRESS (Arena Cursor vs Claude Code) — 2026-07-14_2115
+BENCHMARK STRESS (Arena Cursor vs Claude Code) — 2026-07-14_2059
 Dataset: C:\Projects\LynxMask\dataset_stress (300 dokumentów)
 Pule: imiona ~3609, nazwiska ~39k, ulice ~11k, miasta ~31k
 ============================================================
