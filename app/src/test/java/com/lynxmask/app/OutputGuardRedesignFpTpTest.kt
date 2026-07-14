@@ -372,4 +372,40 @@ class OutputGuardRedesignFpTpTest {
         // regresja wiodącego \b — "Łódź" jako pierwsze słowo zdania
         assertTrue(hasLabel(yellow(guard("Łódź to duże miasto.")), "MIASTO_NIEZAMASKOWANE"))
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // YELLOW: NAZWISKO_NIEZAMASKOWANE/NAZWISKO_RZADKIE_NIEZAMASKOWANE mimo kolizji
+    // z cityForms (14.07, BUG-GUARD-CITY-SILENCES-SURNAME-FIX) — realne nazwiska
+    // identyczne z nazwą miejscowości (Zając/Wróbel/Sikora/Dudek w cities_forms.json,
+    // potwierdzone audytem) wcześniej milczały bezwarunkowo tylko dlatego że słowo
+    // jest też miastem. Czyste miasto bez dowodu nazwiska musi zostać wyciszone
+    // jak dotąd — inaczej duplikat z MIASTO_NIEZAMASKOWANE niżej.
+    // ════════════════════════════════════════════════════════════════════════
+
+    private fun withSurnameCityOverlap(surname: String, extended: Boolean, block: () -> Unit) {
+        LookupTables.resetForTesting()
+        if (extended) {
+            LookupTables.initializeForTesting(surnamesExtended = setOf(surname), cities = setOf(surname))
+        } else {
+            LookupTables.initializeForTesting(surnames = setOf(surname), cities = setOf(surname))
+        }
+        try { block() } finally {
+            LookupTables.resetForTesting()
+            LookupTables.initializeForTesting()
+        }
+    }
+
+    @Test fun nazwiskoKolidujaceZMiastemDalejFlagowaneMalySlownik() =
+        withSurnameCityOverlap("zając", extended = false) {
+            assertTrue(hasLabel(yellow(guard("Pracownik: Zając zgłosił się do pracy.")), "NAZWISKO_NIEZAMASKOWANE"))
+        }
+
+    @Test fun nazwiskoKolidujaceZMiastemDalejFlagowaneRzadkieRozszerzone() =
+        withSurnameCityOverlap("wróbel", extended = true) {
+            assertTrue(hasLabel(yellow(guard("Pracownik: Wróbel zgłosił się do pracy.")), "NAZWISKO_RZADKIE_NIEZAMASKOWANE"))
+        }
+
+    @Test fun czysteMiastoBezDowoduNazwiskaNadalNieFlagowaneJakoNazwisko() = withCities(setOf("gdańsk")) {
+        assertFalse(hasLabel(yellow(guard("Pracownik: Gdańsk zgłosił się do pracy.")), "NAZWISKO_NIEZAMASKOWANE"))
+    }
 }

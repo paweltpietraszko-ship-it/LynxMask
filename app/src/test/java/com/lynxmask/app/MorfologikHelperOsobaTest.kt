@@ -1,5 +1,6 @@
 package com.lynxmask.app
 
+import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -34,5 +35,27 @@ class MorfologikHelperOsobaTest {
     fun `imieslowy koliduja z nazwiskami i sa rozpoznawane jako NIE-osoba`() {
         assertTrue("'działający' (pact)", MorfologikHelper.isDefinitelyNotPerson("działający"))
         assertTrue("'działając' (pcon)", MorfologikHelper.isDefinitelyNotPerson("działając"))
+    }
+
+    @Before
+    fun setupLookupTables() {
+        LookupTables.resetForTesting()
+        LookupTables.initializeFromClasspath()
+        if (!LookupTables.initialized) error("LookupTables nie załadowane — sprawdź src/test/resources/*.json")
+    }
+
+    /**
+     * BUG-SLOWNIK-POSPOLITE-SLOWA-CAPS (12.07, benchmark_results/clean): "ZAPŁATY" w nagłówku
+     * faktury ("ŁĄCZNIE DO ZAPŁATY:", generator.py:775) maskowane jako OSOBA — guard dodany
+     * rano dla małych liter (3a) nie objął osobnego bloku ALL-CAPS (3b-CAPS). Test na PEŁNYM
+     * silniku (nie tylko MorfologikHelper w izolacji) w OBU wariantach wielkości liter —
+     * dokładnie ta klasa regresji (duplikat logiki bez duplikatu guardu) którą złapał benchmark.
+     */
+    @Test
+    fun `ZAPLATY w naglowku faktury nie jest maskowane w zadnej wielkosci liter`() {
+        val lower = PseudonymEngine.pseudonymize("Łącznie do zapłaty: 500 PLN", emptyList())
+        val upper = PseudonymEngine.pseudonymize("ŁĄCZNIE DO ZAPŁATY: 500 PLN", emptyList())
+        assertFalse("małe litery: 'zapłaty' zamaskowane jako OSOBA", lower.tokenMap.values.any { it.equals("zapłaty", ignoreCase = true) })
+        assertFalse("ALL-CAPS: 'ZAPŁATY' zamaskowane jako OSOBA", upper.tokenMap.values.any { it.equals("zapłaty", ignoreCase = true) })
     }
 }

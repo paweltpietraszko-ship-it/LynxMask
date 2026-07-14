@@ -270,4 +270,31 @@ class OcrNormalizerDigitContextTest {
         val result = OcrNormalizer.normalize("49 999,99 zł")
         assertTrue(result.normalizedText.contains("49 999,99"))
     }
+
+    // ── OCR_ONE_AS_L / OCR_ZERO_AS_O — nie rusza kodów referencyjnych (12.07) ──────────
+
+    @Test
+    fun `OCR_ONE_AS_L nie rusza cyfry w numerze ksiegi wieczystej`() {
+        // BUG-1-JAKO-L-NA-KODZIE: "PO1P/00793300/9" to prawdziwy kod (nr KW), nie OCR —
+        // '1' otoczone literami, ale zaraz potem "/cyfra" — sygnatura numeru referencyjnego.
+        val result = OcrNormalizer.normalize("Nr księgi wieczystej: PO1P/00793300/9")
+        assertTrue("cyfra '1' w kodzie KW nie powinna zmienić się na 'l': ${result.normalizedText}",
+            result.normalizedText.contains("PO1P/00793300/9"))
+    }
+
+    @Test
+    fun `OCR_ONE_AS_L nadal naprawia 1 jako l w zwyklym slowie bez ukosnika`() {
+        // Brak regresji: prawdziwy tekst po OCR (litera otoczona literami, BEZ sąsiedztwa
+        // "/cyfra") nadal jest naprawiany jak dotąd.
+        val result = OcrNormalizer.normalize("Zleceniobiorca: Kowa1ski")
+        assertTrue("'Kowa1ski' bez kodu referencyjnego obok powinno nadal naprawiać się do 'Kowalski': ${result.normalizedText}",
+            result.normalizedText.contains("Kowalski"))
+    }
+
+    @Test
+    fun `OCR_ZERO_AS_O nie rusza cyfry w kodzie z ukosnikiem`() {
+        val result = OcrNormalizer.normalize("Nr sprawy: KA0K/00133461/5")
+        assertTrue("cyfra '0' w kodzie z ukośnikiem nie powinna zmienić się na 'o': ${result.normalizedText}",
+            result.normalizedText.contains("KA0K/00133461/5"))
+    }
 }

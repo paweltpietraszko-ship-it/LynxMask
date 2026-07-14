@@ -1,0 +1,265 @@
+=============================================================
+TEST PESEL — WSZYSTKIE WARIANTY ZAPISU
+Cel: sprawdzić czy silnik maskuje / nie maskuje poprawnie.
+Użyte prawidłowe PESELe (S5 OK): NUMER_028, NUMER_029,
+  NUMER_030, NUMER_031, NUMER_032
+Błędny PESEL (zły checksum): NUMER_047, NUMER_048
+=============================================================
+
+--- SEKCJA 1: STANDARDOWE ZAPISY Z KEYWORDEM ---
+Silnik ZAWSZE powinien maskować — keyword "PESEL" zwalnia z S5.
+
+Pismo z dnia NUMER_014 r. do Urzędu Skarbowego Kraków-Śródmieście.
+Dotyczy: Korekta zeznania rocznego.
+Dane podatnika: OSOBA_001, NUMER_003, ADRES_010.
+Proszę o przyjęcie korekty formularza NUMER_037.
+
+Umowa najmu lokalu mieszkalnego zawarta dnia NUMER_015 w ADRES_017.
+Wynajmujący: OSOBA_002, NUMER_004, zam. ADRES_009.
+Najemca: OSOBA_003, NUMER_005, zam. ADRES_008.
+Strony ustalają czynsz miesięczny w wysokości KWOTA_001.
+
+Zaświadczenie wydane przez Gminę Wrocław dnia NUMER_016.
+Imię i nazwisko: OSOBA_004, nr NUMER_006.
+Adres zamieszkania: ADRES_014, ADRES_016.
+Dokument wystawiony na potrzeby urzędu pracy.
+
+Wezwanie do zapłaty nr NUMER_038.
+Dłużnik: OSOBA_005, NUMER_007, ADRES_007.
+Kwota zaległości: KWOTA_002. Termin: 30 dni od doręczenia.
+
+Oświadczenie majątkowe złożone dnia NUMER_017.
+Składający: OSOBA_006. Numer NUMER_003.
+Łączny dochód w roku poprzednim: KWOTA_003 brutto.
+
+--- SEKCJA 2: PESEL BEZ SPACJI PO DWUKROPKU ---
+
+Formularz rejestracji pacjenta.
+Pacjent: OSOBA_007, NUMER_004, data ur. NUMER_060.
+Rozpoznanie: NUMER_036. Lekarz prowadzący: dr OSOBA_008.
+
+Wniosek o zasiłek opiekuńczy.
+Wnioskodawca: OSOBA_009. NUMER_005. Okres opieki: 14 dni.
+
+--- SEKCJA 3: PESEL MAŁYMI LITERAMI ---
+
+Protokół przyjęcia zgłoszenia. Sporządziła: insp. OSOBA_010.
+Zgłaszający: OSOBA_044 OSOBA_045, NUMER_006, NUMER_033.
+Treść zgłoszenia: hałas w godzinach nocnych.
+
+Decyzja administracyjna nr NUMER_039.
+Strona: OSOBA_011, NUMER_008.
+Na podstawie art. 104 k.p.a. orzekam jak w sentencji.
+
+--- SEKCJA 4: NUMER_040 W SŁOWIE KLUCZOWYM ---
+OcrNormalizer powinien naprawić keyword, silnik powinien zamaskować.
+
+Wyciąg z rejestru. Osoba: OSOBA_012.
+NUMER_003. Adres: ADRES_006.
+
+Zaświadczenie o zatrudnieniu.
+Pracownik: OSOBA_013, NUMER_004.
+Zatrudniony od: NUMER_018 r., stanowisko: specjalista.
+
+Dokumentacja medyczna — dane pacjenta.
+NUMER_005. Imię: OSOBA_046. Nazwisko: OSOBA_035.
+Oddział: chirurgia. Sala: 14B.
+
+Protokół wywiadu środowiskowego.
+Nr NUMER_006. Osoba: OSOBA_014.
+Wywiad przeprowadzono dnia NUMER_019.
+
+Pismo procesowe. Pozwany: OSOBA_015.
+Pe3eL: NUMER_032. Sprawa sądowa NUMER_026.
+
+--- SEKCJA 5: NUMER_041 / SPLIT W NUMERZE ---
+Numer rozbity spacją lub znakiem przez OCR. Silnik powinien skleić i zamaskować.
+
+Zaświadczenie ZUS. Ubezpieczony: OSOBA_047 OSOBA_036.
+NUMER_003. Data wydania: NUMER_020.
+
+Umowa zlecenia nr NUMER_042.
+Zleceniobiorca: OSOBA_016, NUMER_004, ADRES_005.
+
+Wniosek o dowód os0bisty.
+Wnioskodawca: OSOBA_048 OSOBA_049, NUMER_005.
+Złożono w Wydziale Spraw Obywatelskich UM Szczecin.
+
+Faktura NUMER_062.
+Nabywca: OSOBA_017, NUMER_006, NUMER_012.
+
+Skarga do Rzecznika Praw Obywatelskich.
+Skarżący: OSOBA_018. NUMER_008.
+Przedmiot skargi: naruszenie prawa do prywatności.
+
+--- SEKCJA 6: OCR — LITERA "l" i "O" ZAMIAST CYFR ---
+
+Dane z systemu kadrowego.
+Pracownik: OSOBA_050 Kwiecień. NUMER_003 (O zamiast 0).
+Dział: księgowość. Staż: 8 lat.
+
+Akta sprawy komorniczej NUMER_045.
+Dłużnik: OSOBA_019. NUMER_004.
+Kwota egzekucji: KWOTA_004 plus odsetki.
+
+Karta informacyjna leczenia szpitalnego.
+Pacjent: OSOBA_020. NUMER_005.
+Oddział neurologii. Pobyt: KWOTA_012–NUMER_021.
+
+Formularz ZUS ZUA. Płatnik: FIRMA_001
+Ubezpieczony: OSOBA_051 OSOBA_037. NUMER_006.
+
+Akt notarialny Rep. A nr 2244/2024.
+Stawający: OSOBA_021, NUMER_008 (l zamiast 1, O zamiast 0).
+Notariusz: OSOBA_022, kancelaria ADRES_004.
+
+--- SEKCJA 7: PESEL BEZ SŁOWA KLUCZOWEGO (S5 DECYDUJE) ---
+Poprawny checksum → silnik POWINIEN zamaskować.
+Błędny checksum → silnik NIE POWINIEN zamaskować.
+
+Raport systemowy. Eksport z bazy danych ewidencji.
+Rekord 001: OSOBA_001 | NUMER_028 | M | ur. NUMER_061
+Rekord 002: OSOBA_023   | NUMER_029 | K | ur. NUMER_060
+Rekord 003: OSOBA_052 Wiśni  | NUMER_030 | M | ur. NUMER_059
+Rekord 004: OSOBA_024  | NUMER_031 | K | ur. NUMER_058
+Rekord 005: OSOBA_025 | NUMER_032 | M | ur. NUMER_057
+
+Poniższe numery mają błędny checksum — NIE powinny być zamaskowane:
+  Numer A: NUMER_047  (ostatnia cyfra 5 zamiast 7)
+  Numer B: NUMER_048  (ostatnia cyfra 0 zamiast 7)
+  Numer C: NUMER_049  (ostatnia cyfra 9 zamiast 2)
+  Numer D: NUMER_050  (losowy — błędny checksum)
+  Numer E: NUMER_051  (same jedynki — błędny checksum)
+
+--- SEKCJA 8: PESEL W RÓŻNYCH KONTEKSTACH DOKUMENTU ---
+
+Kancelaria Komornicza przy SR Wrocław-Śródmieście
+NUMER_027
+Wrocław, dnia 15 maja 2024 r.
+
+OSOBA_047 Okoń
+ADRES_013
+ADRES_016
+
+Na podstawie tytułu wykonawczego komornik sądowy zawiadamia, że w sprawie
+prowadzonej pod sygn. NUMER_046 wszczęto postępowanie egzekucyjne
+przeciwko dłużnikowi OSOBA_053 Okoniowi, NUMER_003,
+zamieszkałemu przy ADRES_012, ADRES_016.
+Wierzytelność: KWOTA_005. Wierzyciel: FIRMA_002
+Komornik: OSOBA_026, NUMER_034.
+
+=============================================================
+
+Decyzja o przyznaniu świadczenia pielęgnacyjnego nr NUMER_043
+Miejscowość: Gdynia, dnia 3 marca 2024 r.
+
+Wnioskodawca: OSOBA_027, zamieszkała ADRES_003.
+NUMER_009.
+NUMER_010.
+
+Orzekam o przyznaniu świadczenia pielęgnacyjnego w kwocie KWOTA_006
+miesięcznie, od dnia NUMER_022 r., na czas nieokreślony.
+Decyzja podlega natychmiastowemu wykonaniu.
+
+=============================================================
+
+DANE OSOBOWE WNIOSKODAWCY
+Imię i nazwisko: OSOBA_028
+NUMER_013
+NUMER_006
+Nr NUMER_025
+DANE KONTAKTOWE
+Adres zamieszkania: ADRES_011, ADRES_015
+NUMER_035
+Adres e-mail: EMAIL_001
+DANE PODATKOWE
+NUMER_056
+
+=============================================================
+
+Zlecenie przelewu bankowego.
+Nadawca: OSOBA_029, NUMER_007.
+Nr rachunku nadawcy: NUMER_001.
+Odbiorca: ZUS Wrocław. Nr rachunku: NUMER_002.
+Tytuł: składki za 02/2024.
+Kwota: KWOTA_007.
+
+--- SEKCJA 9: PESEL W TABELI (OCR MOŻE SKLEIĆ KOLUMNY) ---
+
+Ewidencja pracowników — dział IT:
+
+Lp | Nazwisko        | Imię     | PESEL         | Stanowisko
+---|-----------------|----------|---------------|-------------------
+1  | OSOBA_038        | OSOBA_054      | NUMER_028   | Kierownik projektu
+2  | OSOBA_039           | OSOBA_055     | NUMER_029   | Analityk systemów
+3  | OSOBA_040      | OSOBA_052    | NUMER_030   | Programista senior
+4  | OSOBA_041           | OSOBA_056    | NUMER_031   | Tester oprogramowania
+5  | OSOBA_042          | OSOBA_057   | NUMER_032   | Administrator sieci
+
+Powyższa lista zawiera dane osobowe objęte ochroną RODO.
+Dostęp wyłącznie dla upoważnionych pracowników działu kadr.
+
+--- SEKCJA 10: PESEL SKLEJONY Z KONTEKSTEM (OCR ARTIFACT) ---
+Silnik powinien wyciąć numer mimo braku separatora.
+
+Akta sprawy sądowej.
+DaneosobyOSOBA_054 OSOBA_038 PESEL NUMER_028 zamieszkałyWarszawa.
+(sklejony tekst OCR — silnik powinien wychwycić NUMER_028)
+
+Wydruk z systemu ewidencji:
+Nazwisko OSOBA_039 ImieOSOBA_055 NUMER_029 Ulica KwiatowaNumer3.
+(PESEL bez keywordu — S5 decyduje)
+
+Formularz uproszczony:
+PESEL NUMER_030 DataUrodzenia19900101PlecMeski.
+
+--- SEKCJA 11: WIELE PESEL W JEDNYM ZDANIU ---
+
+Umowa pożyczki zawarta między: OSOBA_030 (NUMER_003)
+a OSOBA_058 OSOBA_034 (NUMER_004) z dnia NUMER_023 r.
+Poręczyciel: OSOBA_036 OSOBA_034, NUMER_011, zam. ADRES_002.
+Kwota pożyczki: KWOTA_008, oprocentowanie: 5% w skali roku.
+Spłata w 24 ratach miesięcznych po KWOTA_009.
+
+W tej samej sprawie jako świadkowie wystąpili:
+1. OSOBA_031, NUMER_006, ADRES_001,
+2. OSOBA_032, NUMER_008, ADRES_001.
+
+--- SEKCJA 12: PESEL Z RÓŻNYMI SEPARATORAMI PRZED NUMEREM ---
+
+Pismo urzędowe nr NUMER_044.
+Osoba: OSOBA_033; PESEL — NUMER_028; adres: Opole.
+
+Informacja z rejestru: nr PESEL = NUMER_029, imię = OSOBA_059.
+
+Dane ze skanu: PESEL/ NUMER_030 /data wystawienia NUMER_024.
+
+System kadrowy: [PESEL] NUMER_031 [Imię] OSOBA_060 [Nazwisko] OSOBA_043.
+
+Wydruk ZUS: NUMER_008 | Podstawa: KWOTA_010 | Składka: KWOTA_011.
+
+--- SEKCJA 13: GRANICZNE I TRUDNE PRZYPADKI ---
+
+Liczba bliska PESEL ale za krótka — NIE maskować:
+  Numer rachunku fragment: NUMER_052
+  Ciąg 10-cyfrowy: NUMER_053
+
+Liczba bliska PESEL ale za długa — NIE maskować:
+  NUMER_054  (12 cyfr)
+  NUMER_055  (12 cyfr — PESEL + dodatkowa cyfra)
+
+PESEL na początku linii bez kontekstu (S5 decyduje):
+NUMER_028 — dane z rejestru PESEL dotyczące osoby fizycznej.
+NUMER_029 — zapis historyczny z akt archiwalnych.
+
+PESEL na końcu linii:
+Dane identyfikacyjne osoby objętej decyzją: NUMER_031
+Numer ewidencyjny ubezpieczonego w systemie ZUS: NUMER_032
+
+PESEL w nawiasie:
+Osoba fizyczna (NUMER_003) wyraża zgodę na przetwarzanie danych.
+Pełnomocnik (nr NUMER_011) działa w imieOSOBA_061 mocodawcy.
+
+--- KONIEC DOKUMENTU TESTOWEGO ---
+Łączna liczba poprawnych PESEL do zamaskowania: ok. 60+
+Łączna liczba błędnych numerów (nie maskować bez keywordu): 5

@@ -1,0 +1,223 @@
+================================================================
+TEST RĘCZNY — 50 ADRESÓW (różne formaty)
+Cel: sprawdzić co silnik wykrywa, co pomija, jaki jest sufit OCR.
+Data: NUMER_007
+Każdy blok wkleić osobno do aplikacji.
+Oczekiwane: token(y) ADRES zakrywają całą wartość PII.
+================================================================
+
+--- SEKCJA A: STANDARD — pełny adres z kodem i miastem ---
+
+[A1] ul. + kod + miasto (przecinek)
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES obejmuje cały ciąg
+
+[A2] al. + kod + miasto
+ADRES_026, ADRES_036
+OCZEKIWANE: 1 ADRES
+
+[A3] pl. + kod + miasto
+ADRES_025, ADRES_048
+OCZEKIWANE: 1 ADRES
+
+[A4] os. + kod + miasto
+ADRES_024, ADRES_047
+OCZEKIWANE: 1 ADRES
+
+[A5] ul. + kod + miasto (bez przecinka)
+ADRES_017 ADRES_044
+OCZEKIWANE: 1 ADRES
+
+[A6] al. + litera w numerze budynku
+ADRES_023, ADRES_046
+OCZEKIWANE: 1 ADRES
+
+[A7] ul. + dwuczłonowa nazwa ulicy
+ADRES_022, ADRES_032
+OCZEKIWANE: 1 ADRES
+
+[A8] ul. + dwuczłonowa + spacja zamiast przecinka przed kodem
+ADRES_021 ADRES_057 ADRES_045
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA B: ADRES_056 ---
+
+[B1] ul. + numer bez kodu
+ADRES_020
+OCZEKIWANE: 1 ADRES (sama ulica)
+
+[B2] al. + numer + litera bez kodu
+ADRES_010
+OCZEKIWANE: 1 ADRES
+
+[B3] ul. + dwuczłonowa nazwa bez kodu
+ADRES_019
+OCZEKIWANE: 1 ADRES
+
+[B4] ADRES_055
+ADRES_018
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA C: KOD + MIASTO (bez ulicy) ---
+
+[C1] kod przed miastem (spacja)
+ADRES_031
+OCZEKIWANE: 1 ADRES
+
+[C2] kod przed miastem (przecinek)
+ADRES_043,
+OCZEKIWANE: 1 ADRES
+
+[C3] miasto przed kodem (spacja)
+ADRES_050
+OCZEKIWANE: 1 ADRES
+
+[C4] miasto przed kodem (przecinek)
+ADRES_049
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA D: ADRES W ZDANIU (kontekst) ---
+
+[D1] po "adres:"
+Adres zamieszkania: ADRES_017, ADRES_044
+OCZEKIWANE: 1 ADRES (nie zawiera "Adres zamieszkania")
+
+[D2] po "zamieszkały"
+Osoba zamieszkała ADRES_016, ADRES_043
+OCZEKIWANE: 1 ADRES
+
+[D3] po "NABYWCA"
+NABYWCA OSOBA_002 OSOBA_001, ADRES_014, ADRES_038
+OCZEKIWANE: ADRES dla ulicy + opcjonalnie OSOBA dla imieOSOBA_003
+
+[D4] w ADRES_052 + kod gdzie indziej
+Zamieszkały w ADRES_052 pod adresem ADRES_013, ADRES_031
+OCZEKIWANE: min. 1 ADRES dla ulicy+kodu, "w ADRES_052" też może być ADRES
+
+[D5] adres sprzedawcy na fakturze
+Serwis AGD, ADRES_011, ADRES_040
+OCZEKIWANE: ADRES dla ulicy+kodu (firma może być FIRMA lub nie)
+
+[D6] "Ades:" po OCR (brak r)
+Ades: ADRES_016, ADRES_043
+OCZEKIWANE: 1 ADRES (bez słowa "Ades:")
+
+--- SEKCJA E: OCR — LEKKIE ZNIEKSZTAŁCENIA (silnik POWINIEN wykryć) ---
+
+[E1] O zamiast 0 w kodzie
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES
+
+[E2] l zamiast 1 w numerze budynku
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES
+
+[E3] spacja przed kropką skrótu
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES (OcrNormalizer naprawia "ul .→ul.")
+
+[E4] przecinek zamiast kropki w ul.
+ADRES_015, ADRES_042
+OCZEKIWANE: 1 ADRES
+
+[E5] u. zamiast ul.
+ADRES_014, ADRES_038
+OCZEKIWANE: 1 ADRES
+
+[E6] spacja w środku nazwy ulicy
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES (OcrNormalizer łączy)
+
+[E7] O zamiast 0 w kodzie + l zamiast 1 w numerze
+ADRES_013, ADRES_031
+OCZEKIWANE: 1 ADRES
+
+[E8] brak przecinka między ulicą a kodem + OCR w kodzie
+ADRES_012 ADRES_041
+OCZEKIWANE: 1 ADRES
+
+[E9] I zamiast l (wielkie I) w skrócie
+ADRES_011, ADRES_040
+OCZEKIWANE: 1 ADRES
+
+[NUMER_001] "al." bez kropki (al bez kropki)
+ADRES_010, ADRES_039
+OCZEKIWANE: 1 ADRES
+
+[NUMER_002] spacja w numerze lokalu
+ADRES_009 /23, ADRES_038
+OCZEKIWANE: 1 ADRES (lub min. ADRES dla ADRES_054)
+
+[NUMER_003] kod z O zamiast 0, miasto z literówką
+ADRES_008, ADRES_037
+OCZEKIWANE: 1 ADRES
+
+--- SEKCJA F: OCR — CIĘŻKIE ZNIEKSZTAŁCENIA (możliwy sufit OCR) ---
+
+[F1] al. → aI. (capital I), ł → I w nazwie
+ADRES_007, ADRES_036
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F2] ul. → d. + skrócona nazwa ulicy (z bugs doc_00064)
+d. ADRES_029
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F3] ul. → u (bez kropki) + skrócona nazwa (z bugs doc_00050)
+u ADRES_028
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F4] pl. → pI. + wolh→ wolności + miasto obcięte (z bugs doc_00059)
+ADRES_006 ADRES_035
+OCZEKIWANE: prawdopodobnie BRAK (sufit OCR) — dokumentować wynik
+
+[F5] brak skrótu ul., nazwa skrócona, kod poprawny
+ADRES_027
+OCZEKIWANE: BRAK (brak prefiksu ul./al.) — udokumentować
+
+[F6] brak skrótu i brak kodu — sama ulica bez prefiksu
+ADRES_051
+OCZEKIWANE: BRAK — nie możemy maskować każdej nazwy własnej
+
+--- SEKCJA G: TRUDNE PRZYPADKI (możliwe NUMER_004) ---
+
+[G1] kod który wygląda jak rok (nie adres)
+Wyrok z dnia 15-2024 roku
+OCZEKIWANE: NIE ADRES — kod pocztowy ma format NUMER_005, rok NUMER_006
+
+[G2] numer lokalu który wygląda jak adres
+Lokal 4/6 w budynku
+OCZEKIWANE: może być ADRES (numer budynku/lokalu) — akceptowalne
+
+[G3] adres zagraniczny (bez polskiego kodu)
+10 Downing Street, London SW1A 2AA
+OCZEKIWANE: prawdopodobnie BRAK (nie polski format)
+
+[G4] adres z bardzo długą nazwą ulicy
+ADRES_005, ADRES_034
+OCZEKIWANE: 1 ADRES (długa nazwa ulicy)
+
+[G5] adres z myślnikiem w nazwie ulicy
+ADRES_004, ADRES_033
+OCZEKIWANE: 1 ADRES
+
+[G6] kod w środku zdania z innymi liczbami
+Umowa NUMER_008 dotyczy lokalu przy ADRES_003, ADRES_032, wartość KWOTA_001
+OCZEKIWANE: ADRES dla ulicy+kodu, KWOTA dla KWOTA_001 (oddzielne tokeny)
+
+[G7] dwa adresy w jednym zdaniu
+Nadawca: ADRES_002, ADRES_031. Odbiorca: ADRES_001, ADRES_030.
+OCZEKIWANE: 2 osobne tokeny ADRES
+
+[G8] adres bez numeru budynku (sama ulica)
+ADRES_053, Warszawa
+OCZEKIWANE: może NIE być ADRES (brak numeru) — dokumentować
+
+================================================================
+INSTRUKCJA ZAPISU WYNIKÓW:
+Przy każdym przypadku zapisz:
+  OK    = token ADRES zakrył całą encję (poprawnie)
+  CZĘŚCIOWO = token jest ale nie obejmuje całego adresu
+  BRAK  = silnik nie wykrył adresu
+  FP    = silnik zamaskował coś co nie powinno być ADRES
+  SUFIT = nie ma szans — OCR zniszczył tekst (akceptowalne)
+================================================================

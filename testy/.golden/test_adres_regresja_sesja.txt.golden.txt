@@ -1,0 +1,56 @@
+TEST REGRESJI — tylko problematyczne zapisy z sesji NUMER_003 (AddressEngine v0)
+Każdy blok: [nazwa] wejście, potem OCZEKIWANE. Kolory w podglądzie: zielony=AddressEngine, niebieski=stary silnik, czerwony=odkryty ręcznie.
+
+[Test 1 — dwuczłonowa nazwa miasta użyta jako nazwa ulicy]
+ADRES_006, ADRES_013
+OCZEKIWANE: 2 tokeny ADRES (ulica+numer / kod+miasto), zero OSOBA na "OSOBA_001"
+
+[Test 1b — kontrola ogólności: inne miasto kończące się na "OSOBA_001", bez adresu]
+Klient odwiedził oddział w mieście ADRES_016 w zeszłym miesiącu.
+OCZEKIWANE: całe "ADRES_016" jako ADRES, zero OSOBA na "OSOBA_001" — jeśli tu też pęknie,
+przyczyna jest ogólna (każde miasto na "OSOBA_001" poza strukturą adresu), nie specyficzna dla
+słowa "Zielona"
+
+[2 — myślnik w nazwie ulicy]
+ADRES_005, ADRES_012
+OCZEKIWANE: 1 token ADRES całość, "Gdańska-" nie zostaje jawne
+
+[3 — patron ulicy, imię+nazwisko w nazwie]
+ADRES_004, ADRES_011
+OCZEKIWANE: 1 token ADRES całość, zero OSOBA na "OSOBA_002 OSOBA_003"
+
+[4 — ulica+numer+miasto BEZ kodu pocztowego]
+ADRES_001
+OCZEKIWANE: 1 token ADRES całość, "Gdańsk" nie zostaje jawne
+
+[5 — dwuczłonowa nazwa patronimiczna + dwie liczby przed kodem]
+ADRES_003 ADRES_017 ADRES_010
+OCZEKIWANE: możliwie 1 token ulica+numer, nie zaczyna się od "OSOBA_004" (bez "ul. OSOBA_005")
+
+[6 — regresja PLN, nie adres]
+Kwota do zapłaty: KWOTA_001
+OCZEKIWANE: PLN zostaje jawne (waluta, nie adres) — BRAK tokenu ADRES na "PLN"
+
+[7 — regresja IBAN, nie adres]
+IBAN NUMER_001
+OCZEKIWANE: cały IBAN jako NUMER (nie ADRES), "PL" nie ucięte jako fałszywy prefiks adresowy
+
+[8 — zdegradowany prefiks OCR pl. → pI.]
+ADRES_002
+OCZEKIWANE: 1 token ADRES (prefiks znormalizowany przed maskowaniem)
+
+[9 — trzy pary kod+miasto w jednej linii]
+ADRES_007, ADRES_009, ADRES_008
+OCZEKIWANE: 3 osobne tokeny ADRES, żaden kod nie ucięty
+
+[10 — miasto po przyimku, bez adresu — kontrola]
+Spotkanie odbędzie się w ADRES_014 w przyszłym tygodniu.
+OCZEKIWANE: 1 token ADRES na "Warszawie" (NameEngine CITY_PREP — niebieski, to OK)
+
+[11 — samo miasto bez kontekstu, obok innego adresu — kontrola]
+Klient mieszka w ADRES_015. WARSZAWA to inne miasto wspomniane w umowie.
+OCZEKIWANE: oba miasta zamaskowane (Anchor A.11c/CITY_PREP — niebieskie, to OK)
+
+[12 — NIP sklejony z kodem pocztowym bez separatora — kontrola regresji wcześniejszej sesji]
+NUMER_002 ADRES_007
+OCZEKIWANE: NIP jako NUMER, "ADRES_007" jako osobny ADRES — nie sklejone

@@ -1,0 +1,116 @@
+=============================================================
+TEST NIP — WSZYSTKIE WARIANTY ZAPISU
+Cel: sprawdzić czy silnik maskuje / nie maskuje poprawnie.
+Prawidłowe NIPy (S5 OK): NUMER_019, NUMER_020, NUMER_021,
+  NUMER_022, NUMER_023, NUMER_024
+Błędny NIP (zła suma S5): NUMER_034
+=============================================================
+
+--- SEKCJA 1: FORMAT 3-3-2-2 Z ETYKIETĄ ---
+Oczekiwane: cały fragment "NIP: NUMER_025" zamaskowany → NUMER_001
+
+Faktura VAT nr NUMER_026.
+Sprzedawca: FIRMA_001, NUMER_001.
+Nabywca: OSOBA_001, ADRES_004, ADRES_006.
+Kwota netto: KWOTA_001. VAT 23%: KWOTA_002.
+
+Umowa o świadczenie usług nr NUMER_033 zawarta dnia NUMER_011.
+Wykonawca: FIRMA_002, NUMER_002.
+Zamawiający: OSOBA_002, zam. ADRES_002.
+Wynagrodzenie: KWOTA_003 brutto miesięcznie.
+
+Wezwanie do zapłaty. Wierzyciel: Usługi Budowlane OSOBA_003.
+NUMER_003. Kwota zaległości: KWOTA_004.
+Termin zapłaty: 14 dni od daty doręczenia pisma.
+
+--- SEKCJA 2: FORMAT 3-2-2-3 Z ETYKIETĄ ---
+Oczekiwane: cały fragment "NIP: NUMER_025" zamaskowany → NUMER_001
+NUMER_027: wcześniej "NIP:" zostawało w tekście, same cyfry były maskowane.
+
+Deklaracja VAT-7 za miesiąc marzec 2024.
+Podatnik: Sklep Elektroniczny XYZ, NUMER_004.
+Adres: ADRES_003, ADRES_005.
+
+Protokół z kontroli sanitarnej z dnia NUMER_012.
+Kontrolowany podmiot: OSOBA_006 Smakowity, NUMER_005.
+Wynik kontroli: warunki sanitarne spełnione.
+
+Wniosek o rejestrację w CEIDG.
+Wnioskodawca: OSOBA_004, NUMER_006.
+Działalność: usługi kosmetyczne. Data rozpoczęcia: NUMER_013.
+
+--- SEKCJA 3: SPACJE ZAMIAST MYŚLNIKÓW (OCR) ---
+Oczekiwane: NIP zamaskowany — OCR zamienia myślniki na spacje.
+
+Pismo z dnia NUMER_014 do Urzędu Skarbowego w ADRES_007.
+Dane podatnika: NUMER_001.
+Proszę o wydanie zaświadczenia o niezaleganiu w podatkach.
+
+Faktura korygująca nr NUMER_028.
+Sprzedawca: Hurtownia ABC. NUMER_002.
+Korekta dotyczy faktury NUMER_029 z dnia NUMER_015.
+
+--- SEKCJA 4: BEZ SEPARATORÓW (10 CYFR) ---
+Oczekiwane: NIP zamaskowany — ciągłe cyfry po słowie kluczowym.
+
+Zaświadczenie wydane przez Naczelnika US Warszawa-Mokotów.
+NUMER_007. Brak zaległości na dzień NUMER_013.
+
+Pismo wychodzące nr NUMER_030.
+Nadawca NUMER_008, adres do korespondencji: ADRES_001.
+
+--- SEKCJA 5: WARIANTY SŁOWA KLUCZOWEGO ---
+Oczekiwane: wszystkie warianty etykiety maskują NIP.
+
+Rachunek uproszczony. Wystawca: OSOBA_005. NUMER_001.
+Wartość usługi: KWOTA_005 brutto.
+
+Oferta handlowa nr NUMER_031.
+Wystawiający: FIRMA_003, NUMER_009.
+Termin ważności oferty: 30 dni.
+
+Karta klienta biznesowego. NIP_nabywcy: NUMER_023.
+Przyznany limit kredytowy: KWOTA_006.
+
+--- SEKCJA 6: NIP BEZ ETYKIETY (GOŁA LICZBA) ---
+Oczekiwane: NIP zamaskowany przez wzorzec strukturalny (S5 musi przejść).
+Uwaga: "NIP:" nie pojawia się w tekście, tylko same cyfry.
+
+Raport kasowy za dzień NUMER_016.
+Transakcje z podmiotem NUMER_019 na łączną kwotę KWOTA_007.
+
+Rejestr umów. Kontrahent NUMER_022 — umowa z dnia NUMER_017.
+
+W pliku widnieje numer NUMER_021 powiązany z reklamacją NUMER_032.
+
+--- SEKCJA 7: PREFIKS PL ---
+Oczekiwane: NIP z prefiksem PL zamaskowany.
+
+Faktura unijna. Numer VAT sprzedawcy: PL NUMER_019.
+Usługa świadczona na terenie UE. Data wystawienia: NUMER_018.
+
+Transakcja wewnątrzwspólnotowa. NIP UE nabywcy: PL NUMER_021.
+
+--- SEKCJA 8: BŁĘDNY NIP BEZ ETYKIETY (S5 FAIL) ---
+Oczekiwane: NIE zamaskowane — zła suma kontrolna, brak słowa "NIP".
+(Ostatnia cyfra zmieniona: NUMER_021 → NUMER_034)
+
+Raport rozbieżności. Podany numer kontrahenta: NUMER_034.
+Weryfikacja w bazie GUS: numer nieprawidłowy, brak rekordu.
+
+Uwaga: liczba NUMER_034 nie powinna zostać zamaskowana — brak etykiety i błędna suma.
+
+--- SEKCJA 9: BŁĘDNY NIP Z ETYKIETĄ (S5 BYPASS) ---
+Oczekiwane: ZAMASKOWANE mimo złej sumy — keyword "NIP" zwalnia z S5.
+Symulacja: OCR przekręcił ostatnią cyfrę prawidłowego NIPu.
+
+Formularz zgłoszeniowy (skan OCR słabej jakości).
+NUMER_010.
+Właściciel: OSOBA_007 Wiśniak. Proszę o weryfikację dokumentu.
+
+=============================================================
+KLUCZ DO OCENY WYNIKÓW:
+  SEKCJA 1-7,9 → wszystkie numery NIP powinny być zamaskowane (NUMER_XXX)
+  SEKCJA 8     → liczba NUMER_034 NIE powinna być zamaskowana
+  W żadnej sekcji słowo "NIP:" nie powinno zostawać w tekście bez tokenu
+=============================================================

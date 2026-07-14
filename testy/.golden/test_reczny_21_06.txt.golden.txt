@@ -1,0 +1,126 @@
+PLIK TESTOWY — test ręczny NUMER_009
+Cel: weryfikacja silnika + Guard na 4 poziomach degradacji OCR.
+Każdy blok to inny dokument i inny typ danych.
+Wkleić cały plik do aplikacji przez Share.
+
+========================================================
+LVL 0 — CZYSTE SKANOWANIE
+Dokument: Pismo ZUS
+Sprawdza: podstawowe encje + YELLOW URODZENIE + YELLOW MIEJSCE_UR
+========================================================
+
+Zakład Ubezpieczeń Społecznych, Oddział w ADRES_012
+ADRES_006, ADRES_011
+
+Dotyczy: OSOBA_002, NUMER_003
+Adres zameldowania: ADRES_005, ADRES_010
+NUMER_014
+E-mail: EMAIL_001
+
+Ur. NUMER_010 r. w ADRES_012.
+
+Pan OSOBA_001, działając na podstawie art. 83 ust. 1 pkt 3 ustawy
+z dnia 13 października 1998 r. o systemie ubezpieczeń społecznych,
+składa wniosek o przeliczenie emerytury.
+
+Numer sprawy: nr 1204/NUMER_020
+Poprzednia decyzja: poz. 4/2022
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE YELLOW] ur. NUMER_010 → URODZENIE
+[SPODZIEWANE YELLOW] ur. w ADRES_012 → MIEJSCE_UR
+[SPODZIEWANE YELLOW] nr 1204/NUMER_020 → SYGNATURA (wzorzec ma "1204" i "2024" ale "EI" pośrodku — czy regex złapie "1204"?)
+[SPODZIEWANE YELLOW] poz. 4/2022 → SYGNATURA (kotwica "poz")
+[NIE POWINIEN ZŁAPAĆ] art. 83 ust. 1 pkt 3 → brak kotwicy i brak "/"
+[NIE POWINIEN ZŁAPAĆ] str. 1/3 — paginacja na dole: str. 1/3
+
+========================================================
+LVL 1 — LEKKI SZUM OCR
+Dokument: Umowa najmu
+Sprawdza: PESEL z błędem spacji + telefon bez +48 + sygnatura umowy
+========================================================
+
+UMOWA NAJMU LOKALU MIESZKALNEGO
+zawarta dnia NUMER_011 w ADRES_013
+
+Wynajmujący: OSOBA_003, NUMER_006
+Nr rachunku: NUMER_001
+
+Najemca: OSOBA_004
+NUMER_004
+Adres: ADRES_004, ADRES_009
+NUMER_016
+
+§ 1. Wynajmujący oddaje w najem lokal przy ADRES_003, ADRES_008.
+§ 4. Czynsz: KWOTA_001 miesięcznie.
+§ 7. Umowa zawarta na czas określony 12 miesięcy.
+
+Sygnatura umowy: nr NUMER_023
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE RED] NUMER_004 → PESEL_SPACE (czy OcrNormalizer sklei przed silnikiem? Jeśli tak — silnik maskuje, Guard nie strzela RED)
+[SPODZIEWANE RED] NUMER_019 → NUMER_027 cyfr z separatorem, bez +48)
+[SPODZIEWANE YELLOW] nr NUMER_023 → SYGNATURA? (wzorzec `\d{1,6}[/\-]\d{1,6}` szuka cyfr — "15" jest przed "/N", "N" to litera, więc regex NIE złapie "15/N". OSOBA_008 "N/2024" → N nie jest cyfrą. FN Guarda!)
+[SPODZIEWANE RED] NIP i IBAN → silnik powinien zamaskować przed Guardem
+
+========================================================
+LVL 2 — SILNA DEGRADACJA OCR
+Dokument: Wezwanie komornicze (mocny szum, rozsypane litery)
+Sprawdza: de-leet w imieOSOBA_013 + IBAN z I/O zamiast cyfr + sygnatura akt
+========================================================
+
+Km 0m k Sạdowy pr Wroclaw-Sr 3 Kr0p0wack
+D NUMER_025 wzywa P4nina OSOBA_005
+NUMER_005 do wys tepowania
+w spraw e nr NUMER_024
+
+Ni n. kont a kom: NUMER_002
+Dluzn: P4na OSOBA_005 ADRES_002 00001 OSOBA_009
+
+Wierz: Sp. z o.o. ZUS-Warsz NUMER_007
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE] P4nina OSOBA_005 → de-leet → "OSOBA_010 OSOBA_011 OSOBA_006" → NameEngine wykryje OSOBA?
+[SPODZIEWANE RED] NUMER_005 → cyfry z I (leet) — OcrNormalizer powinien naprawić I→1, spacje skleić → NUMER_015 → silnik maskuje; jeśli nie → Guard PESEL_SPACE?
+[SPODZIEWANE NUMER_021] NUMER_002→ IBAN z "O" zamiast "0" — Guard regex `[A-Z0-9]` akceptuje O jako literę → Guard RED złapie mimo błędu OCR? Silnik OcrNormalizer OCR_IBAN_SPLIT powinien naprawić O→0 → silnik maskuje
+[SPODZIEWANE YELLOW] nr NUMER_024 → SYGNATURA (kotwica "nr", wzorzec "8923/2023")
+[PUŁAPKA FP] 325O → O to litera, nie cyfra — Guard traktuje jako część IBAN? Sprawdź
+
+========================================================
+LVL 3 — ZDJĘCIE TELEFONEM (dobra jakość, ale specyficzne artefakty)
+Dokument: Faktura VAT
+Sprawdza: NIP bez myślników + nr faktury + pułapka FP §/ust.
+========================================================
+
+FAKTURA VAT nr NUMER_022
+Data wystawienia: NUMER_012
+Termin płatności: NUMER_013
+
+Sprzedawca:
+Przedsiębiorstwo Usług Technicznych "FIRMA_001 NUMER_008
+Nr konta: NUMER_002
+
+Nabywca:
+OSOBA_012 OSOBA_007
+NUMER_003
+ADRES_001, ADRES_007
+NUMER_017
+nr polisy: NUMER_026
+
+Pozycja 1: Usługa konsultacyjna — KWOTA_002 netto
+Stawka VAT: 23% (§ 43 ust. 1/2 Ustawy o VAT — pułapka FP)
+Kwota VAT: KWOTA_003
+RAZEM brutto: KWOTA_004
+
+Podstawa prawna: art. 106e ust. 1 ustawy z dnia 11 marca 2004 r.
+Nr zamówienia: zam. 2024/11/0089
+
+-- PUŁAPKI GUARD --
+[SPODZIEWANE RED] NUMER_008 → Guard RED NIP (10 cyfr bez separatorów — regex `\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}` złapie?)
+[SPODZIEWANE RED] NUMER_003 → PESEL_SPACE
+[SPODZIEWANE RED] NUMER_018 → TELEFON_PELNY
+[SPODZIEWANE YELLOW] nr NUMER_022 → SYGNATURA? (w łańcuchu "NUMER_022" → "06/2024" pasuje do `\d{1,6}[/\-]\d{1,6}`, kotwica "nr" w oknie)
+[SPODZIEWANE YELLOW] nr polisy: NUMER_026 → LICZBA (8 cyfr, kotwica "nr")
+[SPODZIEWANE YELLOW] zam. 2024/11/0089 → SYGNATURA? ("2024/11" pasuje, ale kotwica "zam." → czy "nr zamówienia" w oknie 35 znaków zawiera "nr"? Tak!)
+[NIE POWINIEN ZŁAPAĆ FP] § 43 ust. 1/2 → "1/2" pasuje do wzorca, ale kotwica "ust." nie jest w CTX_SYGN → GUARD NIE ZŁAPIE → OK!
+[NIE POWINIEN ZŁAPAĆ FP] art. 106e ust. 1 → brak "/" → NIE złapie

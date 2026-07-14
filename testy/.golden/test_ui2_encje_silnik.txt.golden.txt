@@ -1,0 +1,131 @@
+================================================================
+PLIK TESTOWY — UI-2 + encje silnika
+Data: NUMER_030
+Cel: smoke test panelu wyniku (UI-2) ORAZ podstawowe typy encji
+Instrukcja: Udostępnij cały plik do LynxMask (Share → LynxMask)
+================================================================
+
+CHECKLIST UI-2 — odhacz na telefonie po pseudonimizacji:
+  [ ] Baner statusu u góry (zielony / żółty / czerwony)
+  [ ] Sekcja RED (jeśli widoczna): „Maskuj” → hit znika, Kopiuj odblokowane
+  [ ] Sekcja YELLOW „Do sprawdzenia”: Guard + flagi NameEngine
+  [ ] YELLOW „Maskuj” → auto-token; „Nie maskuj” → znika z listy
+  [ ] „Podgląd tekstu” → klik OSOBA_001 (lub inny token) → odkrycie wartości
+  [ ] Podgląd: wklej zaznaczony fragment → typ → „Maskuj”
+  [ ] „Kopiuj dokument” → schowek ma tokeny (OSOBA_001), nie oryginały
+  [ ] „Dodaj do biblioteki” (gdy brak RED) + opis opcjonalny
+  [ ] Brak przycisków „Encje” / „Dodaj” (stary layout usunięty)
+
+CHECKLIST SILNIK — co powinno zostać zamaskowane (tokeny w podglądzie):
+  OSOBA:   OSOBA_001, OSOBA_002, OSOBA_003
+  EMAIL:   EMAIL_001, EMAIL_002
+  NUMER:   NUMER_003, NUMER_008, NUMER_014
+  ADRES:   ADRES_002, ADRES_004; ADRES_001, ADRES_003
+  FIRMA:   Przedsiębiorstwo „ALTEX” Sp. z o.o. (jeśli wykryte)
+  KWOTA:   KWOTA_001 (jeśli wykryte)
+
+CHECKLIST GUARD — co może zostać jako alert PO maskowaniu silnika:
+  RED (blokuje Kopiuj): pełny email, telefon, dowód, IBAN, NIP — jeśli silnik pominął
+  YELLOW: PESEL z błędną sumą, ur. + data, ur. w + miasto, sygnatura z „nr”, EMAIL_005
+
+================================================================
+DOKUMENT TESTOWY — Pismo procesowe
+NUMER_012 — Sąd Rejonowy w ADRES_005
+================================================================
+
+Kielce, dnia 22 czerwca 2026 r.
+
+W sprawie o zapłatę wierzytelności pomiędzy:
+
+Powód: OSOBA_001, NUMER_004, NUMER_009,
+zamieszkały ADRES_002, ADRES_004,
+NUMER_015,
+e-mail: EMAIL_001
+
+Pozwany: OSOBA_002, NUMER_005,
+zamieszkała ADRES_001, ADRES_003,
+NUMER_016
+
+Pełnomocnik powoda: adw. OSOBA_003, nr wpisu 12345,
+e-mail: EMAIL_002
+
+-- FLAGI NameEngine (YELLOW w UI-2) --
+Pełnomocnik strony pozwanej: OSOBA_011. OSOBA_007 Zepelin, specjalista ds. mediacji.
+Inspektor nadzoru budowlanego: mgr OSOBA_008 Celej, upoważniona do oględzin terenu.
+
+-- YELLOW Guard: daty i miejsca urodzenia --
+Powód podaje: ur. NUMER_010 r. w ADRES_005.
+Pozwana podaje: ur. NUMER_011 w ADRES_006.
+
+-- YELLOW Guard: sygnatury i numery z kotwicą --
+Poprzednia sprawa: nr 1204/NUMER_020. Akt notarialny: poz. 4/2022.
+Nr polisy ubezpieczeniowej: NUMER_024.
+
+-- YELLOW Guard: PESEL z błędną sumą kontrolną (silnik NIE maskuje) --
+Numer identyfikacyjny w kopii akt: NUMER_025
+OSOBA_009 błędny numer: NUMER_026
+
+-- YELLOW Guard: fragment email (zniekształcony OCR) --
+Kopia korespondencji: jan.OSOBA_001@ (ucięty adres)
+
+-- RED Guard: wycieki celowo „gołe” (mogą przejść jeśli silnik pominie) --
+Kontakt awaryjny: EMAIL_003
+Telefon pełnomocnika: NUMER_018
+Dowód os0bisty powoda: NUMER_019
+Rachunek do wpłaty: NUMER_001
+NIP wierzyciela pomocniczego: NUMER_013
+
+================================================================
+SEKCJA NEGATYWNA — NIE powinno być maskowane / flagowane
+================================================================
+
+Data zawarcia umowy: 15 marca 2024 r.
+Termin płatności: NUMER_029
+Podstawa prawna: art. 23 ust. 1 RODO, § 5 pkt 2 ustawy.
+Strona www: www.lynxmask.pl
+Instytucja: Sąd Rejonowy w ADRES_005, Urząd Skarbowy Kielce-Południe.
+Numer faktury (bez kotwicy Guard): NUMER_021
+Rok budowy budynku: 1998
+Paginacja: str. 1/3
+
+================================================================
+SCENARIUSZ MIESZANY — jeden akapit (najtrudniejszy)
+================================================================
+
+Umowa nr NUMER_022 zawarta w ADRES_005 dnia 22 czerwca 2026 r.
+pomiędzy OSOBA_004, NUMER_003, NUMER_008,
+zamieszkałym ADRES_002, ADRES_004, NUMER_017,
+EMAIL_004, a OSOBA_010 OSOBA_005, NUMER_006,
+zamieszkałą ADRES_001, ADRES_003,
+nr konta NUMER_002,
+na kwotę KWOTA_001 brutto, z terminem płatności 30 dni.
+
+================================================================
+OCZEKIWANY PRZEBIEG UI-2 (orientacyjny)
+================================================================
+
+1. Po wejściu: baner żółty/czerwony jeśli są flagi lub RED hity.
+2. RED (jeśli widoczne): email / tel / dowód / IBAN / NIP z sekcji wycieków.
+   → „Maskuj” na każdym → sekcja znika → „Kopiuj” i „Dodaj do biblioteki” aktywne.
+3. YELLOW: NUMER_007, ur. NUMER_010, sygn. nr 1204/NUMER_020,
+   flagi „Pełnomocnik… OSOBA_007 Zepelin”, „Inspektor… OSOBA_008 Celej”.
+   → „Maskuj” lub „Nie maskuj” na każdej pozycji.
+4. Podgląd tekstu: tokeny OSOBA_001, NUMER_001, ADRES_001 itd.
+   → klik token → oryginał na czerwono → ponowny klik → z powrotem token.
+5. Kopiuj: tekst ze schowka = outputText (tokeny, bez SESJA_ prefix w treści kopiowanej
+   zależy od implementacji ShareTarget — sprawdź czy są tokeny).
+6. Dodaj do biblioteki: opis np. „Test UI-2 KWOTA_002” → zapis w Bibliotece.
+
+================================================================
+PUŁAPKI REGRESJI (znane edge case’y — notatka dla testera)
+================================================================
+
+[NIP 3-2-2-3] NUMER_013 — pełny NIP wierzyciela (NUMER_023 historyczny)
+[NUMER_028 — silnik może nie maskować; Guard RED NIP
+[PESEL spacje] NUMER_027— silnik/OCR może skleić przed Guardem
+[NUMER_031
+[Miasto FP] ADRES_007 — NameEngine nie powinien flagować „OSOBA_006” jako nazwisko
+
+================================================================
+KONIEC PLIKU TESTOWEGO
+================================================================

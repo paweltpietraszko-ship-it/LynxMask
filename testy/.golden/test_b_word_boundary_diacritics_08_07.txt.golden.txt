@@ -1,0 +1,161 @@
+TEST — ASCII \b vs polskie litery diakrytyczne (bug hipoteza NUMER_003)
+Cel: sprawdzić na telefonie czy wzorce kończące match na ą/ć/ę/ł/ń/ó/ś/ź/ż + \b
+zostawiają PII jawne, ucinają token (osierocona litera), czy Anchor/AddressEngine ratuje.
+
+Jak czytać wynik:
+- JAWNE = cała encja widoczna w tekście (problem)
+- URWANE = zamaskowane prawie wszystko, zostaje 1 litera (np. "ź" po "Łód") — też problem
+- TOKEN = pełny token NUMER_008 (OK)
+- Kolory DEBUG: zielony=AddressEngine, niebieski=inne warstwy, czerwony=odkryte ręcznie
+
+================================================================================
+SEKCJA A — KWOTA: suffix "zł" (Structural \b(?:złlPLN)\b — gałąź zł podatna)
+Anchor A.9 powinien ratować "cyfra + zł"; jeśli nie — jawne PII.
+================================================================================
+
+[A1] Suffix zł po kwocie (klasyczny bug)
+Kwota do zapłaty: KWOTA_001 brutto
+OCZEKIWANE: TOKEN KWOTA na całość "KWOTA_001" (min. bez jawnego "zł")
+
+[A2] Suffix zł bez przecinka
+Należność główna: KWOTA_002
+OCZEKIWANE: TOKEN KWOTA, zero jawnego "KWOTA_002"
+
+[A3] Suffix zł z OCR liter zamiast zer (Anchor D-class)
+kwota: KWOTA_003
+OCZEKIWANE: TOKEN KWOTA, zero jawnego "OOO" ani "zł"
+
+[A4] OSOBA_006 zł na linii (minimalny przypadek)
+KWOTA_004
+OCZEKIWANE: TOKEN KWOTA
+
+[A5] Kontrola — PLN zamiast zł (Structural powinien łapać bez Anchor)
+Kwota: KWOTA_005 netto
+OCZEKIWANE: TOKEN KWOTA
+
+[A6] Kontrola — prefix zł (inny wzorzec, \b przed zł działa)
+KWOTA_007
+OCZEKIWANE: TOKEN KWOTA
+
+[A7] Kwota słowna S4-A z samym "zł" (Structural 676 — gałąź zł podatna)
+KWOTA_008
+OCZEKIWANE: TOKEN KWOTA na całość frazy z "zł"
+
+[A8] Kontrola S4-A — "złotych" kończy się ASCII (powinno działać)
+KWOTA_009
+OCZEKIWANE: TOKEN KWOTA
+
+[A9] S4-B z (?!\p{L}) — kontrola naprawy
+KWOTA_010
+OCZEKIWANE: TOKEN KWOTA (ten sam tekst co A4, inna ścieżka w silniku)
+
+================================================================================
+SEKCJA B — ADRES: miasto kończące się na literę podatną (ź, ń, ą…)
+Ryzyko: truncation "Łódź"→"Łód" + jawne "ź", lub brak tokenu.
+================================================================================
+
+[B1] Kod + Łódź (końcówka ź)
+Adres zamieszkania: ADRES_001, ADRES_002
+OCZEKIWANE: TOKEN ADRES, zero jawnego "Łódź" (zero osieroconego "ź")
+
+[B2] OSOBA_007 para kod+miasto Łódź
+ADRES_002
+OCZEKIWANE: 1 TOKEN ADRES na całość, zero jawnego "Łódź"
+
+[B3] Toruń (końcówka ń)
+ADRES_006
+OCZEKIWANE: 1 TOKEN ADRES, zero jawnego "Toruń"
+
+[B4] Poznań (końcówka ń)
+ADRES_005
+OCZEKIWANE: 1 TOKEN ADRES, zero jawnego "Poznań"
+
+[B5] Kontrola — Gdańsk (końcówka k, ASCII)
+ADRES_004
+OCZEKIWANE: 1 TOKEN ADRES, zero jawnego "Gdańsk"
+
+[B6] Kontrola — ADRES_011 (końcówka a na "OSOBA_004")
+ADRES_003
+OCZEKIWANE: TOKEN ADRES, zero OSOBA na "OSOBA_004", zero jawnego miasta
+
+[B7] Miasto po przyimku (NameEngine CITY_PREP — \b po nazwie)
+Umowa zawarta w ADRES_008 dnia NUMER_004.
+OCZEKIWANE: TOKEN ADRES na "Toruń", nie samo "Toru" + jawne "ń"
+
+[B8] Miasto po "w" — Poznań
+Zamawiający zamieszkały w ADRES_009 od 2019 roku.
+OCZEKIWANE: TOKEN ADRES na "Poznań"
+
+[B9] Miasto po "w" — Łódź
+Dostawa towaru do ADRES_010 w terminie 14 dni.
+OCZEKIWANE: TOKEN ADRES na "Łódź", zero osieroconego "ź"
+
+================================================================================
+SEKCJA C — OSOBA: nazwisko kończące się na ń, ś, ć (NameEngine + \b)
+================================================================================
+
+[C1] Nazwisko na ń (forward)
+Imię i nazwisko: OSOBA_008 Kowalińska
+OCZEKIWANE: TOKEN OSOBA, zero jawnego "Kowalińska"
+
+[C2] Nazwisko na ń (backward)
+Kowaliński, OSOBA_009
+OCZEKIWANE: TOKEN OSOBA na całość, zero jawnego "Kowaliński"
+
+[C3] Nazwisko na ś
+Umowę podpisał: OSOBA_002
+OCZEKIWANE: TOKEN OSOBA, zero jawnego "OSOBA_005"
+
+[C4] Kontrola — nazwisko ASCII
+Imię i nazwisko: OSOBA_003
+OCZEKIWANE: TOKEN OSOBA
+
+[C5] Dwa słowa jak miasto (overlap ADRES_011)
+Adres: ADRES_012 ADRES_007
+OCZEKIWANE: TOKEN ADRES na frazę, zero OSOBA na "OSOBA_004"
+
+[C6] Pan + imię (honorific, końcówki ą w panią — keyword nie match końcówka)
+Pani OSOBA_001
+OCZEKIWANE: TOKEN OSOBA
+
+================================================================================
+SEKCJA D — MIESZANE (realistyczny fragment umowy)
+Jeden przebieg — łatwiej zobaczyć czy coś zostaje jawne w kontekście.
+================================================================================
+
+[D1]
+UMOWA O ŚWIADCZENIE USŁUG
+Zleceniodawca: Kowaliński, OSOBA_009, zam. ADRES_002
+Kwota: KWOTA_006 brutto
+Wynagrodzenie płatne w terminie 14 dni od daty faktury.
+Podpisano w ADRES_009 dnia NUMER_005.
+OCZEKIWANE:
+- OSOBA: Kowaliński / OSOBA_009
+- ADRES: ADRES_002 (pełny, bez urwanej "ź")
+- KWOTA: KWOTA_006 (pełny token)
+- ADRES: Poznań
+- zero jawnych: Kowaliński, Łódź, zł, Poznań
+
+================================================================================
+SEKCJA E — KONTROLA (encje NIE podatne na ten bug — powinny zawsze przejść)
+================================================================================
+
+[E1] PESEL + NIP (cyfry, \b OK)
+NUMER_001
+NUMER_002
+
+[E2] Telefon
+NUMER_006
+
+[E3] Email
+E-mail: EMAIL_001
+
+[E4] Prawo jazdy (keyword kończy się ASCII: jazdy)
+prawo jazdy: NUMER_007
+
+================================================================================
+NOTATKA DLA TESTERA
+Po pseudonimizacji wklej do wyniki_testy_reczne.txt:
+- które linie NUMER_009 mają JAWNE / URWANE / TOKEN
+- kolor tokenów (zielony/niebieski) jeśli DEBUG
+- czy Guard (żółty/czerwony) coś zgłosił
