@@ -66,7 +66,12 @@ class ManualTestRegressionTest {
                 created++
                 println("NOWA MIGAWKA: ${f.name} (pierwsze uruchomienie — brak punktu odniesienia)")
             } else {
-                val golden = goldenFile.readText(Charsets.UTF_8)
+                // BUG-GOLDEN-CRLF-FALSZYWY-ALARM (14.07): git core.autocrlf=true na Windows
+                // konwertuje pliki .golden.txt na CRLF przy każdym checkout/stash — silnik w
+                // pamięci zawsze zwraca \n. Porównanie surowych bajtów widziało "zmianę" mimo
+                // identycznej treści linia-po-linii (0 różnic w pętli niżej = pewny sygnał tego
+                // mechanizmu). Normalizacja \r\n->\n przed porównaniem, zamiast ufać bajtom.
+                val golden = goldenFile.readText(Charsets.UTF_8).replace("\r\n", "\n")
                 if (golden != output) {
                     changed += f.name
                     println("ZMIANA: ${f.name} — wynik różni się od ostatnio zatwierdzonego stanu")

@@ -58,7 +58,13 @@ internal fun runOutputGuard(
     val hits = mutableListOf<GuardHit>()
 
     val tokenRe = Regex("""\b(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b""")
-    val text = tokenRe.replace(pseudonymizedText, "⟦TOKEN⟧")
+    // BUG-GUARD-TOKEN-TYPE-LOST-FIX (14.07, ultrareview follow-up): placeholder zachowuje typ
+    // encji (⟦TOSOBA⟧ zamiast gołego ⟦TOKEN⟧) — potrzebne niżej do wykrycia nazwiska stojącego
+    // bezpośrednio obok już zamaskowanej osoby (silny, strukturalny sygnał, nie kolejne słowo-
+    // klucz do enumeracji). Prefiks "T" (nie "_") celowo łamie \b PRZED nazwą typu — "⟦TNUMER⟧"
+    // nie może stać się przypadkową kotwicą dla CTX_SYGN/CTX_LICZBA niżej (obie zawierają
+    // słowo-klucz "numer" jako osobny \b-ograniczony token, gołe "⟦NUMER⟧" by to złapało).
+    val text = tokenRe.replace(pseudonymizedText) { "⟦T${it.value.substringBefore('_')}⟧" }
 
     fun hit(label: String, level: String, m: MatchResult) =
         GuardHit(label, level, m.value, m.range.first, m.range.last + 1)
@@ -154,7 +160,16 @@ internal fun runOutputGuard(
             if ((LookupTables.cityForms.contains(lower) || LookupTables.streetForms.contains(lower)) &&
                 !isSurname && !isRareSurname) return@forEach
             if (!isSurname && !isFirstName && !isRareSurname) return@forEach
-            if (!CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first))) return@forEach
+            // BUG-GUARD-KOTWICA-SASIEDZTWO-OSOBA (14.07, zrzut Pawła: "Pietraszko"/"Kowalińska"
+            // w 39k-słowniku, ale nie flagowane — dokument nie ma żadnego słowa z CTX_OSOBA_LABEL
+            // w pobliżu, np. "wspólnicy spółki cywilnej"/"zamieszkały przy"). Zamiast dopisywać
+            // kolejne słowa-klucze do listy (enumeracja przykładów), dodano drugi, strukturalny
+            // sygnał: nazwisko stojące BEZPOŚREDNIO obok już zamaskowanego tokenu ⟦TOSOBA⟧
+            // (przecinek/spacja jako jedyny separator) — to sam token jest kotwicą, tak jak przy
+            // liście osób "Jan Kowalski, Anna Pietraszko, ..." gdzie tylko imię się zamaskowało.
+            val adjacentToOsobaToken = Regex("""⟦TOSOBA⟧[,\s]{0,2}$""").containsMatchIn(text.substring(maxOf(0, m.range.first - 10), m.range.first)) ||
+                Regex("""^[,\s]{0,2}⟦TOSOBA⟧""").containsMatchIn(text.substring(m.range.last + 1, minOf(text.length, m.range.last + 11)))
+            if (!adjacentToOsobaToken && !CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first))) return@forEach
             val label = when {
                 isRareSurname -> "NAZWISKO_RZADKIE_NIEZAMASKOWANE"
                 isSurname -> "NAZWISKO_NIEZAMASKOWANE"
