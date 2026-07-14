@@ -196,6 +196,20 @@ między klasami testowymi zamiast przeliczania za każdym razem. Priorytet do us
   dopisane teraz — polska deklinacja rzeczownikowa ma pułapki (rodzina "-ec" ma ruchome "e":
   "Kowalec"→dopełniacz "Kowalca", nie "Koweleca" — mechaniczne doklejenie końcówek jak przy
   -ski byłoby błędne). Zrobić dopiero z testem-najpierw na konkretnym przykładzie, nie zgadywać.
+- **Usunięcie Rundy 2 (`STRUCTURAL_R2`/`NAME_ENGINE_R2`, `PseudonymEngine.kt` ~379-403)** —
+  dowód już zebrany 14.07: `StressBenchmarkTest` liczy `trace.layer` na 300 dokumentach,
+  wynik **0 tokenów** przez Rundę 2 (STRUCTURAL: 1541, NAME_ENGINE: 591, ADDRESS_ENGINE: 697,
+  ANCHOR: 91 — Runda 2: 0). Spełnia kryterium z decyzji 04.07 ("usuń gdy dowód pokaże że nic
+  już nie przechodzi"). Świadomie odłożone na spokojniejszą sesję — Paweł: nie chce ryzykować
+  że "szybkie sprzątanie" znowu rozciągnie się na dni tuż przed mergem. Diagnostyka w
+  StressBenchmarkTest zostaje (tani do ponownego sprawdzenia po każdej zmianie silnika).
+- **ADRES ma dwóch właścicieli** (audyt jeden-właściciel-na-encję, 14.07): AddressEngine.kt
+  deklaruje się jako jedyny silnik ADRES, ale NameEngine.kt niezależnie przypisuje ten sam
+  token w dwóch miejscach (`applyCityLookup`/`CITY_PREP_REGEX` — miasto po przyimku, i blok
+  city-surname-overlap — miasto dwuczłonowe typu "Zielona Góra"). Ma uzasadnienie w
+  komentarzach kodu, nie powoduje aktywnych bugów (nie "walczą" o token), ale to ten sam
+  wzorzec ryzyka co incydent 30.06. Do decyzji: formalnie zatwierdzić jako trwały wyjątek
+  w mapie architektury, albo przenieść obie reguły do AddressEngine.kt. Nie blokuje mergu.
 
 ---
 
