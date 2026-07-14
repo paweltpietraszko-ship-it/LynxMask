@@ -1,0 +1,12 @@
+=== ARENA Cursor vs Claude Code ===
+Data: 2026-07-14_1418
+WYNIK: CC +1 (PASSED)
+
+Metryki:
+  ogolny recall: 98,8%
+  NUMER: 98,4% (1154/1173)
+  OSOBA: 98,8% (407/412)
+  ADRES: 100,0% (340/340)
+  EMAIL: 100,0% (48/48)
+  OSOBA extended_only: 98,0% (245/250)
+  krytyczne miss: 0

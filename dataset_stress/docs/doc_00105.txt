@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV/2024/08/9197
+
+Data wystawienia: 01.10.2023
+Numer klienta: KL-25036
+
+----------------------------------------
+SPRZEDAWCA:
+Serwis AGD ELEKTRO Sp. z o.o.
+Adres: ul. Cieszynskiego 48, 44-100 Sypień
+NIP: 329-405-72-01   REGON: 615832813
+Nr konta: PL57169010148268861533555439
+
+NABYWCA:
+Gocha Jarus
+Adres: ul. Filmowa 97/18, 50-001 Podkamionka
+NIP: 359-094-79-88
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         4    1902   8%     7608     8217
+2.   Usługa doradcza                   6     831   8%     4986     5385
+3.   Usługa transportowa               5    1156  23%     5780     7109
+4.   Usługa doradcza                   9    1733  23%    15597    19184
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        39895 PLN
+
+Płatność przelewem: PL57169010148268861533555439
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

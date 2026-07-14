@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2024/5655
+
+Data wystawienia: 11.04.2024
+Numer klienta: KL-82340
+
+----------------------------------------
+SPRZEDAWCA:
+Kancelaria Prawna LEGIS S.C.
+Adres: ul. Brandysa 53/9, 60-001 Ślepowrony
+NIP: 424-808-61-32   REGON: 873782630
+Nr konta: PL27325000038214658404499727
+
+NABYWCA:
+Tobiasz Góra
+Adres: ul. Pstragowa 179, 87-100 Bieżyce
+NIP: 271-274-84-63
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         6    1830   8%    10980    11858
+2.   Naprawa sprzętu                  10     834   8%     8340     9007
+3.   Usługa transportowa               1     701  23%      701      862
+4.   Usługa transportowa               7    1409   8%     9863    10652
+5.   Wynajem sprzętu biurowego         1     308  23%      308      379
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        32758 PLN
+
+Płatność przelewem: PL27325000038214658404499727
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

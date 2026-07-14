@@ -54,4 +54,49 @@ class OcrNormalizerSurnameTest {
         val result = OcrNormalizer.normalize(input)
         assertEquals("Wielka litera w prawej części = nie skleja", input, result.normalizedText)
     }
+
+    // ── OCR_NAME_L_AS_I (12.07, diagnoza Cursor, BUG-KAMLNSKA-REGRESJA) ─────────────
+
+    @Test
+    fun `S6b litera l zamiast i w nazwisku naprawiana gdy odblokowuje slownik`() {
+        // "Malinowskl" (OCR: ostatnie 'i' -> 'l') — "malinowski" jest w fixture testowej.
+        val result = OcrNormalizer.normalize("Zleceniobiorca: Malinowskl, PESEL")
+        assertTrue("Malinowskl powinno być naprawione do Malinowski",
+            result.normalizedText.contains("Malinowski"))
+        assertFalse("Nie może zostać błędna litera 'l' na końcu",
+            result.normalizedText.contains("Malinowskl"))
+    }
+
+    @Test
+    fun `S6b nie rusza slowa ktore juz jest poprawnym nazwiskiem z litera l`() {
+        val input = "Zleceniobiorca: Kowalski, PESEL"
+        val result = OcrNormalizer.normalize(input)
+        assertEquals("Kowalski (już poprawne, ma prawdziwe 'l') nie powinno być zmienione",
+            input, result.normalizedText)
+    }
+
+    @Test
+    fun `S6b nie zgaduje gdy podstawienie nie daje trafienia w slowniku`() {
+        val input = "Zwykle slowo bez nazwiska w tekscie"
+        val result = OcrNormalizer.normalize(input)
+        assertEquals("Brak trafienia w słowniku po podstawieniu = bez zmian",
+            input, result.normalizedText)
+    }
+
+    // BUG-NAME-CONFUSION-GUARD-FIX (ultrareview): fixNameLetterConfusion nie sprawdzał
+    // isRecognizedWord (jak jej bliźniacza fixDigitLetterConfusion) — zwykłe polskie
+    // słowo z 'l' było poddawane zgadywaniu, jeśli podstawienie PRZYPADKIEM trafiało
+    // w słownik nazwisk. "byli" (czasownik "być", czas przeszły) to prawdziwe, częste
+    // polskie słowo — fixture symuluje przypadkową kolizję (podstawienie 'l'->'i' daje
+    // "byii") żeby odtworzyć mechanizm bez polegania na prawdziwym 39k słowniku.
+    @Test
+    fun `S6b prawdziwe polskie slowo z litera l nie jest zamieniane mimo przypadkowej kolizji w slowniku`() {
+        LookupTables.initializeForTesting(
+            surnames = LookupTables.surnamesForms + "byii"
+        )
+        val input = "Wczoraj byli tam na miejscu."
+        val result = OcrNormalizer.normalize(input)
+        assertEquals("'byli' to prawdziwe słowo (czasownik) — nie może zostać zamienione na 'byii'",
+            input, result.normalizedText)
+    }
 }

@@ -1,0 +1,210 @@
+DOKUMENT TESTOWY — LynxMask
+Poziom degradacji: lvl3 (szum OCR, spacje w liczbach, artefakty polskich znaków)
+Data: NUMER_064
+Cel: sprawdzenie czy silnik wykrywa i maskuje wszystkie dane wrażliwe
+
+================================================================
+SEKCJA 1 — OSOBY (różne wzorce)
+================================================================
+
+Zleceniodawca: OSOBA_002, zamieszkały ADRES_004, ADRES_010.
+Zleceniobiorca: OSOBA_013, adres: ADRES_001, ADRES_007.
+Pełnomocnik: Pani OSOBA_001, NUMER_004.
+Ordynator oddziału: OSOBA_019. OSOBA_003, nr NUMER_043.
+Podpisano: OSOBA_004 (OCR artefakt — wielkie litery).
+Świadek: OSOBA_016 OSOBA_014, NUMER_018.
+
+-- OCR lvl3: polskie znaki zdegradowane --
+Wykonawca: OSOBA_005 (OCR: OSOBA_005).
+Najemca: OSOBA_006 (OCR: OSOBA_007).
+Kurator: OSOBA_008 (OCR: OSOBA_009).
+
+================================================================
+SEKCJA 2 — EMAILE (edge case'y)
+================================================================
+
+-- Standardowy --
+Kontakt: EMAIL_001
+E-mail służbowy: EMAIL_002
+
+-- NUMER_050: imię w local-part --
+email zleceniobiorcy: EMAIL_003
+adres e-mail: EMAIL_004
+
+-- OCR lvl3: spacja w local-part (pułapka) --
+Kontakt email: EMAIL_005
+E-mail: EMAIL_006
+
+-- OCR lvl3: EMAIL_014
+Adres mailowy: EMAIL_007
+
+-- Z kontekstem e-mail: --
+e-mail: EMAIL_008
+e-mail : EMAIL_009
+
+-- NIE powinno być zamaskowane --
+Strona www: www.lynxmask.pl
+Link: https://kancelaria.com/kontakt
+
+================================================================
+SEKCJA 3 — NUMERY PESEL (różne wzorce OCR)
+================================================================
+
+NUMER_005
+NUMER_006
+NUMER_007
+NUMER_008
+NUMER_009
+
+-- Bez słowa kluczowego (strukturalny) --
+Dane: NUMER_056, zameldowany w ADRES_013.
+
+================================================================
+SEKCJA 4 — NIP i REGON
+================================================================
+
+NUMER_012
+NUMER_013
+NUMER_014
+REGON: NUMER_031
+
+-- OCR lvl3 --
+NUMER_015
+NUMER_016
+
+================================================================
+SEKCJA 5 — TELEFONY
+================================================================
+
+NUMER_032
+NUMER_033
+NUMER_034
+Kontakt: NUMER_042
+NUMER_035
+
+================================================================
+SEKCJA 6 — ADRESY
+================================================================
+
+-- Pełny adres --
+Zamieszkały: ADRES_004, ADRES_010
+Adres korespondencyjny: ADRES_003, ADRES_009
+
+-- OCR lvl3: adres rozbity newline --
+Adres dostawy: ADRES_002, ADRES_008
+
+-- Różne prefiksy --
+ADRES_001, ADRES_007
+ADRES_006, ADRES_011
+
+-- Bez kodu pocztowego --
+Ulica: ADRES_012
+ADRES_005
+
+================================================================
+SEKCJA 7 — DOKUMENTY TOŻSAMOŚCI
+================================================================
+
+NUMER_020
+Dowód os.: NUMER_044
+NUMER_021
+NUMER_024
+
+NUMER_023
+Paszport nr NUMER_049
+
+Prawo jazdy: NUMER_051
+
+================================================================
+SEKCJA 8 — NUMER KONTA I IBAN
+================================================================
+
+-- IBAN ze spacjami (powinien być wykryty) --
+Nr konta: NUMER_001
+
+-- IBAN bez spacji (NUMER_052 — może nie być wykryty) --
+IBAN: NUMER_002
+
+-- Z kontekstem --
+IBAN: NUMER_003
+
+================================================================
+SEKCJA 9 — PUŁAPKI: NIE POWINNO BYĆ ZAMASKOWANE
+================================================================
+
+-- OSOBA_017 --
+Data zawarcia: 15 marca 2024
+Termin płatności: NUMER_063
+Dnia NUMER_019 r. strony ustaliły.
+
+-- Kwoty --
+Wynagrodzenie: KWOTA_001 brutto
+Opłata: KWOTA_002
+Wartość netto: KWOTA_003
+
+-- Odniesienia do przepisów --
+art. 23 ust. 1 RODO
+§ 5 pkt 2 lit. a) ustawy z dnia 10 maja 2018 r.
+Dz.U. 2018 poz. 1000
+
+-- Nazwy instytucji (biała lista) --
+Sąd Rejonowy w ADRES_014
+Urząd Skarbowy Kraków-Śródmieście
+Prokuratura Rejonowa Warszawa-Śródmieście
+
+-- Skróty które nie są encjami --
+Sp. z o.o. (forma prawna — nie maskuj nazwy bez nazwy własnej)
+e-mail: (samo słowo bez adresu — nie powinno crashować)
+pl. (skrót placu — nie maskuj jako OSOBA)
+
+-- Liczby które nie są NUMER_053 --
+Numer faktury: NUMER_054
+Pozycja: 123456
+Rok budowy: 1998
+
+================================================================
+SEKCJA 10 — SCENARIUSZ MIESZANY (najtrudniejszy)
+================================================================
+
+Umowa nr NUMER_055 zawarta w ADRES_014 dnia 18 czerwca 2026 r.
+pomiędzy OSOBA_010, NUMER_010, NUMER_017,
+zamieszkałym ADRES_004, ADRES_010, NUMER_036,
+e-mail: EMAIL_010 (OCR: EMAIL_011)
+a OSOBA_018 OSOBA_015, NUMER_011,
+zamieszkałą ADRES_001, ADRES_007,
+nr konta NUMER_001.
+
+Pełnomocnik strony: Pani OSOBA_001, adwokat, nr wpisu 12345,
+e-mail: EMAIL_012, NUMER_037.
+
+Świadek: dr OSOBA_003, NUMER_022,
+kontakt: EMAIL_013 (OCR: spacja w local-part).
+
+Zatwierdzono przez Sąd Rejonowy w ADRES_014, NUMER_025.
+Wartość sporu: KWOTA_004. Termin rozprawy: 15 września 2026 r.
+
+================================================================
+OCZEKIWANE MASKI — LISTA KONTROLNA
+================================================================
+
+OSOBA (8):     OSOBA_002, OSOBA_011, OSOBA_001,
+               OSOBA_003, OSOBA_012, OSOBA_016 OSOBA_014,
+               OSOBA_005, OSOBA_006
+EMAIL (7):     EMAIL_001, EMAIL_002,
+               EMAIL_003, EMAIL_004,
+               EMAIL_008, EMAIL_009,
+               EMAIL_012
+               (+ 3 z OCR spacją — mogą przepaść: NUMER_050)
+PESEL (6):     NUMER_057, NUMER_058, NUMER_059, NUMER_026,
+               NUMER_060, NUMER_056
+NIP (5):       NUMER_027, NUMER_062, NUMER_028,
+               NUMER_029, NUMER_030
+NUMER_061):   NUMER_039, NUMER_038, NUMER_040,
+               NUMER_042, NUMER_041
+ADRES (6):     ADRES_004 / ADRES_010,
+               ADRES_003 / ADRES_009,
+               ADRES_002 / ADRES_008,
+               ADRES_001 / ADRES_007
+DOKUMENT (6):  NUMER_045, NUMER_044, NUMER_046, NUMER_047,
+               NUMER_048, NUMER_051
+IBAN (3):      PL36..., PL62..., PL61...

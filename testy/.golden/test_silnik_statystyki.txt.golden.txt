@@ -1,0 +1,233 @@
+DOKUMENT ZBIORCZY — TEST SILNIKA LYNXMASK
+Cel: ręczne przepuszczenie przez aplikację, porównanie z listą kontrolną
+Data: NUMER_063
+================================================================
+
+
+================================================================
+SEKCJA A — UMOWA ZLECENIA (osoby, adresy, emaile, numery)
+================================================================
+
+Umowa nr NUMER_053 zawarta dnia 20 czerwca 2026 r. w ADRES_015
+pomiędzy:
+
+1. OSOBA_001, NUMER_004, NUMER_010,
+   zamieszkały ADRES_001, ADRES_014,
+   NUMER_032, e-mail: EMAIL_001,
+   nr NUMER_022,
+   zwany dalej Zleceniodawcą,
+
+a
+
+2. OSOBA_002, NUMER_005, NUMER_011,
+   zamieszkała ADRES_007, ADRES_013,
+   NUMER_033, e-mail: EMAIL_002,
+   nr NUMER_023,
+   zwana dalej Zleceniobiorcą.
+
+Pełnomocnik Zleceniodawcy: OSOBA_003, adwokat,
+adres kancelarii: ADRES_006, ADRES_012,
+e-mail: EMAIL_003, NUMER_034.
+
+Konto bankowe Zleceniobiorcy:
+IBAN: NUMER_001
+
+§1. Przedmiot umowy
+Zleceniodawca powierza, a Zleceniobiorca przyjmuje do wykonania
+obsługę prawną w zakresie wskazanym w załączniku nr 1.
+
+§2. Wynagrodzenie
+Wynagrodzenie wynosi KWOTA_001 netto miesięcznie.
+Faktura VAT wystawiana do 5. dnia każdego miesiąca.
+Nr faktury: NUMER_054.
+
+§3. Czas trwania
+Umowa obowiązuje od 1 lipca 2026 r. do 30 czerwca 2027 r.
+Wypowiedzenie z zachowaniem 30-dniowego okresu.
+
+Zatwierdzono przez Sąd Rejonowy w ADRES_016, NUMER_025.
+Podstawa: art. 734 § 1 Kodeksu cywilnego (Dz.U. 2023 poz. 1360).
+
+
+================================================================
+SEKCJA B — FORMULARZ REJESTRACYJNY (gęste dane osobowe)
+================================================================
+
+DANE WNIOSKODAWCY:
+Imię i nazwisko:     OSOBA_004
+NUMER_006
+Nr dowodu os.:       NUMER_049
+NUMER_015
+NUMER_035
+E-mail:              EMAIL_004
+Adres zamieszkania:  ADRES_005, ADRES_011
+
+DANE PEŁNOMOCNIKA:
+Imię i nazwisko:     OSOBA_016. OSOBA_005
+NUMER_007
+NUMER_012
+NUMER_036
+E-mail:              EMAIL_005
+Adres:               ADRES_004, ADRES_010
+Nr NUMER_024
+
+DANE FIRMY:
+NUMER_013
+REGON:               NUMER_031
+IBAN firmowy:        NUMER_002
+E-mail firmowy:      EMAIL_006
+
+
+================================================================
+SEKCJA C — NOTATKA SŁUŻBOWA (różne konteksty osób)
+================================================================
+
+Data: NUMER_017 r.
+Sporządziła: OSOBA_006
+
+Dnia NUMER_018 do biura zgłosiła się następująca osoba:
+OSOBA_007, NUMER_008, zamieszkały ADRES_003,
+ADRES_009, NUMER_037, e-mail: EMAIL_007.
+
+Sprawa dotyczyła skargi złożonej przez OSOBA_013 OSOBA_011,
+NUMER_016, NUMER_009,
+zam. ADRES_002, ADRES_008, e-mail: EMAIL_008.
+
+Sprawę przekazano do rozpatrzenia przez OSOBA_008,
+adres e-mail: EMAIL_009, NUMER_038.
+
+Nr konta do zwrotu: NUMER_003.
+Wartość roszczenia: KWOTA_002. Termin: NUMER_062.
+
+Podpisano: OSOBA_009, NUMER_014
+e-mail: EMAIL_010, NUMER_039.
+
+Strona www urzędu: www.urzad-gmina.pl (nie maskować).
+Adres e-mail informacyjny: EMAIL_011 (nie maskować — ogólny).
+
+
+================================================================
+SEKCJA D — PUŁAPKI: NIE POWINNO BYĆ ZAMASKOWANE
+================================================================
+
+OSOBA_014 (nie maskować):
+  15 marca 2024, NUMER_061, NUMER_019, 1 lipca 2026 r.
+
+Kwoty (nie maskować):
+  KWOTA_001, KWOTA_002, KWOTA_003, KWOTA_004
+
+Przepisy (nie maskować):
+  art. 734 § 1 Kodeksu cywilnego
+  Dz.U. 2023 poz. 1360
+  § 1, § 2, § 3
+
+Nazwy instytucji (nie maskować):
+  Sąd Rejonowy w ADRES_016
+  Urząd Skarbowy Kraków-Śródmieście
+  ZUS, NFZ, RODO
+
+Numery referencyjne (nie maskować):
+  NUMER_053, NUMER_054, NUMER_025
+
+Rok i numery porządkowe (nie maskować):
+  30-dniowy, nr 1, art. 1, § 5
+
+Skróty (nie maskować):
+  Sp. z o.o., e-mail: (samo słowo), ul., al., os., pl.
+
+
+================================================================
+LISTA KONTROLNA — MOJA STATYSTYKA OCZEKIWANA
+================================================================
+
+Łącznie encji do zamaskowania: 54
+
+--- OSOBA (10) ---
+ 1. OSOBA_001                       → OSOBA_xxx
+ 2. OSOBA_002             → OSOBA_xxx
+ 3. OSOBA_003                     → OSOBA_xxx
+ 4. OSOBA_004                        → OSOBA_xxx
+ 5. OSOBA_005               → OSOBA_xxx
+ 6. OSOBA_006                 → OSOBA_xxx
+ 7. OSOBA_007                  → OSOBA_xxx
+ 8. OSOBA_015 OSOBA_012                   → OSOBA_xxx
+ 9. OSOBA_010                → OSOBA_xxx
+10. OSOBA_009                   → OSOBA_xxx
+
+--- EMAIL (11) ---
+ EMAIL_012                 → EMAIL_xxx
+ EMAIL_013     → EMAIL_xxx
+ EMAIL_014          → EMAIL_xxx
+ EMAIL_015               → EMAIL_xxx
+ EMAIL_016   → EMAIL_xxx
+ EMAIL_017          → EMAIL_xxx
+ EMAIL_018             → EMAIL_xxx
+ EMAIL_019            → EMAIL_xxx
+ EMAIL_020     → EMAIL_xxx
+EMAIL_021         → EMAIL_xxx
+EMAIL_022                        → EMAIL_xxx  ← może NIE (ogólny)
+
+--- PESEL (8) ---
+ 1. NUMER_055                        → NUMER_xxx
+ 2. NUMER_056                        → NUMER_xxx
+ 3. NUMER_057                        → NUMER_xxx
+ 4. NUMER_058                        → NUMER_xxx
+ 5. NUMER_059                        → NUMER_xxx
+ 6. NUMER_026                        → NUMER_xxx
+ 7. NUMER_020  (data ur.)             → może NUMER_xxx
+ 8. NUMER_021  (data ur.)             → może NUMER_xxx
+
+--- NIP (5) ---
+ 1. NUMER_027                      → NUMER_xxx
+ 2. NUMER_060                      → NUMER_xxx
+ 3. NUMER_028                         → NUMER_xxx
+ 4. NUMER_029                      → NUMER_xxx
+ 5. NUMER_030                      → NUMER_xxx
+
+--- IBAN (3) ---
+ 1. NUMER_001→ NUMER_xxx
+ 2. NUMER_002→ NUMER_xxx
+ 3. NUMER_003→ NUMER_xxx
+
+--- NUMER_040. NUMER_041                    → NUMER_xxx
+ 2. NUMER_042                    → NUMER_xxx
+ 3. NUMER_046                       → NUMER_xxx
+ 4. NUMER_048                     → NUMER_xxx
+ 5. NUMER_043                    → NUMER_xxx
+ 6. NUMER_045                        → NUMER_xxx
+ 7. NUMER_047                       → NUMER_xxx
+ 8. NUMER_044                    → NUMER_xxx
+
+--- DOKUMENT TOŻSAMOŚCI (4) ---
+ 1. NUMER_050   (dowód)               → NUMER_xxx
+ 2. NUMER_049   (dowód)               → NUMER_xxx
+ 3. NUMER_051    (paszport)            → NUMER_xxx
+ 4. NUMER_052   (paszport)            → NUMER_xxx
+
+--- REGON (1) ---
+ 1. NUMER_031                          → NUMER_xxx
+
+--- ADRES (8) ---
+ 1. ADRES_001, ADRES_014         → ADRES_xxx / ADRES_xxx
+ 2. ADRES_007, ADRES_013   → ADRES_xxx / ADRES_xxx
+ 3. ADRES_006, ADRES_012 → ADRES_xxx / ADRES_xxx
+ 4. ADRES_005, ADRES_011       → ADRES_xxx / ADRES_xxx
+ 5. ADRES_004, ADRES_010          → ADRES_xxx / ADRES_xxx
+ 6. ADRES_003, ADRES_009          → ADRES_xxx / ADRES_xxx
+ 7. ADRES_002, ADRES_008            → ADRES_xxx / ADRES_xxx
+ 8. ADRES_001 (ponownie — sekcja D)  → ADRES_xxx (może pominięty — UserDict)
+
+
+================================================================
+JAK ZGŁOSIĆ WYNIKI
+================================================================
+
+Dla każdej sekcji podaj:
+  WYKRYTE: ile z listy zostało zamaskowane
+  POMINIĘTE: które konkretnie nie zostały zamaskowane
+  FALSE POSITIVE: co zostało zamaskowane a nie powinno
+
+Przykład:
+  OSOBA: 9/10 wykryte, pominięty: "OSOBA_009"
+  EMAIL: 10/11 wykryte, pominięty: "EMAIL_011" (OK — ogólny)
+  itd.

@@ -13,16 +13,70 @@ package com.lynxmask.app
 
 private const val D = """[0-9OolIiSsBbZz]"""
 
+// BUG-SYGNATURA-PROZA-FIX (09.07, testy Pawła na telefonie: "sygnatura biologiczna",
+// "sygnatura. Ponieważ", "sygnatura, oczywiście Pawle" — wszystkie fałszywie maskowane).
+// Mechanizm dograny z Cursorem: walidacja dotyczy TYLKO gałęzi `atur\w*` regexu A.8 (pełne
+// słowo "sygnatura..."), NIE gałęzi "sygn."/"sygn"+"akt" (skrót prawny, zero walidacji jak
+// dotąd — to świadome, celowe odstępstwo TYLKO dla tej jednej reguły od generalnej zasady
+// AnchorEngine "kotwica zachłanna, zero walidacji", patrz feedback_anchor_greedy_no_checksum).
+private val SYGNATURA_ANCHOR_PREFIX = Regex("""(?i)^sygnatur\w*""")
+
+// Pomija "akt" (kotwica strukturalna regexu, nie kod wydziału — nie trzeba go wypisywać
+// na allowliście) i wiodącą interpunkcję/białe znaki, żeby dojść do PIERWSZEGO prawdziwego
+// słowa po kotwicy "sygnatura".
+private val SYGNATURA_TAIL_FIRST_WORD = Regex("""^[^\p{L}]*(?:akt\.?[^\p{L}]*)?(\p{L}+)""", RegexOption.IGNORE_CASE)
+
+// Prawdziwe kody sygnatur sądowych/administracyjnych — krótka lista, nie próba wyliczenia
+// każdego możliwego skrótu wydziału (por. StructuralEngine.kt, te same rodziny liter).
+private val SYGNATURA_COURT_CODES = setOf(
+    "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII",
+    "Km", "Co", "Ns", "Ka", "Ds",
+)
+
+/**
+ * true = maskuj (kod sygnatury albo skrót prawny), false = odrzuć (zwykłe zdanie prozy).
+ * Działa TYLKO na dopasowaniach zaczynających się od pełnego słowa "sygnatur..." — gałęzie
+ * "sygn."/"sygn akt" (skrót bez pełnego słowa) zawsze przechodzą bez walidacji.
+ */
+private fun isSygnaturaA8Acceptable(m: MatchResult): Boolean {
+    val anchor = SYGNATURA_ANCHOR_PREFIX.find(m.value) ?: return true
+    val tail = m.value.substring(anchor.value.length)
+    val word = SYGNATURA_TAIL_FIRST_WORD.find(tail)?.groupValues?.get(1) ?: return true
+    if (word in SYGNATURA_COURT_CODES) return true
+    return MorfologikHelper.tags(word).isEmpty()
+}
+
+// Słowa tytułu w regexie A.10 — pomijane przy walidacji isA10NoCommonWordCollision, nie są
+// "nazwiskiem" i nie mają być oceniane jako słowo pospolite kontra nazwisko.
+private val ANCHOR_A10_TITLE_WORDS = setOf("dr", "hab", "prof", "mgr", "inż", "adw", "mec", "lek", "med")
+
+/**
+ * true = maskuj, false = odrzuć. DECYZJA WŁAŚCICIELA (14.07): AnchorEngine jest z założenia
+ * zachłanny, zero walidacji kształtu (patrz reszta pliku) — jedyny wyjątek to konkretne,
+ * już potwierdzone kolizje słownikowe (OSOBA_DENYLIST, ten sam mechanizm co w NameEngine.kt),
+ * nie szeroki filtr gramatyczny. Lepiej zamaskować słowo pospolite przy tytule niż zgubić
+ * realne nazwisko.
+ */
+private fun isA10NoCommonWordCollision(m: MatchResult): Boolean =
+    m.value.split(Regex("""[^\S\n]+"""))
+        .map { it.trim('.', ',') }
+        .filter { it.isNotBlank() && it.lowercase() !in ANCHOR_A10_TITLE_WORDS }
+        .none { it.lowercase() in OSOBA_DENYLIST }
+
 internal fun applyAnchorEngine(
     text: String,
     assignToken: (value: String, tokenType: String) -> String
 ): String {
     var t = text
 
-    fun applyAll(re: Regex, tokenType: String) {
+    // validate: opcjonalna walidacja PER DOPASOWANIE, poza samym kształtem regexu — domyślnie
+    // no-op ({ true }), zero zmian dla reguł które jej nie używają. Dodane 09.07 dla A.8
+    // (patrz niżej) na rekomendację Cursora — prostsze niż osobna pętla poza applyAll dla
+    // jednej reguły, bo overlap/padding/token-assignment zostają w jednym miejscu.
+    fun applyAll(re: Regex, tokenType: String, validate: (MatchResult) -> Boolean = { true }) {
         val hits = re.findAll(t).toList().ifEmpty { return }
         t = hits.asReversed().fold(t) { acc, m ->
-            if (matchOverlapsToken(acc, m.range)) acc
+            if (matchOverlapsToken(acc, m.range) || !validate(m)) acc
             else {
                 val token = assignToken(m.value.trim(), tokenType)
                 val before = acc.getOrElse(m.range.first - 1) { ' ' }
@@ -76,13 +130,40 @@ internal fun applyAnchorEngine(
     // TLD) po pojedynczej spacji, ale TYLKO gdy poprzedni fragment urwał się na kropce
     // (lookbehind `(?<=\.)`) — to gwarantuje że nie połyka zwykłego słowa po poprawnym mailu
     // (np. "jan@wp.pl do jutra" — "do" zostaje jawne, bo "wp.pl" nie kończy się kropką).
+    //
+    // BUG-EMAIL-TOKEN-PREFIX-FIX (09.07, diagnoza Cursor traceMode, test_email_izolowany_09_07.txt
+    // linia 9 w pliku wieloliniowym): `[^\s\n@]*` jest wystarczająco pojemny (litery/cyfry/
+    // podkreślnik/kropka), żeby połknąć istniejący token z POPRZEDNIEJ linii (np. "EMAIL_001")
+    // jako rzekomy "local-part" — cały match wtedy nakłada się na już przypisany token,
+    // `matchOverlapsToken` odrzuca go w CAŁOŚCI, co gubi też prawdziwy, niepowiązany email na
+    // kolejnej linii zamiast tylko odciąć token z prefiksu.
+    //
+    // BUG-EMAIL-TOKEN-PREFIX-FIX v2 (09.07, druga runda diagnozy Cursor traceMode): pierwsza
+    // wersja (negative lookahead PO opcjonalnym prefiksie) nie wystarczyła — opcjonalny prefiks
+    // `[\p{L}0-9]+\s+` sam potrafi połknąć SAME CYFRY z ogona tokenu ("001" z "EMAIL_001",
+    // dozwolone przez `0-9`) + newline, więc match i tak zaczynał się od pozycji nakładającej
+    // się na token, ZANIM lookahead w ogóle dostał szansę sprawdzić. Prawdziwy local-part-prefix
+    // (np. "marek" w "marek wozniak@...") zawsze zaczyna się LITERĄ, nigdy samą cyfrą — wymuszenie
+    // litery na start (`[\p{L}][\p{L}0-9]*` zamiast `[\p{L}0-9]+`) blokuje "001" jako kandydata
+    // na prefiks z konstrukcji, bez osłabiania oryginalnego zastosowania (BUG-EMAIL-LOCALPART-
+    // SPACJA-FIX, 05.07). Negative lookahead na sam token zostaje jako dodatkowe zabezpieczenie
+    // (przypadek glueowany bez newline). A.2b (osierocona domena) i tak łapie glueowany przypadek
+    // "EMAIL_001@domena.pl" bez lewej ekspansji, więc to nie zabiera mu roboty.
     // ------------------------------------------------------------------
-    applyAll(Regex("""(?:[\p{L}0-9]+\s+)?[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*(?:(?<=\.)[^\S\n][a-zA-Z]{2,4}\b)?"""), TOKEN_EMAIL)
+    applyAll(Regex("""(?:[\p{L}][\p{L}0-9]*\s+)?(?!(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b)[^\s\n@]*\s*@\s*[^\s\n]+(?:\s*\.[^\s\n]+)*(?:(?<=\.)[^\S\n][a-zA-Z]{2,4}\b)?"""), TOKEN_EMAIL)
 
     // A.2b EMAIL — osierocona domena po istniejącym tokenie
     // EMAIL_001@nfz.gov.pl → A.2 skipped (TOKEN_RE), tu łapiemy @nfz.gov.pl
     // Wymaga minimum jednej kropki w domenie — nie matchuje @TOKEN_001 bez rozszerzenia.
-    applyAll(Regex("""@[^\s\n@]+(?:\.[^\s\n@]+)+"""), TOKEN_EMAIL)
+    //
+    // BUG-EMAIL-A2B-SPACJA-DOMENA-FIX (09.07, Paweł: "jeżli po spacji jest .pl/.com/.app to
+    // jest email"): A.2 już toleruje spację przed kolejnym segmentem domeny (linia wyżej,
+    // `(?:\s*\.[^\s\n]+)*`) — A.2b tej samej tolerancji nie miał, więc gdy A.2 z jakiegoś
+    // powodu nie złapał całości (np. overlap z tokenem), A.2b jako fallback urywał się na
+    // pierwszej spacji ("@kancelaria .pl" → tylko "@kancelaria", " .pl" zostawało jawne).
+    // Ta sama ogólna reguła co w A.2 (dowolny kolejny segment domeny, nie enumeracja TLD),
+    // [^\S\n]* zamiast \s* — spacja tylko w tej samej linii, bez mostkowania \n.
+    applyAll(Regex("""@[^\s\n@]+(?:[^\S\n]*\.[^\s\n@]+)+"""), TOKEN_EMAIL)
 
     // ------------------------------------------------------------------
     // A.3  TELEFON — kotwica: warianty jakie ludzie faktycznie piszą
@@ -116,10 +197,12 @@ internal fun applyAnchorEngine(
     // StructuralEngine R1 (linia 359, plain \d) już obsługuje ten wariant z jednym
     // dodatkowym słowem — jeśli R1 nie złapie, wolimy brak matcha niż śmieć.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* na kotwicach mobile/gsm/t —
+    // bez tego "mobile"/"gsm"/"t" na końcu linii kradnie cyfry z POCZĄTKU zupełnie innej linii.
     applyAll(
         Regex(
             """(?i)(?:\+4[8Bb]|0048|tel\w*+\.?|kom[oó]rk\w*+|kom\.?|fax\.?""" +
-            """|mobile\s*:?|gsm\s*:?|wew\.?|\bt\s*:)[^\S\n]*:?[^\S\n]*\(?$D(?:[\s\-.()]?$D)*""" +
+            """|mobile[^\S\n]*:?|gsm[^\S\n]*:?|wew\.?|\bt[^\S\n]*:)[^\S\n]*:?[^\S\n]*\(?$D(?:[\s\-.()]?$D)*""" +
             """(?![a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
         ),
         TOKEN_NUMER
@@ -197,8 +280,22 @@ internal fun applyAnchorEngine(
     // przed końcówką roku) na "12.O3". Limit {0,2} dodatkowych słów zapobiega zjadaniu
     // dalszego zdania (np. "...1963 roku zamieszkały w Krakowie" — stop po "1963").
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* po dob/date of birth/data urodzenia -> [^\S\n]*
+    // BUG-DATA-UR-ZJADA-PESEL-FIX (08.07, znaleziony w benchmarku po fixach — nie regres,
+    // mechanizm istniał od 01.07/BUG-DATA-SLOWNA-FIX, naprawiony bez pytania): gdy OCR
+    // wstawia spację W ŚRODKU daty cyfrowej ("08. 07.1985"), to samo w sobie zużywa już
+    // 1 z 2 dozwolonych "dodatkowych słów" — zostaje miejsce na JESZCZE JEDNO, które może
+    // być zupełnie innym słowem-kotwicą ("PESEL"), zjedzonym razem z datą i odbierającym
+    // kontekst prawdziwemu numerowi PESEL zaraz po nim (doc_00417, dwa bugi na raz: BUG_SILNIKA
+    // dla daty + BRAK_W_OCR dla pesela bez kotwicy). Fix: (?!KEYWORD\b) przed każdym dodatkowym
+    // słowem — nie pozwól "dodatkowemu słowu" być znanym słowem-kotwicą innej encji.
+    // BUG-WIZJA-PROZA-DOB-FIX (10.07, esej Pawła "Wizja Claude 2"): "dob" bez \b przed nim
+    // łapało się W ŚRODKU zwykłych polskich słów ("prawdopo[dob]ieństwo") — litera zaraz po
+    // nim (i/o/s/...) to klasa D, więc regex brał to za start numeru i zjadał 2 kolejne
+    // słowa zdania jako "resztę daty". Fix: \bdob\b — ta sama klasa błędu co inne kotwice
+    // bez granicy słowa (patrz feedback_general_rules_not_examples, lessons_anchor_regex_pitfalls).
     applyAll(
-        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|dob\s*:?|d\.o\.b\.?|date\s+of\s+birth\s*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data\s+urodzenia\s*:?)[^\S\n]*$D\S*(?:[^\S\n]+\S+){0,2}"""),
+        Regex("""(?i)(?:\bur\b\.?|u[nr]\.|\bdob\b[^\S\n]*:?|d\.o\.b\.?|date[^\S\n]+of[^\S\n]+birth[^\S\n]*:?|urodzon\w{0,5}\b(?:[^\S\n]+(?:dnia|w[^\S\n]+dniu))?|data[^\S\n]+urodzenia[^\S\n]*:?)[^\S\n]*$D\S*(?:[^\S\n]+(?!(?:PESEL|NIP|REGON|IBAN|Nr|Numer|KRS|KW|PWZ)\b)\S+){0,2}"""),
         TOKEN_NUMER
     )
 
@@ -236,15 +333,30 @@ internal fun applyAnchorEngine(
     // A.8  SYGNATURA — kotwica: keyword sygn. / KRS / KW
     // Widzę kotwicę → co po niej do końca linii (lub pierwszej spacji dla KRS/KW) → maskuję.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* przed [^\n]+ -> [^\S\n]* — "sygn." na
+    // końcu linii nie może przełknąć \n i skonsumować całą NASTĘPNĄ, niepowiązaną linię.
+    //
+    // BUG-SYGNATURA-SLOWO-FIX (09.07, zgłoszenie Pawła: dokument o SETI "Wizja Claude 2" —
+    // 14 fałszywych trafień, całe zdania zjedzone jako NUMER): `sygn\.?` bez granicy słowa
+    // i bez wymogu kropki/kontekstu łapało gołe 4 litery "sygn" — pasuje do POCZĄTKU każdego
+    // zwykłego polskiego słowa zaczynającego się tak samo ("sygnał", "sygnalizuje"), a nawet
+    // w ŚRODKU słowa złożonego ("techno[sygn]atur") bo brakowało \b. Naprawione: wymagane
+    // ALBO "sygn." z kropką (prawdziwy skrót), ALBO "sygn" bezpośrednio przed "akt" (kotwica
+    // bez kropki), ALBO pełny rdzeń "sygnatur..." (rodzina słowa "sygnatura", nie "sygnał").
+    // Rdzeń "sygnatur" wciąż koliduje z technicznym/naukowym użyciem tego samego słowa
+    // (np. "sygnatura biologiczna" w tekście o astrobiologii) — świadomie zaakceptowane,
+    // bo to ten sam wyraz co prawny "sygnatura akt", nie da się rozstrzygnąć samym regexem.
     applyAll(
-        Regex("""(?i)sygn\.?\s*(?:akt\.?)?\s*:?\s*[^\n]+"""),
-        TOKEN_NUMER
+        Regex("""(?i)\bsygn(?:\.|(?=[^\S\n]*akt\b)|atur\w*)[^\S\n]*(?:akt\.?)?[^\S\n]*:?[^\S\n]*[^\n]+"""),
+        TOKEN_NUMER,
+        validate = ::isSygnaturaA8Acceptable
     )
     // BUG-KW-KWOTA-FIX (Cursor 01.07): \bKW\b zamiast gołego KW — bez granicy słowa,
     // (?i) sprawiał że "kw" wewnątrz zwykłego słowa "kwota" pasował do (?:KRS|KW),
     // zjadając kotwicę "kwota:" zanim A.9b (KWOTA prefix) dostał szansę jej użyć.
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]*
     applyAll(
-        Regex("""(?i)(?:\bKRS\b|\bKW\b)\s*:?\s*\S+"""),
+        Regex("""(?i)(?:\bKRS\b|\bKW\b)[^\S\n]*:?[^\S\n]*\S+"""),
         TOKEN_NUMER
     )
 
@@ -279,19 +391,78 @@ internal fun applyAnchorEngine(
     )
 
     // ------------------------------------------------------------------
+    // A.9c KWOTA — kotwica: SAM KSZTAŁT, bez waluty/keywordu (Paweł 08.07)
+    // Zasada właściciela: cyfry + [,.] + dokładnie 2 cyfry = kwota, koniec dyskusji —
+    // ten kształt (separator dziesiętny + 2 miejsca po przecinku) w polskim dokumencie
+    // prawie zawsze oznacza pieniądze, nawet bez "zł"/"PLN" obok. Biegnie PO A.9/A.9b
+    // (kotwica walutowa ma pierwszeństwo, precyzyjniejsza) — łapie tylko to, czego tamte
+    // dwie reguły NIE skonsumowały (matchOverlapsToken + fakt że kotwica walutowa już
+    // by to zabrała). To jedyna reguła w AnchorEngine gdzie kotwicą jest sam KSZTAŁT
+    // liczby, nie słowo — świadome odstępstwo, decyzja właściciela.
+    // Znane kompromisy (zaakceptowane, nie naprawiane punktowo):
+    //   - procent "23,50%" złapie się jako kwota (kosmetyczny FP, nie wyciek PII)
+    //   - data z 2-cyfrowym rokiem "15.03.24" złapie ogon "03,24" jako kwotę (rzadkie
+    //     w dokumentach formalnych — te używają 4-cyfrowego roku, który NIE pasuje
+    //     do wymogu "dokładnie 2 cyfry po separatorze")
+    // (?!D|[,.]D) na końcu — pełna data "15.03.2024" (4-cyfrowy rok) NIE łapie się jako
+    // "15,03" bo zaraz po "03" jest kolejna kropka+CYFRA (kontynuacja, nie koniec liczby).
+    // BUG-A9C-LISTA-KWOT-FIX (08.07, test PDF Pawła: "15 000,00 15000,00, 15 000,00"
+    // trzy kwoty w jednej linii, tylko OSTATNIA się maskowała): dwa braki naprawione —
+    // (1) [^\S\n]?[,.][^\S\n]? zamiast gołego [,.] — tolerancja spacji WOKÓŁ przecinka
+    // ("15 000 , 00", OCR rozjeżdża odstępy); (2) lookahead zawężony z "cokolwiek D lub
+    // przecinek" do "D LUB przecinek+D" — poprzednia wersja odrzucała kwotę gdy zaraz po
+    // niej był przecinek ROZDZIELAJĄCY listę kolejnych kwot (nie kontynuacja tej samej
+    // liczby), więc każda kwota oprócz ostatniej w linii ginęła.
+    // ------------------------------------------------------------------
+    // BUG-A9C-ZERO-CYFR-FIX (ultrareview): pierwszy znak musiał też być D-klasą, więc
+    // ciąg złożony WYŁĄCZNIE z liter D-klasy ("los, ostatni" — l/o/s i o/s to litery
+    // z tego zbioru) łapał się jako kwota bez ANI JEDNEJ prawdziwej cyfry. Ten sam
+    // wymóg co A.9/A.9b (patrz komentarz wyżej: "[0-9] na początku — wymaga
+    // prawdziwej cyfry") — pierwszy znak musi być literalną cyfrą, D-klasa tylko
+    // dla kontynuacji wewnątrz już potwierdzonej liczby.
+    applyAll(
+        Regex("""(?<![0-9OolIiSsBbZz])[0-9][0-9OolIiSsBbZz]{0,5}(?:(?:[.,]|[^\S\n])[0-9OolIiSsBbZz]{3})*[^\S\n]?[,.][^\S\n]?[0-9OolIiSsBbZz]{2}(?![0-9OolIiSsBbZz]|[,.][0-9OolIiSsBbZz])"""),
+        TOKEN_KWOTA
+    )
+
+    // ------------------------------------------------------------------
+    // A.9d KWOTA — kotwica: cyfra + mnożnik słowny (tysiąc/milion/miliard), bez
+    // wymogu keywordu (Paweł 08.07, mały bug naprawiony od razu bez pytania).
+    // Ten sam pomysł co A.9c (sam kształt wystarczy), tylko dla mnożnika słownego
+    // zamiast separatora dziesiętnego. Rozwiązuje trzy zgłoszone naraz przypadki:
+    //   - "15 tysięcy 30 milionów" bez żadnego keywordu (S4-A w StructuralEngine
+    //     wymaga keywordu typu "wysokości"/"kwota" — to jest fallback bez niego)
+    //   - to samo rozbite na dwie linie (każdy fragment łapie się osobno, nie
+    //     trzeba przekraczać \n — każda linia ma swój własny mnożnik)
+    //   - "15tysięcy" bez spacji między cyfrą a słowem (S4-A wymagało [^\S\n]+
+    //     czyli PRAWDZIWEJ spacji; tu separator jest opcjonalny [^\S\n]?)
+    // Guard (?<![0-9OolIiSsBbZz]) — nie zaczynaj w środku innej liczby.
+    // ------------------------------------------------------------------
+    applyAll(
+        Regex("""(?<![0-9OolIiSsBbZz])[0-9OolIiSsBbZz]{1,6}[^\S\n]?(?:tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4})(?![\p{L}\p{N}_])""", RegexOption.IGNORE_CASE),
+        TOKEN_KWOTA
+    )
+
+    // ------------------------------------------------------------------
     // A.10 OSOBA — kotwica: tytuł dr / mgr / adw. / mec. / lek. / prof.
     // Widzę tytuł → 1–2 tokeny z wielkiej litery po nim → maskuję.
     // NameEngine obsługuje pary imię+nazwisko. AnchorEngine łapie resztki po OCR.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s+ -> [^\S\n]+ — tytuł ("dr"/"prof" itd.) na
+    // końcu linii nie może przełknąć \n i wziąć przypadkowego wielkoliterowego słowa
+    // z POCZĄTKU zupełnie innej, niepowiązanej linii jako rzekome imię/nazwisko.
+    // isA10NoCommonWordCollision (zdefiniowana na górze pliku) blokuje tylko konkretne,
+    // znane kolizje słownikowe (OSOBA_DENYLIST) — reszta zostaje zachłanna z założenia.
     applyAll(
         Regex(
-            """(?i)(?:dr\s+(?:hab\.?\s+)?|prof\.?\s+|mgr\s+(?:inż\.?\s+)?|inż\.?\s+""" +
-            """|adw\.?\s+|mec\.?\s+|lek\.?\s+(?:med\.?\s+)?)""" +
+            """(?i)(?:dr[^\S\n]+(?:hab\.?[^\S\n]+)?|prof\.?[^\S\n]+|mgr[^\S\n]+(?:inż\.?[^\S\n]+)?|inż\.?[^\S\n]+""" +
+            """|adw\.?[^\S\n]+|mec\.?[^\S\n]+|lek\.?[^\S\n]+(?:med\.?[^\S\n]+)?)""" +
             """(?!(?:OSOBA|FIRMA|NUMER|EMAIL|KWOTA|ADRES)_)""" +
             """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,30}""" +
-            """(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
+            """(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
         ),
-        TOKEN_OSOBA
+        TOKEN_OSOBA,
+        validate = ::isA10NoCommonWordCollision
     )
 
     // ------------------------------------------------------------------
@@ -320,9 +491,11 @@ internal fun applyAnchorEngine(
     )
 
     // A.11b (samotny kod pocztowy + opcjonalne miasto) usunięty 04.07 (migracja ADRES krok 5) —
-    // duplikat StructuralEngine.applyPostalCityPatterns kierunek 1/3 (Warstwa 1b), które działa
-    // wcześniej w potoku. Jeśli test ręczny ujawni regresję (miasto spoza słownika obok kodu) —
-    // krok 6 planu (guard A.11c/A.11d na osierocony kod) ma to pokryć.
+    // duplikat ówczesnego StructuralEngine.applyPostalCityPatterns kierunek 1/3 (Warstwa 1b),
+    // które działało wcześniej w potoku (funkcja sama usunięta 07.07, patrz AddressEngine.kt
+    // POSTAL_K1/K2/K3 — dziś jedyny właściciel tej pary). Jeśli test ręczny ujawni regresję
+    // (miasto spoza słownika obok kodu) — krok 6 planu (guard A.11c/A.11d na osierocony kod)
+    // ma to pokryć.
 
     // ------------------------------------------------------------------
     // A.11c ADRES — miasto po istniejącym tokenie ADRES
@@ -362,8 +535,17 @@ internal fun applyAnchorEngine(
     // Kotwice: kod pocztowy w pobliżu LUB token ADRES w pobliżu
     //          LUB poprzednie słowo w słowniku POLISH_CITIES.
     // Bez kontekstu nie maskujemy — samo "4/6" to nie PII.
+    //
+    // BUG-A11E-KRADNIE-SEGMENTY-FIX (diagnoza Cursor+trace, 14.07): prawdziwy numer
+    // budynku/lokalu w Polsce ma ZAWSZE dokładnie 2 segmenty (budynek/lokal) — nigdy 3+.
+    // Bez tego warunku "Faktura VAT 26/06/006" (3 segmenty) łapało tylko "26/06" jeśli
+    // gdziekolwiek w oknie ±100 zn. był już token ADRES (np. z NIEPOWIĄZANEGO adresu w
+    // tym samym dokumencie) — zostawiało "/006" jawne i blokowało A.12 (numer dokumentu),
+    // który już jest zaprojektowany na dowolną liczbę segmentów. (?![/\-]\d) na końcu:
+    // jeśli zaraz po dopasowaniu jest kolejny segment /cyfra, to NIE jest numer budynku
+    // (za dużo segmentów) — oddaj sprawę A.12, nie łap częściowo.
     // ------------------------------------------------------------------
-    val buildingNumRe2 = Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?\b""")
+    val buildingNumRe2 = Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?\b(?![/\-]\d)""")
     t = buildingNumRe2.findAll(t).toList().asReversed().fold(t) { acc, m ->
         if (TOKEN_RE.containsMatchIn(m.value)) acc
         else {
@@ -492,12 +674,28 @@ internal fun applyAnchorEngine(
     // Runda 1 (StructuralEngine) może zostawić: "+", "+4B", "tel.", "kom." przed tokenem.
     // Usuwamy je — sama cyfra jest już zamaskowana, prefix nie jest PII.
     // ------------------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* — prefiks na końcu linii nie
+    // może zostać skasowany bo "przypadkiem" jest w pobliżu tokenu z zupełnie innej linii.
     val tok = """(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}"""
-    t = Regex("""\+4[8Bb]\s*(?=$tok)""").replace(t, "")   // "+4B NUMER_016" → "NUMER_016"
-    t = Regex("""\+\s*(?=$tok)""").replace(t, "")          // "+NUMER_013"    → "NUMER_013"
-    t = Regex("""(?i)(?:tel\.?|kom\.?|fax\.?)\s*(?=$tok)""").replace(t, "")  // "tel.NUMER_017" → "NUMER_017"
+    t = Regex("""\+4[8Bb][^\S\n]*(?=$tok)""").replace(t, "")   // "+4B NUMER_016" → "NUMER_016"
+    t = Regex("""\+[^\S\n]*(?=$tok)""").replace(t, "")          // "+NUMER_013"    → "NUMER_013"
+    t = Regex("""(?i)(?:tel\.?|kom\.?|fax\.?)[^\S\n]*(?=$tok)""").replace(t, "")  // "tel.NUMER_017" → "NUMER_017"
     // "ul. ADRES_003" → "ADRES_003", "adres: ul. ADRES_003" → "ADRES_003"
-    t = Regex("""(?i)(?:adres\s*:?\s*)?(?:ul[.,]|al\.|os\.|pl\.|u\.)[^\S\n]*(?=ADRES_\d{3})""").replace(t, "")
+    t = Regex("""(?i)(?:adres[^\S\n]*:?[^\S\n]*)?(?:ul[.,]|al\.|os\.|pl\.|u\.)[^\S\n]*(?=ADRES_\d{3})""").replace(t, "")
+
+    // ------------------------------------------------------------------
+    // CLEANUP: sierocące ogony BEZ SPACJI po istniejących tokenach (Paweł 08.07)
+    // Runda 1 wstawia spację po tokenie tylko gdy następny znak to litera/cyfra
+    // (assignToken pre/suf) — ale NIE gdy to interpunkcja typu "/"/"-"/"." (np. "FV 12/06/
+    // 2026/WAW" → wzorzec daty zabiera "12/06/2026", zostaje "NUMER_002/WAW" ze skrawkiem
+    // po sklejeniu bezpośrednio przecinkiem). Ten sam mechanizm bugu co historyczne
+    // BUG-NR-SIEROTA/BUG-NUMER-FAKTURA-* — zamiast łatać każdy wzorzec z osobna (Structural
+    // ma ich dziesiątki), jeden ogólny "sprzątacz" tutaj: token + "/"/"-"/"." bez spacji +
+    // ciąg alfanumeryczny → dociągamy ogon do tokenu (znika, tak jak reszta wartości).
+    // Guard (?!$tok\b) — dwa PRAWDZIWE sąsiadujące tokeny (np. "NUMER_009/NUMER_006",
+    // realny przypadek z testu PDF) NIE mogą być ucięte w połowie drugiego tokenu.
+    // ------------------------------------------------------------------
+    t = Regex("""($tok)(?:[/\-.](?!$tok\b)[A-Za-z0-9]+)+""").replace(t) { it.groupValues[1] }
 
     return t
 }

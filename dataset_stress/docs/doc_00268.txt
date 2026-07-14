@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr 4890/07/2020
+
+Data wystawienia: 04.10.2024
+Numer klienta: KL-74662
+
+----------------------------------------
+SPRZEDAWCA:
+Kancelaria Prawna LEGIS S.C.
+Adres: ul. Waleczna 166, 90-001 Sławęcice
+NIP: 804-611-72-97   REGON: 174260884
+Nr konta: PL70109010145017164455618579
+
+NABYWCA:
+Ziv Czerwień
+Adres: ul. Nad doliną 82/4, 31-001 Wałbrzych
+NIP: 696-390-40-98
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe               10     260   8%     2600     2808
+2.   Naprawa sprzętu                   1    1740   8%     1740     1879
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         4687 PLN
+
+Płatność przelewem: PL70109010145017164455618579
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

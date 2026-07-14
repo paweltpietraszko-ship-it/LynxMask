@@ -286,7 +286,9 @@ private val WHITE_LIST_COMMON_WORDS: Set<String> = setOf(
 // OSOBA_DENYLIST v1.11: słowa pospolite blokowane przed assignToken(..., TOKEN_OSOBA).
 // Uzupełnienie WHITE_LIST_COMMON_WORDS o OCR-garbled warianty (bez polskich znaków)
 // potwierdzonych w PSE_OSOBA logach benchmarku: "Wydzialu", "Wydziatu", "icznie", "SŁU".
-private val OSOBA_DENYLIST: Set<String> = setOf(
+// internal (nie private): OutputGuard.kt (Warstwa 6) reużywa tę samą listę, żeby nie
+// flagować YELLOW dokładnie tych słów, które NameEngine już świadomie pomija przy maskowaniu.
+internal val OSOBA_DENYLIST: Set<String> = setOf(
     "zamieszkania", "zameldowania", "służbowa", "służbowy",
     "wydział", "wydziału", "wydzialu", "wydziatu",
     "informacji", "informacj", "uzyskanych",
@@ -297,7 +299,45 @@ private val OSOBA_DENYLIST: Set<String> = setOf(
     "ulica", "ulicy", "adres", "adresu",
     "imię", "nazwisko", "pesel", "numer",
     "miejscowość", "miejscowości",
+    // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07): "rodo" to odmieniona forma prawdziwego,
+    // rzadkiego nazwiska "Roda" w słowniku 39k (próg ≥100) — koliduje z akronimem RODO.
+    "rodo",
+    // BUG-SLOWNIK-POSPOLITE-SLOWA-IMIONA (11.07): krótkie imiona "Dana"/"Dato"/"Nika"/"Niko"
+    // (słownik imion, próg ≥100) mają pełną odmianę przez Morfeusza pokrywającą się ze
+    // zwykłymi polskimi słowami. Filtr semantyczny (MorfologikHelper.isDefinitelyNotPerson)
+    // okazał się zbyt szeroki — blokował też "Tomka" (Morfologik zna je jako zwykły subst
+    // we własnym słowniku, bez rozróżnienia na osobowe m1) — cofnięty na rzecz precyzyjnej
+    // listy konkretnych potwierdzonych kolizji z benchmarku.
+    "data", "dane", "danych", "nikach",
+    // DECYZJA WŁAŚCICIELA (14.07): filtr semantyczny Morfologika (isCommonWordNotSurname,
+    // usunięty niżej) blokował nie tylko te słowa, ale PRZY OKAZJI też realne nazwiska
+    // będące nazwami zwierząt/przedmiotów (Zając/Wróbel/Sowa/Kot/Karaś) — one mają się
+    // maskować ZAWSZE, nawet kosztem fałszywych trafień. Zamiast szerokiego filtra
+    // gramatycznego (blokuje obie klasy naraz, nie da się ich odróżnić regułą), te 4
+    // KONKRETNE, już potwierdzone słowa-kolizje (i ich odmiana) trafiają tu wprost —
+    // ten sam wzorzec co "data/dane/danych/nikach" wyżej.
+    "osoba", "osoby", "osobie", "osobę", "osobą", "osób", "osobom", "osobami", "osobach",
+    "zapłata", "zapłaty", "zapłacie", "zapłatę", "zapłatą", "zapłat", "zapłatom",
+    "zapłatami", "zapłatach",
+    "łączna", "łącznej", "łączną", "łączny", "łączne", "łącznego", "łącznemu",
+    "łącznym", "łącznych", "łącznymi",
+    "działający", "działająca", "działające", "działającego", "działającej",
+    "działającemu", "działającym", "działających", "działającymi", "działając",
+    // BUG-MUSIAL-CZASOWNIK (14.07): wpis nazwiska "Musiał" w słowniku ma zanieczyszczoną
+    // listę odmian — obok prawdziwych form nazwiska są tam też formy czasownika "musieć"
+    // (błąd generatora, przypadkiem ten sam rdzeń). Tylko formy które są WYŁĄCZNIE
+    // czasownikiem (nie mają żadnego prawdopodobnego odczytu jako nazwisko) — nie ruszam
+    // "musiała/musiało/musiały", bo te mogłyby być realną odmianą nazwiska.
+    "musi", "musisz", "musimy", "musicie", "muszę", "muszą",
 )
+
+// DECYZJA WŁAŚCICIELA (14.07): "Kot" (3 znaki) to prawdziwe nazwisko w słowniku, ale
+// wszędzie indziej w pliku obowiązuje próg "≤3 znaki = skrót/artefakt OCR" (LENGTH-FIX,
+// np. "Sp"/"Ko"/"pl") — bez wyjątku zostałoby jawne. Zamiast obniżać próg globalnie
+// (więcej śmieci OCR jako fałszywe nazwiska), jawna lista PRAWDZIWYCH krótkich nazwisk —
+// jedyny wyjątek od reguły długości, dopisywać kolejne tu gdy się pojawią, nie zmieniać
+// progu globalnie.
+internal val KNOWN_SHORT_SURNAMES: Set<String> = setOf("kot")
 
 private val WHITE_LIST_CALENDAR: Set<String> = setOf(
     "styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec",
@@ -363,6 +403,16 @@ private val TITLE_ADJECTIVE_ENDINGS = Regex(
     """(?i)(?:owego|owej|owym|owych|iego|iej|iem|owy|owa|owe|ową|czny|czna|czne|cznego|cznej|wny|wna|wne|wnego|wnej)\b"""
 )
 
+// BUG-SLOWNIK-POSPOLITE-SLOWA (10.07) + BUG-ZAPLATY-CAPS-REGRESJA (12.07) + DECYZJA
+// WŁAŚCICIELA (14.07): był tu filtr semantyczny (Morfologik "czy to na pewno nie osoba"),
+// USUNIĘTY — blokował "Osoba"/"Zapłata"/"Łączna" (słusznie), ale PRZY OKAZJI blokował też
+// realne nazwiska będące nazwami zwierząt/przedmiotów (Zając/Wróbel/Sowa/Kot/Karaś), bo
+// gramatycznie nie da się ich odróżnić regułą — oba typy słów to zwykłe rzeczowniki/
+// przymiotniki dla Morfologika. Właściciel: nazwisko ma się maskować ZAWSZE, nawet kosztem
+// fałszywych trafień na słowach pospolitych. Te konkretne, potwierdzone kolizje (Osoba/
+// Zapłata/Łączna/Działający) są teraz w OSOBA_DENYLIST (precyzyjna lista, nie szeroki
+// filtr gramatyczny) — dokładnie ten sam wzorzec co "data/dane/danych/nikach" tamże.
+
 private fun isAdjective(word: String): Boolean {
     // surnamesForms ZAWSZE przed Morfologikiem — "Kowalski" jest przymiotnikiem
     // dzierżawczym w słowniku morfologicznym, ale nazwiskiem w surnamesForms.
@@ -371,10 +421,57 @@ private fun isAdjective(word: String): Boolean {
         if (LookupTables.surnamesForms.contains(w)) return false
         if (LookupTables.surnamesForms.any { it.length >= 5 && w.startsWith(it) }) return false
     }
+    // BUG-BARTLOMIEJ-PRZYMIOTNIK-FIX (11.07): namesForms ZAWSZE przed regex fallbackiem —
+    // TITLE_ADJECTIVE_ENDINGS (Warstwa 2 niżej) szuka końcówki typu "iej" GDZIEKOLWIEK w
+    // słowie (containsMatchIn, brak kotwicy początku), więc łapie ją jako substring w
+    // imionach takich jak "Bartłomiej"/"Maciej" (kończą się na "...iej") i błędnie uznaje
+    // je za przymiotnik ("wielkiej", "polskiej"). Realne imię ze słownika nigdy nie jest
+    // przymiotnikiem — ten sam wzorzec ochronny co surnamesForms powyżej.
+    if (LookupTables.initialized && LookupTables.namesForms.isNotEmpty()) {
+        if (LookupTables.namesForms.contains(word.lowercase())) return false
+    }
     // Warstwa 1: Morfologik — definitywny przymiotnik (nie-nazwisko)
     if (MorfologikHelper.isAdjective(word)) return true
     // Warstwa 2: regex fallback dla słów spoza słownika (OCR-garbled, neologizmy)
     return TITLE_ADJECTIVE_ENDINGS.containsMatchIn(word)
+}
+
+// BUG-DWA-IMIONA-FIX (11.07): NAME_FORWARD/BACKWARD/HONORIFIC_REGEX sklejają dwa
+// sąsiadujące wyrazy z wielkiej litery w JEDEN token OSOBA (imię+nazwisko), zakładając
+// że drugi wyraz to nazwisko. Gdy oba wyrazy są w rzeczywistości osobnymi imionami
+// ("Paweł Tomasz", "Wiktoria Sylwia" — lista osób, nie jedna osoba dwuczłonowa),
+// silnik błędnie łączy dwie osoby w jedną.
+// BUG-DWA-IMIONA-FIX-v2 (11.07, po teście na telefonie): pierwsza wersja sprawdzała
+// surnamesForms (39k) jako dowód "to jednak może być nazwisko" — ale ten sam zaszumiony,
+// automatycznie zebrany rejestr PESEL zawiera "tomasz"/"maciej"/"piotr" jako RZADKIE
+// nazwiska (próg ≥100), więc guard sam siebie wyłączał dokładnie dla najpopularniejszych
+// imion, które najczęściej stoją obok siebie na listach osób. Nowa, prostsza reguła:
+// drugi wyraz NIE jest traktowany jako nazwisko, jeśli jest w słowniku imion — bez
+// pytania zaszumionego słownika nazwisk o zdanie.
+// BUG-DWA-IMIONA-FIX-v3 (11.07, kolejny test na telefonie): v2 sprawdzała tylko
+// POLISH_FIRST_NAMES (curated, ~150 pełnych imion) — nie łapała zdrobnień ("Tomek Kasia"
+// nadal się sklejało, bo "Kasia" nie ma na tej krótkiej liście). LookupTables.namesForms
+// (3,6k, ten sam rejestr PESEL/GUS co pełne imiona) zawiera zdrobnienia i jest czystym
+// źródłem specjalnie dla imion (bez kolizji z nazwiskami, które psuły v1) — użyj go jako
+// głównego sprawdzenia, POLISH_FIRST_NAMES zostaje jako fallback gdy słownik niezaładowany.
+private fun isFirstNameOnlyNotSurname(word: String): Boolean {
+    val lower = word.lowercase()
+    return (LookupTables.initialized && LookupTables.namesForms.contains(lower)) ||
+        POLISH_FIRST_NAMES.contains(lower)
+}
+
+// BUG-PROZA-SKLEJANIE-DOWOLNYCH-SLOW (11.07, diagnoza na realnym dokumencie właściciela):
+// bloki łączące dwa słowa w OSOBA wymagały dictionary-dowodu TYLKO dla jednej strony
+// (imię ze słownika) — druga strona ("nazwisko") mogła być DOWOLNYM słowem z wielkiej
+// litery, byle nie przymiotnikiem/nie za krótkim/nie na denylist. W umowach to działa,
+// bo "Jan Kowalski" — oba człony naprawdę są imieniem i nazwiskiem. W wolnym tekście
+// (eseje, dokumenty techniczne) sąsiadem bywa dowolny wyraz z definicji terminu/nagłówka
+// ("Zasada Pawła", "Teza Pawła") — regex zgarniał go bez pytania. Fix ogólny: druga
+// strona też musi mieć dowód w słowniku nazwisk (surnamesForms) — dla złożonych nazwisk
+// z myślnikiem ("Kowalska-Nowak") wystarczy że JEDEN człon jest potwierdzony.
+private fun hasSurnameEvidence(word: String): Boolean {
+    if (!LookupTables.initialized) return true  // brak słownika = nie blokuj (fallback jak gdzie indziej)
+    return word.lowercase().split("-").any { LookupTables.surnamesForms.contains(it) }
 }
 
 // ============================================================
@@ -397,8 +494,13 @@ private var _nameForwardRegex: Regex? = null
 private val NAME_FORWARD_REGEX: Regex
     get() {
         _nameForwardRegex?.let { return it }
+        // BUG-DIAKRYTYKI-GRANICA (11.07, znaleziony testem sklejania): \b końcowy po grupie
+        // nazwiska (wolny znak z klasy, nie literał ze słownika) obcinał ostatnią literę
+        // gdy nazwisko/imię kończyło się diakrytykiem — Java \b traktuje "ł" jak nie-\w,
+        // więc granica "wykrywała się" o jedną literę wcześniej ("Paweł"→"Pawe"). Ten sam
+        // fix co StructuralEngine/AddressEngine/OutputGuard — $WORD_END_UNICODE zamiast \b.
         val r = Regex(
-            """\b(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)\b""",
+            """\b(${buildNamePattern()})\b[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)$WORD_END_UNICODE""",
             RegexOption.IGNORE_CASE
         )
         if (LookupTables.initialized) _nameForwardRegex = r
@@ -409,8 +511,15 @@ private var _nameBackwardRegex: Regex? = null
 private val NAME_BACKWARD_REGEX: Regex
     get() {
         _nameBackwardRegex?.let { return it }
+        // BUG-SKLEJANIE-MIEDZYLINIOWE-FIX (11.07, znalezione testem ręcznym na telefonie):
+        // separator kończył się gołym \s+ (dopasowuje TEŻ \n) zamiast [^\S\n] jak wszędzie
+        // indziej w tym pliku ("nie może przełknąć \n" — patrz komentarze przy innych
+        // regexach). Efekt: nazwisko z KOŃCA jednej linii/akapitu sklejało się z imieniem
+        // z POCZĄTKU zupełnie innej, niepowiązanej linii dalej w dokumencie ("Wiśniewska"
+        // z jednej sekcji + "Bartłomiej" z zupełnie innej), bo \s+ przełykał puste linie
+        // między nimi. Separator musi zostać w obrębie jednej linii.
         val r = Regex(
-            """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)(?:[^\S\n]*,?\s+)\b(${buildNamePattern()})\b""",
+            """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöüÄÖÜ]+(?:-[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżäöü]+)*)(?:[^\S\n]*,?[^\S\n]+)\b(${buildNamePattern()})$WORD_END_UNICODE""",
             RegexOption.IGNORE_CASE
         )
         if (LookupTables.initialized) _nameBackwardRegex = r
@@ -506,16 +615,25 @@ internal fun isOnWhiteList(word: String): Boolean {
 // ============================================================
 // TODO-2: Detekcja adresów z bazy GUS TERYT
 // ============================================================
+// BUG-DIAKRYTYKI-GRANICA (StructuralEngine.kt, WORD_END_UNICODE): \b końcowy zastąpiony —
+// nazwa miasta po przyimku ("do Łodzi", "w Gdyni") może kończyć się polską literą diakrytyczną.
+// BUG-CITY-PREP-CASE-FIX (08.07, brief Cursor): globalne (?i) na całym wzorcu znosiło wymóg
+// wielkiej litery na DRUGIM (opcjonalnym) słowie miasta dwuwyrazowego — "w Toruń dnia" łapało
+// "Toruń dnia" jako jeden kandydat (bo "dnia" pod IGNORE_CASE też pasuje do [A-ZŁŚŹĆŃĄĘÓŻ]),
+// cityForms.contains("toruń dnia") zawodził, cały match odrzucony, "Toruń" zostawało jawne.
+// (?i:...) ograniczone TYLKO do przyimka — reszta wzorca (Title-Case miasta) zostaje
+// świadomie case-sensitive, zgodnie z przeznaczeniem.
+// BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s w lookbehind -> [^\S\n] — przyimek na końcu
+// linii + nazwa własna na początku ZUPEŁNIE INNEJ linii nie może być brana za "miasto po przyimku".
 internal val CITY_PREP_REGEX = Regex(
-    """(?i)(?<=\b(?:w|z|do|ze|we|nad|pod|przy|przez|na)\s)([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)\b"""
+    """(?<=\b(?i:w|z|do|ze|we|nad|pod|przy|przez|na)[^\S\n])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)$WORD_END_UNICODE"""
 )
 // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): STREET_NAME_CHARS (StructuralEngine.kt) — wspólne
-// źródło znaków nazwy ulicy, żeby myślnik (i przyszłe dodatki) nie trzeba było pamiętać
-// dopisywać w kilku miejscach osobno.
+// źródło znaków nazwy ulicy. Współdzielone z AddressEngine.kt (Blok 1, STREET_DICT) — jedyny
+// pozostały konsument po usunięciu applyStreetLookup (07.07, duplikat AddressEngine.STREET_DICT).
 internal val STREET_CANDIDATE_REGEX = Regex(
     """\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]+){0,2})[^\S\n]+(\d{1,4}[A-Za-z]?(?:[/[^\S\n]]\d{1,4}[A-Za-z]?)?)\b"""
 )
-
 private fun applyCityLookup(
     text: String,
     assignToken: (String, String) -> String
@@ -539,50 +657,18 @@ private fun applyCityLookup(
     return result
 }
 
-private fun applyStreetLookup(
-    text: String,
-    assignToken: (String, String) -> String
-): String {
-    if (!LookupTables.initialized || LookupTables.streetForms.isEmpty()) return text
-
-    return STREET_CANDIDATE_REGEX.replace(text) { match ->
-        if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
-
-        val streetPart = match.groupValues[1].trim()
-        val streetLower = streetPart.lowercase()
-
-        // BUG-PLN-STREETLOOKUP-FIX (05.07, diagnoza agenta): "płn" (skrót "Północna" w
-        // street_names.json) po ASCII-foldowaniu (ł→l, LookupTables.withAsciiVariants) staje
-        // się "pln" i koliduje ze skrótem waluty — streetForms.contains("pln") wychodzi true.
-        // Ten sam CURRENCY_PREFIX_DENY co w AddressEngine.kt (tam już zablokowany), tu było
-        // bez ochrony — łapało "PLN 1234" jako ADRES zanim AnchorEngine zobaczył tekst.
-        if (streetLower in CURRENCY_PREFIX_DENY) return@replace match.value
-
-        // Sprawdź klucz (mianownik) i formy fleksyjne z bazy — z prefiksami
-        if (LookupTables.streetForms.contains(streetLower) ||
-            LookupTables.streetForms.contains("ulica $streetLower") ||
-            LookupTables.streetForms.contains("ulicy $streetLower") ||
-            LookupTables.streetForms.contains("aleje $streetLower") ||
-            LookupTables.streetForms.contains("alei $streetLower") ||
-            LookupTables.streetForms.contains("plac $streetLower") ||
-            LookupTables.streetForms.contains("placu $streetLower") ||
-            LookupTables.streetForms.contains("os. $streetLower") ||
-            LookupTables.streetForms.contains("osiedle $streetLower")) {
-            assignToken(match.value, TOKEN_ADRES)
-        } else {
-            match.value
-        }
-    }
-}
-
 // Pola dowodu osobistego — maskują TYLKO wartość, etykieta zostaje w tekście.
 // Obsługują ALL-CAPS (stary dowód) i mixed-case (nowy dowód).
 // ID_CARD_PARENT przed FIRSTNAME — bardziej szczegółowy wzorzec ma pierwszeństwo.
+// BUG-DIAKRYTYKI-GRANICA: \b końcowy -> WORD_END_UNICODE — imię może kończyć się diakrytykiem
+// (np. "Stanisława", odmiana dopełniacza kończąca się na "ą"/"ę" itp.).
+// BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s -> [^\S\n] — "imię (ojca/matki)" to kotwica,
+// nie może przełknąć \n i ukraść imienia z zupełnie innej, niepowiązanej linii/akapitu.
 private val ID_CARD_PARENT_REGEX = Regex(
-    """(?i)\bimi[eę]\s+(?:ojca|matki|rodzica)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+    """(?i)\bimi[eę][^\S\n]+(?:ojca|matki|rodzica)[^\S\n]*:?[^\S\n]*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})$WORD_END_UNICODE"""
 )
 private val ID_CARD_FIRSTNAME_REGEX = Regex(
-    """(?i)\bimi[eę](?!\s+(?:ojca|matki|rodzica)\b)\s*:?\s*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})\b"""
+    """(?i)\bimi[eę](?![^\S\n]+(?:ojca|matki|rodzica)\b)[^\S\n]*:?[^\S\n]*([A-ZŁŚŹĆŃĄĘÓŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż]{1,19})$WORD_END_UNICODE"""
 )
 
 // PERF-FIX v1.6: titlePattern jako lazy val — poprzednio był kompilowany na nowo
@@ -614,13 +700,10 @@ internal fun applyContextualBlacklist(
     var result = text
 
     // TODO-2: Adresy z bazy GUS TERYT — przed detekcją imion
-    // FAZA-B-WYLACZENIE (05.07, decyzja Pawła — strangler fig): applyStreetLookup to ten sam
-    // słownik (streetForms) i ten sam kształt co AddressEngine.STREET_DICT — duplikat
-    // strukturalny, nie kotwica. Wyłączony gdy USE_ADDRESS_ENGINE_V0. applyCityLookup ZOSTAJE
-    // zawsze — to CITY_PREP ("w Warszawie"), świadomie poza zakresem AddressEngine v0.
-    if (!USE_ADDRESS_ENGINE_V0) {
-        result = applyStreetLookup(result, assignToken)
-    }
+    // applyStreetLookup usunięty 07.07 (konsolidacja ADRES) — ten sam słownik i kształt co
+    // AddressEngine.STREET_DICT, duplikat strukturalny. applyCityLookup zostaje — to CITY_PREP
+    // ("w Warszawie"), świadomie poza zakresem AddressEngine (przyimek + słownik miast, nie
+    // ulica/kod pocztowy).
     result = applyCityLookup(result, assignToken)
 
     // 3a — Firmy z formą prawną
@@ -641,11 +724,22 @@ internal fun applyContextualBlacklist(
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
         val namePart = match.groupValues[2]
         val surnamePart = match.groupValues[3]
+        // BUG-CASE-IGNORE-FORWARD-FIX (11.07): IGNORE_CASE na całym regexie sprawia że
+        // [A-ZŁŚŹĆŃĄĘÓŻ] pasuje też do małej litery — bez tej kontroli runtime "Pan daty
+        // wystawienia" (małe "d") przeszłoby jako imię/nazwisko. Ten sam mechanizm co
+        // istniejący guard w NAME_BACKWARD_REGEX niżej ("CASE-FIX"), tu dotąd brakujący.
+        if (!namePart[0].isUpperCase() || !surnamePart[0].isUpperCase()) return@replace match.value
         if (isOnWhiteList(surnamePart)) return@replace match.value
         if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
             !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
+        // BUG-DENYLIST-NAMEPART-FIX (11.07): OSOBA_DENYLIST był dotąd sprawdzany tylko po
+        // stronie nazwiska — "Kowalski Data" ("Data" jako namePart ze słownika imion, kolizja
+        // ze zwykłym słowem) przechodziło bez przeszkód mimo że "data" jest już na liście.
+        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (isFirstNameOnlyNotSurname(surnamePart)) return@replace match.value
         if (surnamePart.length < 4) return@replace match.value
         if (surnamePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surnamePart)) return@replace match.value
         "${match.groupValues[1]} ${assignToken("$namePart $surnamePart", TOKEN_OSOBA)}"
     }
 
@@ -654,19 +748,30 @@ internal fun applyContextualBlacklist(
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
         val namePart = match.groupValues[1]
         val surname = match.groupValues[2]
+        // BUG-CASE-IGNORE-FORWARD-FIX (11.07): tej kontroli tu brakowało (istniała już
+        // w NAME_BACKWARD_REGEX niżej — "CASE-FIX"). IGNORE_CASE na regexie sprawia że
+        // [A-ZŁŚŹĆŃĄĘÓŻ] pasuje też do małej litery — bez runtime guard "Data wystawienia"
+        // (imię "Data" ze słownika + zwykłe słowo "wystawienia" małą literą) sklejało się
+        // w jeden fałszywy token OSOBA. Realna nazwa własna zawsze zaczyna się wielką literą.
+        if (!namePart[0].isUpperCase() || !surname[0].isUpperCase()) return@replace match.value
         // BUG-1 FIX: sprawdź białą listę dla OBIE grupy
         // "adresem Lipowej" — "adresem" jest na białej liście → nie tokenizuj
         if (isOnWhiteList(namePart)) return@replace match.value
         if (isOnWhiteList(surname)) return@replace match.value
+        // BUG-DENYLIST-NAMEPART-FIX (11.07): jak w HONORIFIC_REGEX wyżej — namePart musi
+        // przejść przez OSOBA_DENYLIST, nie tylko surname.
+        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
         // BUG-2 FIX: Wyklucz przymiotniki TYLKO gdy nie są w słowniku nazwisk
         // "Kowalskiego" kończy się na -iego ale jest w surnamesForms → nazwisko
         // "Wielkiego" kończy się na -iego i NIE jest w surnamesForms → przymiotnik
         if (isAdjective(surname)) return@replace match.value
+        if (isFirstNameOnlyNotSurname(surname)) return@replace match.value
         // LENGTH-FIX v1.10: fragment ≤3 znaki jako "nazwisko" to skrót lub artefakt OCR
         // ("Sp", "Ko", "pl") — nie jest realnym nazwiskiem. Wzorzec regex akceptuje ≥2 znaki.
         // Nie dotyczy namePart (imię) — buildNamePattern ma własny filtr ≥3 znaków.
         if (surname.length < 4) return@replace match.value
         if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surname)) return@replace match.value
         assignToken(match.value, TOKEN_OSOBA)
     }
 
@@ -679,15 +784,24 @@ internal fun applyContextualBlacklist(
         // "imieniu Katarzyny" — 'i' (małe) pasuje do klasy [A-ZŁŚŹĆŃĄĘÓŻ] z IGNORE_CASE.
         // Realna nazwa własna zaczyna się wielką literą — odrzucamy małoliterowe "nazwiska".
         if (!surname[0].isUpperCase()) return@replace match.value
+        // BUG-CASE-IGNORE-FORWARD-FIX (11.07): analogiczna kontrola dla namePart — tu też
+        // brakowało jej (grupa 2, oparta na buildNamePattern(), nie miała żadnego guardu wielkości
+        // litery w żadnym z bloków przed dzisiejszą sesją).
+        if (!namePart[0].isUpperCase()) return@replace match.value
         // BUG-1 FIX: sprawdź białą listę dla obu grup
         if (isOnWhiteList(surname)) return@replace match.value
         if (isOnWhiteList(namePart)) return@replace match.value
+        // BUG-DENYLIST-NAMEPART-FIX (11.07): "Kowalski Data" — "Data" jako namePart ze
+        // słownika imion nigdy nie było sprawdzane przeciw OSOBA_DENYLIST w tym bloku.
+        if (namePart.lowercase() in OSOBA_DENYLIST) return@replace match.value
         // BUG-2 FIX: przymiotnik vs odmienione nazwisko
         if (isAdjective(surname)) return@replace match.value
+        if (isFirstNameOnlyNotSurname(surname)) return@replace match.value
         // LENGTH-FIX v1.10: analogicznie jak w NAME_FORWARD — skróty 2-3 znakowe
         // nie są realnymi nazwiskami.
         if (surname.length < 4) return@replace match.value
         if (surname.lowercase() in OSOBA_DENYLIST) return@replace match.value
+        if (!hasSurnameEvidence(surname)) return@replace match.value
         assignToken(match.value, TOKEN_OSOBA)
     }
 
@@ -695,6 +809,9 @@ internal fun applyContextualBlacklist(
     result = HONORIFIC_NAME_ONLY_REGEX.replace(result) { match ->
         if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
         val namePart = match.groupValues[2]
+        // BUG-CASE-IGNORE-FORWARD-FIX (11.07): jak w pozostałych blokach — bez tego guardu
+        // "Pan daty" (małe "d") przeszłoby jako imię.
+        if (!namePart[0].isUpperCase()) return@replace match.value
         if (!LookupTables.namesForms.contains(namePart.lowercase()) &&
             !POLISH_FIRST_NAMES.contains(namePart.lowercase())) return@replace match.value
         if (isAdjective(namePart)) return@replace match.value
@@ -735,6 +852,24 @@ internal fun applyContextualBlacklist(
             }
     }
 
+    // 3a — Krótkie prawdziwe nazwiska (KNOWN_SHORT_SURNAMES) — "Kot" itp., 3 znaki, poniżej
+    // progu długości który reszta pliku traktuje jako skrót/artefakt OCR (patrz definicja
+    // KNOWN_SHORT_SURNAMES wyżej). Osobny, węższy regex (dokładnie 1 wielka + 2 małe litery)
+    // zamiast obniżania progu globalnie.
+    result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻa-ząćęłńóśźż])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2})(?![a-ząćęłńóśźż])""")
+        .replace(result) { match ->
+            if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+            val word = match.groupValues[1]
+            if (word.lowercase() !in KNOWN_SHORT_SURNAMES) return@replace match.value
+            if (isOnWhiteList(word)) return@replace match.value
+            val token = assignToken(word, TOKEN_OSOBA)
+            val before = result.getOrElse(match.range.first - 1) { ' ' }
+            val after = result.getOrElse(match.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            "$pre$token$suf"
+        }
+
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
     // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): pre/suf jak w AnchorEngine/ADDRESS —
     // obrona na wypadek gdyby jakiś inny krok potoku skleił to słowo z sąsiednim bez spacji
@@ -755,6 +890,17 @@ internal fun applyContextualBlacklist(
         }
 
     // 3a — Samo imię z namesForms (najniższy priorytet — po nazwisku, przed tytułami)
+    // BUG-SLOWNIK-POSPOLITE-SLOWA-IMIONA (11.07): rozszerzony słownik imion (3610, rejestr
+    // PESEL/GUS) ma te same kolizje co rozszerzony słownik nazwisk 08.07 — krótkie imiona
+    // (np. "Dana", "Dato", "Nika") mają pełną odmianę przez Morfeusza pokrywającą się ze
+    // zwykłymi polskimi słowami ("dane", "data", "nikach"). Strażnik Morfologika
+    // (isDefinitelyNotPerson) PRÓBOWANY i COFNIĘTY tego samego dnia — zbyt szeroki dla
+    // imion: Morfologik zna wiele zdrobnień ("Tomka" — dopełniacz "Tomka") jako zwykły
+    // rzeczownik we własnym słowniku (subst, bez rozróżnienia na osobowe m1), więc
+    // zablokował realny golden test "Zadzwoniłem do Tomka wczoraj." W przeciwieństwie do
+    // nazwisk (Warstwa "Samo nazwisko" niżej) imiona nie mają kształtu-sufiksu chroniącego
+    // popularne przypadki przed Morfologikiem, więc zamiast filtra semantycznego —
+    // precyzyjna lista potwierdzonych kolizji w OSOBA_DENYLIST (data/dane/danych/nikach).
     result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻ])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})(?![a-ząćęłńóśźż])""")
         .replace(result) { match ->
             if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value

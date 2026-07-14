@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr VAT/2024/3177
+
+Data wystawienia: 29.01.2024
+Numer klienta: KL-56019
+
+----------------------------------------
+SPRZEDAWCA:
+Serwis AGD ELEKTRO Sp. z o.o.
+Adres: al. Jana Pawła II 31/48, 20-100 Radom
+NIP: 951-606-07-16   REGON: 152975169
+Nr konta: PL33169010141369681645352181
+
+NABYWCA:
+Paweł Dąbrowski
+Adres: ul. Mickiewicza 98, 44-100 Bydgoszcz
+NIP: 696-966-41-69
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   2     349  23%      698      859
+2.   Naprawa sprzętu                   3    1283   8%     3849     4157
+3.   Konsultacja techniczna            3    1998  23%     5994     7373
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        12389 PLN
+
+Płatność przelewem: PL33169010141369681645352181
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

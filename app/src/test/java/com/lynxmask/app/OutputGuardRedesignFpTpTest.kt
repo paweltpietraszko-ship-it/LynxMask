@@ -323,4 +323,132 @@ class OutputGuardRedesignFpTpTest {
         assertTrue("PL_PREFIX nie powinien być flagowany (reguła usunięta)",
             yellow(guard("Konto PL6110900104000000712")).none { it.label == "PL_PREFIX" })
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // YELLOW: MIASTO_NIEZAMASKOWANE (08.07, brief Cursor — decyzja właściciela:
+    // gołe miasto ze słownika bez kontekstu strukturalnego = tylko ostrzeżenie,
+    // NIE auto-maskowanie — zbyt duży FP na wieloznacznych słowach typu "warszawski").
+    // ════════════════════════════════════════════════════════════════════════
+
+    private fun withCities(cities: Set<String>, streets: Set<String> = emptySet(), block: () -> Unit) {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(cities = cities, streets = streets)
+        try { block() } finally {
+            LookupTables.resetForTesting()
+            LookupTables.initializeForTesting()
+        }
+    }
+
+    @Test fun miastoNiezamaskowaneGoleMiastoFlagged() = withCities(setOf("gdańsk")) {
+        assertTrue(hasLabel(yellow(guard("Siedziba: Gdańsk")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoNiezamaskowanePoPrzyimkuFlagged() = withCities(setOf("krakowie")) {
+        // symuluje stan SPRZED fixu CITY_PREP — miasto po przyimku zostało jawne
+        assertTrue(hasLabel(yellow(guard("Klient mieszka w Krakowie.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoJuzZamaskowaneWTejSamejLinniNieFlagowane() = withCities(setOf("warszawie")) {
+        // symuluje stan PO silniku: linia ma już token ADRES_NNN, nie duplikuj ostrzeżenia
+        assertFalse("Linia z istniejącym ADRES_001 nie powinna dodatkowo dostać MIASTO_NIEZAMASKOWANE",
+            hasLabel(yellow(guard("Działalność prowadzona w Warszawie, ADRES_001.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun zwykleSloWoBezCityFormsNieFlagowane() = withCities(setOf("gdańsk")) {
+        assertFalse(hasLabel(yellow(guard("Zamawiający zlecił wykonanie Usługi.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoBedaceTakzeUlicaNieFlagowaneJakoMiasto() =
+        withCities(cities = setOf("gdańska"), streets = setOf("gdańska")) {
+            // "Gdańska" jako nazwa ulicy — zostaw ocenę Guardowi ulicy, nie duplikuj jako miasto
+            assertFalse(hasLabel(yellow(guard("Zamieszkały przy ul. Gdańska 5.")), "MIASTO_NIEZAMASKOWANE"))
+        }
+
+    @Test fun miastoDwuwyrazoweNiezamaskowaneFlagged() = withCities(setOf("zielona góra")) {
+        assertTrue(hasLabel(yellow(guard("Siedziba spółki: Zielona Góra")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    @Test fun miastoZaczynajaceSieNaDiakrytykFlagged() = withCities(setOf("łódź")) {
+        // regresja wiodącego \b — "Łódź" jako pierwsze słowo zdania
+        assertTrue(hasLabel(yellow(guard("Łódź to duże miasto.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    // BUG-MIASTO-ZACHLANNA-PARA-FIX (ultrareview): stara wersja regexu łapała parę
+    // "słowo1 słowo2" jednym matchem — gdy para nie była dwuczłonowym miastem, findAll
+    // konsumował oba słowa naraz i drugie słowo ("Warszawa") nigdy nie było sprawdzone
+    // osobno jako miasto jednoczłonowe.
+    @Test fun miastoPoprzedzoneInnymSlowemZWielkiejLiteryNadalWykryte() = withCities(setOf("warszawa")) {
+        assertTrue("Warszawa poprzedzona innym słowem z wielkiej litery ('Piękna') " +
+            "powinna nadal dać MIASTO_NIEZAMASKOWANE",
+            hasLabel(yellow(guard("Piękna Warszawa wita gości z całego świata.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // YELLOW: NAZWISKO_NIEZAMASKOWANE/NAZWISKO_RZADKIE_NIEZAMASKOWANE mimo kolizji
+    // z cityForms (14.07, BUG-GUARD-CITY-SILENCES-SURNAME-FIX) — realne nazwiska
+    // identyczne z nazwą miejscowości (Zając/Wróbel/Sikora/Dudek w cities_forms.json,
+    // potwierdzone audytem) wcześniej milczały bezwarunkowo tylko dlatego że słowo
+    // jest też miastem. Czyste miasto bez dowodu nazwiska musi zostać wyciszone
+    // jak dotąd — inaczej duplikat z MIASTO_NIEZAMASKOWANE niżej.
+    // ════════════════════════════════════════════════════════════════════════
+
+    private fun withSurnameCityOverlap(surname: String, extended: Boolean, block: () -> Unit) {
+        LookupTables.resetForTesting()
+        if (extended) {
+            LookupTables.initializeForTesting(surnamesExtended = setOf(surname), cities = setOf(surname))
+        } else {
+            LookupTables.initializeForTesting(surnames = setOf(surname), cities = setOf(surname))
+        }
+        try { block() } finally {
+            LookupTables.resetForTesting()
+            LookupTables.initializeForTesting()
+        }
+    }
+
+    @Test fun nazwiskoKolidujaceZMiastemDalejFlagowaneMalySlownik() =
+        withSurnameCityOverlap("zając", extended = false) {
+            assertTrue(hasLabel(yellow(guard("Pracownik: Zając zgłosił się do pracy.")), "NAZWISKO_NIEZAMASKOWANE"))
+        }
+
+    @Test fun nazwiskoKolidujaceZMiastemDalejFlagowaneRzadkieRozszerzone() =
+        withSurnameCityOverlap("wróbel", extended = true) {
+            assertTrue(hasLabel(yellow(guard("Pracownik: Wróbel zgłosił się do pracy.")), "NAZWISKO_RZADKIE_NIEZAMASKOWANE"))
+        }
+
+    @Test fun czysteMiastoBezDowoduNazwiskaNadalNieFlagowaneJakoNazwisko() = withCities(setOf("gdańsk")) {
+        assertFalse(hasLabel(yellow(guard("Pracownik: Gdańsk zgłosił się do pracy.")), "NAZWISKO_NIEZAMASKOWANE"))
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // YELLOW: nazwisko sąsiadujące z tokenem OSOBA_NNN — brak CTX_OSOBA_LABEL w
+    // pobliżu (14.07, zrzut Pawła: dokument "wspólnicy spółki cywilnej" — realne
+    // rzadkie nazwiska "Pietraszko"/"Kowalińska" w 39k-słowniku milczały, bo żadne
+    // słowo z CTX_OSOBA_LABEL nie występowało w tym typie dokumentu).
+    // ════════════════════════════════════════════════════════════════════════
+
+    private fun withExtendedSurname(surname: String, block: () -> Unit) {
+        LookupTables.resetForTesting()
+        LookupTables.initializeForTesting(surnamesExtended = setOf(surname))
+        try { block() } finally {
+            LookupTables.resetForTesting()
+            LookupTables.initializeForTesting()
+        }
+    }
+
+    @Test fun nazwiskoRzadkieObokTokenuOsobaFlagowaneBezEtykietyKontekstowej() =
+        withExtendedSurname("pietraszko") {
+            assertTrue(
+                "Nazwisko 'Pietraszko' tuż obok OSOBA_010 (bez żadnego słowa z CTX_OSOBA_LABEL " +
+                    "w pobliżu) powinno dostać YELLOW dzięki sąsiedztwu z tokenem osoby",
+                hasLabel(yellow(guard("OSOBA_010, Pietraszko - wspólnicy spółki cywilnej.")), "NAZWISKO_RZADKIE_NIEZAMASKOWANE")
+            )
+        }
+
+    @Test fun nazwiskoRzadkieBezEtykietyIBezSasiedztwaOsobyNieFlagowane() =
+        withExtendedSurname("pietraszko") {
+            assertFalse(
+                "Bez etykiety CTX_OSOBA_LABEL i bez sąsiedztwa z tokenem OSOBA — nadal cisza (unika szumu)",
+                hasLabel(yellow(guard("W dokumencie wspomniano też Pietraszko przy innej okazji.")), "NAZWISKO_RZADKIE_NIEZAMASKOWANE")
+            )
+        }
 }

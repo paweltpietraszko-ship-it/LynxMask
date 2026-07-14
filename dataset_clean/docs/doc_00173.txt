@@ -1,0 +1,37 @@
+FORMULARZ DANYCH OSOBOWYCH
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Tomasz Wójcik
+Data urodzenia:
+09.01.1960
+PESEL:
+77121470777
+Nr dowodu osobistego:
+URK240132
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Sportowa 34, 80-001 Toruń
+Telefon:
++48 792 342 321
+Adres e-mail:
+tomaszwojcik@interia.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+207-603-10-83
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

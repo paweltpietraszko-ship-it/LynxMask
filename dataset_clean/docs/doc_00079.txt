@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-07168/12/2022
+
+Data wystawienia: 15.05.2021
+Numer klienta: KL-17589
+
+----------------------------------------
+SPRZEDAWCA:
+Hurtownia Materiałów BUDMAT Sp. z o.o.
+Adres: ul. Wolności 62, 40-001 Wrocław
+NIP: 652-696-58-25   REGON: 168486660
+Nr konta: PL08109010148892414183285691
+
+NABYWCA:
+Zbigniew Kowalski
+Adres: pl. Wolności 164, 00-001 Kielce
+NIP: 810-910-43-02
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               2     978   8%     1956     2112
+2.   Instalacja oprogramowania         3     294   8%      882      953
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         3065 PLN
+
+Płatność przelewem: PL08109010148892414183285691
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

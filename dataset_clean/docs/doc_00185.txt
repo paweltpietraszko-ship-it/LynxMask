@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2021/6792
+
+Data wystawienia: 16.03.2022
+Numer klienta: KL-33840
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Kopernika 82, 90-001 Rybnik
+NIP: 865-612-48-12   REGON: 820634595
+Nr konta: PL33109010141238296577242954
+
+NABYWCA:
+Jan Krawczyk
+Adres: ul. Wolności 9/6, 31-001 Rybnik
+NIP: 669-857-00-24
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 4      92   8%      368      397
+2.   Obsługa prawna                   10    1333   8%    13330    14396
+3.   Konsultacja techniczna            8     456  23%     3648     4487
+4.   Usługa serwisowa                  1     871  23%      871     1071
+5.   Usługa projektowa                 5     355   8%     1775     1917
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        22268 PLN
+
+Płatność przelewem: PL33109010141238296577242954
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

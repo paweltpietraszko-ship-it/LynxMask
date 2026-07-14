@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 8814/03/2023
+
+Data wystawienia: 05.10.2024
+Numer klienta: KL-41584
+
+----------------------------------------
+SPRZEDAWCA:
+Biuro Rachunkowe RACHMISTRZ
+Adres: ul. Norwida 196/43, 87-100 Radom
+NIP: 179-030-67-38   REGON: 634283642
+Nr konta: PL81150010130892687056856624
+
+NABYWCA:
+Paweł Lewandowski
+Adres: al. Niepodległości 5/5, 87-100 Wrocław
+NIP: 930-284-39-58
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Instalacja oprogramowania         3    1700  23%     5100     6273
+2.   Usługa doradcza                   9     895  23%     8055     9908
+3.   Obsługa prawna                    9     324  23%     2916     3587
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        19768 PLN
+
+Płatność przelewem: PL81150010130892687056856624
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

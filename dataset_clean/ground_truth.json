@@ -1,0 +1,3790 @@
+[
+  {
+    "file": "docs/doc_00000.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Paweł Szymański",
+      "adres": "ul. Ogrodowa 36, 45-001 Bielsko-Biała",
+      "pesel": "57101960410",
+      "dowod_osobisty": "CGH890838",
+      "telefon": "+48 663 794 026",
+      "email": "pawel_szymanski98@onet.pl",
+      "data_urodzenia": "13.03.1980",
+      "nip": "216-155-94-00"
+    }
+  },
+  {
+    "file": "docs/doc_00001.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Magdalena Michalska",
+      "adres": "ul. Zielona 93, 02-200 Bytom",
+      "pesel": "54021067757",
+      "dowod_osobisty": "CHD647525",
+      "telefon": "+48 603 419 283",
+      "email": "magdalena_michalska@wp.pl",
+      "data_urodzenia": "20.12.1999",
+      "nip": "450-305-64-14",
+      "numer_paszportu": "TZ5376724",
+      "numer_kw": "PO1P/00793300/9",
+      "numer_dzialki": "711878.0052.5931/5"
+    }
+  },
+  {
+    "file": "docs/doc_00002.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Piotr Wójcik",
+      "oskarzony": "Jan Dudek",
+      "adres": "ul. Różana 153/25, Zabrze",
+      "data": "19.12.2022",
+      "pesel": "72072299408",
+      "telefon": "+48 781 845 146"
+    }
+  },
+  {
+    "file": "docs/doc_00003.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Kamil Wieczorek",
+      "adres_zleceniodawca": "ul. Lipowa 130, 60-001 Olsztyn",
+      "nip_zleceniodawca": "282-278-24-84",
+      "pesel_zleceniodawca": "90070412315",
+      "imie_nazwisko_zleceniobiorca": "Dariusz Jabłoński",
+      "adres_zleceniobiorca": "ul. Sportowa 164, 10-100 Szczecin",
+      "nip_zleceniobiorca": "738-346-57-83",
+      "numer_umowy": "KT/0781/2023",
+      "iban": "PL86169010148095701543039117"
+    }
+  },
+  {
+    "file": "docs/doc_00004.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Joanna Pawłowska",
+      "adres": "ul. Ogrodowa 2/41, 40-001 Kraków",
+      "sygnatura_akt": "II K 515/2016",
+      "pesel": "96021624372",
+      "telefon": "+48 538 299 737"
+    }
+  },
+  {
+    "file": "docs/doc_00005.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Bartosz Jankowski",
+      "adres": "ul. Różana 106, 01-100 Zielona Góra",
+      "pesel": "58103006250",
+      "dowod_osobisty": "DHG387262",
+      "telefon": "+48 577 317 810",
+      "email": "bartoszjankowski@o2.pl",
+      "data_urodzenia": "15.05.1958",
+      "nip": "426-773-60-22"
+    }
+  },
+  {
+    "file": "docs/doc_00006.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Robert Wieczorek",
+      "oskarzony": "Iwona Dudek",
+      "adres": "ul. Chopina 125/19, Szczecin",
+      "data": "01.04.2023",
+      "pesel": "98082306208",
+      "telefon": "+48 489 788 208"
+    }
+  },
+  {
+    "file": "docs/doc_00007.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Katarzyna Michalska",
+      "adres": "ul. Słoneczna 173, 03-300 Częstochowa",
+      "pesel": "01220925207",
+      "dowod_osobisty": "UCN998543",
+      "telefon": "+48 785 346 247",
+      "email": "katarzyna.michalska80@onet.pl",
+      "data_urodzenia": "05.07.2000",
+      "nip": "218-384-25-11"
+    }
+  },
+  {
+    "file": "docs/doc_00008.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Paulina Dąbrowska",
+      "oskarzony": "Magdalena Grabowska",
+      "adres": "ul. Kwiatowa 171, Białystok",
+      "data": "06.04.2025",
+      "pesel": "62011827014",
+      "telefon": "+48 798 244 935"
+    }
+  },
+  {
+    "file": "docs/doc_00009.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "1772/03/2022",
+      "nip_sprzedawcy": "624-278-68-00",
+      "regon_sprzedawcy": "720450533",
+      "nip_nabywcy": "212-805-98-29",
+      "iban": "PL31114019873158692322602563",
+      "numer_klienta": "KL-15075",
+      "imie_nazwisko_nabywcy": "Monika Grabowska",
+      "adres_nabywcy": "ul. Kopernika 109, 00-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00010.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Agnieszka Woźniak",
+      "adres": "ul. Lipowa 149, 01-100 Lublin",
+      "pesel": "59092361050",
+      "sygnatura_komornicza": "Km 79557/2024",
+      "iban": "PL95109010146934060883561595"
+    }
+  },
+  {
+    "file": "docs/doc_00011.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Dorota Mazur",
+      "osoba": "Iwona Kowalczyk",
+      "pesel": "87092168025",
+      "telefon": "+48 739 468 044",
+      "adres": "ul. Polna 111, 70-001 Zabrze"
+    }
+  },
+  {
+    "file": "docs/doc_00012.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Michał Grabowski",
+      "oskarzony": "Kamil Kamiński",
+      "adres": "ul. Sienkiewicza 22/43, Olsztyn",
+      "data": "17.11.2021",
+      "pesel": "58051983821",
+      "telefon": "+48 784 332 003"
+    }
+  },
+  {
+    "file": "docs/doc_00013.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Katarzyna Krawczyk",
+      "oskarzony": "Zbigniew Pawłowski",
+      "adres": "ul. Polna 184, Toruń",
+      "data": "14.05.2021",
+      "pesel": "63032967103",
+      "telefon": "+48 663 287 083"
+    }
+  },
+  {
+    "file": "docs/doc_00014.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Rafał Dudek",
+      "adres": "ul. Warszawska 144, 41-200 Rybnik",
+      "pesel": "04321883483",
+      "dowod_osobisty": "NSO277434",
+      "telefon": "+48 727 347 143",
+      "email": "rafal_dudek@onet.pl",
+      "data_urodzenia": "17.06.1998",
+      "nip": "758-760-36-66"
+    }
+  },
+  {
+    "file": "docs/doc_00015.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Jakub Dąbrowski",
+      "adres": "al. Niepodległości 100, 45-001 Radom",
+      "pesel": "98123081929",
+      "sygnatura_administracyjna": "SA.028860.2025",
+      "nip": "165-627-29-86"
+    }
+  },
+  {
+    "file": "docs/doc_00016.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Rafał Kamiński",
+      "adres": "ul. Leśna 67/14, 70-001 Sosnowiec",
+      "pesel": "80041277946",
+      "sygnatura_administracyjna": "IW.033165.2024",
+      "nip": "905-310-03-35"
+    }
+  },
+  {
+    "file": "docs/doc_00017.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Renata Lewandowska",
+      "oskarzony": "Paweł Jabłoński",
+      "adres": "ul. Piaskowa 43, Zielona Góra",
+      "data": "11.05.2024",
+      "pesel": "64091098791",
+      "telefon": "+48 484 966 319"
+    }
+  },
+  {
+    "file": "docs/doc_00018.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2025/05/9107",
+      "nip_sprzedawcy": "950-671-65-75",
+      "regon_sprzedawcy": "794531478",
+      "nip_nabywcy": "362-849-87-74",
+      "iban": "PL40102028927996507527354549",
+      "numer_klienta": "KL-77715",
+      "imie_nazwisko_nabywcy": "Beata Dudek",
+      "adres_nabywcy": "ul. Piaskowa 137, 02-200 Gdynia"
+    }
+  },
+  {
+    "file": "docs/doc_00019.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Mateusz Zając",
+      "adres": "ul. Ogrodowa 79, 31-001 Gdynia",
+      "pesel": "99082854395",
+      "dowod_osobisty": "KLZ744431",
+      "telefon": "+48 793 518 233",
+      "email": "mateusz_zajac76@o2.pl",
+      "data_urodzenia": "25.01.1997",
+      "nip": "513-435-24-06",
+      "numer_kw": "WA1M/00067174/8",
+      "numer_dzialki": "232413.0082.8043/1"
+    }
+  },
+  {
+    "file": "docs/doc_00020.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Rafał Kozłowski",
+      "osoba": "Piotr Woźniak",
+      "pesel": "92111011668",
+      "telefon": "+48 691 902 294",
+      "adres": "ul. Słoneczna 64/49, 87-100 Radom"
+    }
+  },
+  {
+    "file": "docs/doc_00021.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2025/6595",
+      "nip_sprzedawcy": "434-123-28-19",
+      "regon_sprzedawcy": "547134932",
+      "nip_nabywcy": "306-797-40-35",
+      "iban": "PL33240101351832421024994717",
+      "numer_klienta": "KL-75597",
+      "imie_nazwisko_nabywcy": "Karolina Krawczyk",
+      "adres_nabywcy": "ul. Kolejowa 16, 03-300 Zielona Góra"
+    }
+  },
+  {
+    "file": "docs/doc_00022.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Sławomir Kwiatkowski",
+      "osoba": "Zofia Wiśniewska",
+      "pesel": "81032041812",
+      "telefon": "+48 515 674 680",
+      "adres": "ul. Dębowa 23/21, 85-001 Wrocław"
+    }
+  },
+  {
+    "file": "docs/doc_00023.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Iwona Krawczyk",
+      "adres": "ul. Różana 14/24, 31-001 Zabrze",
+      "sygnatura_akt": "I C 7243/2025",
+      "pesel": "73121656254",
+      "telefon": "+48 697 109 324"
+    }
+  },
+  {
+    "file": "docs/doc_00024.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Marek Krawczyk",
+      "adres": "ul. Kościuszki 166, 60-001 Toruń",
+      "pesel": "95082772271",
+      "sygnatura_administracyjna": "PD.032046.2025",
+      "nip": "739-821-46-56"
+    }
+  },
+  {
+    "file": "docs/doc_00025.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Renata Dudek",
+      "osoba": "Andrzej Krawczyk",
+      "pesel": "93061435399",
+      "telefon": "+48 667 533 963",
+      "adres": "ul. Zielona 199, 31-001 Katowice"
+    }
+  },
+  {
+    "file": "docs/doc_00026.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Adamczyk",
+      "adres": "ul. Mickiewicza 127, 44-100 Poznań",
+      "pesel": "02321333960",
+      "sygnatura_administracyjna": "PD.069037.2019",
+      "nip": "721-745-96-16"
+    }
+  },
+  {
+    "file": "docs/doc_00027.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Zofia Nowakowska",
+      "adres": "ul. Leśna 159/41, 60-001 Bielsko-Biała",
+      "pesel": "70053076415",
+      "sygnatura_komornicza": "Km 58253/2019",
+      "iban": "PL39114019874005045562386922"
+    }
+  },
+  {
+    "file": "docs/doc_00028.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Joanna Piotrowska",
+      "adres": "ul. Szkolna 37/41, 41-200 Lublin",
+      "pesel": "72112768271",
+      "sygnatura_administracyjna": "KP.088915.2022",
+      "nip": "859-464-74-35"
+    }
+  },
+  {
+    "file": "docs/doc_00029.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Renata Dąbrowska",
+      "adres": "ul. Chopina 76/43, 50-001 Częstochowa",
+      "pesel": "50092357906",
+      "sygnatura_administracyjna": "OW.037612.2025",
+      "nip": "439-421-04-76"
+    }
+  },
+  {
+    "file": "docs/doc_00030.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Bartosz Kamiński",
+      "osoba": "Mariusz Jankowski",
+      "pesel": "95010793532",
+      "telefon": "+48 577 451 712",
+      "adres": "al. Niepodległości 58, 85-001 Zielona Góra"
+    }
+  },
+  {
+    "file": "docs/doc_00031.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Mateusz Nowak",
+      "adres": "ul. Nowa 138/24, 50-001 Bielsko-Biała",
+      "pesel": "02261139048",
+      "sygnatura_komornicza": "Km 88552/2019",
+      "iban": "PL55240101350985931746120047"
+    }
+  },
+  {
+    "file": "docs/doc_00032.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2021/8851",
+      "nip_sprzedawcy": "279-640-53-76",
+      "regon_sprzedawcy": "531713909",
+      "nip_nabywcy": "835-158-50-65",
+      "iban": "PL72109010145329318393352904",
+      "numer_klienta": "KL-32871",
+      "imie_nazwisko_nabywcy": "Aleksandra Krawczyk",
+      "adres_nabywcy": "ul. Różana 151, 90-001 Poznań"
+    }
+  },
+  {
+    "file": "docs/doc_00033.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Kamil Kwiatkowski",
+      "osoba": "Edyta Wiśniewska",
+      "pesel": "90032179696",
+      "telefon": "+48 507 839 084",
+      "adres": "ul. Dębowa 165, 31-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00034.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Zofia Zając",
+      "adres": "ul. Dębowa 19, 87-100 Katowice",
+      "pesel": "63042306790",
+      "sygnatura_administracyjna": "KP.050025.2023",
+      "nip": "889-611-83-66"
+    }
+  },
+  {
+    "file": "docs/doc_00035.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Kamil Wójcik",
+      "oskarzony": "Łukasz Dudek",
+      "adres": "ul. Nowa 96, Bielsko-Biała",
+      "data": "17.05.2020",
+      "pesel": "58030985174",
+      "telefon": "+48 505 280 988"
+    }
+  },
+  {
+    "file": "docs/doc_00036.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Natalia Jankowska",
+      "adres": "ul. Zielona 171, 01-100 Radom",
+      "pesel": "75102261415",
+      "sygnatura_komornicza": "Km 20380/2021",
+      "iban": "PL14240101353158514936899809"
+    }
+  },
+  {
+    "file": "docs/doc_00037.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Maciej Dąbrowski",
+      "adres_zleceniodawca": "ul. Lipowa 37, 02-200 Częstochowa",
+      "nip_zleceniodawca": "897-643-81-56",
+      "pesel_zleceniodawca": "85061761338",
+      "imie_nazwisko_zleceniobiorca": "Marta Nowak",
+      "adres_zleceniobiorca": "ul. Mickiewicza 190, 02-200 Warszawa",
+      "nip_zleceniobiorca": "714-978-40-30",
+      "numer_umowy": "UMOWA/2021/NR/0386",
+      "iban": "PL08150010132545991022901476"
+    }
+  },
+  {
+    "file": "docs/doc_00038.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2024/3177",
+      "nip_sprzedawcy": "951-606-07-16",
+      "regon_sprzedawcy": "152975169",
+      "nip_nabywcy": "696-966-41-69",
+      "iban": "PL33169010141369681645352181",
+      "numer_klienta": "KL-56019",
+      "imie_nazwisko_nabywcy": "Paweł Dąbrowski",
+      "adres_nabywcy": "ul. Mickiewicza 98, 44-100 Bydgoszcz"
+    }
+  },
+  {
+    "file": "docs/doc_00039.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Renata Krawczyk",
+      "oskarzony": "Renata Adamczyk",
+      "adres": "ul. Kopernika 160/41, Katowice",
+      "data": "19.06.2022",
+      "pesel": "56021648055",
+      "telefon": "+48 579 058 147"
+    }
+  },
+  {
+    "file": "docs/doc_00040.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jakub Dąbrowski",
+      "oskarzony": "Tomasz Michalski",
+      "adres": "ul. Kolejowa 130/38, Rzeszów",
+      "data": "10.07.2022",
+      "pesel": "01241566791",
+      "telefon": "+48 698 207 151"
+    }
+  },
+  {
+    "file": "docs/doc_00041.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Robert Krawczyk",
+      "adres_zleceniodawca": "ul. Kolejowa 41/19, 90-001 Częstochowa",
+      "nip_zleceniodawca": "965-281-68-50",
+      "pesel_zleceniodawca": "62050515815",
+      "imie_nazwisko_zleceniobiorca": "Elżbieta Grabowska",
+      "adres_zleceniobiorca": "al. Niepodległości 87, 70-001 Kraków",
+      "nip_zleceniobiorca": "154-235-73-31",
+      "numer_umowy": "UMW/2019/338",
+      "iban": "PL85114019876449251925462914"
+    }
+  },
+  {
+    "file": "docs/doc_00042.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Sylwia Kowalczyk",
+      "adres": "ul. Kolejowa 97/12, 87-100 Bytom",
+      "sygnatura_akt": "I C 7171/2017",
+      "pesel": "82090769261",
+      "telefon": "+48 734 738 347"
+    }
+  },
+  {
+    "file": "docs/doc_00043.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Marcin Jabłoński",
+      "oskarzony": "Dariusz Kwiatkowski",
+      "adres": "ul. Lipowa 52, Poznań",
+      "data": "16.04.2020",
+      "pesel": "93021189515",
+      "telefon": "+48 798 141 247"
+    }
+  },
+  {
+    "file": "docs/doc_00044.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Katarzyna Szymańska",
+      "adres_zleceniodawca": "ul. Różana 14/24, 85-001 Bydgoszcz",
+      "nip_zleceniodawca": "534-103-69-70",
+      "pesel_zleceniodawca": "62111829897",
+      "imie_nazwisko_zleceniobiorca": "Marta Nowak",
+      "adres_zleceniobiorca": "ul. Słoneczna 96/21, 70-001 Wrocław",
+      "nip_zleceniobiorca": "217-980-89-33",
+      "numer_umowy": "UMW/2020/141",
+      "iban": "PL63169010147277901043289861"
+    }
+  },
+  {
+    "file": "docs/doc_00045.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2022/0784",
+      "nip_sprzedawcy": "167-065-40-52",
+      "regon_sprzedawcy": "952772211",
+      "nip_nabywcy": "253-195-20-59",
+      "iban": "PL09114019877043030548687403",
+      "numer_klienta": "KL-45811",
+      "imie_nazwisko_nabywcy": "Tadeusz Dudek",
+      "adres_nabywcy": "ul. Krakowska 130, 45-001 Kielce"
+    }
+  },
+  {
+    "file": "docs/doc_00046.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Dorota Wójcik",
+      "adres_zleceniodawca": "ul. Długa 115, 20-100 Radom",
+      "nip_zleceniodawca": "192-755-71-99",
+      "pesel_zleceniodawca": "66091051185",
+      "imie_nazwisko_zleceniobiorca": "Tadeusz Dąbrowski",
+      "adres_zleceniobiorca": "ul. Chopina 114/3, 80-001 Zielona Góra",
+      "nip_zleceniobiorca": "385-654-31-03",
+      "numer_umowy": "UMW/2024/282",
+      "iban": "PL42114019876582029702135569"
+    }
+  },
+  {
+    "file": "docs/doc_00047.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Paulina Krawczyk",
+      "osoba": "Wojciech Dąbrowski",
+      "pesel": "94012520412",
+      "telefon": "+48 692 715 518",
+      "adres": "ul. Krakowska 75, 20-100 Gdańsk"
+    }
+  },
+  {
+    "file": "docs/doc_00048.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-02763/11/2024",
+      "nip_sprzedawcy": "778-669-12-59",
+      "regon_sprzedawcy": "368018242",
+      "nip_nabywcy": "277-852-89-21",
+      "iban": "PL16102028922535841438424981",
+      "numer_klienta": "KL-32439",
+      "imie_nazwisko_nabywcy": "Barbara Szymańska",
+      "adres_nabywcy": "ul. Dębowa 142/6, 60-001 Łódź"
+    }
+  },
+  {
+    "file": "docs/doc_00049.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Tadeusz Mazur",
+      "oskarzony": "Tomasz Zając",
+      "adres": "ul. Leśna 41, Toruń",
+      "data": "21.02.2021",
+      "pesel": "80070962156",
+      "telefon": "+48 795 625 881"
+    }
+  },
+  {
+    "file": "docs/doc_00050.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Marek Woźniak",
+      "adres": "ul. Dębowa 64/4, 85-001 Białystok",
+      "pesel": "05231742839",
+      "sygnatura_komornicza": "Km 75818/2023",
+      "iban": "PL34150010133278774701687339"
+    }
+  },
+  {
+    "file": "docs/doc_00051.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Wojciech Adamczyk",
+      "adres": "ul. Sienkiewicza 121/1, 90-001 Wrocław",
+      "sygnatura_akt": "II K 4334/2017",
+      "pesel": "86030637418",
+      "telefon": "+48 738 358 416"
+    }
+  },
+  {
+    "file": "docs/doc_00052.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Sylwia Dudek",
+      "osoba": "Barbara Wójcik",
+      "pesel": "83062581380",
+      "telefon": "+48 602 398 680",
+      "adres": "ul. Leśna 10/22, 44-100 Toruń"
+    }
+  },
+  {
+    "file": "docs/doc_00053.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Elżbieta Kowalczyk",
+      "adres_zleceniodawca": "ul. Lipowa 101, 60-001 Zielona Góra",
+      "nip_zleceniodawca": "828-962-30-95",
+      "pesel_zleceniodawca": "86102651362",
+      "imie_nazwisko_zleceniobiorca": "Wojciech Kozłowski",
+      "adres_zleceniobiorca": "ul. Szkolna 87, 45-001 Kielce",
+      "nip_zleceniobiorca": "230-756-26-34",
+      "numer_umowy": "U-00726/2025",
+      "iban": "PL16169010140551694097499309"
+    }
+  },
+  {
+    "file": "docs/doc_00054.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Iwona Kozłowska",
+      "adres_zleceniodawca": "ul. Wiosenna 81, 45-001 Sosnowiec",
+      "nip_zleceniodawca": "752-404-15-72",
+      "pesel_zleceniodawca": "59102063024",
+      "imie_nazwisko_zleceniobiorca": "Zofia Grabowska",
+      "adres_zleceniobiorca": "al. Jana Pawła II 140/50, 50-001 Zielona Góra",
+      "nip_zleceniobiorca": "573-384-84-21",
+      "numer_umowy": "KT/0197/2025",
+      "iban": "PL15325000034344375758441986"
+    }
+  },
+  {
+    "file": "docs/doc_00055.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Elżbieta Szymańska",
+      "adres": "ul. Kopernika 60/27, 31-001 Katowice",
+      "sygnatura_akt": "I C 2253/2016",
+      "pesel": "99051795177",
+      "telefon": "+48 693 454 019"
+    }
+  },
+  {
+    "file": "docs/doc_00056.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Ewa Kwiatkowska",
+      "adres": "ul. Sportowa 46, 85-001 Kraków",
+      "sygnatura_akt": "I K 3053/2022",
+      "pesel": "53051200998",
+      "telefon": "+48 505 478 872"
+    }
+  },
+  {
+    "file": "docs/doc_00057.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Marek Kozłowski",
+      "osoba": "Rafał Adamczyk",
+      "pesel": "66091501444",
+      "telefon": "+48 733 296 685",
+      "adres": "ul. Słoneczna 103, 10-100 Gdańsk"
+    }
+  },
+  {
+    "file": "docs/doc_00058.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Anna Woźniak",
+      "adres": "ul. Wiosenna 61, 70-001 Lublin",
+      "pesel": "77020259606",
+      "sygnatura_komornicza": "Km 85779/2022",
+      "iban": "PL96114019873017426841459332"
+    }
+  },
+  {
+    "file": "docs/doc_00059.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Sylwia Jankowska",
+      "oskarzony": "Mariusz Piotrowski",
+      "adres": "al. Niepodległości 138, Szczecin",
+      "data": "25.10.2023",
+      "pesel": "03261589482",
+      "telefon": "+48 698 519 108"
+    }
+  },
+  {
+    "file": "docs/doc_00060.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-08665/07/2024",
+      "nip_sprzedawcy": "172-867-90-89",
+      "regon_sprzedawcy": "165180178",
+      "nip_nabywcy": "840-640-39-13",
+      "iban": "PL06109010144622656766182512",
+      "numer_klienta": "KL-39188",
+      "imie_nazwisko_nabywcy": "Ewa Kozłowska",
+      "adres_nabywcy": "ul. Chopina 150, 41-200 Kielce"
+    }
+  },
+  {
+    "file": "docs/doc_00061.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "8814/03/2023",
+      "nip_sprzedawcy": "179-030-67-38",
+      "regon_sprzedawcy": "634283642",
+      "nip_nabywcy": "930-284-39-58",
+      "iban": "PL81150010130892687056856624",
+      "numer_klienta": "KL-41584",
+      "imie_nazwisko_nabywcy": "Paweł Lewandowski",
+      "adres_nabywcy": "al. Niepodległości 5/5, 87-100 Wrocław"
+    }
+  },
+  {
+    "file": "docs/doc_00062.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "9066/05/2020",
+      "nip_sprzedawcy": "239-837-35-47",
+      "regon_sprzedawcy": "485467854",
+      "nip_nabywcy": "133-173-93-66",
+      "iban": "PL75150010134587717535560932",
+      "numer_klienta": "KL-48691",
+      "imie_nazwisko_nabywcy": "Zbigniew Wiśniewski",
+      "adres_nabywcy": "ul. Nowa 97, 01-100 Zabrze"
+    }
+  },
+  {
+    "file": "docs/doc_00063.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jakub Kamiński",
+      "oskarzony": "Mariusz Piotrowski",
+      "adres": "ul. Lipowa 139, Kraków",
+      "data": "10.03.2020",
+      "pesel": "56090196709",
+      "telefon": "+48 486 231 203"
+    }
+  },
+  {
+    "file": "docs/doc_00064.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Wojciech Adamczyk",
+      "oskarzony": "Sylwia Piotrowska",
+      "adres": "ul. Sienkiewicza 125/35, Rzeszów",
+      "data": "25.01.2020",
+      "pesel": "51070354283",
+      "telefon": "+48 570 862 118"
+    }
+  },
+  {
+    "file": "docs/doc_00065.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Wojciech Grabowski",
+      "adres_zleceniodawca": "ul. Wolności 102/26, 65-001 Sosnowiec",
+      "nip_zleceniodawca": "501-489-02-59",
+      "pesel_zleceniodawca": "71072958063",
+      "imie_nazwisko_zleceniobiorca": "Jakub Woźniak",
+      "adres_zleceniobiorca": "ul. Ogrodowa 179/44, 01-100 Łódź",
+      "nip_zleceniobiorca": "139-261-42-97",
+      "numer_umowy": "UMOWA/2019/NR/0416",
+      "iban": "PL81325000037002176591803397"
+    }
+  },
+  {
+    "file": "docs/doc_00066.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Kamil Kowalczyk",
+      "adres": "ul. Wolności 177, 80-001 Kielce",
+      "pesel": "54102610016",
+      "sygnatura_komornicza": "Km 79420/2023",
+      "iban": "PL12325000039650477358662961"
+    }
+  },
+  {
+    "file": "docs/doc_00067.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2022/1261",
+      "nip_sprzedawcy": "641-212-67-88",
+      "regon_sprzedawcy": "660466180",
+      "nip_nabywcy": "986-101-58-12",
+      "iban": "PL62102028929826224447212646",
+      "numer_klienta": "KL-42990",
+      "imie_nazwisko_nabywcy": "Paweł Kowalczyk",
+      "adres_nabywcy": "al. Jana Pawła II 93/1, 41-200 Białystok"
+    }
+  },
+  {
+    "file": "docs/doc_00068.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Bartosz Adamczyk",
+      "adres": "ul. Kolejowa 35/39, 30-001 Bytom",
+      "pesel": "92122232171",
+      "sygnatura_komornicza": "Km 38300/2023",
+      "iban": "PL36114019877935646519398280"
+    }
+  },
+  {
+    "file": "docs/doc_00069.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Paulina Wiśniewska",
+      "oskarzony": "Natalia Dudek",
+      "adres": "pl. Wolności 36, Bydgoszcz",
+      "data": "10.09.2023",
+      "pesel": "63103073276",
+      "telefon": "+48 507 979 688"
+    }
+  },
+  {
+    "file": "docs/doc_00070.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Marta Zając",
+      "adres": "ul. Wolności 138, 03-300 Łódź",
+      "pesel": "72040967320",
+      "sygnatura_administracyjna": "PT.073922.2018",
+      "nip": "661-014-38-82"
+    }
+  },
+  {
+    "file": "docs/doc_00071.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Maciej Dudek",
+      "adres": "ul. Szkolna 177, 00-001 Gdynia",
+      "pesel": "93042410715",
+      "sygnatura_komornicza": "Km 95802/2019",
+      "iban": "PL35150010134573875717751401"
+    }
+  },
+  {
+    "file": "docs/doc_00072.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Ewa Wieczorek",
+      "adres": "ul. Ogrodowa 133/11, 45-001 Katowice",
+      "pesel": "88040298179",
+      "dowod_osobisty": "WFF660937",
+      "telefon": "+48 736 603 341",
+      "email": "ewa.wieczorek@poczta.pl",
+      "data_urodzenia": "02.03.1998",
+      "nip": "355-371-47-87"
+    }
+  },
+  {
+    "file": "docs/doc_00073.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Marta Jankowska",
+      "adres": "ul. Zielona 118, 60-001 Bielsko-Biała",
+      "pesel": "05221660439",
+      "sygnatura_administracyjna": "OW.015548.2023",
+      "nip": "352-866-92-94"
+    }
+  },
+  {
+    "file": "docs/doc_00074.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Zofia Dąbrowska",
+      "adres_zleceniodawca": "ul. Kolejowa 14, 31-001 Warszawa",
+      "nip_zleceniodawca": "888-191-48-55",
+      "pesel_zleceniodawca": "52112246010",
+      "imie_nazwisko_zleceniobiorca": "Łukasz Krawczyk",
+      "adres_zleceniobiorca": "ul. Mickiewicza 50, 44-100 Rzeszów",
+      "nip_zleceniobiorca": "907-836-13-45",
+      "numer_umowy": "UMOWA/2025/NR/0419",
+      "iban": "PL93114019877721903404384279"
+    }
+  },
+  {
+    "file": "docs/doc_00075.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Joanna Lewandowska",
+      "adres": "ul. Wolności 189, 87-100 Gdynia",
+      "pesel": "88053116921",
+      "dowod_osobisty": "GBT584982",
+      "telefon": "+48 604 494 812",
+      "email": "joanna.lewandowska@interia.pl",
+      "data_urodzenia": "20.05.1961",
+      "nip": "332-536-72-92"
+    }
+  },
+  {
+    "file": "docs/doc_00076.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Maciej Wiśniewski",
+      "oskarzony": "Kamil Woźniak",
+      "adres": "ul. Chopina 95, Toruń",
+      "data": "06.04.2023",
+      "pesel": "50032388900",
+      "telefon": "+48 797 518 636"
+    }
+  },
+  {
+    "file": "docs/doc_00077.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2021/11/2341",
+      "nip_sprzedawcy": "341-541-52-09",
+      "regon_sprzedawcy": "229387007",
+      "nip_nabywcy": "743-611-03-74",
+      "iban": "PL68114019875162713611155426",
+      "numer_klienta": "KL-79534",
+      "imie_nazwisko_nabywcy": "Marcin Kozłowski",
+      "adres_nabywcy": "ul. Leśna 26, 00-001 Sosnowiec"
+    }
+  },
+  {
+    "file": "docs/doc_00078.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Katarzyna Wójcik",
+      "oskarzony": "Marek Pawłowski",
+      "adres": "ul. Norwida 99/28, Katowice",
+      "data": "22.05.2021",
+      "pesel": "74110666094",
+      "telefon": "+48 739 940 438"
+    }
+  },
+  {
+    "file": "docs/doc_00079.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-07168/12/2022",
+      "nip_sprzedawcy": "652-696-58-25",
+      "regon_sprzedawcy": "168486660",
+      "nip_nabywcy": "810-910-43-02",
+      "iban": "PL08109010148892414183285691",
+      "numer_klienta": "KL-17589",
+      "imie_nazwisko_nabywcy": "Zbigniew Kowalski",
+      "adres_nabywcy": "pl. Wolności 164, 00-001 Kielce"
+    }
+  },
+  {
+    "file": "docs/doc_00080.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Ewa Piotrowska",
+      "adres_zleceniodawca": "ul. Wolności 185/24, 50-001 Poznań",
+      "nip_zleceniodawca": "722-086-35-34",
+      "pesel_zleceniodawca": "79051308801",
+      "imie_nazwisko_zleceniobiorca": "Elżbieta Grabowska",
+      "adres_zleceniobiorca": "ul. Norwida 31, 70-001 Warszawa",
+      "nip_zleceniobiorca": "338-061-74-40",
+      "numer_umowy": "UMW/2024/279",
+      "iban": "PL05114019879177850792524191"
+    }
+  },
+  {
+    "file": "docs/doc_00081.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2022/6439",
+      "nip_sprzedawcy": "306-038-50-57",
+      "regon_sprzedawcy": "124103860",
+      "nip_nabywcy": "164-138-36-79",
+      "iban": "PL06114019875719182619906234",
+      "numer_klienta": "KL-51688",
+      "imie_nazwisko_nabywcy": "Beata Wieczorek",
+      "adres_nabywcy": "al. Niepodległości 199/35, 40-001 Rybnik"
+    }
+  },
+  {
+    "file": "docs/doc_00082.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "7097/10/2021",
+      "nip_sprzedawcy": "235-680-44-22",
+      "regon_sprzedawcy": "310032365",
+      "nip_nabywcy": "167-883-17-14",
+      "iban": "PL98150010131994101372151070",
+      "numer_klienta": "KL-75028",
+      "imie_nazwisko_nabywcy": "Paweł Wójcik",
+      "adres_nabywcy": "ul. Leśna 56, 10-100 Katowice"
+    }
+  },
+  {
+    "file": "docs/doc_00083.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Zbigniew Grabowski",
+      "adres_zleceniodawca": "ul. Wiosenna 183/35, 80-001 Toruń",
+      "nip_zleceniodawca": "752-239-55-96",
+      "pesel_zleceniodawca": "77092317918",
+      "imie_nazwisko_zleceniobiorca": "Mariusz Nowak",
+      "adres_zleceniobiorca": "ul. Szkolna 129/18, 00-001 Gdańsk",
+      "nip_zleceniobiorca": "159-929-37-83",
+      "numer_umowy": "KT/0612/2023",
+      "iban": "PL19169010144078593213348039"
+    }
+  },
+  {
+    "file": "docs/doc_00084.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-01275/06/2021",
+      "nip_sprzedawcy": "392-185-15-62",
+      "regon_sprzedawcy": "389539269",
+      "nip_nabywcy": "254-522-67-59",
+      "iban": "PL03150010134220969029593917",
+      "numer_klienta": "KL-55457",
+      "imie_nazwisko_nabywcy": "Dariusz Piotrowski",
+      "adres_nabywcy": "al. Jana Pawła II 184/21, 00-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00085.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Rafał Wieczorek",
+      "adres": "ul. Różana 43, 85-001 Toruń",
+      "sygnatura_akt": "III K 8947/2020",
+      "pesel": "93010680726",
+      "telefon": "+48 517 104 054"
+    }
+  },
+  {
+    "file": "docs/doc_00086.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Mateusz Kamiński",
+      "adres": "ul. Norwida 20, 70-001 Łódź",
+      "pesel": "03241862808",
+      "sygnatura_komornicza": "Km 85773/2024",
+      "iban": "PL20325000036201533688444310"
+    }
+  },
+  {
+    "file": "docs/doc_00087.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jakub Nowak",
+      "oskarzony": "Marcin Dudek",
+      "adres": "ul. Kopernika 154, Wrocław",
+      "data": "27.02.2021",
+      "pesel": "65042965311",
+      "telefon": "+48 691 467 741"
+    }
+  },
+  {
+    "file": "docs/doc_00088.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Mateusz Jankowski",
+      "adres": "ul. Lipowa 115/29, 50-001 Sosnowiec",
+      "pesel": "70041985718",
+      "sygnatura_administracyjna": "PT.098696.2020",
+      "nip": "258-693-80-66"
+    }
+  },
+  {
+    "file": "docs/doc_00089.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Joanna Piotrowska",
+      "oskarzony": "Mateusz Zając",
+      "adres": "ul. Leśna 129, Kielce",
+      "data": "19.10.2023",
+      "pesel": "05282515079",
+      "telefon": "+48 512 332 061"
+    }
+  },
+  {
+    "file": "docs/doc_00090.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Zbigniew Kowalczyk",
+      "adres": "ul. Sportowa 153/47, 02-200 Łódź",
+      "pesel": "84102656950",
+      "sygnatura_administracyjna": "PD.068216.2022",
+      "nip": "961-622-99-94"
+    }
+  },
+  {
+    "file": "docs/doc_00091.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Iwona Jankowska",
+      "adres": "ul. Różana 68/32, 87-100 Gliwice",
+      "pesel": "92060903878",
+      "dowod_osobisty": "EUU606530",
+      "telefon": "+48 797 450 544",
+      "email": "iwona_jankowska@onet.pl",
+      "data_urodzenia": "24.10.1958",
+      "nip": "424-754-69-10",
+      "numer_paszportu": "GN7850821"
+    }
+  },
+  {
+    "file": "docs/doc_00092.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Dariusz Pawłowski",
+      "adres": "ul. Kwiatowa 45/13, 40-001 Kraków",
+      "pesel": "52121946752",
+      "sygnatura_administracyjna": "SA.036010.2021",
+      "nip": "961-035-79-75"
+    }
+  },
+  {
+    "file": "docs/doc_00093.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Paweł Wieczorek",
+      "adres": "ul. Sportowa 177/2, 01-100 Częstochowa",
+      "pesel": "64081387421",
+      "sygnatura_komornicza": "Km 84953/2021",
+      "iban": "PL63114019873468007229034944"
+    }
+  },
+  {
+    "file": "docs/doc_00094.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Michał Krawczyk",
+      "adres": "ul. Długa 174, 85-001 Zabrze",
+      "pesel": "02260910453",
+      "sygnatura_komornicza": "Km 39221/2022",
+      "iban": "PL76109010147154544432830965"
+    }
+  },
+  {
+    "file": "docs/doc_00095.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Monika Kwiatkowska",
+      "oskarzony": "Kamil Kowalski",
+      "adres": "ul. Szkolna 182, Szczecin",
+      "data": "27.01.2024",
+      "pesel": "69121370263",
+      "telefon": "+48 785 842 824"
+    }
+  },
+  {
+    "file": "docs/doc_00096.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Kamil Woźniak",
+      "adres": "ul. Norwida 144, 70-001 Gdańsk",
+      "pesel": "58010522753",
+      "dowod_osobisty": "NKL494717",
+      "telefon": "+48 489 991 738",
+      "email": "kamilwozniak@gmail.com",
+      "data_urodzenia": "07.10.1976",
+      "nip": "702-235-69-72",
+      "numer_paszportu": "ZF1752500"
+    }
+  },
+  {
+    "file": "docs/doc_00097.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Ewa Piotrowska",
+      "adres_zleceniodawca": "ul. Kolejowa 112, 90-001 Częstochowa",
+      "nip_zleceniodawca": "144-789-85-69",
+      "pesel_zleceniodawca": "70021574424",
+      "imie_nazwisko_zleceniobiorca": "Katarzyna Kowalczyk",
+      "adres_zleceniobiorca": "pl. Wolności 99/35, 80-001 Szczecin",
+      "nip_zleceniobiorca": "357-532-60-35",
+      "numer_umowy": "U-00914/2018",
+      "iban": "PL02169010148300335421689421"
+    }
+  },
+  {
+    "file": "docs/doc_00098.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Robert Adamczyk",
+      "adres_zleceniodawca": "ul. Nowa 198, 87-100 Kraków",
+      "nip_zleceniodawca": "241-173-93-40",
+      "pesel_zleceniodawca": "68081970445",
+      "imie_nazwisko_zleceniobiorca": "Aleksandra Adamczyk",
+      "adres_zleceniobiorca": "ul. Leśna 170/2, 03-300 Kraków",
+      "nip_zleceniobiorca": "935-642-08-72",
+      "numer_umowy": "UMOWA/2024/NR/0455",
+      "iban": "PL21325000034723046184992618"
+    }
+  },
+  {
+    "file": "docs/doc_00099.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Tomasz Wójcik",
+      "adres": "ul. Sportowa 147, 02-200 Poznań",
+      "sygnatura_akt": "II C 1230/2023",
+      "pesel": "72121665952",
+      "telefon": "+48 577 012 045"
+    }
+  },
+  {
+    "file": "docs/doc_00100.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Maciej Kowalski",
+      "adres": "ul. Kwiatowa 36, 70-001 Gdańsk",
+      "pesel": "82012891597",
+      "dowod_osobisty": "ICL521667",
+      "telefon": "+48 576 762 120",
+      "email": "maciej.kowalski@wp.pl",
+      "data_urodzenia": "21.04.1993",
+      "nip": "829-659-02-73",
+      "numer_kw": "LD1M/00472094/0",
+      "numer_dzialki": "786789.0041.203"
+    }
+  },
+  {
+    "file": "docs/doc_00101.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-04991/10/2020",
+      "nip_sprzedawcy": "389-002-87-77",
+      "regon_sprzedawcy": "486631770",
+      "nip_nabywcy": "317-535-40-80",
+      "iban": "PL94169010149717751701660880",
+      "numer_klienta": "KL-95799",
+      "imie_nazwisko_nabywcy": "Elżbieta Grabowska",
+      "adres_nabywcy": "pl. Wolności 89, 85-001 Olsztyn"
+    }
+  },
+  {
+    "file": "docs/doc_00102.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Jan Piotrowski",
+      "adres": "ul. Mickiewicza 184, 03-300 Radom",
+      "pesel": "72102462518",
+      "dowod_osobisty": "MGO351609",
+      "telefon": "+48 507 798 270",
+      "email": "janpiotrowski56@poczta.pl",
+      "data_urodzenia": "29.04.1993",
+      "nip": "929-221-69-92"
+    }
+  },
+  {
+    "file": "docs/doc_00103.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Paulina Jabłońska",
+      "adres": "ul. Ogrodowa 71/22, 41-200 Białystok",
+      "pesel": "61121914197",
+      "sygnatura_administracyjna": "KP.092046.2022",
+      "nip": "933-394-52-23"
+    }
+  },
+  {
+    "file": "docs/doc_00104.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Iwona Piotrowska",
+      "adres": "ul. Szkolna 147, 90-001 Bytom",
+      "pesel": "97112429265",
+      "dowod_osobisty": "ARD062003",
+      "telefon": "+48 572 442 043",
+      "email": "iwona.piotrowska@poczta.pl",
+      "data_urodzenia": "09.08.1990",
+      "nip": "298-386-38-45",
+      "numer_kw": "LD1M/00416380/6"
+    }
+  },
+  {
+    "file": "docs/doc_00105.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Paweł Lewandowski",
+      "adres": "ul. Kolejowa 200, 40-001 Sosnowiec",
+      "sygnatura_akt": "II Ns 6026/2025",
+      "pesel": "67051230116",
+      "telefon": "+48 512 816 064"
+    }
+  },
+  {
+    "file": "docs/doc_00106.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Paweł Nowak",
+      "adres_zleceniodawca": "ul. Leśna 40, 01-100 Zabrze",
+      "nip_zleceniodawca": "655-439-87-81",
+      "pesel_zleceniodawca": "78101739008",
+      "imie_nazwisko_zleceniobiorca": "Robert Kowalczyk",
+      "adres_zleceniobiorca": "al. Niepodległości 161, 60-001 Bielsko-Biała",
+      "nip_zleceniobiorca": "115-739-93-03",
+      "numer_umowy": "U-00809/2025",
+      "iban": "PL78169010145832818268861533"
+    }
+  },
+  {
+    "file": "docs/doc_00107.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Beata Nowak",
+      "osoba": "Marta Grabowska",
+      "pesel": "95082345659",
+      "telefon": "+48 783 581 128",
+      "adres": "ul. Krakowska 2, 30-001 Szczecin"
+    }
+  },
+  {
+    "file": "docs/doc_00108.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Małgorzata Nowakowska",
+      "adres": "ul. Sportowa 180, 90-001 Zielona Góra",
+      "pesel": "56062176401",
+      "sygnatura_administracyjna": "SA.094061.2025",
+      "nip": "767-665-06-15",
+      "numer_kw": "KR1P/00802682/9"
+    }
+  },
+  {
+    "file": "docs/doc_00109.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Dariusz Wójcik",
+      "adres": "ul. Długa 176/6, 41-200 Białystok",
+      "pesel": "84032140406",
+      "dowod_osobisty": "PFS326842",
+      "telefon": "+48 575 088 210",
+      "email": "dariuszwojcik@gmail.com",
+      "data_urodzenia": "11.03.1998",
+      "nip": "914-353-68-23",
+      "numer_paszportu": "HU4312908"
+    }
+  },
+  {
+    "file": "docs/doc_00110.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Tomasz Woźniak",
+      "adres": "ul. Kościuszki 51, 70-001 Toruń",
+      "pesel": "82011513120",
+      "dowod_osobisty": "DJU135775",
+      "telefon": "+48 734 929 955",
+      "email": "tomasz.wozniak32@interia.pl",
+      "data_urodzenia": "15.11.1969",
+      "nip": "745-257-77-53"
+    }
+  },
+  {
+    "file": "docs/doc_00111.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Katarzyna Woźniak",
+      "adres_zleceniodawca": "ul. Polna 68, 02-200 Olsztyn",
+      "nip_zleceniodawca": "758-039-28-29",
+      "pesel_zleceniodawca": "69081977913",
+      "imie_nazwisko_zleceniobiorca": "Barbara Nowakowska",
+      "adres_zleceniobiorca": "ul. Norwida 20, 00-001 Kielce",
+      "nip_zleceniobiorca": "822-992-75-03",
+      "numer_umowy": "KT/0788/2024",
+      "iban": "PL75109010148488725639427881"
+    }
+  },
+  {
+    "file": "docs/doc_00112.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Lewandowski",
+      "adres": "ul. Warszawska 93/30, 01-100 Kraków",
+      "pesel": "79012810585",
+      "sygnatura_komornicza": "Km 97343/2022",
+      "iban": "PL25325000038926659184638655"
+    }
+  },
+  {
+    "file": "docs/doc_00113.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Barbara Krawczyk",
+      "adres": "ul. Lipowa 59/42, 30-001 Lublin",
+      "sygnatura_akt": "I Ns 3063/2017",
+      "pesel": "04210573424",
+      "telefon": "+48 665 177 739"
+    }
+  },
+  {
+    "file": "docs/doc_00114.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Piotr Kowalczyk",
+      "adres": "ul. Szkolna 152/41, 01-100 Kielce",
+      "pesel": "01250515056",
+      "sygnatura_administracyjna": "PD.067817.2020",
+      "nip": "141-379-77-20"
+    }
+  },
+  {
+    "file": "docs/doc_00115.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Elżbieta Woźniak",
+      "adres_zleceniodawca": "ul. Dębowa 153, 85-001 Bydgoszcz",
+      "nip_zleceniodawca": "262-473-14-92",
+      "pesel_zleceniodawca": "96081800730",
+      "imie_nazwisko_zleceniobiorca": "Tadeusz Kozłowski",
+      "adres_zleceniobiorca": "ul. Wiosenna 34/13, 44-100 Kielce",
+      "nip_zleceniobiorca": "964-300-98-19",
+      "numer_umowy": "KT/0847/2024",
+      "iban": "PL66109010142799088117298068"
+    }
+  },
+  {
+    "file": "docs/doc_00116.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Andrzej Kwiatkowski",
+      "adres": "ul. Kopernika 150/35, 65-001 Radom",
+      "pesel": "82102162677",
+      "sygnatura_administracyjna": "KP.054262.2021",
+      "nip": "825-887-44-94"
+    }
+  },
+  {
+    "file": "docs/doc_00117.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Justyna Wójcik",
+      "adres_zleceniodawca": "ul. Lipowa 26/26, 45-001 Katowice",
+      "nip_zleceniodawca": "590-277-03-84",
+      "pesel_zleceniodawca": "53032736810",
+      "imie_nazwisko_zleceniobiorca": "Karolina Zając",
+      "adres_zleceniobiorca": "ul. Kolejowa 179, 20-100 Kraków",
+      "nip_zleceniobiorca": "530-988-39-24",
+      "numer_umowy": "UMW/2024/988",
+      "iban": "PL27109010142796114351906698"
+    }
+  },
+  {
+    "file": "docs/doc_00118.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Aleksandra Jankowska",
+      "adres": "ul. Sienkiewicza 102, 44-100 Szczecin",
+      "pesel": "51051975401",
+      "dowod_osobisty": "SJS955439",
+      "telefon": "+48 537 690 426",
+      "email": "aleksandra.jankowska@poczta.pl",
+      "data_urodzenia": "21.02.1995",
+      "nip": "551-848-94-79"
+    }
+  },
+  {
+    "file": "docs/doc_00119.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Karolina Dudek",
+      "adres": "ul. Dębowa 151, 03-300 Toruń",
+      "pesel": "73021706932",
+      "sygnatura_komornicza": "Km 41483/2021",
+      "iban": "PL11150010138804341651827553"
+    }
+  },
+  {
+    "file": "docs/doc_00120.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Justyna Lewandowska",
+      "adres_zleceniodawca": "ul. Norwida 62, 40-001 Szczecin",
+      "nip_zleceniodawca": "739-208-67-89",
+      "pesel_zleceniodawca": "78042770537",
+      "imie_nazwisko_zleceniobiorca": "Michał Szymański",
+      "adres_zleceniobiorca": "ul. Polna 64, 10-100 Gdynia",
+      "nip_zleceniobiorca": "185-627-18-79",
+      "numer_umowy": "UMW/2019/123",
+      "iban": "PL70114019877908075957947284"
+    }
+  },
+  {
+    "file": "docs/doc_00121.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Wojciech Woźniak",
+      "adres": "ul. Lipowa 141/18, 87-100 Toruń",
+      "pesel": "80101237479",
+      "dowod_osobisty": "GNZ556472",
+      "telefon": "+48 732 931 438",
+      "email": "wojciech_wozniak95@interia.pl",
+      "data_urodzenia": "02.06.1963",
+      "nip": "802-672-88-56"
+    }
+  },
+  {
+    "file": "docs/doc_00122.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Robert Kamiński",
+      "adres": "ul. Leśna 56, 03-300 Toruń",
+      "sygnatura_akt": "I K 5484/2022",
+      "pesel": "82042957348",
+      "telefon": "+48 600 615 939"
+    }
+  },
+  {
+    "file": "docs/doc_00123.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Beata Jankowska",
+      "adres_zleceniodawca": "al. Niepodległości 189, 85-001 Łódź",
+      "nip_zleceniodawca": "361-117-80-07",
+      "pesel_zleceniodawca": "89112813887",
+      "imie_nazwisko_zleceniobiorca": "Dariusz Piotrowski",
+      "adres_zleceniobiorca": "ul. Kolejowa 74, 20-100 Poznań",
+      "nip_zleceniobiorca": "105-577-84-80",
+      "numer_umowy": "UMOWA/2023/NR/0432",
+      "iban": "PL76109010141253554496475987"
+    }
+  },
+  {
+    "file": "docs/doc_00124.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Magdalena Pawłowska",
+      "oskarzony": "Zbigniew Adamczyk",
+      "adres": "ul. Krakowska 80, Toruń",
+      "data": "10.04.2021",
+      "pesel": "58011345276",
+      "telefon": "+48 572 400 825"
+    }
+  },
+  {
+    "file": "docs/doc_00125.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Adam Zając",
+      "osoba": "Zofia Dąbrowska",
+      "pesel": "88081381735",
+      "telefon": "+48 488 536 866",
+      "adres": "ul. Ogrodowa 42, 85-001 Olsztyn"
+    }
+  },
+  {
+    "file": "docs/doc_00126.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "1170/07/2022",
+      "nip_sprzedawcy": "412-241-79-73",
+      "regon_sprzedawcy": "121442709",
+      "nip_nabywcy": "597-350-20-82",
+      "iban": "PL71102028921207356475705120",
+      "numer_klienta": "KL-33803",
+      "imie_nazwisko_nabywcy": "Zbigniew Szymański",
+      "adres_nabywcy": "ul. Długa 167, 90-001 Lublin"
+    }
+  },
+  {
+    "file": "docs/doc_00127.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Ewa Adamczyk",
+      "osoba": "Edyta Nowakowska",
+      "pesel": "60121625957",
+      "telefon": "+48 535 031 365",
+      "adres": "ul. Kwiatowa 43, 03-300 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00128.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-05966/10/2020",
+      "nip_sprzedawcy": "600-528-12-77",
+      "regon_sprzedawcy": "492855743",
+      "nip_nabywcy": "340-778-48-72",
+      "iban": "PL25169010149821827448570862",
+      "numer_klienta": "KL-52034",
+      "imie_nazwisko_nabywcy": "Renata Zając",
+      "adres_nabywcy": "ul. Ogrodowa 41, 87-100 Bielsko-Biała"
+    }
+  },
+  {
+    "file": "docs/doc_00129.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Łukasz Wójcik",
+      "adres": "ul. Kościuszki 134, 10-100 Kraków",
+      "pesel": "66011089412",
+      "sygnatura_komornicza": "Km 25215/2025",
+      "iban": "PL82109010149678994053910371"
+    }
+  },
+  {
+    "file": "docs/doc_00130.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Natalia Jankowska",
+      "adres": "ul. Wolności 182/40, 44-100 Lublin",
+      "pesel": "53082575157",
+      "sygnatura_komornicza": "Km 28398/2019",
+      "iban": "PL08325000031138633839288619"
+    }
+  },
+  {
+    "file": "docs/doc_00131.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Ewa Kamińska",
+      "adres": "ul. Krakowska 103, 20-100 Bielsko-Biała",
+      "pesel": "97112461450",
+      "sygnatura_administracyjna": "SA.072200.2023",
+      "nip": "765-939-83-66"
+    }
+  },
+  {
+    "file": "docs/doc_00132.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Mateusz Nowak",
+      "oskarzony": "Beata Michalska",
+      "adres": "ul. Kwiatowa 133/20, Warszawa",
+      "data": "30.03.2021",
+      "pesel": "69041087650",
+      "telefon": "+48 728 899 210"
+    }
+  },
+  {
+    "file": "docs/doc_00133.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Andrzej Woźniak",
+      "oskarzony": "Sławomir Szymański",
+      "adres": "ul. Ogrodowa 66, Łódź",
+      "data": "29.03.2022",
+      "pesel": "01212093910",
+      "telefon": "+48 795 727 919"
+    }
+  },
+  {
+    "file": "docs/doc_00134.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Sławomir Mazur",
+      "osoba": "Piotr Jabłoński",
+      "pesel": "81031990063",
+      "telefon": "+48 503 906 048",
+      "adres": "ul. Leśna 82, 70-001 Poznań"
+    }
+  },
+  {
+    "file": "docs/doc_00135.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-07246/06/2021",
+      "nip_sprzedawcy": "617-908-64-13",
+      "regon_sprzedawcy": "793898337",
+      "nip_nabywcy": "786-227-83-75",
+      "iban": "PL09109010144659116655355904",
+      "numer_klienta": "KL-67732",
+      "imie_nazwisko_nabywcy": "Kamil Mazur",
+      "adres_nabywcy": "ul. Ogrodowa 111/26, 10-100 Poznań"
+    }
+  },
+  {
+    "file": "docs/doc_00136.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Adam Kozłowski",
+      "osoba": "Mariusz Lewandowski",
+      "pesel": "99010953587",
+      "telefon": "+48 699 206 980",
+      "adres": "ul. Nowa 44/13, 87-100 Bytom"
+    }
+  },
+  {
+    "file": "docs/doc_00137.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Adam Wiśniewski",
+      "adres": "ul. Wiosenna 170/43, 03-300 Gdynia",
+      "sygnatura_akt": "III K 4793/2015",
+      "pesel": "84022652009",
+      "telefon": "+48 607 981 238"
+    }
+  },
+  {
+    "file": "docs/doc_00138.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Dariusz Dąbrowski",
+      "adres": "al. Jana Pawła II 126/11, 80-001 Warszawa",
+      "sygnatura_akt": "II K 5766/2025",
+      "pesel": "77021424186",
+      "telefon": "+48 570 460 843"
+    }
+  },
+  {
+    "file": "docs/doc_00139.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Katarzyna Wieczorek",
+      "adres": "ul. Wiosenna 134, 40-001 Zabrze",
+      "pesel": "87061124669",
+      "sygnatura_administracyjna": "SA.079446.2022",
+      "nip": "332-983-24-84"
+    }
+  },
+  {
+    "file": "docs/doc_00140.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Mariusz Nowakowski",
+      "adres_zleceniodawca": "al. Jana Pawła II 38, 70-001 Rybnik",
+      "nip_zleceniodawca": "389-752-67-74",
+      "pesel_zleceniodawca": "69121976025",
+      "imie_nazwisko_zleceniobiorca": "Agnieszka Kamińska",
+      "adres_zleceniobiorca": "ul. Różana 106/48, 50-001 Olsztyn",
+      "nip_zleceniobiorca": "323-306-04-62",
+      "numer_umowy": "KT/0798/2020",
+      "iban": "PL70102028922099499939330517"
+    }
+  },
+  {
+    "file": "docs/doc_00141.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Rafał Michalski",
+      "adres": "pl. Wolności 177/30, 90-001 Bydgoszcz",
+      "pesel": "86042879477",
+      "dowod_osobisty": "KMU998808",
+      "telefon": "+48 507 703 886",
+      "email": "rafal.michalski@o2.pl",
+      "data_urodzenia": "21.04.1996",
+      "nip": "134-764-47-28"
+    }
+  },
+  {
+    "file": "docs/doc_00142.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Zbigniew Krawczyk",
+      "adres_zleceniodawca": "ul. Lipowa 200, 45-001 Bytom",
+      "nip_zleceniodawca": "306-447-42-14",
+      "pesel_zleceniodawca": "98100582674",
+      "imie_nazwisko_zleceniobiorca": "Dariusz Wójcik",
+      "adres_zleceniobiorca": "ul. Mickiewicza 101, 00-001 Sosnowiec",
+      "nip_zleceniobiorca": "330-940-77-72",
+      "numer_umowy": "KT/0465/2020",
+      "iban": "PL06240101351452111751868926"
+    }
+  },
+  {
+    "file": "docs/doc_00143.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2025/04/0954",
+      "nip_sprzedawcy": "122-050-20-98",
+      "regon_sprzedawcy": "927950149",
+      "nip_nabywcy": "551-016-22-47",
+      "iban": "PL80150010135616814721458683",
+      "numer_klienta": "KL-84890",
+      "imie_nazwisko_nabywcy": "Karolina Kwiatkowska",
+      "adres_nabywcy": "ul. Krakowska 72, 30-001 Rzeszów"
+    }
+  },
+  {
+    "file": "docs/doc_00144.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Sylwia Jankowska",
+      "osoba": "Sylwia Pawłowska",
+      "pesel": "96081674663",
+      "telefon": "+48 519 343 010",
+      "adres": "ul. Dębowa 161, 30-001 Zielona Góra"
+    }
+  },
+  {
+    "file": "docs/doc_00145.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Łukasz Jankowski",
+      "adres": "ul. Krakowska 164/41, 60-001 Szczecin",
+      "pesel": "72102880954",
+      "sygnatura_administracyjna": "IW.000903.2023",
+      "nip": "669-902-35-54"
+    }
+  },
+  {
+    "file": "docs/doc_00146.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Zbigniew Krawczyk",
+      "adres_zleceniodawca": "ul. Dębowa 106, 44-100 Kraków",
+      "nip_zleceniodawca": "604-617-35-73",
+      "pesel_zleceniodawca": "58042345469",
+      "imie_nazwisko_zleceniobiorca": "Iwona Kozłowska",
+      "adres_zleceniobiorca": "ul. Długa 145, 45-001 Katowice",
+      "nip_zleceniobiorca": "538-421-50-30",
+      "numer_umowy": "U-00214/2018",
+      "iban": "PL28169010145124056829962914"
+    }
+  },
+  {
+    "file": "docs/doc_00147.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Grzegorz Wieczorek",
+      "adres_zleceniodawca": "al. Jana Pawła II 37, 44-100 Wrocław",
+      "nip_zleceniodawca": "585-714-22-41",
+      "pesel_zleceniodawca": "99041532652",
+      "imie_nazwisko_zleceniobiorca": "Beata Jabłońska",
+      "adres_zleceniobiorca": "ul. Sienkiewicza 34/3, 85-001 Sosnowiec",
+      "nip_zleceniobiorca": "209-881-38-58",
+      "numer_umowy": "U-00005/2019",
+      "iban": "PL92109010149157018409435334"
+    }
+  },
+  {
+    "file": "docs/doc_00148.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2024/02/6647",
+      "nip_sprzedawcy": "895-453-81-75",
+      "regon_sprzedawcy": "429456251",
+      "nip_nabywcy": "317-174-77-30",
+      "iban": "PL70169010145770171577245992",
+      "numer_klienta": "KL-52712",
+      "imie_nazwisko_nabywcy": "Wojciech Kozłowski",
+      "adres_nabywcy": "ul. Kościuszki 99/28, 20-100 Częstochowa"
+    }
+  },
+  {
+    "file": "docs/doc_00149.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Aleksandra Wiśniewska",
+      "adres_zleceniodawca": "ul. Różana 112, 45-001 Katowice",
+      "nip_zleceniodawca": "122-784-69-90",
+      "pesel_zleceniodawca": "58010459691",
+      "imie_nazwisko_zleceniobiorca": "Robert Pawłowski",
+      "adres_zleceniobiorca": "ul. Chopina 61/43, 65-001 Łódź",
+      "nip_zleceniobiorca": "833-549-46-52",
+      "numer_umowy": "UMOWA/2025/NR/0118",
+      "iban": "PL06325000031724619196570132"
+    }
+  },
+  {
+    "file": "docs/doc_00150.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Maria Jankowska",
+      "adres_zleceniodawca": "ul. Chopina 144, 03-300 Gdynia",
+      "nip_zleceniodawca": "301-027-62-19",
+      "pesel_zleceniodawca": "88011956569",
+      "imie_nazwisko_zleceniobiorca": "Maria Nowak",
+      "adres_zleceniobiorca": "ul. Zielona 73, 90-001 Bydgoszcz",
+      "nip_zleceniobiorca": "367-969-27-82",
+      "numer_umowy": "U-00641/2024",
+      "iban": "PL17240101356668327238656242"
+    }
+  },
+  {
+    "file": "docs/doc_00151.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2021/0846",
+      "nip_sprzedawcy": "619-712-84-70",
+      "regon_sprzedawcy": "590580776",
+      "nip_nabywcy": "918-913-71-83",
+      "iban": "PL51325000037956544209494079",
+      "numer_klienta": "KL-91830",
+      "imie_nazwisko_nabywcy": "Adam Pawłowski",
+      "adres_nabywcy": "ul. Krakowska 148/3, 31-001 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00152.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jan Woźniak",
+      "oskarzony": "Joanna Piotrowska",
+      "adres": "ul. Lipowa 136, Katowice",
+      "data": "24.10.2020",
+      "pesel": "03260695663",
+      "telefon": "+48 666 372 395"
+    }
+  },
+  {
+    "file": "docs/doc_00153.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Agnieszka Kowalska",
+      "adres": "ul. Lipowa 119/20, 45-001 Toruń",
+      "sygnatura_akt": "III K 6223/2018",
+      "pesel": "73072414868",
+      "telefon": "+48 484 765 801"
+    }
+  },
+  {
+    "file": "docs/doc_00154.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Natalia Michalska",
+      "adres": "ul. Kopernika 70/18, 50-001 Wrocław",
+      "pesel": "02253040035",
+      "sygnatura_komornicza": "Km 68251/2021",
+      "iban": "PL09114019872580010618175344"
+    }
+  },
+  {
+    "file": "docs/doc_00155.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Maria Michalska",
+      "adres": "ul. Sienkiewicza 56, 03-300 Olsztyn",
+      "sygnatura_akt": "I Ns 1416/2016",
+      "pesel": "00301382203",
+      "telefon": "+48 792 447 174"
+    }
+  },
+  {
+    "file": "docs/doc_00156.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Maciej Wiśniewski",
+      "adres": "ul. Nowa 199/25, 01-100 Katowice",
+      "pesel": "73030297821",
+      "sygnatura_komornicza": "Km 9196/2025",
+      "iban": "PL79102028929627128639174101"
+    }
+  },
+  {
+    "file": "docs/doc_00157.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Anna Piotrowska",
+      "osoba": "Zbigniew Nowak",
+      "pesel": "53052468034",
+      "telefon": "+48 795 690 877",
+      "adres": "ul. Różana 104, 02-200 Rybnik"
+    }
+  },
+  {
+    "file": "docs/doc_00158.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "8571/11/2025",
+      "nip_sprzedawcy": "685-174-32-82",
+      "regon_sprzedawcy": "832030936",
+      "nip_nabywcy": "163-461-57-17",
+      "iban": "PL10240101356184787005050613",
+      "numer_klienta": "KL-98877",
+      "imie_nazwisko_nabywcy": "Robert Jabłoński",
+      "adres_nabywcy": "ul. Sienkiewicza 78, 02-200 Olsztyn"
+    }
+  },
+  {
+    "file": "docs/doc_00159.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Zbigniew Kowalski",
+      "adres_zleceniodawca": "ul. Kolejowa 44, 03-300 Łódź",
+      "nip_zleceniodawca": "725-827-39-08",
+      "pesel_zleceniodawca": "50082518380",
+      "imie_nazwisko_zleceniobiorca": "Agnieszka Krawczyk",
+      "adres_zleceniobiorca": "ul. Kościuszki 128, 40-001 Zabrze",
+      "nip_zleceniobiorca": "319-620-71-02",
+      "numer_umowy": "KT/0824/2019",
+      "iban": "PL69150010136519825309251142"
+    }
+  },
+  {
+    "file": "docs/doc_00160.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Zofia Zając",
+      "adres": "ul. Mickiewicza 53/18, 41-200 Kielce",
+      "pesel": "86121924483",
+      "sygnatura_administracyjna": "OW.078254.2018",
+      "nip": "245-608-33-18"
+    }
+  },
+  {
+    "file": "docs/doc_00161.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-07455/10/2021",
+      "nip_sprzedawcy": "536-459-70-11",
+      "regon_sprzedawcy": "479956351",
+      "nip_nabywcy": "182-207-81-12",
+      "iban": "PL67102028921531363631797062",
+      "numer_klienta": "KL-60768",
+      "imie_nazwisko_nabywcy": "Justyna Lewandowska",
+      "adres_nabywcy": "pl. Wolności 46/3, 80-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00162.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Rafał Krawczyk",
+      "adres_zleceniodawca": "ul. Ogrodowa 76, 87-100 Olsztyn",
+      "nip_zleceniodawca": "700-780-68-62",
+      "pesel_zleceniodawca": "69072313535",
+      "imie_nazwisko_zleceniobiorca": "Maciej Kozłowski",
+      "adres_zleceniobiorca": "ul. Lipowa 148, 02-200 Bydgoszcz",
+      "nip_zleceniobiorca": "817-731-80-62",
+      "numer_umowy": "UMOWA/2024/NR/0878",
+      "iban": "PL21102028929774063356939290"
+    }
+  },
+  {
+    "file": "docs/doc_00163.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Marcin Kamiński",
+      "adres": "ul. Chopina 118, 65-001 Zielona Góra",
+      "sygnatura_akt": "I Co 7453/2015",
+      "pesel": "62060989529",
+      "telefon": "+48 607 016 580"
+    }
+  },
+  {
+    "file": "docs/doc_00164.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Sylwia Nowakowska",
+      "osoba": "Małgorzata Dudek",
+      "pesel": "05283190116",
+      "telefon": "+48 725 016 579",
+      "adres": "ul. Leśna 94/42, 02-200 Rzeszów"
+    }
+  },
+  {
+    "file": "docs/doc_00165.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "2164/09/2025",
+      "nip_sprzedawcy": "654-864-01-54",
+      "regon_sprzedawcy": "579513716",
+      "nip_nabywcy": "677-881-78-86",
+      "iban": "PL83109010146241124127238046",
+      "numer_klienta": "KL-55442",
+      "imie_nazwisko_nabywcy": "Joanna Nowakowska",
+      "adres_nabywcy": "ul. Zielona 180/48, 40-001 Rybnik"
+    }
+  },
+  {
+    "file": "docs/doc_00166.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Paweł Szymański",
+      "osoba": "Marcin Jabłoński",
+      "pesel": "54033115176",
+      "telefon": "+48 519 284 222",
+      "adres": "ul. Lipowa 61/21, 10-100 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00167.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Michał Nowakowski",
+      "osoba": "Justyna Kozłowska",
+      "pesel": "63041038135",
+      "telefon": "+48 724 106 727",
+      "adres": "al. Jana Pawła II 40/48, 44-100 Rzeszów"
+    }
+  },
+  {
+    "file": "docs/doc_00168.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Marcin Jabłoński",
+      "osoba": "Renata Dudek",
+      "pesel": "00291674667",
+      "telefon": "+48 601 702 814",
+      "adres": "ul. Kwiatowa 103, 41-200 Bydgoszcz"
+    }
+  },
+  {
+    "file": "docs/doc_00169.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Wojciech Adamczyk",
+      "adres": "ul. Polna 150, 50-001 Rybnik",
+      "pesel": "67072402374",
+      "dowod_osobisty": "YYC863759",
+      "telefon": "+48 738 056 265",
+      "email": "wojciech_adamczyk45@interia.pl",
+      "data_urodzenia": "10.07.1981",
+      "nip": "578-137-67-47",
+      "numer_paszportu": "NN2991234"
+    }
+  },
+  {
+    "file": "docs/doc_00170.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Sławomir Jabłoński",
+      "adres": "ul. Wiosenna 23/41, 90-001 Lublin",
+      "pesel": "65090956996",
+      "sygnatura_komornicza": "Km 26217/2020",
+      "iban": "PL90169010146487049478730024"
+    }
+  },
+  {
+    "file": "docs/doc_00171.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Beata Kwiatkowska",
+      "adres": "ul. Lipowa 126, 40-001 Olsztyn",
+      "pesel": "52072112266",
+      "dowod_osobisty": "CUL979647",
+      "telefon": "+48 791 589 042",
+      "email": "beata.kwiatkowska60@poczta.pl",
+      "data_urodzenia": "26.02.1962",
+      "nip": "620-456-50-43",
+      "numer_paszportu": "WC8321928"
+    }
+  },
+  {
+    "file": "docs/doc_00172.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Robert Zając",
+      "osoba": "Mariusz Pawłowski",
+      "pesel": "62112301354",
+      "telefon": "+48 607 652 132",
+      "adres": "ul. Warszawska 57, 87-100 Rzeszów"
+    }
+  },
+  {
+    "file": "docs/doc_00173.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Tomasz Wójcik",
+      "adres": "ul. Sportowa 34, 80-001 Toruń",
+      "pesel": "77121470777",
+      "dowod_osobisty": "URK240132",
+      "telefon": "+48 792 342 321",
+      "email": "tomaszwojcik@interia.pl",
+      "data_urodzenia": "09.01.1960",
+      "nip": "207-603-10-83"
+    }
+  },
+  {
+    "file": "docs/doc_00174.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Nowak",
+      "adres": "al. Niepodległości 25, 30-001 Zabrze",
+      "sygnatura_akt": "I Ns 3278/2024",
+      "pesel": "81071602955",
+      "telefon": "+48 735 528 938"
+    }
+  },
+  {
+    "file": "docs/doc_00175.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Anna Grabowska",
+      "adres": "ul. Polna 184/19, 45-001 Gdańsk",
+      "pesel": "50052299626",
+      "dowod_osobisty": "RZP592712",
+      "telefon": "+48 606 638 361",
+      "email": "anna.grabowska@onet.pl",
+      "data_urodzenia": "17.08.1996",
+      "nip": "375-480-15-76",
+      "numer_paszportu": "JO9473864"
+    }
+  },
+  {
+    "file": "docs/doc_00176.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-00439/11/2023",
+      "nip_sprzedawcy": "226-691-21-54",
+      "regon_sprzedawcy": "599465798",
+      "nip_nabywcy": "453-961-36-71",
+      "iban": "PL66240101357842711477320101",
+      "numer_klienta": "KL-60152",
+      "imie_nazwisko_nabywcy": "Grzegorz Dudek",
+      "adres_nabywcy": "ul. Wiosenna 113, 02-200 Bielsko-Biała"
+    }
+  },
+  {
+    "file": "docs/doc_00177.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Maria Kwiatkowska",
+      "adres": "ul. Kościuszki 99, 41-200 Częstochowa",
+      "sygnatura_akt": "I C 590/2022",
+      "pesel": "99121067546",
+      "telefon": "+48 792 762 467"
+    }
+  },
+  {
+    "file": "docs/doc_00178.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Justyna Nowakowska",
+      "oskarzony": "Zofia Nowakowska",
+      "adres": "ul. Zielona 41, Częstochowa",
+      "data": "10.10.2022",
+      "pesel": "03211099454",
+      "telefon": "+48 575 009 025"
+    }
+  },
+  {
+    "file": "docs/doc_00179.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Renata Nowak",
+      "adres": "al. Niepodległości 161/7, 80-001 Radom",
+      "pesel": "82012342130",
+      "sygnatura_komornicza": "Km 30852/2021",
+      "iban": "PL80150010139114152085076986"
+    }
+  },
+  {
+    "file": "docs/doc_00180.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Dorota Mazur",
+      "oskarzony": "Dorota Pawłowska",
+      "adres": "ul. Kościuszki 126/44, Szczecin",
+      "data": "14.10.2022",
+      "pesel": "95020883049",
+      "telefon": "+48 519 456 371"
+    }
+  },
+  {
+    "file": "docs/doc_00181.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-01056/06/2023",
+      "nip_sprzedawcy": "863-514-84-63",
+      "regon_sprzedawcy": "920829730",
+      "nip_nabywcy": "953-664-98-72",
+      "iban": "PL81114019877489690835723246",
+      "numer_klienta": "KL-64059",
+      "imie_nazwisko_nabywcy": "Marcin Pawłowski",
+      "adres_nabywcy": "ul. Kościuszki 152/5, 44-100 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00182.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Maria Lewandowska",
+      "adres": "ul. Lipowa 70/17, 45-001 Lublin",
+      "pesel": "65101565962",
+      "sygnatura_administracyjna": "IW.007351.2018",
+      "nip": "516-516-23-16"
+    }
+  },
+  {
+    "file": "docs/doc_00183.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Tomasz Szymański",
+      "osoba": "Dorota Kozłowska",
+      "pesel": "02260475437",
+      "telefon": "+48 663 212 347",
+      "adres": "ul. Różana 66, 31-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00184.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Agnieszka Kozłowska",
+      "adres": "ul. Krakowska 109, 50-001 Bydgoszcz",
+      "pesel": "63010137153",
+      "sygnatura_komornicza": "Km 2862/2022",
+      "iban": "PL94325000030034864518376064"
+    }
+  },
+  {
+    "file": "docs/doc_00185.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2021/6792",
+      "nip_sprzedawcy": "865-612-48-12",
+      "regon_sprzedawcy": "820634595",
+      "nip_nabywcy": "669-857-00-24",
+      "iban": "PL33109010141238296577242954",
+      "numer_klienta": "KL-33840",
+      "imie_nazwisko_nabywcy": "Jan Krawczyk",
+      "adres_nabywcy": "ul. Wolności 9/6, 31-001 Rybnik"
+    }
+  },
+  {
+    "file": "docs/doc_00186.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Sławomir Wójcik",
+      "adres": "ul. Kwiatowa 184, 41-200 Rybnik",
+      "pesel": "94050212133",
+      "sygnatura_komornicza": "Km 34991/2021",
+      "iban": "PL39114019877626393436262044"
+    }
+  },
+  {
+    "file": "docs/doc_00187.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2020/04/2436",
+      "nip_sprzedawcy": "511-800-53-77",
+      "regon_sprzedawcy": "724150271",
+      "nip_nabywcy": "387-572-15-86",
+      "iban": "PL61169010144564494856257287",
+      "numer_klienta": "KL-40128",
+      "imie_nazwisko_nabywcy": "Magdalena Krawczyk",
+      "adres_nabywcy": "ul. Sienkiewicza 55, 90-001 Bytom"
+    }
+  },
+  {
+    "file": "docs/doc_00188.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Robert Nowakowski",
+      "adres": "pl. Wolności 118, 10-100 Zielona Góra",
+      "sygnatura_akt": "II C 5728/2016",
+      "pesel": "75062818481",
+      "telefon": "+48 579 939 089"
+    }
+  },
+  {
+    "file": "docs/doc_00189.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Grzegorz Dudek",
+      "adres": "ul. Kościuszki 85/44, 03-300 Bielsko-Biała",
+      "pesel": "85051338207",
+      "dowod_osobisty": "KEA177749",
+      "telefon": "+48 780 509 759",
+      "email": "grzegorz.dudek@wp.pl",
+      "data_urodzenia": "21.05.1975",
+      "nip": "601-896-16-43",
+      "numer_paszportu": "MC0326642",
+      "numer_kw": "BY1B/00850014/6"
+    }
+  },
+  {
+    "file": "docs/doc_00190.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Marek Jankowski",
+      "adres_zleceniodawca": "ul. Wiosenna 122/39, 02-200 Radom",
+      "nip_zleceniodawca": "343-864-90-81",
+      "pesel_zleceniodawca": "00323183255",
+      "imie_nazwisko_zleceniobiorca": "Zofia Krawczyk",
+      "adres_zleceniobiorca": "al. Niepodległości 109, 20-100 Zabrze",
+      "nip_zleceniobiorca": "208-186-61-75",
+      "numer_umowy": "UMOWA/2024/NR/0646",
+      "iban": "PL55109010148573278814761742"
+    }
+  },
+  {
+    "file": "docs/doc_00191.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Anna Wójcik",
+      "adres": "ul. Norwida 170, 85-001 Gdańsk",
+      "pesel": "54012308551",
+      "dowod_osobisty": "KTO794523",
+      "telefon": "+48 511 941 680",
+      "email": "anna_wojcik22@gmail.com",
+      "data_urodzenia": "21.10.1992",
+      "nip": "869-749-95-61",
+      "numer_kw": "KA1K/00024549/3",
+      "numer_dzialki": "116656.0090.3084"
+    }
+  },
+  {
+    "file": "docs/doc_00192.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Magdalena Szymańska",
+      "oskarzony": "Zbigniew Nowakowski",
+      "adres": "ul. Polna 23/30, Poznań",
+      "data": "14.05.2022",
+      "pesel": "51121611934",
+      "telefon": "+48 797 770 793"
+    }
+  },
+  {
+    "file": "docs/doc_00193.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "6396/12/2022",
+      "nip_sprzedawcy": "507-678-99-76",
+      "regon_sprzedawcy": "567179570",
+      "nip_nabywcy": "408-069-58-15",
+      "iban": "PL03114019876024375738395972",
+      "numer_klienta": "KL-98225",
+      "imie_nazwisko_nabywcy": "Aleksandra Kowalska",
+      "adres_nabywcy": "ul. Zielona 127, 45-001 Zabrze"
+    }
+  },
+  {
+    "file": "docs/doc_00194.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Michał Nowakowski",
+      "oskarzony": "Adam Jankowski",
+      "adres": "ul. Nowa 92, Gdańsk",
+      "data": "06.03.2020",
+      "pesel": "55091834595",
+      "telefon": "+48 531 837 455"
+    }
+  },
+  {
+    "file": "docs/doc_00195.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Iwona Woźniak",
+      "adres": "ul. Mickiewicza 177, 03-300 Zabrze",
+      "sygnatura_akt": "I Co 7174/2015",
+      "pesel": "59121499891",
+      "telefon": "+48 731 808 121"
+    }
+  },
+  {
+    "file": "docs/doc_00196.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Paulina Krawczyk",
+      "adres_zleceniodawca": "ul. Zielona 26/24, 10-100 Katowice",
+      "nip_zleceniodawca": "885-072-08-19",
+      "pesel_zleceniodawca": "63071892488",
+      "imie_nazwisko_zleceniobiorca": "Zofia Wieczorek",
+      "adres_zleceniobiorca": "ul. Kościuszki 52, 00-001 Radom",
+      "nip_zleceniobiorca": "255-626-06-07",
+      "numer_umowy": "UMOWA/2021/NR/0855",
+      "iban": "PL90150010138214565328632666"
+    }
+  },
+  {
+    "file": "docs/doc_00197.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Zając",
+      "adres": "ul. Krakowska 78, 80-001 Katowice",
+      "pesel": "50091684690",
+      "sygnatura_administracyjna": "PD.091889.2020",
+      "nip": "999-756-34-18"
+    }
+  },
+  {
+    "file": "docs/doc_00198.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Iwona Dąbrowska",
+      "adres_zleceniodawca": "ul. Długa 134/41, 00-001 Gdańsk",
+      "nip_zleceniodawca": "993-544-92-64",
+      "pesel_zleceniodawca": "58101615065",
+      "imie_nazwisko_zleceniobiorca": "Dariusz Nowakowski",
+      "adres_zleceniobiorca": "ul. Kwiatowa 139, 60-001 Bydgoszcz",
+      "nip_zleceniobiorca": "931-589-35-79",
+      "numer_umowy": "UMW/2024/518",
+      "iban": "PL42109010145485101749075399"
+    }
+  },
+  {
+    "file": "docs/doc_00199.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Andrzej Piotrowski",
+      "adres": "ul. Polna 115/44, 85-001 Kielce",
+      "pesel": "02301057264",
+      "dowod_osobisty": "ITP677622",
+      "telefon": "+48 722 772 881",
+      "email": "andrzej.piotrowski@o2.pl",
+      "data_urodzenia": "04.12.1952",
+      "nip": "385-196-11-55",
+      "numer_kw": "KA1K/00133461/5",
+      "numer_dzialki": "492649.0039.4817"
+    }
+  },
+  {
+    "file": "docs/doc_00200.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Natalia Kowalska",
+      "adres_zleceniodawca": "ul. Polna 47, 00-001 Toruń",
+      "nip_zleceniodawca": "465-807-41-28",
+      "pesel_zleceniodawca": "98081159081",
+      "imie_nazwisko_zleceniobiorca": "Beata Dąbrowska",
+      "adres_zleceniobiorca": "ul. Kościuszki 141/3, 31-001 Radom",
+      "nip_zleceniobiorca": "194-818-13-97",
+      "numer_umowy": "UMOWA/2022/NR/0580",
+      "iban": "PL83150010136792287772519966"
+    }
+  },
+  {
+    "file": "docs/doc_00201.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "4226/06/2023",
+      "nip_sprzedawcy": "289-569-07-01",
+      "regon_sprzedawcy": "211824226",
+      "nip_nabywcy": "662-608-56-44",
+      "iban": "PL88150010131246209520046152",
+      "numer_klienta": "KL-25855",
+      "imie_nazwisko_nabywcy": "Adam Wójcik",
+      "adres_nabywcy": "ul. Ogrodowa 181, 41-200 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00202.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Katarzyna Piotrowska",
+      "oskarzony": "Zbigniew Szymański",
+      "adres": "ul. Kwiatowa 69, Gliwice",
+      "data": "19.05.2021",
+      "pesel": "99100766741",
+      "telefon": "+48 736 718 325"
+    }
+  },
+  {
+    "file": "docs/doc_00203.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Iwona Kwiatkowska",
+      "adres_zleceniodawca": "ul. Leśna 1, 60-001 Zabrze",
+      "nip_zleceniodawca": "739-855-47-48",
+      "pesel_zleceniodawca": "85032855110",
+      "imie_nazwisko_zleceniobiorca": "Iwona Krawczyk",
+      "adres_zleceniobiorca": "ul. Kopernika 43/31, 87-100 Lublin",
+      "nip_zleceniobiorca": "197-002-68-74",
+      "numer_umowy": "UMOWA/2022/NR/0860",
+      "iban": "PL55169010143984028914161284"
+    }
+  },
+  {
+    "file": "docs/doc_00204.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Justyna Krawczyk",
+      "adres": "ul. Sienkiewicza 32/25, 80-001 Zabrze",
+      "sygnatura_akt": "I C 2904/2021",
+      "pesel": "91070637966",
+      "telefon": "+48 483 045 319"
+    }
+  },
+  {
+    "file": "docs/doc_00205.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "8724/07/2022",
+      "nip_sprzedawcy": "598-728-39-97",
+      "regon_sprzedawcy": "943089487",
+      "nip_nabywcy": "319-212-49-39",
+      "iban": "PL33240101350605664187758030",
+      "numer_klienta": "KL-51450",
+      "imie_nazwisko_nabywcy": "Marta Kowalska",
+      "adres_nabywcy": "ul. Polna 2/41, 03-300 Częstochowa"
+    }
+  },
+  {
+    "file": "docs/doc_00206.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Grzegorz Szymański",
+      "osoba": "Maria Kozłowska",
+      "pesel": "71032996694",
+      "telefon": "+48 737 179 110",
+      "adres": "ul. Leśna 97/45, 10-100 Łódź"
+    }
+  },
+  {
+    "file": "docs/doc_00207.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Wojciech Adamczyk",
+      "oskarzony": "Marek Dudek",
+      "adres": "ul. Leśna 144/25, Częstochowa",
+      "data": "18.06.2023",
+      "pesel": "86111923887",
+      "telefon": "+48 487 676 991"
+    }
+  },
+  {
+    "file": "docs/doc_00208.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Justyna Nowak",
+      "adres": "ul. Dębowa 133/13, 03-300 Wrocław",
+      "pesel": "51020760988",
+      "sygnatura_komornicza": "Km 75232/2021",
+      "iban": "PL88114019878456797232002496"
+    }
+  },
+  {
+    "file": "docs/doc_00209.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Iwona Jabłońska",
+      "osoba": "Grzegorz Dąbrowski",
+      "pesel": "80100629811",
+      "telefon": "+48 729 203 880",
+      "adres": "ul. Różana 89/13, 30-001 Olsztyn"
+    }
+  },
+  {
+    "file": "docs/doc_00210.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Grzegorz Zając",
+      "adres": "ul. Chopina 120, 65-001 Katowice",
+      "pesel": "00301498650",
+      "sygnatura_komornicza": "Km 43172/2024",
+      "iban": "PL14109010147073033793375636"
+    }
+  },
+  {
+    "file": "docs/doc_00211.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Jakub Nowak",
+      "adres": "ul. Krakowska 30/29, 65-001 Szczecin",
+      "pesel": "82041604425",
+      "sygnatura_komornicza": "Km 37337/2021",
+      "iban": "PL70102028924258323024102615"
+    }
+  },
+  {
+    "file": "docs/doc_00212.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jakub Dudek",
+      "oskarzony": "Dariusz Michalski",
+      "adres": "ul. Różana 183/10, Poznań",
+      "data": "27.01.2021",
+      "pesel": "97101138747",
+      "telefon": "+48 736 309 938"
+    }
+  },
+  {
+    "file": "docs/doc_00213.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Dorota Szymańska",
+      "osoba": "Paweł Kowalczyk",
+      "pesel": "95080799160",
+      "telefon": "+48 531 791 286",
+      "adres": "al. Niepodległości 166, 31-001 Gdynia"
+    }
+  },
+  {
+    "file": "docs/doc_00214.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Robert Jankowski",
+      "oskarzony": "Zofia Zając",
+      "adres": "pl. Wolności 122/26, Olsztyn",
+      "data": "23.08.2023",
+      "pesel": "53041421233",
+      "telefon": "+48 693 634 669"
+    }
+  },
+  {
+    "file": "docs/doc_00215.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Marta Woźniak",
+      "adres_zleceniodawca": "ul. Słoneczna 76, 40-001 Gdynia",
+      "nip_zleceniodawca": "914-311-15-03",
+      "pesel_zleceniodawca": "04231014188",
+      "imie_nazwisko_zleceniobiorca": "Barbara Jabłońska",
+      "adres_zleceniobiorca": "ul. Szkolna 11, 70-001 Zabrze",
+      "nip_zleceniobiorca": "935-354-44-38",
+      "numer_umowy": "UMOWA/2024/NR/0462",
+      "iban": "PL08240101355754602734151488"
+    }
+  },
+  {
+    "file": "docs/doc_00216.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Beata Jankowska",
+      "adres": "ul. Wolności 104, 00-001 Gliwice",
+      "sygnatura_akt": "I Ns 8400/2022",
+      "pesel": "85083023339",
+      "telefon": "+48 693 898 775"
+    }
+  },
+  {
+    "file": "docs/doc_00217.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV/2023/01/6040",
+      "nip_sprzedawcy": "559-090-22-54",
+      "regon_sprzedawcy": "259741218",
+      "nip_nabywcy": "763-618-63-76",
+      "iban": "PL40114019878209702316433481",
+      "numer_klienta": "KL-32521",
+      "imie_nazwisko_nabywcy": "Paulina Kwiatkowska",
+      "adres_nabywcy": "ul. Piaskowa 36, 60-001 Poznań"
+    }
+  },
+  {
+    "file": "docs/doc_00218.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-04142/03/2023",
+      "nip_sprzedawcy": "697-779-01-44",
+      "regon_sprzedawcy": "776291605",
+      "nip_nabywcy": "854-692-63-21",
+      "iban": "PL58102028922484137681511856",
+      "numer_klienta": "KL-76330",
+      "imie_nazwisko_nabywcy": "Karolina Woźniak",
+      "adres_nabywcy": "ul. Sportowa 103, 44-100 Bydgoszcz"
+    }
+  },
+  {
+    "file": "docs/doc_00219.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Szymański",
+      "adres": "ul. Chopina 113/18, 20-100 Gdańsk",
+      "pesel": "51081562158",
+      "dowod_osobisty": "DSM210427",
+      "telefon": "+48 602 308 370",
+      "email": "tadeuszszymanski@o2.pl",
+      "data_urodzenia": "23.03.1959",
+      "nip": "747-090-06-38"
+    }
+  },
+  {
+    "file": "docs/doc_00220.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-06367/06/2024",
+      "nip_sprzedawcy": "915-583-93-86",
+      "regon_sprzedawcy": "165063739",
+      "nip_nabywcy": "761-331-55-22",
+      "iban": "PL96109010144950136497189241",
+      "numer_klienta": "KL-53522",
+      "imie_nazwisko_nabywcy": "Adam Nowak",
+      "adres_nabywcy": "ul. Kościuszki 171/11, 90-001 Kraków"
+    }
+  },
+  {
+    "file": "docs/doc_00221.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Bartosz Jabłoński",
+      "osoba": "Tomasz Kowalski",
+      "pesel": "83080851034",
+      "telefon": "+48 663 039 752",
+      "adres": "ul. Nowa 82, 01-100 Rybnik"
+    }
+  },
+  {
+    "file": "docs/doc_00222.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Beata Jabłońska",
+      "adres": "ul. Kwiatowa 59, 70-001 Katowice",
+      "pesel": "71092621020",
+      "sygnatura_administracyjna": "PD.079800.2021",
+      "nip": "421-298-33-86"
+    }
+  },
+  {
+    "file": "docs/doc_00223.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Joanna Kwiatkowska",
+      "adres_zleceniodawca": "ul. Długa 148, 30-001 Olsztyn",
+      "nip_zleceniodawca": "847-468-97-15",
+      "pesel_zleceniodawca": "72112578942",
+      "imie_nazwisko_zleceniobiorca": "Krzysztof Dąbrowski",
+      "adres_zleceniobiorca": "ul. Nowa 124/24, 85-001 Częstochowa",
+      "nip_zleceniobiorca": "260-169-23-63",
+      "numer_umowy": "UMOWA/2020/NR/0483",
+      "iban": "PL45325000039627066149828246"
+    }
+  },
+  {
+    "file": "docs/doc_00224.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Marta Zając",
+      "oskarzony": "Mateusz Kwiatkowski",
+      "adres": "ul. Norwida 64/3, Gdynia",
+      "data": "29.11.2023",
+      "pesel": "63040826724",
+      "telefon": "+48 573 992 011"
+    }
+  },
+  {
+    "file": "docs/doc_00225.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Sławomir Wiśniewski",
+      "adres": "ul. Warszawska 49, 90-001 Gdańsk",
+      "pesel": "72090870898",
+      "sygnatura_administracyjna": "SA.076918.2024",
+      "nip": "219-524-36-44"
+    }
+  },
+  {
+    "file": "docs/doc_00226.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Robert Kwiatkowski",
+      "adres": "ul. Warszawska 107, 90-001 Zielona Góra",
+      "pesel": "65042318034",
+      "dowod_osobisty": "GPF817932",
+      "telefon": "+48 530 234 679",
+      "email": "robertkwiatkowski38@gmail.com",
+      "data_urodzenia": "09.09.1957",
+      "nip": "714-150-93-76"
+    }
+  },
+  {
+    "file": "docs/doc_00227.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Adam Dudek",
+      "adres": "ul. Szkolna 11/34, 85-001 Warszawa",
+      "sygnatura_akt": "I K 8521/2024",
+      "pesel": "93080548487",
+      "telefon": "+48 665 555 356"
+    }
+  },
+  {
+    "file": "docs/doc_00228.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Dorota Wójcik",
+      "adres": "ul. Kwiatowa 117, 10-100 Częstochowa",
+      "sygnatura_akt": "II C 9862/2015",
+      "pesel": "97080928623",
+      "telefon": "+48 607 978 630"
+    }
+  },
+  {
+    "file": "docs/doc_00229.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Edyta Kozłowska",
+      "adres": "ul. Sienkiewicza 114/32, 87-100 Częstochowa",
+      "pesel": "57042035673",
+      "sygnatura_komornicza": "Km 96343/2019",
+      "iban": "PL42150010139328980271487271"
+    }
+  },
+  {
+    "file": "docs/doc_00230.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-02070/11/2022",
+      "nip_sprzedawcy": "812-871-53-95",
+      "regon_sprzedawcy": "241115937",
+      "nip_nabywcy": "256-686-33-42",
+      "iban": "PL33114019871952569040983665",
+      "numer_klienta": "KL-23970",
+      "imie_nazwisko_nabywcy": "Maciej Dudek",
+      "adres_nabywcy": "al. Jana Pawła II 99, 50-001 Bydgoszcz"
+    }
+  },
+  {
+    "file": "docs/doc_00231.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Barbara Wieczorek",
+      "adres_zleceniodawca": "ul. Kolejowa 82/45, 50-001 Wrocław",
+      "nip_zleceniodawca": "666-184-43-82",
+      "pesel_zleceniodawca": "01301214075",
+      "imie_nazwisko_zleceniobiorca": "Paulina Kowalska",
+      "adres_zleceniobiorca": "ul. Zielona 181, 30-001 Olsztyn",
+      "nip_zleceniobiorca": "712-590-47-29",
+      "numer_umowy": "UMOWA/2025/NR/0299",
+      "iban": "PL74169010145233027642086567"
+    }
+  },
+  {
+    "file": "docs/doc_00232.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Kamil Lewandowski",
+      "adres_zleceniodawca": "ul. Norwida 148/10, 90-001 Częstochowa",
+      "nip_zleceniodawca": "278-309-99-77",
+      "pesel_zleceniodawca": "61032710196",
+      "imie_nazwisko_zleceniobiorca": "Anna Jankowska",
+      "adres_zleceniobiorca": "ul. Sienkiewicza 44, 80-001 Wrocław",
+      "nip_zleceniobiorca": "519-267-64-91",
+      "numer_umowy": "UMW/2025/184",
+      "iban": "PL74325000035962630136749261"
+    }
+  },
+  {
+    "file": "docs/doc_00233.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Anna Mazur",
+      "adres": "ul. Krakowska 138, 31-001 Kielce",
+      "pesel": "55092653182",
+      "sygnatura_administracyjna": "OW.098863.2019",
+      "nip": "392-087-51-06"
+    }
+  },
+  {
+    "file": "docs/doc_00234.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Maria Wiśniewska",
+      "osoba": "Elżbieta Dąbrowska",
+      "pesel": "98110417511",
+      "telefon": "+48 534 084 872",
+      "adres": "ul. Szkolna 126, 80-001 Kielce"
+    }
+  },
+  {
+    "file": "docs/doc_00235.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2020/2880",
+      "nip_sprzedawcy": "718-446-26-70",
+      "regon_sprzedawcy": "709314184",
+      "nip_nabywcy": "698-926-25-63",
+      "iban": "PL32109010148615155423401636",
+      "numer_klienta": "KL-87178",
+      "imie_nazwisko_nabywcy": "Piotr Szymański",
+      "adres_nabywcy": "ul. Krakowska 56, 10-100 Lublin"
+    }
+  },
+  {
+    "file": "docs/doc_00236.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Paulina Kowalczyk",
+      "adres": "ul. Sienkiewicza 33/37, 50-001 Zielona Góra",
+      "sygnatura_akt": "II Ns 6065/2015",
+      "pesel": "04281042821",
+      "telefon": "+48 695 784 468"
+    }
+  },
+  {
+    "file": "docs/doc_00237.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Natalia Jabłońska",
+      "adres": "al. Jana Pawła II 24, 40-001 Łódź",
+      "pesel": "58052716903",
+      "dowod_osobisty": "JSP068277",
+      "telefon": "+48 728 160 930",
+      "email": "natalia_jablonska@o2.pl",
+      "data_urodzenia": "15.12.1980",
+      "nip": "489-097-28-38",
+      "numer_paszportu": "LE8506762"
+    }
+  },
+  {
+    "file": "docs/doc_00238.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Joanna Nowakowska",
+      "adres": "ul. Zielona 197, 60-001 Białystok",
+      "pesel": "93050630015",
+      "sygnatura_komornicza": "Km 28603/2024",
+      "iban": "PL55150010138079705097545105"
+    }
+  },
+  {
+    "file": "docs/doc_00239.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Bartosz Piotrowski",
+      "adres": "ul. Polna 22, 90-001 Poznań",
+      "pesel": "61021093538",
+      "sygnatura_komornicza": "Km 29734/2022",
+      "iban": "PL62240101355456284177225605"
+    }
+  },
+  {
+    "file": "docs/doc_00240.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-08231/02/2025",
+      "nip_sprzedawcy": "887-256-86-26",
+      "regon_sprzedawcy": "156906745",
+      "nip_nabywcy": "210-225-80-39",
+      "iban": "PL75150010137163928234143637",
+      "numer_klienta": "KL-34729",
+      "imie_nazwisko_nabywcy": "Mateusz Kwiatkowski",
+      "adres_nabywcy": "pl. Wolności 171, 90-001 Wrocław"
+    }
+  },
+  {
+    "file": "docs/doc_00241.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Aleksandra Kwiatkowska",
+      "adres": "ul. Warszawska 79, 40-001 Bydgoszcz",
+      "pesel": "80022843690",
+      "dowod_osobisty": "NWB414545",
+      "telefon": "+48 796 350 200",
+      "email": "aleksandrakwiatkowska@gmail.com",
+      "data_urodzenia": "07.01.1969",
+      "nip": "574-916-24-71"
+    }
+  },
+  {
+    "file": "docs/doc_00242.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Barbara Kozłowska",
+      "adres": "ul. Piaskowa 190, 65-001 Zielona Góra",
+      "sygnatura_akt": "II K 9908/2023",
+      "pesel": "74100421504",
+      "telefon": "+48 502 910 933"
+    }
+  },
+  {
+    "file": "docs/doc_00243.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Sylwia Kozłowska",
+      "adres": "ul. Długa 186, 30-001 Rybnik",
+      "pesel": "97111373831",
+      "dowod_osobisty": "GNS485571",
+      "telefon": "+48 661 768 802",
+      "email": "sylwia_kozlowska@poczta.pl",
+      "data_urodzenia": "26.07.1961",
+      "nip": "509-036-78-81",
+      "numer_kw": "LD1M/00599822/6",
+      "numer_dzialki": "384682.0027.3016/19"
+    }
+  },
+  {
+    "file": "docs/doc_00244.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Elżbieta Krawczyk",
+      "adres": "ul. Warszawska 182, 60-001 Lublin",
+      "sygnatura_akt": "I K 4856/2018",
+      "pesel": "60090717590",
+      "telefon": "+48 534 024 240"
+    }
+  },
+  {
+    "file": "docs/doc_00245.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Jakub Adamczyk",
+      "adres": "ul. Kolejowa 95/46, 50-001 Rzeszów",
+      "pesel": "61122741846",
+      "dowod_osobisty": "KBW053424",
+      "telefon": "+48 488 916 498",
+      "email": "jakub_adamczyk35@wp.pl",
+      "data_urodzenia": "18.04.1968",
+      "nip": "727-365-27-16"
+    }
+  },
+  {
+    "file": "docs/doc_00246.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-00394/04/2020",
+      "nip_sprzedawcy": "476-182-09-19",
+      "regon_sprzedawcy": "427972451",
+      "nip_nabywcy": "529-001-85-18",
+      "iban": "PL86240101352308481001841862",
+      "numer_klienta": "KL-65985",
+      "imie_nazwisko_nabywcy": "Kamil Kamiński",
+      "adres_nabywcy": "ul. Sienkiewicza 156/10, 90-001 Łódź"
+    }
+  },
+  {
+    "file": "docs/doc_00247.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Agnieszka Jankowska",
+      "adres": "ul. Słoneczna 12, 90-001 Gdańsk",
+      "pesel": "97080434269",
+      "dowod_osobisty": "EYY494514",
+      "telefon": "+48 695 410 225",
+      "email": "agnieszka_jankowska@wp.pl",
+      "data_urodzenia": "03.12.1992",
+      "nip": "219-642-15-27",
+      "numer_paszportu": "ML5767695",
+      "numer_kw": "WR1K/00411798/6"
+    }
+  },
+  {
+    "file": "docs/doc_00248.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Joanna Mazur",
+      "oskarzony": "Robert Kwiatkowski",
+      "adres": "ul. Warszawska 148, Zielona Góra",
+      "data": "10.12.2023",
+      "pesel": "57103024035",
+      "telefon": "+48 485 872 105"
+    }
+  },
+  {
+    "file": "docs/doc_00249.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Barbara Dąbrowska",
+      "adres": "ul. Dębowa 37, 90-001 Rzeszów",
+      "pesel": "71100421503",
+      "sygnatura_komornicza": "Km 15466/2020",
+      "iban": "PL78114019872606501917920252"
+    }
+  },
+  {
+    "file": "docs/doc_00250.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Bartosz Kowalczyk",
+      "adres": "al. Niepodległości 47, 44-100 Poznań",
+      "pesel": "76111448150",
+      "dowod_osobisty": "OWZ041200",
+      "telefon": "+48 732 820 667",
+      "email": "bartoszkowalczyk@poczta.pl",
+      "data_urodzenia": "10.01.1995",
+      "nip": "469-036-28-97"
+    }
+  },
+  {
+    "file": "docs/doc_00251.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Zbigniew Mazur",
+      "oskarzony": "Ewa Kowalska",
+      "adres": "ul. Wolności 96, Szczecin",
+      "data": "10.08.2020",
+      "pesel": "59051407953",
+      "telefon": "+48 483 428 113"
+    }
+  },
+  {
+    "file": "docs/doc_00252.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Beata Lewandowska",
+      "adres": "ul. Krakowska 52, 40-001 Kraków",
+      "sygnatura_akt": "I C 1394/2019",
+      "pesel": "93052804616",
+      "telefon": "+48 570 546 835"
+    }
+  },
+  {
+    "file": "docs/doc_00253.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Paulina Dudek",
+      "adres": "ul. Kościuszki 85, 44-100 Zielona Góra",
+      "pesel": "59012351424",
+      "sygnatura_komornicza": "Km 77062/2018",
+      "iban": "PL89240101357904227113322889"
+    }
+  },
+  {
+    "file": "docs/doc_00254.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Dorota Dąbrowska",
+      "oskarzony": "Bartosz Kowalski",
+      "adres": "ul. Chopina 199, Bydgoszcz",
+      "data": "04.06.2023",
+      "pesel": "04261207680",
+      "telefon": "+48 787 102 481"
+    }
+  },
+  {
+    "file": "docs/doc_00255.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Łukasz Kamiński",
+      "oskarzony": "Ewa Wiśniewska",
+      "adres": "ul. Nowa 148/6, Łódź",
+      "data": "26.12.2023",
+      "pesel": "91050326440",
+      "telefon": "+48 692 197 054"
+    }
+  },
+  {
+    "file": "docs/doc_00256.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Wojciech Dudek",
+      "adres": "ul. Mickiewicza 113/40, 80-001 Katowice",
+      "pesel": "57062869872",
+      "sygnatura_administracyjna": "IW.089563.2022",
+      "nip": "480-214-62-95"
+    }
+  },
+  {
+    "file": "docs/doc_00257.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Marta Krawczyk",
+      "oskarzony": "Mariusz Krawczyk",
+      "adres": "ul. Kościuszki 22/7, Częstochowa",
+      "data": "12.02.2021",
+      "pesel": "86010933659",
+      "telefon": "+48 737 371 470"
+    }
+  },
+  {
+    "file": "docs/doc_00258.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Barbara Adamczyk",
+      "adres_zleceniodawca": "ul. Kolejowa 199/24, 31-001 Radom",
+      "nip_zleceniodawca": "335-677-82-63",
+      "pesel_zleceniodawca": "05242314858",
+      "imie_nazwisko_zleceniobiorca": "Sławomir Kowalski",
+      "adres_zleceniobiorca": "ul. Polna 14/2, 90-001 Rybnik",
+      "nip_zleceniobiorca": "696-089-31-93",
+      "numer_umowy": "KT/0259/2022",
+      "iban": "PL95102028921461476834201654"
+    }
+  },
+  {
+    "file": "docs/doc_00259.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Barbara Piotrowska",
+      "adres_zleceniodawca": "ul. Różana 68, 41-200 Warszawa",
+      "nip_zleceniodawca": "917-766-55-80",
+      "pesel_zleceniodawca": "99080460978",
+      "imie_nazwisko_zleceniobiorca": "Agnieszka Dudek",
+      "adres_zleceniobiorca": "ul. Sportowa 33, 65-001 Olsztyn",
+      "nip_zleceniobiorca": "785-127-65-27",
+      "numer_umowy": "KT/0038/2019",
+      "iban": "PL06102028926829635339055044"
+    }
+  },
+  {
+    "file": "docs/doc_00260.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Paulina Dudek",
+      "osoba": "Marcin Zając",
+      "pesel": "58112608904",
+      "telefon": "+48 500 961 798",
+      "adres": "ul. Kościuszki 163, 01-100 Gliwice"
+    }
+  },
+  {
+    "file": "docs/doc_00261.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Małgorzata Szymańska",
+      "osoba": "Iwona Mazur",
+      "pesel": "67071987614",
+      "telefon": "+48 607 660 538",
+      "adres": "ul. Długa 69, 60-001 Lublin"
+    }
+  },
+  {
+    "file": "docs/doc_00262.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "FV-05868/11/2023",
+      "nip_sprzedawcy": "963-960-96-25",
+      "regon_sprzedawcy": "381964820",
+      "nip_nabywcy": "726-582-63-14",
+      "iban": "PL17150010133110609209819602",
+      "numer_klienta": "KL-41420",
+      "imie_nazwisko_nabywcy": "Natalia Kowalska",
+      "adres_nabywcy": "al. Jana Pawła II 86/37, 40-001 Radom"
+    }
+  },
+  {
+    "file": "docs/doc_00263.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Renata Wójcik",
+      "adres": "ul. Kościuszki 118, 03-300 Wrocław",
+      "sygnatura_akt": "I K 4628/2017",
+      "pesel": "66031609559",
+      "telefon": "+48 536 170 617"
+    }
+  },
+  {
+    "file": "docs/doc_00264.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Łukasz Adamczyk",
+      "adres": "ul. Dębowa 42/1, 65-001 Gdańsk",
+      "pesel": "04260487559",
+      "sygnatura_administracyjna": "KP.063527.2023",
+      "nip": "128-413-90-89"
+    }
+  },
+  {
+    "file": "docs/doc_00265.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Michał Nowak",
+      "adres": "al. Jana Pawła II 36/47, 10-100 Bytom",
+      "pesel": "74010328014",
+      "sygnatura_komornicza": "Km 92909/2023",
+      "iban": "PL80114019874776863423461994"
+    }
+  },
+  {
+    "file": "docs/doc_00266.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Rafał Kwiatkowski",
+      "oskarzony": "Monika Kozłowska",
+      "adres": "ul. Kolejowa 28, Radom",
+      "data": "07.03.2023",
+      "pesel": "81083038209",
+      "telefon": "+48 692 084 964"
+    }
+  },
+  {
+    "file": "docs/doc_00267.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Marek Kamiński",
+      "adres": "ul. Wolności 83, 80-001 Gdańsk",
+      "pesel": "72010407454",
+      "sygnatura_komornicza": "Km 19110/2023",
+      "iban": "PL55150010131050537953816493"
+    }
+  },
+  {
+    "file": "docs/doc_00268.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Paulina Michalska",
+      "adres": "ul. Wolności 172/42, 90-001 Radom",
+      "pesel": "78070683234",
+      "dowod_osobisty": "BPP046117",
+      "telefon": "+48 519 596 390",
+      "email": "paulina.michalska@onet.pl",
+      "data_urodzenia": "02.06.1950",
+      "nip": "842-608-80-53",
+      "numer_kw": "KR1P/00880161/6"
+    }
+  },
+  {
+    "file": "docs/doc_00269.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Aleksandra Wiśniewska",
+      "adres": "ul. Krakowska 199/40, 85-001 Kraków",
+      "pesel": "76101071368",
+      "sygnatura_komornicza": "Km 49108/2019",
+      "iban": "PL49325000031030021563213580"
+    }
+  },
+  {
+    "file": "docs/doc_00270.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Marcin Wiśniewski",
+      "adres": "ul. Nowa 85, 50-001 Częstochowa",
+      "sygnatura_akt": "I Co 2258/2017",
+      "pesel": "61050132684",
+      "telefon": "+48 667 188 397"
+    }
+  },
+  {
+    "file": "docs/doc_00271.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Zofia Szymańska",
+      "adres": "ul. Słoneczna 68, 02-200 Bytom",
+      "pesel": "81090257127",
+      "sygnatura_komornicza": "Km 91190/2021",
+      "iban": "PL20109010147030376371539885"
+    }
+  },
+  {
+    "file": "docs/doc_00272.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Agnieszka Kowalczyk",
+      "adres_zleceniodawca": "ul. Dębowa 159, 85-001 Rybnik",
+      "nip_zleceniodawca": "732-686-85-03",
+      "pesel_zleceniodawca": "66123041254",
+      "imie_nazwisko_zleceniobiorca": "Jakub Mazur",
+      "adres_zleceniobiorca": "ul. Polna 18/11, 60-001 Bielsko-Biała",
+      "nip_zleceniobiorca": "845-106-63-47",
+      "numer_umowy": "UMOWA/2019/NR/0151",
+      "iban": "PL63109010141307240787541815"
+    }
+  },
+  {
+    "file": "docs/doc_00273.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Agnieszka Dudek",
+      "oskarzony": "Krzysztof Wójcik",
+      "adres": "ul. Ogrodowa 30/3, Gliwice",
+      "data": "03.05.2021",
+      "pesel": "55112854434",
+      "telefon": "+48 736 661 347"
+    }
+  },
+  {
+    "file": "docs/doc_00274.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2023/5748",
+      "nip_sprzedawcy": "843-251-22-54",
+      "regon_sprzedawcy": "220957905",
+      "nip_nabywcy": "820-765-02-47",
+      "iban": "PL45240101353710094388221145",
+      "numer_klienta": "KL-96954",
+      "imie_nazwisko_nabywcy": "Marta Adamczyk",
+      "adres_nabywcy": "ul. Kościuszki 48, 87-100 Bytom"
+    }
+  },
+  {
+    "file": "docs/doc_00275.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Adam Szymański",
+      "adres_zleceniodawca": "ul. Piaskowa 53, 85-001 Szczecin",
+      "nip_zleceniodawca": "641-072-72-88",
+      "pesel_zleceniodawca": "51052646456",
+      "imie_nazwisko_zleceniobiorca": "Paulina Kwiatkowska",
+      "adres_zleceniobiorca": "ul. Kopernika 28, 45-001 Olsztyn",
+      "nip_zleceniobiorca": "598-247-41-49",
+      "numer_umowy": "KT/0982/2025",
+      "iban": "PL27114019875569644309859167"
+    }
+  },
+  {
+    "file": "docs/doc_00276.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Marcin Nowak",
+      "adres": "ul. Różana 91, 01-100 Warszawa",
+      "pesel": "72072214157",
+      "dowod_osobisty": "RYS214236",
+      "telefon": "+48 731 430 753",
+      "email": "marcinnowak@o2.pl",
+      "data_urodzenia": "22.10.1985",
+      "nip": "244-942-96-55",
+      "numer_kw": "WR1K/00272165/2",
+      "numer_dzialki": "309215.0039.4998/19"
+    }
+  },
+  {
+    "file": "docs/doc_00277.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Bartosz Wójcik",
+      "adres_zleceniodawca": "al. Jana Pawła II 129, 80-001 Bytom",
+      "nip_zleceniodawca": "515-914-97-59",
+      "pesel_zleceniodawca": "94060913936",
+      "imie_nazwisko_zleceniobiorca": "Rafał Zając",
+      "adres_zleceniobiorca": "ul. Dębowa 91, 90-001 Radom",
+      "nip_zleceniobiorca": "119-803-82-81",
+      "numer_umowy": "UMW/2025/029",
+      "iban": "PL56169010146129439852989406"
+    }
+  },
+  {
+    "file": "docs/doc_00278.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Anna Piotrowska",
+      "osoba": "Małgorzata Wójcik",
+      "pesel": "50010215602",
+      "telefon": "+48 721 331 708",
+      "adres": "ul. Dębowa 101/8, 85-001 Białystok"
+    }
+  },
+  {
+    "file": "docs/doc_00279.txt",
+    "doc_type": "umowa",
+    "entities": {
+      "imie_nazwisko_zleceniodawca": "Iwona Woźniak",
+      "adres_zleceniodawca": "ul. Zielona 169, 10-100 Radom",
+      "nip_zleceniodawca": "819-609-40-95",
+      "pesel_zleceniodawca": "82020451286",
+      "imie_nazwisko_zleceniobiorca": "Justyna Krawczyk",
+      "adres_zleceniobiorca": "ul. Kopernika 6/48, 40-001 Bielsko-Biała",
+      "nip_zleceniobiorca": "805-277-40-25",
+      "numer_umowy": "KT/0524/2020",
+      "iban": "PL56240101354419754661766204"
+    }
+  },
+  {
+    "file": "docs/doc_00280.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Elżbieta Mazur",
+      "adres": "ul. Warszawska 17/10, 65-001 Gdynia",
+      "pesel": "80060947024",
+      "sygnatura_komornicza": "Km 86403/2022",
+      "iban": "PL27240101351767929884259959"
+    }
+  },
+  {
+    "file": "docs/doc_00281.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Kamil Kamiński",
+      "adres": "ul. Ogrodowa 25, 31-001 Toruń",
+      "pesel": "79011477835",
+      "dowod_osobisty": "DFM610941",
+      "telefon": "+48 481 759 025",
+      "email": "kamilkaminski@gmail.com",
+      "data_urodzenia": "14.12.1961",
+      "nip": "933-477-43-38"
+    }
+  },
+  {
+    "file": "docs/doc_00282.txt",
+    "doc_type": "faktura",
+    "entities": {
+      "numer_faktury": "VAT/2024/8193",
+      "nip_sprzedawcy": "387-339-78-51",
+      "regon_sprzedawcy": "228411732",
+      "nip_nabywcy": "698-217-66-13",
+      "iban": "PL51109010149850344651241893",
+      "numer_klienta": "KL-62326",
+      "imie_nazwisko_nabywcy": "Magdalena Dudek",
+      "adres_nabywcy": "al. Niepodległości 105, 70-001 Łódź"
+    }
+  },
+  {
+    "file": "docs/doc_00283.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Łukasz Jabłoński",
+      "adres": "ul. Leśna 36/47, 01-100 Katowice",
+      "pesel": "71022050593",
+      "sygnatura_administracyjna": "IW.045430.2018",
+      "nip": "287-240-10-76",
+      "numer_kw": "GD1G/00462476/7"
+    }
+  },
+  {
+    "file": "docs/doc_00284.txt",
+    "doc_type": "pismo_urzedowe",
+    "entities": {
+      "imie_nazwisko": "Anna Jabłońska",
+      "adres": "ul. Wolności 51, 00-001 Częstochowa",
+      "sygnatura_akt": "I C 7900/2023",
+      "pesel": "83110571271",
+      "telefon": "+48 722 171 955"
+    }
+  },
+  {
+    "file": "docs/doc_00285.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Joanna Szymańska",
+      "adres": "ul. Słoneczna 151/27, 45-001 Zielona Góra",
+      "pesel": "00321704607",
+      "sygnatura_administracyjna": "IW.007555.2021",
+      "nip": "824-055-93-43"
+    }
+  },
+  {
+    "file": "docs/doc_00286.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Katarzyna Woźniak",
+      "adres": "ul. Krakowska 53, 80-001 Zielona Góra",
+      "pesel": "69100645443",
+      "dowod_osobisty": "SJW384588",
+      "telefon": "+48 500 569 741",
+      "email": "katarzyna.wozniak@wp.pl",
+      "data_urodzenia": "27.09.1996",
+      "nip": "448-315-20-36"
+    }
+  },
+  {
+    "file": "docs/doc_00287.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Piotr Woźniak",
+      "adres": "ul. Nowa 151/6, 50-001 Kraków",
+      "pesel": "04291439374",
+      "dowod_osobisty": "MOB336268",
+      "telefon": "+48 484 085 095",
+      "email": "piotrwozniak4@onet.pl",
+      "data_urodzenia": "03.08.1980",
+      "nip": "760-186-48-78"
+    }
+  },
+  {
+    "file": "docs/doc_00288.txt",
+    "doc_type": "notatka",
+    "entities": {
+      "autor": "Mateusz Krawczyk",
+      "osoba": "Joanna Kowalczyk",
+      "pesel": "51051328742",
+      "telefon": "+48 503 845 960",
+      "adres": "ul. Kolejowa 71/43, 87-100 Lublin"
+    }
+  },
+  {
+    "file": "docs/doc_00289.txt",
+    "doc_type": "formularz",
+    "entities": {
+      "imie_nazwisko": "Tadeusz Kozłowski",
+      "adres": "ul. Sportowa 68, 41-200 Sosnowiec",
+      "pesel": "51072045011",
+      "dowod_osobisty": "LPW836091",
+      "telefon": "+48 579 851 724",
+      "email": "tadeusz_kozlowski@onet.pl",
+      "data_urodzenia": "31.05.1961",
+      "nip": "422-903-10-29"
+    }
+  },
+  {
+    "file": "docs/doc_00290.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Robert Szymański",
+      "adres": "ul. Leśna 183, 00-001 Lublin",
+      "pesel": "81091355381",
+      "sygnatura_komornicza": "Km 45939/2021",
+      "iban": "PL13109010148718133595616420"
+    }
+  },
+  {
+    "file": "docs/doc_00291.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Bartosz Adamczyk",
+      "adres": "ul. Piaskowa 121, 87-100 Białystok",
+      "pesel": "52101716450",
+      "sygnatura_komornicza": "Km 77593/2020",
+      "iban": "PL16109010149358895369026113"
+    }
+  },
+  {
+    "file": "docs/doc_00292.txt",
+    "doc_type": "decyzja_administracyjna",
+    "entities": {
+      "imie_nazwisko": "Agnieszka Grabowska",
+      "adres": "ul. Wolności 14, 44-100 Bielsko-Biała",
+      "pesel": "96090645131",
+      "sygnatura_administracyjna": "SA.032085.2022",
+      "nip": "475-137-65-12"
+    }
+  },
+  {
+    "file": "docs/doc_00293.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Karolina Kwiatkowska",
+      "oskarzony": "Andrzej Nowakowski",
+      "adres": "ul. Ogrodowa 199, Bielsko-Biała",
+      "data": "25.09.2023",
+      "pesel": "62052462054",
+      "telefon": "+48 605 116 682"
+    }
+  },
+  {
+    "file": "docs/doc_00294.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Małgorzata Kamińska",
+      "oskarzony": "Anna Kamińska",
+      "adres": "ul. Kościuszki 108/36, Bytom",
+      "data": "01.03.2024",
+      "pesel": "59012312966",
+      "telefon": "+48 482 128 866"
+    }
+  },
+  {
+    "file": "docs/doc_00295.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Robert Nowakowski",
+      "adres": "ul. Ogrodowa 183/22, 65-001 Katowice",
+      "pesel": "04281263112",
+      "sygnatura_komornicza": "Km 96929/2019",
+      "iban": "PL05150010137676472298120995"
+    }
+  },
+  {
+    "file": "docs/doc_00296.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Dariusz Wieczorek",
+      "adres": "ul. Szkolna 72, 40-001 Wrocław",
+      "pesel": "76090450595",
+      "sygnatura_komornicza": "Km 37489/2024",
+      "iban": "PL77240101355220368499515421"
+    }
+  },
+  {
+    "file": "docs/doc_00297.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Jan Dąbrowski",
+      "oskarzony": "Monika Michalska",
+      "adres": "al. Niepodległości 28, Bielsko-Biała",
+      "data": "15.10.2020",
+      "pesel": "58081121187",
+      "telefon": "+48 510 908 830"
+    }
+  },
+  {
+    "file": "docs/doc_00298.txt",
+    "doc_type": "skarga",
+    "entities": {
+      "skarzacy": "Anna Jankowska",
+      "oskarzony": "Sławomir Kwiatkowski",
+      "adres": "ul. Norwida 114, Sosnowiec",
+      "data": "23.02.2025",
+      "pesel": "59110173300",
+      "telefon": "+48 696 741 241"
+    }
+  },
+  {
+    "file": "docs/doc_00299.txt",
+    "doc_type": "wezwanie",
+    "entities": {
+      "imie_nazwisko": "Edyta Szymańska",
+      "adres": "ul. Norwida 20/33, 50-001 Katowice",
+      "pesel": "90090764506",
+      "sygnatura_komornicza": "Km 5127/2023",
+      "iban": "PL11109010148538003296334727"
+    }
+  }
+]

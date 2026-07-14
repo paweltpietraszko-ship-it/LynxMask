@@ -1,0 +1,13 @@
+NUMER_008
+NUMER_001
+NUMER_011
+NUMER_008
+NUMER_009
+NUMER_010
+NUMER_002 NUMER_007
+Wnioskodawca NUMER_008, współwnioskodawca NUMER_009
+ADRES_001 NUMER_003
+Zamieszkały w ADRES_002, NUMER_004, wnosi o wydanie zaświadczenia
+Numer NUMER_005 potwierdzony przez urzędnika
+NUMER_008 NUMER_008
+NUMER_006

@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2022/0784
+
+Data wystawienia: 11.09.2020
+Numer klienta: KL-45811
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Słoneczna 135, 44-100 Łódź
+NIP: 167-065-40-52   REGON: 952772211
+Nr konta: PL09114019877043030548687403
+
+NABYWCA:
+Tadeusz Dudek
+Adres: ul. Krakowska 130, 45-001 Kielce
+NIP: 253-195-20-59
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               7    1572  23%    11004    13535
+2.   Usługa transportowa               6     432  23%     2592     3188
+3.   Wynajem sprzętu biurowego         6    1942  23%    11652    14332
+4.   Konsultacja techniczna            7     211  23%     1477     1817
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        32872 PLN
+
+Płatność przelewem: PL09114019877043030548687403
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,173 @@
+================================================================
+PLIK TESTOWY — silnik przed merge do master (14.07.2026)
+Typ: CZYSTY TEKST — zero degradacji OCR, zero celowych błędów OCR
+Cel: jeden plik „bramka merge” — OSOBA/ADRES/NUMER/KWOTA/FIRMA + kolizje słowników
+      + odmiany nazwisk + miasta + Guard (YELLOW po maskowaniu)
+Weryfikacja: TYLKO telefon — Share → LynxMask, cały plik (bez JVM, bez migawki .golden)
+Uwaga: prefix bramka_* — celowo POZA ManualTestRegressionTest (nie tworzy .golden)
+================================================================
+
+Jak czytać wynik (ręcznie na telefonie):
+  TOKEN     = encja zamaskowana poprawnie
+  JAWNE     = PII widoczne w tekście (problem silnika)
+  YELLOW    = Guard ostrzega o jawnym fragmencie (OK dla gołych miast — decyzja 08.07)
+  NIE-OSOBA = słowo pospolite / kolizja — NIE powinno dostać tokenu OSOBA
+
+================================================================
+SEKCJA A — OSOBA: odmiany nazwisk w parze (regresja 14.07)
+OCZEKIWANE: każda linia → token OSOBA, zero jawnych nazwisk
+================================================================
+
+[A1] Na wniosek Jana Kowalskiego złożono pismo.
+[A2] Spotkanie z Piotrem Kowalskim odbyło się w biurze.
+[A3] W imieniu Anny Wiśniewskiej podpisano protokół.
+[A4] Pełnomocnictwo udzielone Marcinowi Nowackiemu w dniu 01.06.2026.
+[A5] Porozumienie zawarte z Katarzyną Zielińską obowiązuje do końca roku.
+[A6] Umowę podpisano z Janem Kowalskim zamieszkałym przy ul. Lipowej 3.
+
+================================================================
+SEKCJA B — OSOBA: zdrobnienia i samotne imiona
+OCZEKIWANE: B1–B3 token OSOBA; B4–B5 bez tokenu (zdrobnienia w kontekście zwykłym zdania)
+================================================================
+
+[B1] Ustaliliśmy z Tomkiem termin spotkania.
+[B2] Zadzwoniłem do Tomka wczoraj.
+[B3] Raport przygotuje Kasia.
+[B4] Nie widziałem Kasi w biurze.
+[B5] Pan Marek przyszedł na spotkanie. Pani Halina złożyła wniosek.
+
+================================================================
+SEKCJA C — OSOBA: kolizje ze słowami pospolitymi (NIE maskować)
+OCZEKIWANE: zero tokenów OSOBA na tych słowach
+================================================================
+
+[C1] Kwota łączna wynosi 15 000,00 zł.
+[C2] Osoba uprawniona do otrzymania świadczenia złożyła wniosek.
+[C3] Zapłaty dokonano w terminie określonym w umowie.
+[C4] Data wystawienia faktury: 15.03.2026.
+[C5] Adresem korespondencyjnym jest ul. Lipowa 3.
+[C6] Jan Osoba nie jest prawdziwym nazwiskiem w tym zdaniu testowym kolizji.
+[C7] Zapłata Marek to fałszywa para — Marek to imię ze słownika, Zapłata to słowo pospolite.
+
+================================================================
+SEKCJA D — OSOBA: nazwiska-zwierzęta / kolizja z miastem (decyzja 14.07 — MASKOWAĆ)
+OCZEKIWANE: token OSOBA na nazwisku, nie na instytucji
+================================================================
+
+[D1] Kandydat nazwiskiem Góra złożył podanie w urzędzie.
+[D2] Poręczyciel: Marek Kot, PESEL 90010155382, zam. ul. Wiejska 4, Radom.
+[D3] Świadek: Hanna Sowa, PESEL 85032204563, ul. Ogrodowa 2, Lublin.
+[D4] Pełnomocnik: Jan Zając, tel. 601 111 222.
+[D5] Klient odwiedził oddział w mieście Jelenia Góra w zeszłym miesiącu.
+
+================================================================
+SEKCJA E — OSOBA: fałszywe sklejenia (NIE maskować jako jedna osoba)
+OCZEKIWANE: osobne tokeny lub brak sklejenia pary w jeden OSOBA
+================================================================
+
+[E1] Paweł Tomasz
+[E2] Wiktoria Sylwia
+[E3] Bartłomiej Maciej
+[E4] Anna Maria Kowalska
+[E5] Jan Paweł Nowak
+
+================================================================
+SEKCJA F — ADRES: mix wzorców (AddressEngine + CITY_PREP)
+OCZEKIWANE: token ADRES, miasto/ulica nie jawne
+================================================================
+
+[F1] ul. Lipowa 3, 00-001 Warszawa
+[F2] zamieszkały przy ul. Marszałkowskiej 15/3, 00-001 Warszawa
+[F3] ul. Gdańska-Sopocka 3/1, 81-001 Gdynia
+[F4] ul. Jana Pawła II 10/5, 20-001 Lublin
+[F5] ul. Długa 7, Gdańsk
+[F6] ul. Zielona Góra 3, 65-001 Zielona Góra
+[F7] Spotkanie odbędzie się w Warszawie w przyszłym tygodniu.
+[F8] 00-001 Warszawa, 80-001 Gdańsk, 31-610 Kraków
+
+================================================================
+SEKCJA G — ADRES vs KWOTA (regresja PLN / A.11)
+OCZEKIWANE: G1 KWOTA + ewentualnie ADRES; G2 tylko KWOTA, PLN jawne jako waluta
+================================================================
+
+[G1] Należność: 9 850,00 PLN, ul. Kamienna 5, 00-950 Warszawa
+[G2] Kwota do zapłaty: PLN 1234
+[G3] Wartość netto: 15 000,00 zł. Wartość brutto: 18 450,00 zł.
+
+================================================================
+SEKCJA H — NUMER: PESEL, NIP, IBAN, sygnatury, faktury
+OCZEKIWANE: token NUMER, brak sierot (fragmentów po slash)
+================================================================
+
+[H1] PESEL: 85031298763
+[H2] NIP: 123-456-32-99
+[H3] Nr konta: PL61 1090 1014 0000 0712 1981 2874
+[H4] NIP 526-021-15-8100-001 Warszawa
+[H5] Faktura VAT nr FV/2026/000088
+[H6] Faktura VAT 26/06/006
+[H7] Sygn. akt I C 234/2026
+[H8] Nr rachunku: 61 1090 1014 0000 0712 1981 2874
+
+================================================================
+SEKCJA I — EMAIL i FIRMA
+OCZEKIWANE: EMAIL token; FIRMA z formą prawną jako całość
+================================================================
+
+[I1] e-mail: jan.kowalski@example.com
+[I2] kontakt: anna.wisniewski@firma.pl
+[I3] Sprzedawca: ABC Logistyka Sp. z o.o., ul. Krakowska 5, 00-001 Warszawa
+[I4] Nabywca: Jan Kowalski S.A. — błędna forma (kontrola: Kowalski to OSOBA, S.A. osobno jeśli w ogóle)
+
+================================================================
+SEKCJA J — GOŁE MIASTA (silnik NIE maskuje — Guard YELLOW)
+OCZEKIWANE: miasta JAWNE w tekście; po maskowaniu Guard → MIASTO_NIEZAMASKOWANE
+           (Warszawa mianownik + ALL CAPS — znany edge case Guard regex)
+================================================================
+
+[J1] Siedziba spółki: Gdańsk
+[J2] Łódź to duże miasto w centrum Polski.
+[J3] Piękna Warszawa wita gości z całego świata.
+[J4] WARSZAWA, Warszawie, Kraków, Krakowa — lista form fleksyjnych w jednej linii.
+[J5] Działalność prowadzona w Warszawie przy ul. Marszałkowskiej 1, 00-001 Warszawa
+
+================================================================
+SEKCJA K — GUARD po maskowaniu (YELLOW — nie blokują eksportu)
+OCZEKIWANE: YELLOW na ur./sygn./gołym mieście jeśli silnik zostawił jawne
+================================================================
+
+[K1] Powód podaje: ur. 17.07.1985 r. w Kielcach.
+[K2] Pozwana podaje: ur. 15.09.1992 w Krakowie.
+[K3] Pismo nr DEC-2026/0451 w sprawie dotyczącej nieruchomości.
+[K4] Na podstawie art. 734/1 ustawy z dnia 23.04.1964 r.
+
+================================================================
+SEKCJA L — DOKUMENT ZŁOŻONY (realistyczny mix — stress końcowy)
+OCZEKIWANE: wszystkie PII zamaskowane; instytucje i daty urzędowe jawne OK
+================================================================
+
+[L] Umowa nr UZ/2026/0142 zawarta dnia 14.07.2026 r. w Poznaniu.
+
+Strony ustaliły, co następuje:
+
+Zleceniodawca: Jan Kowalski, PESEL 85031298763, NIP 521-334-15-33,
+zamieszkały ul. Lipowa 22, 41-200 Bytom, tel. +48 601 234 567,
+e-mail: krzysztof.nowicki@firma.pl
+
+Zleceniobiorca: Beata Kamińska, PESEL 74081934523,
+tel. (32) 456-78-90, e-mail: b.kaminska@onet.pl
+
+Wynagrodzenie: 3 500,00 PLN brutto. Termin płatności: 14 dni od daty faktury.
+Konto: IBAN PL89109010147449555252110732.
+
+Pełnomocnik zleceniodawcy: adw. Anna Wiśniewska, nr wpisu 67890.
+W imieniu Katarzyny Grabowskiej działam na podstawie pełnomocnictwa.
+
+Ustaliliśmy z Tomkiem termin odbioru dokumentów. Zadzwoniłem do Tomka wczoraj.
+
+Kwota łączna zaliczki nie przekracza 5 000,00 zł. Osoba kontaktowa: dział kadr.
+
+Siedziba wykonawcy: Gdańsk. Spotkanie w Warszawie — szczegóły w załączniku.
+
+================================================================
+KONIEC PLIKU — przed merge: przejść sekcje A–L na telefonie, raportować tagi [Xn] które padły
+================================================================

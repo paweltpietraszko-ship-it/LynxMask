@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr 6396/12/2022
+
+Data wystawienia: 29.08.2023
+Numer klienta: KL-98225
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: al. Jana Pawła II 3/46, 90-001 Radom
+NIP: 507-678-99-76   REGON: 567179570
+Nr konta: PL03114019876024375738395972
+
+NABYWCA:
+Aleksandra Kowalska
+Adres: ul. Zielona 127, 45-001 Zabrze
+NIP: 408-069-58-15
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         3    1323   8%     3969     4287
+2.   Instalacja oprogramowania         2    1416  23%     2832     3483
+3.   Usługa serwisowa                  3     458   8%     1374     1484
+4.   Usługa projektowa                 8     256  23%     2048     2519
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        11773 PLN
+
+Płatność przelewem: PL03114019876024375738395972
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

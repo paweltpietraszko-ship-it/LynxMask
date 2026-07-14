@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-05868/11/2023
+
+Data wystawienia: 29.08.2023
+Numer klienta: KL-41420
+
+----------------------------------------
+SPRZEDAWCA:
+ALFA Sp. z o.o.
+Adres: ul. Kwiatowa 7/24, 87-100 Kielce
+NIP: 963-960-96-25   REGON: 381964820
+Nr konta: PL17150010133110609209819602
+
+NABYWCA:
+Natalia Kowalska
+Adres: al. Jana Pawła II 86/37, 40-001 Radom
+NIP: 726-582-63-14
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Instalacja oprogramowania         4    1146   8%     4584     4951
+2.   Usługa transportowa               5    1400   8%     7000     7560
+3.   Instalacja oprogramowania         2    1964   8%     3928     4242
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        16753 PLN
+
+Płatność przelewem: PL17150010133110609209819602
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

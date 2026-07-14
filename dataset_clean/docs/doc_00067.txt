@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr VAT/2022/1261
+
+Data wystawienia: 17.04.2025
+Numer klienta: KL-42990
+
+----------------------------------------
+SPRZEDAWCA:
+Hurtownia Materiałów BUDMAT Sp. z o.o.
+Adres: ul. Wiosenna 183, 85-001 Poznań
+NIP: 641-212-67-88   REGON: 660466180
+Nr konta: PL62102028929826224447212646
+
+NABYWCA:
+Paweł Kowalczyk
+Adres: al. Jana Pawła II 93/1, 41-200 Białystok
+NIP: 986-101-58-12
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego        10    1312   8%    13120    14170
+2.   Wynajem sprzętu biurowego         2     327  23%      654      804
+3.   Usługa doradcza                   7     730  23%     5110     6285
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        21259 PLN
+
+Płatność przelewem: PL62102028929826224447212646
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

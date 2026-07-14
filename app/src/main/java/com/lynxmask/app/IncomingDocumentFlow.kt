@@ -8,6 +8,8 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,18 +25,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lynxmask.app.document.DocumentArtifact
+import com.lynxmask.app.document.DocxArtifact
+import com.lynxmask.app.document.PdfArtifact
+import com.lynxmask.app.document.XlsxArtifact
+import com.lynxmask.app.document.extractDocxArtifact
+import com.lynxmask.app.document.extractXlsxArtifact
+import com.lynxmask.app.document.rememberDocxExportLauncher
+import com.lynxmask.app.document.rememberPdfExportLauncher
+import com.lynxmask.app.document.rememberXlsxExportLauncher
 import com.lynxmask.app.ui.components.*
 import com.lynxmask.app.ui.theme.LynxColors
+import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.theme.LynxSpacing
+import com.lynxmask.app.ui.theme.LynxTypography
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val TAG = "LynxMask_IncomingDoc"
 
+// BUG-OBRAZ-ZA-MALY (10.07, zgłoszenie Pawła — surowy angielski wyjątek ML Kit
+// "InputImage width and height should be at least 32!" wyciekał wprost do użytkownika).
+// Sprawdzamy PRZED wywołaniem ML Kit, jeden punkt prawdy dla obu miejsc ładowania obrazu
+// (routeImageInput/openImageRedact) — zamiast dublować limit i komunikat w dwóch miejscach.
+private const val MIN_MLKIT_IMAGE_DIMENSION = 32
+
+private fun tooSmallForMlKitMessage(bmp: Bitmap): String? {
+    if (bmp.width >= MIN_MLKIT_IMAGE_DIMENSION && bmp.height >= MIN_MLKIT_IMAGE_DIMENSION) return null
+    return "Obraz jest za mały do przetworzenia (${bmp.width}×${bmp.height} px, " +
+        "minimum ${MIN_MLKIT_IMAGE_DIMENSION}×${MIN_MLKIT_IMAGE_DIMENSION} px) — spróbuj innego pliku."
+}
+
 private sealed class IncomingDocState {
     object Loading : IncomingDocState()
-    data class Review(val rawText: String, val ocrConfidence: Float? = null) : IncomingDocState()
+    data class Review(
+        val rawText: String,
+        val ocrConfidence: Float? = null,
+        // Document Rebuilder: przeżywa ręczną korektę, żeby DOCX export był dostępny po
+        // Scanned. Eksport zapisuje gotowy zamaskowany tekst wprost (patrz DocxWriter.kt) —
+        // korekta w Review trafia do silnika normalnie, nic dodatkowego nie trzeba tu robić.
+        val artifact: DocumentArtifact? = null,
+        val sourceUri: Uri? = null
+    ) : IncomingDocState()
     data class ImageRedact(
         val bitmap: Bitmap,
         val regions: List<RedactionRegion>,
@@ -45,7 +78,9 @@ private sealed class IncomingDocState {
     data class Scanned(
         val result: PseudonymResult,
         val sourceText: String,
-        val ocrConfidence: Float? = null
+        val ocrConfidence: Float? = null,
+        val artifact: DocumentArtifact? = null,
+        val sourceUri: Uri? = null
     ) : IncomingDocState()
     data class Error(val message: String) : IncomingDocState()
     data class OcrRejected(val conf: Float?) : IncomingDocState()
@@ -64,6 +99,9 @@ fun IncomingDocumentFlow(
     var state by remember(intent) { mutableStateOf<IncomingDocState>(IncomingDocState.Loading) }
     var progressLabel by remember { mutableStateOf("Wczytuję...") }
     var savedLibrarySessionId by remember { mutableStateOf<String?>(null) }
+    val saveDocx = rememberDocxExportLauncher(scope)
+    val savePdf = rememberPdfExportLauncher(scope)
+    val saveXlsx = rememberXlsxExportLauncher(scope)
 
     remember { UserDictionary.load(context) }
     remember { GuardAllowlist.load(context) }
@@ -90,15 +128,12 @@ fun IncomingDocumentFlow(
         }
     }
 
-    BackHandler {
-        when (val s = state) {
-            is IncomingDocState.Scanned -> state = IncomingDocState.Review(
-                rawText = s.sourceText,
-                ocrConfidence = s.ocrConfidence
-            )
-            else -> onFinished()
-        }
-    }
+    // BUG-WSTECZ-DO-ORYGINALU (11.07, zgłoszone przez Pawła): Wstecz z ekranu wyniku
+    // (Scanned) wracał do edycji oryginalnego tekstu (Review) zamiast do Hub. Nielogiczne —
+    // ręczna korekta/domaskowanie dzieje się PRZED pierwszą pseudonimizacją (na ekranie
+    // Review), nie po obejrzeniu już zamaskowanego wyniku i podglądu wydruku. Wstecz zawsze
+    // kończy flow, niezależnie od stanu — bez wyjątku dla Scanned.
+    BackHandler { onFinished() }
 
     savedLibrarySessionId?.let { sesjaId ->
         AlertDialog(
@@ -106,10 +141,11 @@ fun IncomingDocumentFlow(
                 savedLibrarySessionId = null
                 onFinished()
             },
-            title = { Text("Zapisano w bibliotece", color = LynxColors.TextPrimary) },
+            title = { Text("Zapisano w bibliotece", fontFamily = LynxTypography.Sans, color = LynxColors.TextPrimary) },
             text = {
                 Text(
                     "Sesja zapisana. Możesz ją otworzyć w Bibliotece lub wrócić do ekranu głównego.",
+                    fontFamily = LynxTypography.Sans,
                     color = LynxColors.TextSecondary
                 )
             },
@@ -118,22 +154,28 @@ fun IncomingDocumentFlow(
                     LynxPendingNav.requestLibrary(sesjaId)
                     savedLibrarySessionId = null
                     onFinished()
-                }) { Text("Otwórz bibliotekę") }
+                }) { Text("Otwórz bibliotekę", fontFamily = LynxTypography.Sans) }
             },
             dismissButton = {
                 LynxGhostButton(onClick = {
                     savedLibrarySessionId = null
                     onFinished()
-                }) { Text("Zamknij") }
+                }) { Text("Zamknij", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
     }
 
+    // BUG-BIALE-PASKI-INSET (11.07, poprawka poprzedniej próby): statusBarsPadding/
+    // navigationBarsPadding NA SAMYM Surface kurczy też jego TŁO do obszaru bezpiecznego —
+    // pasek statusu/nawigacji wypada wtedy POZA Surface i pokazuje surowe (jasne) tło
+    // systemowe. Tło zostaje na pełny ekran (bez paddingu), padding przenosi się na
+    // wewnętrzny Box, który tnie tylko TREŚĆ, nie farbę.
     Surface(
-        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         when (val s = state) {
             is IncomingDocState.Loading ->
                 IncomingLoadingContent(label = progressLabel)
@@ -159,7 +201,9 @@ fun IncomingDocumentFlow(
                                 state = IncomingDocState.Scanned(
                                     result = result,
                                     sourceText = correctedText,
-                                    ocrConfidence = s.ocrConfidence
+                                    ocrConfidence = s.ocrConfidence,
+                                    artifact = s.artifact,
+                                    sourceUri = s.sourceUri
                                 )
                             }
                         }
@@ -237,12 +281,22 @@ fun IncomingDocumentFlow(
                     onSaveDescription = if (isExpress) null else { maskedText, description ->
                         scope.launch(Dispatchers.IO) {
                             val cleanText = maskedText.removePrefix("SESJA_${s.result.sessionId}\n")
+                            // Document Rebuilder (10.07): zapamiętaj format źródłowy, żeby
+                            // Biblioteka mogła później zaproponować "Zapisz DOCX/PDF/Excel"
+                            // zamiast tylko podglądu tekstu (patrz SessionDetailScreen).
+                            val sourceFormat = when (s.artifact) {
+                                is DocxArtifact -> SessionStore.SOURCE_FORMAT_DOCX
+                                is PdfArtifact -> SessionStore.SOURCE_FORMAT_PDF
+                                is XlsxArtifact -> SessionStore.SOURCE_FORMAT_XLSX
+                                else -> null
+                            }
                             val saved = SessionStore.save(
                                 context = context,
                                 sesjaId = s.result.sessionId,
                                 tokenMapJson = s.result.tokenMapJson(),
                                 tokenCount = s.result.tokenMap.size,
-                                maskedText = cleanText
+                                maskedText = cleanText,
+                                sourceFormat = sourceFormat
                             )
                             if (!saved) {
                                 withContext(Dispatchers.Main) {
@@ -270,8 +324,18 @@ fun IncomingDocumentFlow(
                             LynxPendingNav.requestLibrary(s.result.sessionId)
                             onFinished()
                         }
-                    }
+                    },
+                    onSaveDocx = if (s.artifact is DocxArtifact) {
+                        { text: String -> saveDocx(text) }
+                    } else null,
+                    onSavePdf = if (s.artifact is PdfArtifact) {
+                        { text: String -> savePdf(text) }
+                    } else null,
+                    onSaveXlsx = if (s.artifact is XlsxArtifact) {
+                        { text: String -> saveXlsx(text) }
+                    } else null
                 )
+        }
         }
     }
 }
@@ -310,8 +374,11 @@ private suspend fun processIncomingIntent(
             type = mime
             putExtra(Intent.EXTRA_STREAM, uri)
         }
-        val (rawText, isOcr, ocrConf) = extractRawText(synthetic, context, onProgress)
-        finishWithText(rawText, isOcr, ocrConf, setState, context)
+        val extracted = extractRawText(synthetic, context, onProgress)
+        finishWithText(
+            extracted.text, extracted.goToReview, extracted.confidence, setState, context,
+            extracted.artifact, extracted.sourceUri
+        )
         return
     }
 
@@ -348,8 +415,11 @@ private suspend fun processIncomingIntent(
         return
     }
 
-    val (rawText, isOcr, ocrConf) = extractRawText(intent, context, onProgress)
-    finishWithText(rawText, isOcr, ocrConf, setState, context)
+    val extracted = extractRawText(intent, context, onProgress)
+    finishWithText(
+        extracted.text, extracted.goToReview, extracted.confidence, setState, context,
+        extracted.artifact, extracted.sourceUri
+    )
 }
 
 private suspend fun finishWithText(
@@ -357,17 +427,19 @@ private suspend fun finishWithText(
     goToReview: Boolean,
     mlKitConfidence: Float?,
     setState: (IncomingDocState) -> Unit,
-    context: android.content.Context
+    context: android.content.Context,
+    artifact: DocumentArtifact? = null,
+    sourceUri: Uri? = null
 ) {
     if (rawText.isBlank()) {
         setState(IncomingDocState.Error(
-            "Nie udało się odczytać treści dokumentu.\nObsługiwane formaty: DOCX, PDF, obrazy, tekst."
+            "Nie udało się odczytać treści dokumentu.\nObsługiwane formaty: DOCX, PDF, Excel, obrazy, tekst."
         ))
         return
     }
     DebugLogBuffer.log("IncomingDoc", "Tekst: ${rawText.length} znaków, review=$goToReview")
     if (goToReview) {
-        setState(IncomingDocState.Review(rawText, ocrConfidence = mlKitConfidence))
+        setState(IncomingDocState.Review(rawText, mlKitConfidence, artifact, sourceUri))
         return
     }
     LynxAppInit.ensureReady(context.applicationContext)
@@ -380,7 +452,7 @@ private suspend fun finishWithText(
         )
     }
     DebugLogBuffer.logOcrAnalysis(rawText, result)
-    setState(IncomingDocState.Scanned(result, rawText, mlKitConfidence))
+    setState(IncomingDocState.Scanned(result, rawText, mlKitConfidence, artifact, sourceUri))
 }
 
 private suspend fun routeImageInput(
@@ -399,6 +471,11 @@ private suspend fun routeImageInput(
     val bmp = loadBitmapExifAware(context, uri)
     if (bmp == null) {
         setState(IncomingDocState.Error("Nie udało się wczytać obrazu"))
+        return
+    }
+    tooSmallForMlKitMessage(bmp)?.let { message ->
+        bmp.recycle()
+        setState(IncomingDocState.Error(message))
         return
     }
 
@@ -465,6 +542,11 @@ private suspend fun openImageRedact(
         setState(IncomingDocState.Error("Nie udało się wczytać obrazu"))
         return
     }
+    tooSmallForMlKitMessage(bmp)?.let { message ->
+        bmp.recycle()
+        setState(IncomingDocState.Error(message))
+        return
+    }
     try {
         val ocrScan = withContext(Dispatchers.Default) { ImageRedactionPipeline.runOcrOnce(bmp) }
         val profile = redactionProfileFor(ImageInputKind.CARD, ocrScan.plainText)
@@ -485,11 +567,19 @@ private suspend fun openImageRedact(
     }
 }
 
+private data class ExtractedDocument(
+    val text: String,
+    val goToReview: Boolean,
+    val confidence: Float?,
+    val artifact: DocumentArtifact? = null,
+    val sourceUri: Uri? = null
+)
+
 private suspend fun extractRawText(
     intent: Intent,
     context: android.content.Context,
     onProgress: (String) -> Unit
-): Triple<String, Boolean, Float?> {
+): ExtractedDocument {
     val mimeType = intent.type ?: ""
     val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
@@ -505,12 +595,34 @@ private suspend fun extractRawText(
     val isDocx = mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         || fileName.endsWith(".docx", ignoreCase = true)
         || (mimeType == "application/octet-stream" && fileName.endsWith(".docx", ignoreCase = true))
+    val isXlsx = mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        || fileName.endsWith(".xlsx", ignoreCase = true)
+        || (mimeType == "application/octet-stream" && fileName.endsWith(".xlsx", ignoreCase = true))
 
     return when {
         isDocx -> {
-            if (uri == null) return Triple("", false, null)
+            if (uri == null) return ExtractedDocument("", false, null)
             onProgress("Czytam umowę DOCX...")
-            Triple(extractTextFromDocx(uri, context), true, null)
+            // Document Rebuilder: nowy parser z pamięcią pozycji (do "Zapisz DOCX" po
+            // maskowaniu). Fallback do starego regexu jeśli nowy zawiedzie (np. plik bez
+            // word/document.xml w oczekiwanej formie) — nigdy nie regresuj poniżej tego co
+            // działało wcześniej, DOCX export po prostu nie będzie dostępny dla tego pliku.
+            val artifact = extractDocxArtifact(uri, context)
+            if (artifact != null) {
+                ExtractedDocument(artifact.plainText, true, null, artifact, uri)
+            } else {
+                ExtractedDocument(extractTextFromDocx(uri, context), true, null)
+            }
+        }
+        isXlsx -> {
+            if (uri == null) return ExtractedDocument("", false, null)
+            onProgress("Czytam arkusz Excel...")
+            val artifact = extractXlsxArtifact(uri, context)
+            if (artifact != null) {
+                ExtractedDocument(artifact.plainText, true, null, artifact, uri)
+            } else {
+                ExtractedDocument("", false, null)
+            }
         }
         mimeType == "text/plain" -> {
             onProgress("Odczytuję tekst...")
@@ -519,18 +631,18 @@ private suspend fun extractRawText(
             } else {
                 intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
             }
-            Triple(text, true, null)
+            ExtractedDocument(text, true, null)
         }
         mimeType == "application/pdf" -> {
-            if (uri == null) return Triple("", false, null)
+            if (uri == null) return ExtractedDocument("", false, null)
             onProgress("Otwieram PDF...")
             val (text, conf) = ocrFromPdfUri(uri, context, onProgress)
-            Triple(text, true, conf)
+            ExtractedDocument(text, true, conf, PdfArtifact(text, uri), uri)
         }
         else -> {
             val text = if (uri != null) extractTextFromDocx(uri, context)
             else (intent.getStringExtra(Intent.EXTRA_TEXT) ?: "")
-            Triple(text, text.isNotBlank(), null)
+            ExtractedDocument(text, text.isNotBlank(), null)
         }
     }
 }
@@ -546,7 +658,7 @@ private fun IncomingLoadingContent(label: String) {
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(16.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -572,7 +684,7 @@ private fun IncomingReviewContent(
                 Text(
                     if (isLow) "Słaba jakość skanu ($pct%)" else "Niska jakość skanu ($pct%) — sprawdź tekst",
                     modifier = Modifier.padding(12.dp),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = LynxTypography.Sans),
                     color = cardColor,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -580,23 +692,27 @@ private fun IncomingReviewContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Text("Sprawdź tekst przed pseudonimizacją", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("Sprawdź tekst przed pseudonimizacją", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = editableText,
             onValueChange = { editableText = it },
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodySmall,
-            label = { Text("Tekst ze skanera") }
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = LynxTypography.Sans),
+            shape = RoundedCornerShape(LynxShapes.ButtonRadius),
+            label = { Text("Tekst ze skanera", fontFamily = LynxTypography.Sans) }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LynxSecondaryButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text("Anuluj") }
-            LynxPrimaryButton(onClick = { onConfirm(editableText) }, modifier = Modifier.weight(2f)) {
-                Text("Pseudonimizuj")
-            }
+        LynxFilledButton(
+            label = "Pseudonimizuj",
+            icon = Icons.Outlined.Shield,
+            onClick = { onConfirm(editableText) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        LynxGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+            Text("Anuluj", fontFamily = LynxTypography.Sans, color = LynxColors.TextDim)
         }
     }
 }
@@ -609,11 +725,11 @@ private fun IncomingErrorContent(message: String, onDismiss: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Nie udało się przetworzyć", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("Nie udało się przetworzyć", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(message, style = MaterialTheme.typography.bodySmall.copy(fontFamily = LynxTypography.Sans), color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(24.dp))
-        LynxPrimaryButton(onClick = onDismiss) { Text("Zamknij") }
+        LynxPrimaryButton(onClick = onDismiss) { Text("Zamknij", fontFamily = LynxTypography.Sans) }
     }
 }
 
@@ -624,11 +740,11 @@ private fun IncomingOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Dokument zbyt słabej jakości", fontWeight = FontWeight.Bold, fontSize = 18.sp, textAlign = TextAlign.Center)
+        Text("Dokument zbyt słabej jakości", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 18.sp, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             "Nie możemy zagwarantować bezpiecznego maskowania — zrób nowe zdjęcie.",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = LynxTypography.Sans),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
@@ -636,13 +752,13 @@ private fun IncomingOcrRejectedContent(conf: Float?, onDismiss: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Jakość OCR: ${"%.0f%%".format(conf * 100)}",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = LynxTypography.Sans),
                 color = MaterialTheme.colorScheme.error
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
         LynxPrimaryButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-            Text("Zamknij i zrób nowe zdjęcie")
+            Text("Zamknij i zrób nowe zdjęcie", fontFamily = LynxTypography.Sans)
         }
     }
 }

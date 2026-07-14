@@ -1,0 +1,68 @@
+BENCHMARK STRESS (duże pule OSOBA) — 2026-07-12_1700
+Dataset: C:\Projects\LynxMask\dataset_stress (300 dokumentów)
+============================================================
+
+Recall (wszystkie encje): 99,2%  (1971/1987)
+Precision: 71,3%
+F1: 0,829
+Krytyczne niewykryte: 0
+FP razem: 795  REVIEW=360, EXTRA_MASK_POLICY=435
+
+── Recall OSOBA wg tieru nazwiska (główna metryka stress) ──
+  (extended_only = tylko 39k, poza top-1000 — tu musi rosnąć prawdziwy fix)
+  extended_only    248/252  recall=98,4%
+  collision         95/ 96  recall=99,0%
+  top1000           78/ 78  recall=100,0%
+
+── Przykłady MISS OSOBA per tier (max 5/tier) ──
+  [extended_only]
+    kisiała via imie_nazwisko='Andrés Kisiała'
+    kijanowski via imie_nazwisko_zleceniodawca='Luís Kijanowska'
+    hutnyk via imie_nazwisko='Ján Hutnyk'
+    żuromski via oskarzony='Bariş Żuromska'
+  [collision]
+    dudek via imie_nazwisko='Maja Dudek'
+
+── Braki (wszystkie typy, pierwsze 15 dok.) ──
+  docs/doc_00001.txt [formularz]:
+    numer_dzialki='711878.0052.5931/5'
+  docs/doc_00006.txt [formularz]:
+    numer_dzialki='428838.0008.822'
+  docs/doc_00009.txt [pismo_urzedowe]:
+    imie_nazwisko='Andrés Kisiała'
+  docs/doc_00031.txt [decyzja_administracyjna]:
+    numer_kw='WR1K/00624867/3'
+  docs/doc_00080.txt [umowa]:
+    imie_nazwisko_zleceniodawca='Luís Kijanowska'
+  docs/doc_00106.txt [wezwanie]:
+    imie_nazwisko='Maja Dudek'
+  docs/doc_00150.txt [formularz]:
+    numer_kw='KA1K/00940361/9'
+  docs/doc_00173.txt [skarga]:
+    adres='al. Jana Pawła II 45, Warszawa'
+  docs/doc_00190.txt [decyzja_administracyjna]:
+    numer_kw='PO1P/00923955/1'
+  docs/doc_00249.txt [decyzja_administracyjna]:
+    numer_kw='KA1K/00200706/6'
+  docs/doc_00262.txt [formularz]:
+    numer_kw='KA1K/00701710/9'
+  docs/doc_00264.txt [decyzja_administracyjna]:
+    numer_kw='GD1G/00460244/2'
+  docs/doc_00270.txt [wezwanie]:
+    imie_nazwisko='Ján Hutnyk'
+  docs/doc_00272.txt [formularz]:
+    numer_dzialki='396765.0076.2023/10'
+  docs/doc_00280.txt [decyzja_administracyjna]:
+    numer_kw='WR1K/00583662/5'
+
+── FP REVIEW (top 10 wartości) ──
+  x22  Biała
+  x21  al. Jana Pawła 11
+  x13  Warszawie
+  x11  Krakowie
+  x9  Anna Zielińska
+  x8  Poznaniu
+  x8  Marta Kędzierska
+  x8  Janusz Wierzbicki
+  x7  Tomasz Malinowski
+  x7  Gdańsku

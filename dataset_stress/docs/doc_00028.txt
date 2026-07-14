@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV/2020/05/8792
+
+Data wystawienia: 24.01.2022
+Numer klienta: KL-69609
+
+----------------------------------------
+SPRZEDAWCA:
+Firma Logistyczna TRANS Sp. z o.o.
+Adres: ul. Baltazara 169/1, 01-100 Polski Świętów
+NIP: 495-339-42-17   REGON: 662328587
+Nr konta: PL02325000034247451712368516
+
+NABYWCA:
+Volha Melion
+Adres: ul. Wspolna 191, 60-001 Złotniki Małe
+NIP: 147-095-21-41
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 7    1734  23%    12138    14930
+2.   Konsultacja techniczna            4    1015   8%     4060     4385
+3.   Usługa projektowa                 9     721   8%     6489     7008
+4.   Konsultacja techniczna            8    1912  23%    15296    18814
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        45137 PLN
+
+Płatność przelewem: PL02325000034247451712368516
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

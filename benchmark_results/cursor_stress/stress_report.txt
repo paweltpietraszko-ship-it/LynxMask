@@ -1,0 +1,70 @@
+CURSOR STRESS TEST — NameEngine mały vs duży słownik
+Dokument: C:\Projects\LynxMask\benchmark_results\cursor_stress\stress_document.txt
+Kod silnika: HEAD (bez zmian)
+
+=== SŁOWNIK: small (names=2296, surnames=14842) ===
+OSOBA tokeny (14):
+  [OSOBA_010] "Annę"  rule=CONTEXTUAL
+  [OSOBA_009] "Nowak"  rule=CONTEXTUAL
+  [OSOBA_014] "mgr inż"  rule=OSOBA
+  [OSOBA_011] "Piotr"  rule=CONTEXTUAL
+  [OSOBA_001] "Ewa Bednarek"  rule=CONTEXTUAL
+  [OSOBA_012] "Jan"  rule=CONTEXTUAL
+  [OSOBA_002] "Anna Nowak"  rule=CONTEXTUAL
+  [OSOBA_003] "Grzegorz Dudek"  rule=CONTEXTUAL
+  [OSOBA_004] "Marek Sikora"  rule=CONTEXTUAL
+  [OSOBA_005] "Robert Wieczorek"  rule=CONTEXTUAL
+  [OSOBA_006] "Iwony Wróbel"  rule=CONTEXTUAL
+  [OSOBA_007] "Iwona Wróbel"  rule=CONTEXTUAL
+  [OSOBA_013] "Iwoną"  rule=CONTEXTUAL
+  [OSOBA_008] "Grzegorz Zając"  rule=CONTEXTUAL
+
+=== SŁOWNIK: big (names=19647, surnames=448895) ===
+OSOBA tokeny (16):
+  [OSOBA_014] "Annę"  rule=CONTEXTUAL
+  [OSOBA_010] "Nowak"  rule=CONTEXTUAL
+  [OSOBA_016] "mgr inż"  rule=OSOBA
+  [OSOBA_001] "Piotr Adamkowski"  rule=CONTEXTUAL
+  [OSOBA_002] "Ewa Bednarek"  rule=CONTEXTUAL
+  [OSOBA_009] "Abramowski Jan"  rule=CONTEXTUAL
+  [OSOBA_003] "Anna Nowak"  rule=CONTEXTUAL
+  [OSOBA_004] "Grzegorz Dudek"  rule=CONTEXTUAL
+  [OSOBA_011] "Biała"  rule=CONTEXTUAL
+  [OSOBA_015] "ZAPŁATY"  rule=CONTEXTUAL
+  [OSOBA_005] "Marek Sikora"  rule=CONTEXTUAL
+  [OSOBA_006] "Robert Wieczorek"  rule=CONTEXTUAL
+  [OSOBA_012] "Iwony"  rule=CONTEXTUAL
+  [OSOBA_007] "Iwona Wróbel"  rule=CONTEXTUAL
+  [OSOBA_013] "Iwoną"  rule=CONTEXTUAL
+  [OSOBA_008] "Grzegorz Zając"  rule=CONTEXTUAL
+
+=== PORÓWNANIE WZGLĘDEM OCZEKIWAŃ ===
+OK oba | rzadkie nazwisko tylko w 39k | "Piotr Adamkowski" | small=true big=true
+OK oba | rzadkie nazwisko tylko w 39k (odwrócony szyk) | "Abramowski Jan" | small=true big=true
+OK oba | nazwisko w obu słownikach | "Grzegorz Dudek" | small=true big=true
+OK oba | nazwisko w obu słownikach | "Marek Sikora" | small=true big=true
+OK oba | nazwisko w obu słownikach | "Robert Wieczorek" | small=true big=true
+OK oba | Wróbel tylko w 39k | "Iwona Wróbel" | small=true big=true
+MISS oba | Kołodziej tylko w 39k | "Kołodziej" | small=false big=false
+OK oba | Zając w obu (z diakrytykiem) | "Grzegorz Zając" | small=true big=true
+OK oba | top-1000 | "Anna Nowak" | small=true big=true
+OK oba | top-1000 | "Ewa Bednarek" | small=true big=true
+OK oba (brak FP) | kolizja: słowo Osoba | "Osoba uprawniona" | small=false big=false
+OK oba (brak FP) | kolizja: słowo Osoba | "Osoba kontaktowa" | small=false big=false
+OK oba (brak FP) | kolizja: przymiotnik Łączna | "Łączna kwota" | small=false big=false
+OK oba (brak FP) | kolizja: Działający tylko w 39k | "Działający z upoważnienia" | small=false big=false
+FP tylko duży | kolizja: ZAPŁATY tylko w 39k (CAPS) | "ŁĄCZNIE DO ZAPŁATY" | small=false big=true
+
+=== TYLKO DUŻY SŁOWNIK (dodatkowe OSOBA vs mały) ===
+  + "Piotr Adamkowski" → OSOBA_001 (CONTEXTUAL)
+  + "Abramowski Jan" → OSOBA_009 (CONTEXTUAL)
+  + "Biała" → OSOBA_011 (CONTEXTUAL)
+  + "ZAPŁATY" → OSOBA_015 (CONTEXTUAL)
+  + "Iwony" → OSOBA_012 (CONTEXTUAL)
+
+=== TYLKO MAŁY SŁOWNIK (utracone przy dużym / FP tylko mały) ===
+  + "Piotr" → OSOBA_011 (CONTEXTUAL)
+  + "Jan" → OSOBA_012 (CONTEXTUAL)
+  + "Iwony Wróbel" → OSOBA_006 (CONTEXTUAL)
+
+=== ANALIZA SKLEJEŃ (token szerszy niż sama encja) ===

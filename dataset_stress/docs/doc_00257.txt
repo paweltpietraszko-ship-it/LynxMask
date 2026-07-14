@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr VAT/2025/4422
+
+Data wystawienia: 26.12.2020
+Numer klienta: KL-93320
+
+----------------------------------------
+SPRZEDAWCA:
+Hurtownia Materiałów BUDMAT Sp. z o.o.
+Adres: ul. Metalurgiczna 97/26, 02-200 Wystok
+NIP: 677-871-12-19   REGON: 837147086
+Nr konta: PL58102028927235909605673030
+
+NABYWCA:
+Agatha Ertman
+Adres: ul. Kozia górka 100, 02-200 Skaliszkiejmy
+NIP: 763-651-55-90
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa serwisowa                  2     610  23%     1220     1501
+2.   Konsultacja techniczna            5    1839  23%     9195    11310
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        12811 PLN
+
+Płatność przelewem: PL58102028927235909605673030
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

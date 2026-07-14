@@ -1,0 +1,245 @@
+BUGS v2 — SEKCJA B (IN-SCOPE ACCEPTED) — 2026-07-14 14:57:24
+════════════════════════════════════════════════════════════
+
+[OCR_ZNIEKSZTAŁCONY] Encje krytyczne — BLOCKER RELEASE: 1
+
+  doc_00026.png  lvl=3  dowod_osobisty=LKW771657
+    → encja nie jest exact w OCR, ale fuzzy match — bug silnika/normalizera
+    Tokeny w dokumencie: ADRES=«ul. Chopina 197», NUMER=«29.08.1995», NUMER=«dowodu osobistego:
+BBO70505777», NUMER=«804-245-29-69», NUMER=«+48 480 687 340», OSOBA=«Andrzej Szymański», EMAIL=«mail
+andrzejszymanski@poczta»
+
+[BRAK_W_OCR] Encje krytyczne (nie blokuje release): 1
+
+  doc_00026.png  lvl=3  qs=81  pesel=88070505777
+
+[ADRES POMINIĘTE] 3 encji:
+
+  doc_00050.png  adres=ul. Kwiatowa 189, 87-100 Lublin  → BRAK_W_OCR
+    OCR: Data 04.06 2025 Sporządzla Andrzj Wleczorak Dotyczy. prośby o udostępnienie informacji publcznej Wdiu 04 06 2025 do biura zglolaię nastepjca oscba Kamil Midhalski PESEL: 99112240330 Ades: u Kiatowa 189, 87-100 Lubin Tel: +48 576 477 050 Rozmowa trw ala ok 20 minut Spra zostala zarejestrow ana w systemie ewidencj korespond wniosku Zalecono zlozenie pisemnego wniosku wraz a NOTATKA SŁUŽBOWA Andrzej Wleczork weminie 7 di roboczych dokumenty oraz emin zdoenia
+  doc_00057.png  adres_nabywcy=ul. Dębowa 19/23, 87-100 Białystok  → BRAK_W_OCR
+    OCR: Data wystawienia 1903 2023 Numer kdienta KL-71014 SPRZEDAWCA ALFA Sp. z 60. Adres: u Råzana 2or38,60-001 Zabrze NIP: 721-458-13-28 REGON: 557374054 Nr konta PL19102028926340039277573006 NABYWCA Lukasz Krawczyk Adres: u. Debowa 1923, 87-100 Biaystok NIP. 846-896-94-27 Lp Narwa uskugi L Cena VAT Netto Bruto 1. Uskga transportbwa & 322 8% 2576 2T82 2. Instalacja oprogramawania 5 631 23% 3155 388t 3.Uskuga sensisowa 10 1590 23% 15900 19657 4. Ushga projektowa 2 426 8% 852 920 5.Obsluga prauna t10 704 23% 7040 8659 ACZNE 00 ZAPUATY 36799 PLN Platnosć przelewem PL19102028926340039277573006 Termin platnosci: 14 dni od daty wystawienia faktury Wystawila Odebralia FAKTURA VAT NrFV08217/08/2023
+  doc_00059.png  adres=pl. Wolności 175, 30-001 Wrocław  → BRAK_W_OCR
+    OCR: Urząd Gmirny Warszawa Wola Sygn. akt IK 9658/2023 Mausz Michalski pl. Wolhoci 175 30-001 Wodaw Marusz Michalski, PESEL 61030656762 Dzialając na podstaie at 155$1 Kodeksu postepowania adninistracnego tị Dz U. z 2023 t poz 775 ae zm). Urzad Gminy Warszaa-Wola wrywa Panią Pana do zbenia pisemnych wja
+
+[NUMER POMINIĘTE] 6 encji:
+
+  doc_00023.png  numer_kw=WA1M/00157521/8  → BRAK_W_OCR
+    OCR: Sygn.: IW.035577 2018 Data wydania: 03.01.2023 Na podstawie: po rozpatrzeniu wniosku: Ewa Wieczorek art 104 ustawy z dnia 14 czerwca 1960 r. - Kodeks postępowania administracyjnego (t.j. Dz. U. z 2023 r. poz. 775 ze zm.) PESEL: 52122132413 NIP: 760-582-85-89 adres: ul. Kopernika 111, 87-100 Zabrze ORZEKAM: UZASADNIENIE: Zakład Ubezpieczeń Społecznych Oddział w Warszawie Organ orzekam przyznać świadczenie na warunka ch określonych w uzasa dnieniu. POUCZENIE: DECYZJA ADMINISTRACYJNA w sprawie przyznaniu zasiłku stałego Po przeprowadzeniu postępowania administracyjnego i zebraniu materiału dowodowego organ stwierdzit, że zachodzą przesłanki uzasadniające wydanie powyższego rozstrzygnię cia. Strona spełnita/nie spełnila wymogi formalne i materialnoprawne. Gdańsk, dnia 03.01.2023 Podpis i pieczęć organu Od niniejszej decyzji służy stronie odwołanie do Samorządowego Kolegium Odwolawczeg o, złożone za pośrednictwem organu, który wydat decyzję, w terminie 14 dni od dnia jej doręczenia. Sygn.: IW.03 5577.20 18 | Zaktad Ubezpie czeń Spoecznych Oddziat w Warszawie
+  doc_00026.png  pesel=88070505777  → BRAK_W_OCR
+    OCR: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Data urodzenia: Andrzej Szymański PESEL: 29.08.1995 Nr dowodu osobistego: 88070505777 DANE KON TAKTOWE LKWI7 1657 Adres zamieszkania ul. Chopina 197, 20-t00 Torurń Telefon: Data: +48 480 687 340 Adres e-mail andrzejszymanski@poczta p DANE PODATKOWE NIP Gesli dotyczy): Podpis: 804-245-
+  doc_00026.png  dowod_osobisty=LKW771657  → OCR_ZNIEKSZTAŁCONY
+    OCR: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Data urodzenia: Andrzej Szymański PESEL: 29.08.1995 Nr dowodu osobistego: 88070505777 DANE KON TAKTOWE LKWI7 1657 Adres zamieszkania ul. Chopina 197, 20-t00 Torurń Telefon: Data: +48 480 687 340 Adres e-mail andrzejszymanski@poczta p DANE PODATKOWE NIP Gesli dotyczy): Podpis: 804-245-29-69 Oiwiadozam, 2e podane dane sa zgodne ze stahem faktyanym Wyratam zgode na prztwarzanie moich danych osobowych zp0dnie z at. B ust 31e. b} RODo. ZGŁOSZENIE DO REJESTRU
+  doc_00028.png  sygnatura_akt=II Ns 3241/2021  → BRAK_W_OCR
+    OCR: Urząd Marszalłkowski Województwa Mazowieckiego Sygn. akt I| Ns 32412021 Magdalena Zając ul. Krakowska 60/49 44-100 Olsztyn Magdalena Zając, PESEL 59122059128 Działając na podstawie art. 155$ 1 Kodeksu postępowania adinistracyjnego (tj. DzU.z 2023. poz. 775 ze zm.), Urzad Marszatkowski Województwa Mazowieckiego wzywa Panią/Pana: do złożenia pisemnych wyjaśnień w terminie 14 dni od daty doreczenia niniejszego pisma w sprawie dotyczącej okreslenia podstawy wymiaru świadcze nia. W razie pytań prosimy o kontakt: tel: +48 693 181 535 Z poważaniem, WEZWANIE DO Z2ŁOŻENIA WYJAŚNIEŃ Kierow nik Wydziatu Urzad Marszalkowski Wojewócdztwa Mazowieckiego Kraków, dnia 13.12.2022 Syg. akt: Ns 32412021 Wygenerowano elektroniczne.
+  doc_00056.png  numer_dzialki=206487.0027.8889  → BRAK_W_OCR
+    OCR: elefon: +48 608 739 071 Adres e-mail: tomaszpiotrow ski@interia.pl DANE PODATKOWE NIP (jeśli dotyczy): 904-225-18-69 DANE NIERUCHOMOŚCI Nr księgi wie czystejį WR1K/00871568/5 Nr działki ewidencyjnej: 206487,0027.8889 Ošwiadezam, že podane dane są zgodhe ze stanem faktycznym. Wyrażam zgodę na przehwarzanie moich danych osob owych zgodnie z art. O ust 1 lit. b) RODO. Data: ZGŁOSZENIE DO REJESTRU Podpis:
+  doc_00059.png  sygnatura_akt=III K 9858/2023  → BRAK_W_OCR
+    OCR: Urząd Gmirny Warszawa Wola Sygn. akt IK 9658/2023 Mausz Michalski pl. Wolhoci 175 30-001 Wodaw Marusz Michalski, PESEL 61030656762 Dzialając na podstaie at 155$1 Kodeksu postepowania adninistracnego tị Dz U. z 2023 t poz 775 ae zm). Urzad Gminy Warszaa-Wola wrywa Panią Pana do zbenia pisemnych wjasnień w teminie 14 dni od daty dorczenia niniejszego pisma w sprae dotyczącej okresilenia podsta Wrazie pytań prosimy o kontakt tel 48 514 186 584 Z powazarniem, WEZWANIE DO ZŁoŽENIA WYJAŚNIEŃ Kkya Gy so Olsztyn, dnia 04.11 2024 ymianu siadczenia
+
+[TOKENY POZA GT] 184 łącznie sekcja B — token spoza GT ≠ błąd silnika:
+  UX_FP=0 (realny problem czytelności)  REVIEW=77 (nieznane)  EXTRA_MASK_POLICY=107 (KWOTA/NUMER, zamierzone)  EXTRA_MASK_OK=0 (nachodzi na GT, zamierzone)
+
+Podział wg warstwy:
+
+  STRUCTURAL/NUMER/NUMER: 51
+    [EXTRA_MASK_POLICY] doc_00000.png  "02.12.2022"
+    [EXTRA_MASK_POLICY] doc_00006.png  "24,09.2020"
+    [EXTRA_MASK_POLICY] doc_00009.png  "09.02.2023"
+    [EXTRA_MASK_POLICY] doc_00009.png  "IVW.028071.2024"
+    [EXTRA_MASK_POLICY] doc_00010.png  "14.05.2025"
+    [EXTRA_MASK_POLICY] doc_00010.png  "FVI2025/12/1828"
+    [EXTRA_MASK_POLICY] doc_00012.png  "13.04.2021"
+    [EXTRA_MASK_POLICY] doc_00017.png  "01.01.2024"
+    [EXTRA_MASK_POLICY] doc_00018.png  "20.06.2024"
+    [EXTRA_MASK_POLICY] doc_00018.png  "0848052021"
+    [EXTRA_MASK_POLICY] doc_00019.png  "18.10.2020"
+    [EXTRA_MASK_POLICY] doc_00021.png  "14.03.2021"
+    [EXTRA_MASK_POLICY] doc_00022.png  "06.08.2021"
+    [EXTRA_MASK_POLICY] doc_00023.png  "03.01.2023"
+    [EXTRA_MASK_POLICY] doc_00023.png  "IW.035577 2018"
+    [EXTRA_MASK_POLICY] doc_00026.png  "dowodu osobistego:
+BBO70505777"
+    [EXTRA_MASK_POLICY] doc_00027.png  "28.01.2022"
+    [EXTRA_MASK_POLICY] doc_00028.png  "13.12.2022"
+    [EXTRA_MASK_POLICY] doc_00028.png  "32412021"
+    [EXTRA_MASK_POLICY] doc_00032.png  "14.02.2022"
+    [EXTRA_MASK_POLICY] doc_00033.png  "13.09.2023"
+    [EXTRA_MASK_POLICY] doc_00034.png  "14.03.2022"
+    [EXTRA_MASK_POLICY] doc_00035.png  "28,04.2024"
+    [EXTRA_MASK_POLICY] doc_00036.png  "22.11.2024"
+    [EXTRA_MASK_POLICY] doc_00041.png  "30.10.2022"
+    [EXTRA_MASK_POLICY] doc_00043.png  "29.12.2020"
+    [EXTRA_MASK_POLICY] doc_00045.png  "09.07.2020"
+    [EXTRA_MASK_POLICY] doc_00045.png  "IW.097167 2020"
+    [EXTRA_MASK_POLICY] doc_00046.png  "06.12.2020"
+    [EXTRA_MASK_POLICY] doc_00047.png  "07.12.2021"
+    [EXTRA_MASK_POLICY] doc_00048.png  "18.01.2023"
+    [EXTRA_MASK_POLICY] doc_00048.png  "18,01.2023"
+    [EXTRA_MASK_POLICY] doc_00049.png  "16.06.2021"
+    [EXTRA_MASK_POLICY] doc_00049.png  "K67192017"
+    [EXTRA_MASK_POLICY] doc_00051.png  "19.04.2022"
+    [EXTRA_MASK_POLICY] doc_00052.png  "06.12.2022"
+    [EXTRA_MASK_POLICY] doc_00052.png  "PD.077335 2018"
+    [EXTRA_MASK_POLICY] doc_00053.png  "27.02.2024"
+    [EXTRA_MASK_POLICY] doc_00055.png  "17.09.2021"
+    [EXTRA_MASK_POLICY] doc_00058.png  "06.08.2021"
+    [EXTRA_MASK_POLICY] doc_00058.png  "PI.032118.2025"
+    [EXTRA_MASK_POLICY] doc_00059.png  "Sygn. akt IK 9658/2023"
+    [EXTRA_MASK_POLICY] doc_00059.png  "tel 48 514 186 584"
+    [EXTRA_MASK_POLICY] doc_00060.png  "01.01.2023"
+    [EXTRA_MASK_POLICY] doc_00061.png  "15.03.2020"
+    [EXTRA_MASK_POLICY] doc_00062.png  "07.08.2024"
+    [EXTRA_MASK_POLICY] doc_00063.png  "26.12.2024"
+    [EXTRA_MASK_POLICY] doc_00064.png  "tel 48 487 871 740"
+    [EXTRA_MASK_POLICY] doc_00066.png  "PLO7240101357989834297189070"
+    [EXTRA_MASK_POLICY] doc_00066.png  "30.08.2021"
+    [EXTRA_MASK_POLICY] doc_00067.png  "tel 48 506 425 349"
+  STRUCTURAL/KWOTA/KWOTA: 23
+    [EXTRA_MASK_POLICY] doc_00000.png  "9,850 PLN"
+    [EXTRA_MASK_POLICY] doc_00005.png  "38,678 PLN"
+    [EXTRA_MASK_POLICY] doc_00006.png  "54,131 PLN"
+    [EXTRA_MASK_POLICY] doc_00010.png  "12956 PLN"
+    [EXTRA_MASK_POLICY] doc_00012.png  "30021 PLN"
+    [EXTRA_MASK_POLICY] doc_00015.png  "15498 PLN"
+    [EXTRA_MASK_POLICY] doc_00022.png  "12455 PLN"
+    [EXTRA_MASK_POLICY] doc_00027.png  "50,625 PLN"
+    [EXTRA_MASK_POLICY] doc_00032.png  "3626 PLN"
+    [EXTRA_MASK_POLICY] doc_00034.png  "915 PLN"
+    [EXTRA_MASK_POLICY] doc_00035.png  "47,279 PLN"
+    [EXTRA_MASK_POLICY] doc_00036.png  "3,399 PLN"
+    [EXTRA_MASK_POLICY] doc_00039.png  "12456 PLN"
+    [EXTRA_MASK_POLICY] doc_00041.png  "7117 PLN"
+    [EXTRA_MASK_POLICY] doc_00043.png  "18,297 PLN"
+    [EXTRA_MASK_POLICY] doc_00045.png  "3,972 PLN"
+    [EXTRA_MASK_POLICY] doc_00055.png  "1362 PLN"
+    [EXTRA_MASK_POLICY] doc_00057.png  "36799 PLN"
+    [EXTRA_MASK_POLICY] doc_00061.png  "43,768 PLN"
+    [EXTRA_MASK_POLICY] doc_00062.png  "22234 PLN"
+    [EXTRA_MASK_POLICY] doc_00063.png  "795 PLN"
+    [EXTRA_MASK_POLICY] doc_00065.png  "79,326 PLN"
+    [EXTRA_MASK_POLICY] doc_00066.png  "18,756 PLN"
+  ANCHOR/KWOTA/KWOTA: 23
+    [EXTRA_MASK_POLICY] doc_00000.png  "9 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00005.png  "38 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00006.png  "54 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00018.png  "20.06"
+    [EXTRA_MASK_POLICY] doc_00027.png  "50 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00035.png  "47 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00036.png  "3 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00039.png  "11.02"
+    [EXTRA_MASK_POLICY] doc_00041.png  "2. Sz"
+    [EXTRA_MASK_POLICY] doc_00043.png  "18 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00045.png  "09.07"
+    [EXTRA_MASK_POLICY] doc_00047.png  "07.12"
+    [EXTRA_MASK_POLICY] doc_00050.png  "04.06"
+    [EXTRA_MASK_POLICY] doc_00052.png  "06.12"
+    [EXTRA_MASK_POLICY] doc_00053.png  "27.02"
+    [EXTRA_MASK_POLICY] doc_00055.png  "3.Sz"
+    [EXTRA_MASK_POLICY] doc_00059.png  "04.11"
+    [EXTRA_MASK_POLICY] doc_00061.png  "43 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00063.png  "53 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00064.png  "17.03"
+    [EXTRA_MASK_POLICY] doc_00065.png  "29.04"
+    [EXTRA_MASK_POLICY] doc_00065.png  "79 tysięoy"
+    [EXTRA_MASK_POLICY] doc_00066.png  "18 tysięcy"
+  NAME_ENGINE/CONTEXTUAL/OSOBA: 23
+    [REVIEW] doc_00005.png  "Zajac"
+    [REVIEW] doc_00005.png  "Jana"
+    [REVIEW] doc_00005.png  "Pawła"
+    [REVIEW] doc_00006.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00016.png  "Kamil"
+    [REVIEW] doc_00027.png  "Anna Zielińska"
+    [REVIEW] doc_00034.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00035.png  "Marta Kędzierska"
+    [REVIEW] doc_00035.png  "Biała"
+    [REVIEW] doc_00036.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00036.png  "Maria"
+    [REVIEW] doc_00041.png  "Dudek"
+    [REVIEW] doc_00047.png  "Ewa"
+    [REVIEW] doc_00050.png  "Kamil"
+    [REVIEW] doc_00051.png  "Marta"
+    [REVIEW] doc_00055.png  "Biała"
+    [REVIEW] doc_00061.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00062.png  "Jana"
+    [REVIEW] doc_00062.png  "Pawła"
+    [REVIEW] doc_00064.png  "Ewa"
+    [REVIEW] doc_00065.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00066.png  "Tomasz Malinowski"
+    [REVIEW] doc_00066.png  "Tomasz"
+  ADDRESS_ENGINE/STREET_NO_ZIP/ADRES: 19
+    [REVIEW] doc_00010.png  "ul. Leśna 97"
+    [REVIEW] doc_00012.png  "ul, Wolnośd 99"
+    [REVIEW] doc_00012.png  "ul. Nowa 97"
+    [REVIEW] doc_00015.png  "ul, Kopernika 129/46"
+    [REVIEW] doc_00015.png  "ul, Leśna 72/40"
+    [REVIEW] doc_00018.png  "ul, Sportowa 137"
+    [REVIEW] doc_00021.png  "al. Niepodlegości 13/2"
+    [REVIEW] doc_00022.png  "ul. Stoneczna 101"
+    [REVIEW] doc_00032.png  "ul. Polna 163/31"
+    [REVIEW] doc_00033.png  "ul. Zebna 84"
+    [REVIEW] doc_00034.png  "ul. Ogrodowa 110/06"
+    [REVIEW] doc_00047.png  "ul, Krakowska 14/38"
+    [REVIEW] doc_00055.png  "ul. Kopernika 32"
+    [REVIEW] doc_00057.png  "ul. Debowa 1923"
+    [REVIEW] doc_00059.png  "pl. Wolhoci 175"
+    [REVIEW] doc_00062.png  "ul. Wiosenna 103/40"
+    [REVIEW] doc_00065.png  "ul. Kośscuszki 78/26"
+    [REVIEW] doc_00065.png  "ul. Kościuszki 7826"
+    [REVIEW] doc_00066.png  "ul. VWio sen na 45/12"
+  ADDRESS_ENGINE/POSTAL_K1/ADRES: 16
+    [REVIEW] doc_00010.png  "85-001Łódż"
+    [REVIEW] doc_00012.png  "10-100 Zielona Góra"
+    [REVIEW] doc_00015.png  "01-100 Zabrze"
+    [REVIEW] doc_00022.png  "01-100 Rybnik"
+    [REVIEW] doc_00032.png  "87-100 Rzeszów"
+    [REVIEW] doc_00034.png  "01-100 Glwice"
+    [REVIEW] doc_00034.png  "01-100 Giwice"
+    [REVIEW] doc_00039.png  "30-001 Bytom"
+    [REVIEW] doc_00041.png  "31-001 Sosnowiec"
+    [REVIEW] doc_00052.png  "70-001 Wrockaw"
+    [REVIEW] doc_00055.png  "87-100 Bielsko"
+    [REVIEW] doc_00057.png  "87-100 Biaystok"
+    [REVIEW] doc_00057.png  "60-001 Zabrze"
+    [REVIEW] doc_00059.png  "30-001 Wodaw"
+    [REVIEW] doc_00061.png  "45-001 Soshowiec"
+    [REVIEW] doc_00062.png  "45-001 Warszawa"
+  ANCHOR/NUMER/NUMER: 10
+    [EXTRA_MASK_POLICY] doc_00000.png  "nr UMWI2024/291"
+    [EXTRA_MASK_POLICY] doc_00012.png  "Nr VATI2022/2181"
+    [EXTRA_MASK_POLICY] doc_00015.png  "Nr VATI2021/2117"
+    [EXTRA_MASK_POLICY] doc_00017.png  "Sygn. akt: Il K4076/2015 Wygenerowano elektron icznie."
+    [EXTRA_MASK_POLICY] doc_00035.png  "Sygn. akt Km 21021P022"
+    [EXTRA_MASK_POLICY] doc_00039.png  "Nr VATI2021/1823"
+    [EXTRA_MASK_POLICY] doc_00041.png  "Nr4752101/2020"
+    [EXTRA_MASK_POLICY] doc_00062.png  "NrFVI2025/04/5792"
+    [EXTRA_MASK_POLICY] doc_00063.png  "nr UMWI2024/375"
+    [EXTRA_MASK_POLICY] doc_00064.png  "Sygn. aktiN 47e82023 Wygenerwan eietronicane"
+  NAME_ENGINE/CONTEXTUAL/ADRES: 8
+    [REVIEW] doc_00017.png  "Warszawie"
+    [REVIEW] doc_00019.png  "Gdańsku"
+    [REVIEW] doc_00023.png  "Warszawie"
+    [REVIEW] doc_00045.png  "Warszawie"
+    [REVIEW] doc_00046.png  "Warszawie"
+    [REVIEW] doc_00052.png  "Warszawie"
+    [REVIEW] doc_00052.png  "Zielona Góra"
+    [REVIEW] doc_00058.png  "Gdańsku"
+  NAME_ENGINE/CONTEXTUAL/FIRMA: 4
+    [REVIEW] doc_00022.png  "Przedsiębiorstwo Budowlane MARBUD S.A."
+    [REVIEW] doc_00039.png  "GAMMA Sp. z o.o."
+    [REVIEW] doc_00055.png  "Doradztwo Biznesowe EXPERT Sp. z o.o."
+    [REVIEW] doc_00062.png  "Doradztwo Biznesowe EXPERT Sp. z o.o."
+  ANCHOR/ADRES/ADRES: 2
+    [REVIEW] doc_00005.png  "6/46"
+    [REVIEW] doc_00041.png  "ul. Kwiatowa t82/40"
+  STRUCTURAL/EMAIL/EMAIL: 2
+    [REVIEW] doc_00042.png  "justyna.dudek@amail.com"
+    [REVIEW] doc_00056.png  "tomaszpiotrow_ski@interia.pl"
+  ANCHOR/EMAIL/EMAIL: 1
+    [REVIEW] doc_00016.png  "nnail
+kamil.woziak@wppl"
+  ADDRESS_ENGINE/STREET_DICT/ADRES: 1
+    [REVIEW] doc_00039.png  "Polna 2"
+  ADDRESS_ENGINE/STREET_FULL/ADRES: 1
+    [REVIEW] doc_00050.png  "Kiatowa 189, 87-100 Lubin"
+

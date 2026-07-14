@@ -1,0 +1,39 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Natalia Jabłońska
+Data urodzenia:
+15.12.1980
+PESEL:
+58052716903
+Nr dowodu osobistego:
+JSP068277
+Nr paszportu:
+LE8506762
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+al. Jana Pawła II 24, 40-001 Łódź
+Telefon:
++48 728 160 930
+Adres e-mail:
+natalia_jablonska@o2.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+489-097-28-38
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

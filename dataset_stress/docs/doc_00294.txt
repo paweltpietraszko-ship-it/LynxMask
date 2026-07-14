@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-07289/12/2023
+
+Data wystawienia: 27.08.2021
+Numer klienta: KL-69486
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Wegnera 131, 60-001 Mielno Pyrzyckie
+NIP: 468-499-51-55   REGON: 549134215
+Nr konta: PL77102028928820908830705349
+
+NABYWCA:
+Arie Kolodziej
+Adres: ul. Nadnotecka 99/12, 01-100 Duje
+NIP: 521-447-73-28
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            8    1870  23%    14960    18401
+2.   Wynajem sprzętu biurowego         5     227   8%     1135     1226
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        19627 PLN
+
+Płatność przelewem: PL77102028928820908830705349
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

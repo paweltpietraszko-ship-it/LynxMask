@@ -1,0 +1,163 @@
+=============================================================
+TEST EMAIL + ADRES — TRUDNE PRZYPADKI (benchmark missed NUMER_026)
+Cel: sprawdzić czy silnik wykrywa encje które failowały w benchmarku.
+=============================================================
+
+GROUND TRUTH (co silnik POWINIEN zamaskować):
+  EMAIL: EMAIL_001, EMAIL_002, EMAIL_003
+  ADRES: ADRES_004, ADRES_017
+         ADRES_005, ADRES_015
+         ADRES_011, ADRES_021
+         ADRES_009, ADRES_019
+         ADRES_001, ADRES_014
+         ADRES_010, ADRES_020
+         ADRES_008, ADRES_018
+  OSOBA: OSOBA_001, OSOBA_002
+
+=============================================================
+
+--- SEKCJA 1: EMAIL Z PODKREŚLNIKIEM W NUMER_016 ---
+OCR często czyta _ jako spację lub myślnik.
+Silnik POWINIEN zamaskować mimo artefaktu.
+
+Zlecenie nr NUMER_017.
+Wykonawca: OSOBA_003, adres e-mail: EMAIL_001
+NUMER_010. NUMER_005.
+
+OCR wariant (spacja zamiast podkreślnika):
+Adres e-mail: EMAIL_004
+Kwota wynagrodzenia: KWOTA_001 brutto.
+
+OCR wariant (myślnik zamiast podkreślnika):
+Kontakt: EMAIL_004. Termin realizacji: NUMER_006.
+
+Zapis formalny wniosku: EMAIL_005,
+zamieszkały ADRES_004, ADRES_017.
+
+--- SEKCJA 2: EMAIL Z KROPKĄ W NUMER_016 — SPACJE OCR ---
+
+Wniosek o udzielenie informacji publicznej.
+Wnioskodawca: OSOBA_004, e-mail: EMAIL_002
+Adres korespondencyjny: ADRES_005, ADRES_015.
+
+OCR wariant (spacja w local-part):
+Kontakt e-mail: EMAIL_006, NUMER_011.
+
+OCR wariant (brak kropki między EMAIL_010 sklejenie):
+EMAIL_007 (spacja przed TLD)
+
+=============================================================
+
+Protokół odbioru prac nr NUMER_018.
+Zamawiający: OSOBA_005, e-mail: EMAIL_003
+Adres: ADRES_011, ADRES_021. NUMER_001.
+
+OCR wariant (spacja w local-EMAIL_009
+Adres mailowy: EMAIL_003 — do weryfikacji.
+
+OCR wariant (keyword rozbity):
+e mail: EMAIL_003
+
+--- SEKCJA 3: ADRES — PREFIKSY ul./al./pl./ADRES_024
+Silnik POWINIEN maskować pełny adres z kodem pocztowym.
+
+Decyzja administracyjna nr NUMER_019.
+Strona postępowania: OSOBA_001, zam. ADRES_004, ADRES_017.
+NUMER_002. Pełnomocnik: adw. OSOBA_015 OSOBA_017.
+
+=============================================================
+
+Umowa o dzieło nr NUMER_020.
+Zamawiający: OSOBA_002, zamieszkały ADRES_005, ADRES_015.
+Nr NUMER_009. NUMER_012.
+
+=============================================================
+
+Zaświadczenie o zameldowaniu.
+Osoba: OSOBA_006. Adres stałego zameldowania: ADRES_010, ADRES_020.
+Data wydania zaświadczenia: NUMER_007.
+
+=============================================================
+
+Korespondencja seryjna — dane nadawców:
+1. OSOBA_007, ADRES_009, ADRES_019, NUMER_003
+2. OSOBA_008, ADRES_001, ADRES_014, NUMER_013. OSOBA_009, ADRES_008, ADRES_018, e-mail: EMAIL_008
+
+--- SEKCJA 4: ADRES — OCR ARTEFAKTY W KODZIE POCZTOWYM ---
+
+Pismo do Urzędu Miasta.
+Wnioskodawca: OSOBA_010. Adres: ADRES_004, ADRES_017.
+(kod pocztowy: l zamiast 1)
+
+Akta sprawy sądowej sygn. NUMER_024.
+Pozwany: OSOBA_011, zam. ADRES_005, ADRES_015.
+(kod pocztowy: O zamiast 0)
+
+Dane ewidencyjne systemu:
+Adres: ADRES_004, ADRES_017
+(kod pocztowy bez myślnika — spacja zamiast -)
+
+--- SEKCJA 5: ADRES — RÓŻNE FORMY ZAPISU PREFIKSU ---
+
+Formularz ZUS ZUA.
+Adres zamieszkania: ADRES_013.
+
+Akta komornicze NUMER_025.
+Dłużnik zamieszkuje przy ADRES_005, ADRES_015.
+(al bez kropki)
+
+Wniosek o świadczenie rodzinne.
+Adres: ADRES_012.
+(brak prefiksu ul.)
+
+Skrócony opis: ADRES_023 ADRES_022 (kolejność zamieniona).
+
+--- SEKCJA 6: OSOBA BEZ KEYWORDU — KONTEKST DOKUMENTU ---
+
+Wezwanie do zapłaty nr NUMER_021.
+OSOBA_001 zamieszkały ADRES_004, ADRES_017
+zalega z opłatą czynszu za okres styczeń–marzec 2026 r.
+Kwota zadłużenia: KWOTA_002. Termin zapłaty: 7 dni.
+
+=============================================================
+
+Protokół zebrania wspólnoty mieszkaniowej z dnia NUMER_008.
+Obecni: OSOBA_002 (ADRES_005), OSOBA_012 (ADRES_007),
+OSOBA_010 (ADRES_006). Nieobecni: OSOBA_013.
+Uchwała nr 3/2026 — przyjęta jednomyślnie.
+
+--- SEKCJA 7: KOMBINACJE — EMAIL + ADRES W JEDNYM DOKUMENCIE ---
+
+Reklamacja konsumencka nr NUMER_022.
+Składający: OSOBA_002
+Adres: ADRES_005, ADRES_015
+E-mail: EMAIL_002
+NUMER_004
+7reść: Zgłaszam reklamację zakupionego urządzenia. Proszę o kontakt na powyższy e-mail.
+
+=============================================================
+
+Umowa sprzedaży nr NUMER_023.
+Sprzedający: OSOBA_001, zam. ADRES_004, ADRES_017,
+e-mail: EMAIL_001, NUMER_014.
+Kupujący: FIRMA_001, ADRES_003, ADRES_016.
+Przedmiot: laptop Lenovo ThinkPad. Cena: KWOTA_003.
+
+=============================================================
+
+--- SEKCJA 8: TRUDNE — BRAK SEPARATORA LUB ZMIENIONA KOLEJNOŚĆ ---
+
+Wydruk z systemu ERP (sklejony OCR):
+Nazwisko OSOBA_016 ImieOSOBA_018AdresWolnosci99-41200Sosnowiec
+
+Dane kontrahenta (tabelaryczne):
+OSOBA_014 | ADRES_002 | ADRES_015 | EMAIL_002
+
+Formularz uproszczony — bez przecinków:
+adres: ADRES_001 ADRES_014 NUMER_015
+
+--- KONIEC DOKUMENTU TESTOWEGO ---
+Łączna liczba encji do zamaskowania:
+  EMAIL: 3 unikalne (EMAIL_001, EMAIL_002, EMAIL_003)
+  ADRES: 7 unikalnych ulic z kodami
+  OSOBA: 2 (OSOBA_001, OSOBA_002)

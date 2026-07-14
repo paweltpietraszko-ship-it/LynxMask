@@ -58,7 +58,13 @@ internal fun runOutputGuard(
     val hits = mutableListOf<GuardHit>()
 
     val tokenRe = Regex("""\b(?:FIRMA|OSOBA|NUMER|EMAIL|KWOTA|ADRES)_\d{3}\b""")
-    val text = tokenRe.replace(pseudonymizedText, "⟦TOKEN⟧")
+    // BUG-GUARD-TOKEN-TYPE-LOST-FIX (14.07, ultrareview follow-up): placeholder zachowuje typ
+    // encji (⟦TOSOBA⟧ zamiast gołego ⟦TOKEN⟧) — potrzebne niżej do wykrycia nazwiska stojącego
+    // bezpośrednio obok już zamaskowanej osoby (silny, strukturalny sygnał, nie kolejne słowo-
+    // klucz do enumeracji). Prefiks "T" (nie "_") celowo łamie \b PRZED nazwą typu — "⟦TNUMER⟧"
+    // nie może stać się przypadkową kotwicą dla CTX_SYGN/CTX_LICZBA niżej (obie zawierają
+    // słowo-klucz "numer" jako osobny \b-ograniczony token, gołe "⟦NUMER⟧" by to złapało).
+    val text = tokenRe.replace(pseudonymizedText) { "⟦T${it.value.substringBefore('_')}⟧" }
 
     fun hit(label: String, level: String, m: MatchResult) =
         GuardHit(label, level, m.value, m.range.first, m.range.last + 1)
@@ -116,6 +122,113 @@ internal fun runOutputGuard(
         if (words.none { it in NAMES_GUARD_CITY_SKIP } && CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first)))
             hits += hit("OSOBA_NIEZAMASKOWANE", "YELLOW", m)
     }
+
+    // ── YELLOW: POJEDYNCZE niezamaskowane imię/nazwisko ze słownika po etykiecie ────
+    // BUG-MAZUR-NIEZAMASKOWANY (11.07): silnik czasem ŚWIADOMIE nie maskuje słowa ze
+    // słownika nazwisk — strażnik Morfologika w NameEngine ("Samo nazwisko") uznaje np.
+    // "Mazur" za zbyt pospolite (nazwa tańca ludowego), mimo że to też częste prawdziwe
+    // nazwisko. Reguła OSOBA_NIEZAMASKOWANE wyżej wymaga PARY słów — nie złapie samego
+    // "Mazur" bez sąsiadującego imienia. Pomiar na realnym tekście dokumentów (11.07):
+    // wersja BEZ kotwicy etykiety dawała 25% słów z wielkiej litery jako trafienia w
+    // 39k-słownik (m.in. "cena"/"organ"/"neto" — realny powrót do fali 30 flag z
+    // wcześniejszej sesji). Ta sama kotwica CTX_OSOBA_LABEL co wyżej ogranicza skan do
+    // miejsc gdzie kontekst już mocno sugeruje dane osobowe — miasta/ulice odfiltrowane
+    // (mają własną regułę MIASTO_NIEZAMASKOWANE niżej), znane kolizje pospolite pomijane
+    // przez OSOBA_DENYLIST (NameEngine.kt).
+    // BUG-KADRY-SILENT-MISS (12.07, decyzja właściciela): surnamesForms (aktywne maskowanie)
+    // zawężony do top-1000 (usuwa kolizje typu Osoba/Zapłata/Łączna) — ale to samo zawężenie
+    // zostawiałoby CISZĄ rzadkie, prawdziwe nazwiska spoza tej listy (niebezpieczne dla
+    // dokumentów kadrowych/HR, PII wycieka bez ostrzeżenia). surnamesFormsExtended (39k) łata
+    // to TU — nie maskuje (ryzyko kolizji zbyt wysokie dla auto-akcji), tylko ostrzega.
+    // Ta sama kotwica CTX_OSOBA_LABEL i te same listy pomijania co reguła wyżej — celowo,
+    // to już zmierzone jako bezpieczne (bez kotwicy 25% szumu, patrz komentarz wyżej).
+    if (LookupTables.initialized && (LookupTables.namesForms.isNotEmpty() || LookupTables.surnamesForms.isNotEmpty() || LookupTables.surnamesFormsExtended.isNotEmpty())) {
+        Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})\b""").findAll(text).forEach { m ->
+            val word = m.groupValues[1]
+            val lower = word.lowercase()
+            if (lower in NAMES_GUARD_CITY_SKIP) return@forEach
+            if (lower in OSOBA_DENYLIST) return@forEach
+            val isSurname = LookupTables.surnamesForms.contains(lower)
+            val isFirstName = LookupTables.namesForms.contains(lower)
+            val isRareSurname = !isSurname && LookupTables.surnamesFormsExtended.contains(lower)
+            // BUG-GUARD-CITY-SILENCES-SURNAME-FIX (14.07): wcześniej cityForms/streetForms
+            // wyciszało OSTRZEŻENIE bezwarunkowo — realne nazwiska pokrywające się z nazwą
+            // miejscowości (Zając, Wróbel, Sikora, Dudek — potwierdzone w cities_forms.json)
+            // nie dostawały nawet YELLOW. Miasto/ulica bez ŻADNEGO dowodu nazwiska zostaje
+            // wyciszone jak dotąd (unika podwójnego ostrzeżenia z MIASTO_NIEZAMASKOWANE
+            // niżej) — ale gdy słowo JEST znanym nazwiskiem, kolizja z miastem już nie milczy.
+            if ((LookupTables.cityForms.contains(lower) || LookupTables.streetForms.contains(lower)) &&
+                !isSurname && !isRareSurname) return@forEach
+            if (!isSurname && !isFirstName && !isRareSurname) return@forEach
+            // BUG-GUARD-KOTWICA-SASIEDZTWO-OSOBA (14.07, zrzut Pawła: "Pietraszko"/"Kowalińska"
+            // w 39k-słowniku, ale nie flagowane — dokument nie ma żadnego słowa z CTX_OSOBA_LABEL
+            // w pobliżu, np. "wspólnicy spółki cywilnej"/"zamieszkały przy"). Zamiast dopisywać
+            // kolejne słowa-klucze do listy (enumeracja przykładów), dodano drugi, strukturalny
+            // sygnał: nazwisko stojące BEZPOŚREDNIO obok już zamaskowanego tokenu ⟦TOSOBA⟧
+            // (przecinek/spacja jako jedyny separator) — to sam token jest kotwicą, tak jak przy
+            // liście osób "Jan Kowalski, Anna Pietraszko, ..." gdzie tylko imię się zamaskowało.
+            val adjacentToOsobaToken = Regex("""⟦TOSOBA⟧[,\s]{0,2}$""").containsMatchIn(text.substring(maxOf(0, m.range.first - 10), m.range.first)) ||
+                Regex("""^[,\s]{0,2}⟦TOSOBA⟧""").containsMatchIn(text.substring(m.range.last + 1, minOf(text.length, m.range.last + 11)))
+            if (!adjacentToOsobaToken && !CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first))) return@forEach
+            val label = when {
+                isRareSurname -> "NAZWISKO_RZADKIE_NIEZAMASKOWANE"
+                isSurname -> "NAZWISKO_NIEZAMASKOWANE"
+                else -> "IMIE_NIEZAMASKOWANE"
+            }
+            hits += GuardHit(label, "YELLOW", word, m.range.first, m.range.first + word.length)
+        }
+    }
+
+    // ── YELLOW: miasto ze słownika zostało jawne (bez auto-maskowania) ──────
+    // Decyzja właściciela (08.07, brief Cursor): NIE auto-maskować gołych miast bez
+    // kontekstu strukturalnego (kod pocztowy/ul./przyimek — to już robi AddressEngine/
+    // CITY_PREP) — zbyt duży FP na wieloznacznych słowach ("warszawski", "Gdański port",
+    // nazwy instytucji). Guard tylko OSTRZEGA, nie maskuje.
+    // Działa na pseudonymizedText (RAW, nie na `text` z podmienionymi ⟦TOKEN⟧) — potrzebuje
+    // widzieć prawdziwe tokeny ADRES_NNN żeby wykryć "ta sama linia ma już adres" i uniknąć
+    // podwójnego flagowania tego samego fragmentu. Wiodący/końcowy \b zastąpiony przez
+    // WORD_START_UNICODE/WORD_END_UNICODE (StructuralEngine.kt) — nazwa miasta może zaczynać
+    // się lub kończyć na polską literę diakrytyczną (Łódź, Żywiec, Ostrów).
+    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+        val cityWordRe = Regex("""$WORD_START_UNICODE([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})$WORD_END_UNICODE""")
+        val adresTokenRe = Regex("""\bADRES_\d{3}\b""")
+        // BUG-MIASTO-ZACHLANNA-PARA-FIX (ultrareview): stara wersja łapała OD RAZU parę
+        // "słowo1 słowo2" jednym matchem (opcjonalna druga grupa) — gdy para nie była
+        // dwuczłonowym miastem ("Wielka Warszawa"), findAll i tak konsumował oba słowa
+        // naraz i NIGDY nie sprawdzał drugiego słowa ("Warszawa") osobno jako miasto.
+        // Fix: dopasuj pojedyncze słowa, dla każdego opcjonalnie sprawdź sąsiada jako
+        // parę — jeśli para nie jest miastem, słowo-sąsiad zostaje sprawdzone osobno
+        // w kolejnej iteracji zamiast być bezpowrotnie "zjedzone".
+        val words = cityWordRe.findAll(pseudonymizedText).toList()
+        var idx = 0
+        while (idx < words.size) {
+            val m = words[idx]
+            val next = words.getOrNull(idx + 1)
+            val sep = pseudonymizedText.getOrNull(m.range.last + 1)
+            val adjacent = next != null && next.range.first == m.range.last + 2 &&
+                sep != null && sep != '\n' && sep.isWhitespace()
+            val first = m.groupValues[1]
+            val second = if (adjacent) next!!.groupValues[1] else null
+            val (matchedCity, consumedNext) = when {
+                second != null && LookupTables.cityForms.contains("${first.lowercase()} ${second.lowercase()}") ->
+                    pseudonymizedText.substring(m.range.first, next!!.range.last + 1) to true
+                LookupTables.cityForms.contains(first.lowercase()) -> first to false
+                else -> null to false
+            }
+            idx += if (consumedNext) 2 else 1
+            if (matchedCity == null) continue
+            // Nazwa jest jednocześnie ulicą (np. "Gdańska") — zostaw ocenę kontekstu Guardowi ADRES/ulicy, nie duplikuj.
+            if (LookupTables.streetForms.contains(matchedCity.lowercase())) continue
+            val start = m.range.first
+            val matchEnd = start + matchedCity.length - 1
+            val lineStart = pseudonymizedText.lastIndexOf('\n', start).let { if (it < 0) 0 else it + 1 }
+            val lineEnd = pseudonymizedText.indexOf('\n', matchEnd).let { if (it < 0) pseudonymizedText.length else it }
+            val line = pseudonymizedText.substring(lineStart, lineEnd)
+            if (adresTokenRe.containsMatchIn(line)) continue
+            hits += GuardHit("MIASTO_NIEZAMASKOWANE", "YELLOW", matchedCity, start, start + matchedCity.length)
+        }
+    }
+
 
     // ── YELLOW bezwarunkowe (kontekst wbudowany w regex) ─────────────────────
     val yellowPatterns = listOf(

@@ -1,0 +1,6 @@
+Nr NUMER_001
+NUMER_003
+DANE KONTAKTOWE NUMER_002
+
+NUMER_004
+Oswiadczam, ze podane dane sa zgodne

@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
 /**
- * AddressEngine.kt — v0, silnik równoległy testowy (04.07.2026)
+ * AddressEngine.kt — jedyny silnik ADRES (skonsolidowany 07.07.2026)
  *
  * Decyzja właściciela po audycie Cursora (`CURSOR_AUDYT_ADRES_2026-07-04.md`,
  * brief `CURSOR_BRIEF_AddressEngine_2026-07-04.md`): 12 nakładających się reguł ADRES
@@ -11,10 +11,11 @@ package com.lynxmask.app
  * jeden skonsolidowany silnik, uruchamiany PRZED NameEngine, żeby żadna reguła imion/nazwisk
  * nie zdążyła pociąć adresu zanim ten silnik zobaczy go w całości.
  *
- * v0 = TEST RÓWNOLEGŁY. Stare źródła (StructuralEngine.applyPostalCityPatterns,
- * ADDRESS_PATTERNS, NameEngine.applyStreetLookup, AnchorEngine A.11/A.11c/A.11d/A.11e)
- * CELOWO NIE są usuwane w tej iteracji — nadal działają jako fallback po tym silniku.
- * Duplikaty są tu oczekiwane i informacyjne, nie błąd.
+ * Konsolidacja 07.07 (drugi audyt Cursora, po zielonych testach + benchmarku na telefonie):
+ * stare źródła StructuralEngine.applyPostalCityPatterns, ADDRESS_PATTERNS i
+ * NameEngine.applyStreetLookup USUNIĘTE — były zduplikowanym kształtem, gorzej guardowanym.
+ * AnchorEngine A.11/A.11c/A.11d/A.11e ZOSTAJĄ — to kotwica na resztkach (nie równoległy
+ * silnik strukturalny), patrz notatka architektury niżej.
  *
  * WAŻNE — poprawka architektury (Paweł, 04.07, po pierwszej rundzie testów): TYLKO reguły
  * strukturalne/deterministyczne należą tu, na POCZĄTKU potoku. Kotwice luźne (prefix linii
@@ -90,8 +91,16 @@ internal fun applyAddressEngine(
     // STREET_NO_ZIP bez wymogu miasta) zdążą skonsumować tylko część frazy i osierocić miasto.
     // ------------------------------------------------------------------
     if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+        // BUG-ADRES-ZLEPIONY-BEZ-SPACJI (zgłoszone przez Pawła 08.07, test stresowy 100
+        // encji — "ul.Polna8,00-950Warszawa" bez ŻADNYCH spacji wcale się nie odpalało):
+        // wszystkie złączenia wymagały co najmniej JEDNEJ spacji ([^\S\n]+) — prefiks→nazwa,
+        // nazwa→numer, przecinek→reszta. Przy pełnym sklejeniu (OCR bez spacji) całość
+        // zostawała jawna, a "Polna" (nazwa ulicy) błędnie łapana przez NameEngine jako
+        // nazwisko. Fix: [^\S\n]* (zero lub więcej) na tych samych złączeniach co
+        // BUG-ADRES-ZLEPIONE-KODY (07.07, POSTAL_K1/K2 niżej) — ten sam mechanizm,
+        // rozszerzony na całą rodzinę wzorców ulicy, nie tylko kod↔miasto.
         val streetCityRe = Regex(
-            """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}){0,2}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]{1,29})?)"""
+            """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]*[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}){0,2}[^\S\n]*\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]*([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]{1,29})?)"""
         )
         t = streetCityRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) return@fold acc
@@ -118,8 +127,10 @@ internal fun applyAddressEngine(
     // roboty (TOKEN_RE guard).
     // ------------------------------------------------------------------
     run {
+        // BUG-ADRES-ZLEPIONY-BEZ-SPACJI (08.07): patrz komentarz przy streetCityRe wyżej —
+        // ten sam fix, ta sama para złączeń (prefiks→nazwa, nazwa→numer).
         val streetNoZipRe = Regex(
-            """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}){0,2}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
+            """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]*[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}){0,2}[^\S\n]*\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
         )
         t = streetNoZipRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value, "STREET_NO_ZIP")
@@ -145,8 +156,14 @@ internal fun applyAddressEngine(
         // skleić z tekstem z NASTĘPNEJ linii (np. etykietą testu). [^\S\n] = spacja/tab,
         // nigdy nowa linia. Ten sam błąd istnieje w oryginale (nie naprawiany teraz — poza
         // scope v0), tu naprawiony dla nowego silnika.
+        // BUG-DIAKRYTYKI-GRANICA: \b końcowy -> WORD_END_UNICODE (StructuralEngine.kt) —
+        // nazwa miasta na końcu adresu może kończyć się polską literą diakrytyczną
+        // (np. "Łódź"), zwykły \b jest ASCII-only i wtedy nigdy się nie dopasowuje.
+        // BUG-ADRES-ZLEPIONY-BEZ-SPACJI (08.07): patrz komentarz przy streetCityRe wyżej —
+        // ten sam fix, rozszerzony na WSZYSTKIE złączenia w tym najdłuższym wzorcu
+        // (prefiks→nazwa, nazwa→numer, przecinek→kod, kod→miasto).
         val streetFullRe = Regex(
-            """((?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+)?\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
+            """((?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]*)?\b([A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?[^\S\n]*\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,]?[^\S\n]*\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,]?[^\S\n]*[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}$WORD_END_UNICODE"""
         )
         t = streetFullRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
             if (TOKEN_RE.containsMatchIn(m.value)) return@fold acc
@@ -181,8 +198,15 @@ internal fun applyAddressEngine(
         // bug_gora_jako_osoba_diagnoza). Wariant (b) jest konieczny bo cityForms rzadko ma
         // literalną kombinację dwuwyrazową jako jeden wpis — "Tel" nie jest w żadnym z tych
         // słowników, więc nadal odrzucone.
+        // BUG-ADRES-ZLEPIONE-KODY (07.07, test ręczny na telefonie): [^\S\n]+ wymagał co
+        // najmniej JEDNEJ spacji między kodem a miastem — gdy OCR (albo kilka adresów pod rząd
+        // bez separatora) skleja je bez spacji ("00-001Warszawa", "70-001Szczecin80-001Gdańsk..."),
+        // dopasowanie w ogóle nie odpalało, zostawiając WSZYSTKO jawne. Fix: [^\S\n]* (zero lub
+        // więcej) — toleruje też zlepienie. Zweryfikowane Javą: nadal poprawnie rozdziela kilka
+        // zlepionych par kod+miasto pod rząd na osobne tokeny, nie psuje normalnych przypadków
+        // ze spacją, nie łapie niepowiązanego tekstu (np. IBAN).
         val postalCodeToNameRe = Regex(
-            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]+""" +
+            """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,]?[^\S\n]*""" +
             """([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30})(?:([^\S\n])([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}))?"""
         )
         t = postalCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
@@ -200,8 +224,10 @@ internal fun applyAddressEngine(
         }
 
         if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
+            // BUG-ADRES-ZLEPIONE-KODY (07.07): ten sam fix co POSTAL_K1 wyżej — [^\S\n]*
+            // zamiast [^\S\n]+, toleruje miasto zlepione bezpośrednio z kodem bez spacji.
             val postalNameToCodeRe = Regex(
-                """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,]?[^\S\n]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
+                """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,]?[^\S\n]*((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
             )
             t = postalNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
                 if (TOKEN_RE.containsMatchIn(m.value)) acc

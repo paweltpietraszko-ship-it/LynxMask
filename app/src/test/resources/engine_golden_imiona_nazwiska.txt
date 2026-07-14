@@ -1,0 +1,179 @@
+# ZŁOTY PLIK — IMIONA/NAZWISKA, SKLEJANIE, SŁOWA MYLĄCE (11.07)
+# Format: <tekst> [OSOBA:wartość] — jeden lub więcej tagów na linii.
+# Wiele tagów na linii = te wartości MUSZĄ trafić do RÓŻNYCH tokenów (test sklejania).
+# [NONE:wartość] = to słowo NIE MOŻE zostać zamaskowane (pospolite słowo, nie osoba).
+#
+# Celowo POMINIĘTE (osobny, jeszcze otwarty problem — kolizja słownika NAZWISK,
+# nie dzisiejsza sesja imion): Osoba, Łączna, Działając, Zapłaty.
+# Celowo POMINIĘTE (niejednoznaczne prawdziwe nazwiska, brak pewnej odpowiedzi):
+# Marszałkowski, Sądowy, Biała.
+# Celowo POMINIĘTE — Mazur (11.07): strażnik Morfologika blokuje maskowanie (rozpoznaje
+# jako nazwę tańca/regionu), świadomie NIE naprawione wprost — zamiast tego OutputGuard
+# flaguje YELLOW (NAZWISKO_NIEZAMASKOWANE) gdy w pobliżu jest etykieta danych osobowych.
+# Bez etykiety w pobliżu (jak samo "Mazur" niżej by wyglądało) nic go nie złapie — to
+# świadomie zaakceptowana luka, nie cel tego testu.
+
+=== Same imiona (różne końcówki, w tym klasa "-iej") ===
+Bartłomiej [OSOBA:Bartłomiej]
+Maciej [OSOBA:Maciej]
+Andrzej [OSOBA:Andrzej]
+Wojciech [OSOBA:Wojciech]
+Tomek [OSOBA:Tomek]
+Kasia [OSOBA:Kasia]
+Anna [OSOBA:Anna]
+Ewa [OSOBA:Ewa]
+Grażyna [OSOBA:Grażyna]
+Zbigniew [OSOBA:Zbigniew]
+Ignacy [OSOBA:Ignacy]
+Nikodem [OSOBA:Nikodem]
+Miłosz [OSOBA:Miłosz]
+Wiktoria [OSOBA:Wiktoria]
+Zuzanna [OSOBA:Zuzanna]
+Kalina [OSOBA:Kalina]
+Jagoda [OSOBA:Jagoda]
+Malina [OSOBA:Malina]
+
+=== Same nazwiska ===
+Kowalski [OSOBA:Kowalski]
+Nowak [OSOBA:Nowak]
+Wiśniewski [OSOBA:Wiśniewski]
+Wójcik [OSOBA:Wójcik]
+Kamiński [OSOBA:Kamiński]
+Lewandowski [OSOBA:Lewandowski]
+Zieliński [OSOBA:Zieliński]
+Szymański [OSOBA:Szymański]
+Woźniak [OSOBA:Woźniak]
+Dąbrowski [OSOBA:Dąbrowski]
+Kozłowski [OSOBA:Kozłowski]
+Jankowski [OSOBA:Jankowski]
+Kwiatkowski [OSOBA:Kwiatkowski]
+Krawczyk [OSOBA:Krawczyk]
+
+=== Imię + Nazwisko, szyk naturalny (jeden token, jedna osoba) ===
+Bartłomiej Kowalski [OSOBA:Bartłomiej Kowalski]
+Maciej Nowak [OSOBA:Maciej Nowak]
+Andrzej Wiśniewski [OSOBA:Andrzej Wiśniewski]
+Katarzyna Zielińska [OSOBA:Katarzyna Zielińska]
+Agnieszka Wójcik [OSOBA:Agnieszka Wójcik]
+Tomasz Kamiński [OSOBA:Tomasz Kamiński]
+Wojciech Lewandowski [OSOBA:Wojciech Lewandowski]
+Zofia Szymańska [OSOBA:Zofia Szymańska]
+Ewa Woźniak [OSOBA:Ewa Woźniak]
+Robert Dąbrowski [OSOBA:Robert Dąbrowski]
+
+=== Nazwisko + Imię, szyk odwrócony (jeden token, jedna osoba) ===
+Kowalski Bartłomiej [OSOBA:Kowalski Bartłomiej]
+Nowak Maciej [OSOBA:Nowak Maciej]
+Zielińska Katarzyna [OSOBA:Zielińska Katarzyna]
+Kamiński Tomasz [OSOBA:Kamiński Tomasz]
+Wójcik Agnieszka [OSOBA:Wójcik Agnieszka]
+Szymańska Zofia [OSOBA:Szymańska Zofia]
+
+=== Kowalski Data — nazwisko obok kolizyjnego słowa ze słownika imion ===
+Kowalski Data [OSOBA:Kowalski][NONE:Data]
+
+=== Podwójne nazwiska (jeden token, jedna osoba) ===
+Anna Kowalska-Nowak [OSOBA:Anna Kowalska-Nowak]
+Maria Wiśniewska-Zielińska [OSOBA:Maria Wiśniewska-Zielińska]
+Piotr Nowak-Kowalski [OSOBA:Piotr Nowak-Kowalski]
+Ewa Szymańska-Lewandowska [OSOBA:Ewa Szymańska-Lewandowska]
+Bartłomiej Kowalski-Zawadzki [OSOBA:Bartłomiej Kowalski-Zawadzki]
+Agnieszka Mazur-Krawczyk [OSOBA:Agnieszka Mazur-Krawczyk]
+
+=== Dwa imiona obok siebie bez kontekstu — test sklejania (MUSZĄ być rozdzielone) ===
+Paweł Tomasz [OSOBA:Paweł][OSOBA:Tomasz]
+Wiktoria Sylwia [OSOBA:Wiktoria][OSOBA:Sylwia]
+Bartłomiej Maciej [OSOBA:Bartłomiej][OSOBA:Maciej]
+Andrzej Wojciech [OSOBA:Andrzej][OSOBA:Wojciech]
+Anna Maria [OSOBA:Anna][OSOBA:Maria]
+Ewa Zofia [OSOBA:Ewa][OSOBA:Zofia]
+Marek Adam [OSOBA:Marek][OSOBA:Adam]
+Grażyna Zuzanna [OSOBA:Grażyna][OSOBA:Zuzanna]
+
+=== Dwa nazwiska obok siebie — test sklejania ===
+Kowalski Nowak [OSOBA:Kowalski][OSOBA:Nowak]
+Wiśniewski Zieliński [OSOBA:Wiśniewski][OSOBA:Zieliński]
+Szymański Wójcik [OSOBA:Szymański][OSOBA:Wójcik]
+Krawczyk Kwiatkowski [OSOBA:Krawczyk][OSOBA:Kwiatkowski]
+Kamiński Dąbrowski [OSOBA:Kamiński][OSOBA:Dąbrowski]
+
+=== Cztery słowa pod rząd — łańcuch, mocniejszy test sklejania ===
+Bartłomiej Kowalski Maciej Nowak [OSOBA:Bartłomiej Kowalski][OSOBA:Maciej Nowak]
+Robert Adam Julia Marta [OSOBA:Robert][OSOBA:Adam][OSOBA:Julia][OSOBA:Marta]
+Andrzej Wiśniewski Katarzyna Zielińska [OSOBA:Andrzej Wiśniewski][OSOBA:Katarzyna Zielińska]
+Kowalski Nowak Wiśniewski Zieliński [OSOBA:Kowalski][OSOBA:Nowak][OSOBA:Wiśniewski][OSOBA:Zieliński]
+
+=== Podwójne imię + nazwisko (realne dwuimienne osoby) ===
+Anna Maria Kowalska [OSOBA:Anna][OSOBA:Maria][OSOBA:Kowalska]
+Jan Paweł Nowak [OSOBA:Jan][OSOBA:Paweł][OSOBA:Nowak]
+Ewa Zofia Wiśniewska [OSOBA:Ewa][OSOBA:Zofia][OSOBA:Wiśniewska]
+Bartłomiej Maciej Kowalski [OSOBA:Bartłomiej][OSOBA:Maciej][OSOBA:Kowalski]
+
+=== Słowa pospolite, potwierdzone kolizje ze słownikiem imion (NIE mogą się maskować) ===
+Data [NONE:Data]
+Dane [NONE:Dane]
+Danych [NONE:Danych]
+Nikach [NONE:Nikach]
+
+=== Prawdziwe przymiotniki — kontrola negatywna (NIE mogą się maskować) ===
+Wielkiej [NONE:Wielkiej]
+Polskiej [NONE:Polskiej]
+Ładniejszej [NONE:Ładniejszej]
+Rejonowej [NONE:Rejonowej]
+Cennej [NONE:Cennej]
+Głównej [NONE:Głównej]
+
+=== Formy z Pan/Pani ===
+Pan Marek [OSOBA:Marek]
+Pani Halina [OSOBA:Halina]
+Pan Bartłomiej Kowalski [OSOBA:Bartłomiej Kowalski]
+Pani Zofia Szymańska [OSOBA:Zofia Szymańska]
+Pani Katarzyna [OSOBA:Katarzyna]
+Pan Maciej [OSOBA:Maciej]
+
+# Kolizje słownika W PARZE imię+nazwisko (14.07) — isCommonWordNotSurname był tylko
+# w 4 blokach "samo słowo", nie w blokach łączących parę; "Osoba"/"Zapłata" same są już
+# poprawnie blokowane (patrz "celowo pominięte" na górze pliku), ale w parze z realnym
+# imieniem przechodziły bez przeszkody.
+=== Kolizje słownika w parze imię+nazwisko ===
+Jan Osoba przyszedł na spotkanie. [OSOBA:Jan] [NONE:Osoba]
+Zapłata Marek podpisał umowę. [OSOBA:Marek] [NONE:Zapłata]
+Pan Jan Osoba złożył wniosek. [OSOBA:Jan] [NONE:Osoba]
+
+# AnchorEngine A.10 — DECYZJA WŁAŚCICIELA (14.07): kotwica ma być zachłanna z założenia
+# (jak reszta AnchorEngine), blokujemy TYLKO konkretne znane kolizje słownikowe
+# (OSOBA_DENYLIST: Osoba/Zapłata/Łączna/Działający), nie każde słowo pospolite —
+# lepiej fałszywie zamaskować niż zgubić realne nazwisko.
+=== AnchorEngine A.10 — blokuje tylko znaną kolizję, reszta zachłanna ===
+dr Osoba nie została wpisana do rejestru. [NONE:Osoba]
+dr Ważne ustalenia zostały zapisane. [OSOBA:Ważne]
+
+# BUG-NAZWISKO-PRZYPADEK-ZALEZNY (14.07) — isCommonWordNotSurname (dodany dziś wyżej do par)
+# sprawdzał tylko mianownikowy kształt nazwiska (ski/ska/cki/cka/...), więc odmienione przez
+# przypadki nazwisko w parze (np. dopełniacz/narzędnik) trafiało do Morfologika jako zwykły
+# przymiotnik i było fałszywie odrzucane. Dwa różne przypadki gramatyczne + dwie różne rodziny
+# sufiksów (-ski i -cki), żeby to była naprawdę ogólna reguła, nie jeden łatany przykład.
+=== Odmiana przymiotnikowa nazwiska w parze (różne przypadki, różne rodziny sufiksów) ===
+Rozmawiałem z Piotrem Kowalskim wczoraj. [OSOBA:Piotrem Kowalskim]
+Napisałem do Piotra Nowackiego w tej sprawie. [OSOBA:Piotra Nowackiego]
+
+# DECYZJA WŁAŚCICIELA (14.07) — KNOWN_SHORT_SURNAMES: "Kot" (3 znaki) to realne nazwisko,
+# ale próg długości (LENGTH-FIX, chroni przed skrótami typu "Sp"/"Ko") wszędzie indziej
+# blokował je jako zbyt krótkie. Jawny wyjątek zamiast obniżania progu globalnie.
+=== Krótkie prawdziwe nazwisko (KNOWN_SHORT_SURNAMES) ===
+Świadek: Kot. [OSOBA:Kot]
+
+# BUG-MUSIAL-CZASOWNIK (14.07) — wpis nazwiska "Musiał" w słowniku ma zanieczyszczone
+# odmiany formami czasownika "musieć" (błąd generatora danych). Znalezione po usunięciu
+# filtra Morfologika (dawniej przypadkiem zasłaniał ten błąd).
+=== Kolizja słownika: "Musiał" (nazwisko) vs "musieć" (czasownik) ===
+Dokument musi zostać podpisany przez strony. [NONE:musi]
+
+# AUDYT AGENTA (14.07) — 13 KOLEJNYCH nazwisk w słowniku miało ten sam błąd generatora
+# (cała odmiana zamieniona na odmianę innego czasownika o tym samym rdzeniu). Usunięte
+# całkowicie z surnames_top1000.json (nie punktowa łatka OSOBA_DENYLIST — dane były
+# nie do naprawienia częściowo). Próbka najbardziej ryzykownych (częste słowa formalne):
+=== Kolizje słownika: pozostałe zanieczyszczone nazwiska, usunięte z JSON ===
+Świadek żyła w tym mieście od urodzenia. [NONE:żyła]
+Pozwany przybył na rozprawę zgodnie z wezwaniem. [NONE:przybył]
+Powódka domagała się zwrotu kosztów postępowania. [NONE:domagała]

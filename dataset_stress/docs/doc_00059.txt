@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2021/09/0963
+
+Data wystawienia: 19.04.2025
+Numer klienta: KL-19742
+
+----------------------------------------
+SPRZEDAWCA:
+Hurtownia Materiałów BUDMAT Sp. z o.o.
+Adres: ul. Plac wiosny ludów 62, 60-001 Trzebiechów
+NIP: 558-771-75-35   REGON: 999642354
+Nr konta: PL88102028926937854777252287
+
+NABYWCA:
+Suleyman Kałęka
+Adres: ul. Perzowa 120, 60-001 Kupienin
+NIP: 656-093-20-44
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa doradcza                   7     331   8%     2317     2502
+2.   Konsultacja techniczna            3      68   8%      204      220
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         2722 PLN
+
+Płatność przelewem: PL88102028926937854777252287
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

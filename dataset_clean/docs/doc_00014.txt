@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Rafał Dudek
+Data urodzenia:
+17.06.1998
+PESEL:
+04321883483
+Nr dowodu osobistego:
+NSO277434
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Warszawska 144, 41-200 Rybnik
+Telefon:
++48 727 347 143
+Adres e-mail:
+rafal_dudek@onet.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+758-760-36-66
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

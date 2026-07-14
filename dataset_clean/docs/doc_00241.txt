@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Aleksandra Kwiatkowska
+Data urodzenia:
+07.01.1969
+PESEL:
+80022843690
+Nr dowodu osobistego:
+NWB414545
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Warszawska 79, 40-001 Bydgoszcz
+Telefon:
++48 796 350 200
+Adres e-mail:
+aleksandrakwiatkowska@gmail.com
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+574-916-24-71
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

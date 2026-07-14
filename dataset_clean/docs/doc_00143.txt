@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2025/04/0954
+
+Data wystawienia: 03.02.2024
+Numer klienta: KL-84890
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Dębowa 21, 40-001 Warszawa
+NIP: 122-050-20-98   REGON: 927950149
+Nr konta: PL80150010135616814721458683
+
+NABYWCA:
+Karolina Kwiatkowska
+Adres: ul. Krakowska 72, 30-001 Rzeszów
+NIP: 551-016-22-47
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego        10    1962  23%    19620    24133
+2.   Usługa transportowa              10    1786  23%    17860    21968
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        46101 PLN
+
+Płatność przelewem: PL80150010135616814721458683
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

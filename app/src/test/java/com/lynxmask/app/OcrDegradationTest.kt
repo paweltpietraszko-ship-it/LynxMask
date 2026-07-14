@@ -191,9 +191,16 @@ class OcrDegradationTest {
         assertTrue("Krzyszt0f N0wlckl nie wykryty — NameEngine nie obsłużył LVL2",
             tokens(LVL2).any { "Krzyszt" in it || "N0wlckl" in it || "Nowlckl" in it })
 
+    // BUG-KAMLNSKA-BEZ-KOTWICY (14.07): asercja sprawdzała starą, ZEPSUTĄ pisownię
+    // ("B3ata"/"Kamlnska"), ale silnik teraz poprawnie NAPRAWIA ją przed maskowaniem
+    // (fixDigitLetterConfusion/fixNameLetterConfusion) — token zawiera już poprawioną
+    // pisownię "Beata Kaminska", więc stara pisownia nigdy tam nie wystąpi. Potwierdzone
+    // testem TRACE-DIAGNOSTIC (niżej): silnik maskuje poprawnie, test sprawdzał złą rzecz.
+    // Analogicznie do `lvl2 OSOBA Nowicki wykryty` (wyżej) i `lvl3 OSOBA Nowicki` (niżej),
+    // które już sprawdzają poprawioną pisownię.
     @Test fun `lvl2 OSOBA Kaminska wykryta mimo B3ata`() =
-        assertTrue("B3ata Kamlnska nie wykryta (LVL2)",
-            tokens(LVL2).any { "B3ata" in it || "Kamlnska" in it })
+        assertTrue("Beata Kaminska nie wykryta (LVL2)",
+            tokens(LVL2).any { "Beata" in it || "Kaminska" in it })
 
     @Test fun `lvl2 PESEL1 wykryty ze spacjami`() =
         assertTrue("PESEL 9104 05 12361 (dwie spacje) nie wykryty",
@@ -237,9 +244,11 @@ class OcrDegradationTest {
         assertTrue("Krzy5zt0f N0w1ck1 nie wykryty po de-leet (LVL3)",
             tokens(LVL3).any { "Nowicki" in it || "Krzysztof" in it })
 
+    // BUG-KAMLNSKA-BEZ-KOTWICY (14.07): jak przy LVL2 wyżej — asercja sprawdzała zepsutą
+    // pisownię, silnik ją poprawnie naprawia przed maskowaniem.
     @Test fun `lvl3 OSOBA Kaminska wykryta mimo Be4ta`() =
-        assertTrue("Be4ta Kamlnska nie wykryta (LVL3)",
-            tokens(LVL3).any { "Be4ta" in it || "Kamlnska" in it })
+        assertTrue("Beata Kaminska nie wykryta (LVL3)",
+            tokens(LVL3).any { "Beata" in it || "Kaminska" in it })
 
     @Test fun `lvl3 PESEL1 wykryty 9l0405 l2361`() =
         // OCR_PESEL_SPLIT v2.0: akceptuje l/O w cyfrach PESEL + konwertuje l→1 i usuwa spacje.

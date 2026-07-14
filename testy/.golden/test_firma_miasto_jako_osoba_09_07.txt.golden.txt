@@ -1,0 +1,11 @@
+Sprzedawca: FIRMA_001, ADRES_003, ADRES_005. Nabywca: OSOBA_001, NUMER_001.
+
+Wykonawca: FIRMA_002 z siedzibą w ADRES_006, NUMER_002.
+
+FIRMA_003 reprezentowane przez OSOBA_003 OSOBA_002, zam. ADRES_001.
+
+Sąd Rejonowy w ADRES_007, XII Wydział Cywilny, NUMER_004.
+
+Urząd Miasta w ADRES_008 wydał decyzję administracyjną nr 123/2026 z dnia NUMER_003.
+
+Adres: ADRES_002, ADRES_004.

@@ -31,18 +31,36 @@ object LookupTables {
 
     private var _namesForms: Set<String> = emptySet()
     private var _surnamesForms: Set<String> = emptySet()
+    private var _surnamesFormsExtended: Set<String> = emptySet()
     private var _streetForms: Set<String> = emptySet()
     private var _cityForms: Set<String> = emptySet()
     private var _medForms: Set<String> = emptySet()
     private var _citySurnameOverlap: Set<String> = emptySet()
+    private var _surnameSuffixes: Set<String> = emptySet()
     private var _initialized = false
 
     val initialized: Boolean get() = _initialized
     val namesForms: Set<String> get() = _namesForms
     val surnamesForms: Set<String> get() = _surnamesForms
+    // BUG-KADRY-SILENT-MISS (12.07): surnamesForms (aktywne maskowanie) zawężony do progu
+    // top-1000 (≥3296 osób w rejestrze PESEL) — usuwa kolizje pospolite (Osoba/Zapłata/
+    // Łączna), ale sam by ZOSTAWIAŁ CISZĄ rzadkie, prawdziwe nazwiska spoza tej listy
+    // (niebezpieczne dla dokumentów HR/kadrowych — PII wycieka bez ŻADNEGO ostrzeżenia).
+    // surnamesFormsExtended (39k, próg ≥100) rozwiązuje to w OutputGuard.kt: NIE maskuje
+    // (ryzyko kolizji zbyt wysokie dla auto-akcji), ale OSTRZEGA (YELLOW) — koszt złej flagi
+    // (człowiek sprawdza) jest dużo niższy niż koszt złego auto-maskowania. Właściciel 12.07:
+    // "mały słownik dla NameEngine, duży tylko dla Guard".
+    val surnamesFormsExtended: Set<String> get() = _surnamesFormsExtended
     val streetForms: Set<String> get() = _streetForms
     val cityForms: Set<String> get() = _cityForms
     val medForms: Set<String> get() = _medForms
+    // NIEUŻYWANE od 14.07 (DECYZJA WŁAŚCICIELA): był to sygnał kształtu dla strażnika
+    // Morfologika w NameEngine.isCommonWordNotSurname(), USUNIĘTEGO — blokował obok
+    // Osoba/Zapłata/Łączna też realne nazwiska-zwierzęta (Zając/Wróbel/Sowa/Kot).
+    // Zastąpione precyzyjną listą OSOBA_DENYLIST. Zostawione załadowane (koszt pomijalny,
+    // mały plik) na wypadek przyszłego przywrócenia — jeśli nikt go nie użyje do końca
+    // roku, usunąć razem z surname_suffixes.json.
+    val surnameSuffixes: Set<String> get() = _surnameSuffixes
 
     // BUG-GORA-OSOBA-FIX (04.07): słowa będące jednocześnie drugim członem dwuwyrazowej
     // nazwy miejscowości (np. "Góra" w "Zielona Góra"/"Jelenia Góra") i nazwiskiem z
@@ -53,23 +71,37 @@ object LookupTables {
     // słowniki (cities_forms.json / surnames_top1000.json), nie utrzymywać ręcznie.
     val citySurnameOverlap: Set<String> get() = _citySurnameOverlap
 
+    // PERF-PRÓBA (11.07): zrównoleglenie 7 niezależnych słowników przez coroutines
+    // (Dispatchers.Default) było TU WOLNIEJSZE niż sekwencyjnie na telefonie (23,9s vs 9,4s) —
+    // zmierzone na realnym urządzeniu, nie na desktopie. Prawdopodobna przyczyna: budowanie
+    // kilku ogromnych zbiorów stringów naraz (343k+ + 30k+ elementów jednocześnie w pamięci)
+    // winduje presję GC bardziej niż oszczędza na współbieżności przy ograniczonej liczbie
+    // rdzeni telefonu. Wniosek zapisany, NIE próbować ponownie bez nowego pomiaru na telefonie.
     fun initialize(context: Context) {
         if (_initialized) return
+        val tA0 = System.currentTimeMillis()
         val names = loadFormsFromAsset(context, "names_inflected.json")
         val baseSurnames = loadFormsFromAsset(context, "surnames_top1000.json")
+        val baseSurnamesExtended = loadFormsFromAsset(context, "surnames_extended.json")
         val streets = loadFormsFromAsset(context, "street_names.json")
         val cities = loadFlatListFromAsset(context, "cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med = loadFlatListFromAsset(context, "medical_facilities.json")
         val overlap = loadFlatListFromAsset(context, "city_surname_overlap.json")
+        val suffixes = loadFlatListFromAsset(context, "surname_suffixes.json")
 
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (baseSurnames + generateFeminineVariants(baseSurnames)).withAsciiVariants()
+        _surnamesFormsExtended = (baseSurnamesExtended + generateFeminineVariants(baseSurnamesExtended)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
         _citySurnameOverlap = overlap.withAsciiVariants()
+        _surnameSuffixes = suffixes
+        val tA1 = System.currentTimeMillis()
+        if (BuildConfig.DEBUG) android.util.Log.d("LynxTiming",
+            "sequential-init=${tA1-tA0}ms surnames.size=${_surnamesForms.size}")
 
         // INIT-FIX v1.1: initialized tylko gdy krytyczne pliki załadowane.
         // Street/city/med mogą być puste (degrades gracefully). Names+surnames puste = silnik ślepy.
@@ -124,14 +156,21 @@ object LookupTables {
         med: Set<String> = setOf(
             "szpital", "klinika", "przychodnia", "poradnia", "ambulatorium"
         ),
-        citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa")
+        citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa"),
+        surnameSuffixes: Set<String> = setOf("ski", "ska", "cki", "cka", "owicz", "ak", "uk"),
+        // Domyślnie = surnames (ten sam zestaw) — testy które nie sprawdzają jawnie reguły
+        // "rzadkie nazwisko spoza aktywnego słownika" dostają neutralne zachowanie
+        // (reguła strukturalnie nie odpala, bo extended==surnames, nic nowego nie "wystaje").
+        surnamesExtended: Set<String> = surnames
     ) {
         _namesForms    = names
         _surnamesForms = surnames
+        _surnamesFormsExtended = surnamesExtended
         _streetForms   = streets
         _cityForms     = cities
         _medForms      = med
         _citySurnameOverlap = citySurnameOverlap
+        _surnameSuffixes = surnameSuffixes
         _initialized   = true
         resetRegexCache()
     }
@@ -142,18 +181,22 @@ object LookupTables {
         if (_initialized) return
         val names    = loadFormsFromClasspath("names_inflected.json")
         val surnames = loadFormsFromClasspath("surnames_top1000.json")
+        val surnamesExtended = loadFormsFromClasspath("surnames_extended.json")
         val streets  = loadFormsFromClasspath("street_names.json")
         val cities   = loadFlatListFromClasspath("cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
         }
         val med      = loadFlatListFromClasspath("medical_facilities.json")
         val overlap  = loadFlatListFromClasspath("city_surname_overlap.json")
+        val suffixes = loadFlatListFromClasspath("surname_suffixes.json")
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
+        _surnamesFormsExtended = (surnamesExtended + generateFeminineVariants(surnamesExtended)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
         _citySurnameOverlap = overlap.withAsciiVariants()
+        _surnameSuffixes = suffixes
         _initialized   = _namesForms.isNotEmpty() && _surnamesForms.isNotEmpty()
         if (_initialized) resetRegexCache()
     }
@@ -184,10 +227,12 @@ object LookupTables {
     fun resetForTesting() {
         _namesForms    = emptySet()
         _surnamesForms = emptySet()
+        _surnamesFormsExtended = emptySet()
         _streetForms   = emptySet()
         _cityForms     = emptySet()
         _medForms      = emptySet()
         _citySurnameOverlap = emptySet()
+        _surnameSuffixes = emptySet()
         _initialized   = false
         resetRegexCache()
     }
@@ -203,9 +248,15 @@ object LookupTables {
         return this + ascii
     }
 
+    // PERF-FIX (11.07): regex kompilowany RAZ, nie przy każdym wywołaniu stripDiacritics —
+    // funkcja woła się per-słowo dla każdej formy w każdym słowniku (setki tysięcy razy przy
+    // 39k słowniku nazwisk + 30k miast), kompilacja regexa w pętli dominowała czas startu apki
+    // (22s init → w tym ~20s w withAsciiVariants/stripDiacritics, zmierzone LynxTiming).
+    private val COMBINING_MARKS_REGEX = Regex("\\p{InCombiningDiacriticalMarks}+")
+
     private fun stripDiacritics(s: String): String =
         java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
-            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+            .replace(COMBINING_MARKS_REGEX, "")
             // Ł/ł ma kreską (stroke, U+0141/U+0142) — nie jest combining mark,
             // NFD jej nie rozkłada. Ręczna konwersja żeby "łukasz" → "lukasz".
             .replace('ł', 'l').replace('Ł', 'L')

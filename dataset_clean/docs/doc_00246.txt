@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-00394/04/2020
+
+Data wystawienia: 28.02.2022
+Numer klienta: KL-65985
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Kopernika 73/11, 85-001 Gdańsk
+NIP: 476-182-09-19   REGON: 427972451
+Nr konta: PL86240101352308481001841862
+
+NABYWCA:
+Kamil Kamiński
+Adres: ul. Sienkiewicza 156/10, 90-001 Łódź
+NIP: 529-001-85-18
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                5     512  23%     2560     3149
+2.   Konsultacja techniczna            8     397   8%     3176     3430
+3.   Naprawa sprzętu                   2     627  23%     1254     1542
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         8121 PLN
+
+Płatność przelewem: PL86240101352308481001841862
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

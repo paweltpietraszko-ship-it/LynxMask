@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-07246/06/2021
+
+Data wystawienia: 01.04.2020
+Numer klienta: KL-67732
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: ul. Dębowa 193, 02-200 Kielce
+NIP: 617-908-64-13   REGON: 793898337
+Nr konta: PL09109010144659116655355904
+
+NABYWCA:
+Kamil Mazur
+Adres: ul. Ogrodowa 111/26, 10-100 Poznań
+NIP: 786-227-83-75
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   6     369   8%     2214     2391
+2.   Konsultacja techniczna            1     547   8%      547      591
+3.   Instalacja oprogramowania         1     753   8%      753      813
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         3795 PLN
+
+Płatność przelewem: PL09109010144659116655355904
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

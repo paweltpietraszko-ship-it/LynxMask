@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV-01056/06/2023
+
+Data wystawienia: 30.06.2021
+Numer klienta: KL-64059
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Wiosenna 58, 65-001 Łódź
+NIP: 863-514-84-63   REGON: 920829730
+Nr konta: PL81114019877489690835723246
+
+NABYWCA:
+Marcin Pawłowski
+Adres: ul. Kościuszki 152/5, 44-100 Gliwice
+NIP: 953-664-98-72
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa serwisowa                  5    1456   8%     7280     7862
+2.   Usługa transportowa               4     282   8%     1128     1218
+3.   Naprawa sprzętu                   1     552  23%      552      679
+4.   Wynajem sprzętu biurowego         8    1196  23%     9568    11769
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        21528 PLN
+
+Płatność przelewem: PL81114019877489690835723246
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

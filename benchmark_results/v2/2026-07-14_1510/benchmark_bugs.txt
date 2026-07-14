@@ -1,0 +1,224 @@
+BUGS v2 — SEKCJA B (IN-SCOPE ACCEPTED) — 2026-07-14 15:10:49
+════════════════════════════════════════════════════════════
+
+[BRAK_W_OCR] Encje krytyczne (nie blokuje release): 1
+
+  doc_00042.png  lvl=3  qs=78  numer_paszportu=LP5017343
+
+[EMAIL POMINIĘTE] 1 encji:
+
+  doc_00016.png  email=robert.dabrowski@o2.pl  → BRAK_W_OCR
+    OCR[300]: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Robert Dabrowski Data urodzenia: 24.10.1980 PESEL: 54080167775 Nr dowodu osobistego WPI207441 Nr paszportu: SM9019371 DANE KONTAKTOWE Adres zamieszkania: ul. Zielona 82/43, 70-001 Kielce Telefon: +48 782 104 128 Adres e-mail: robert.dabrowski@o2,pl DANE POD
+
+[ADRES POMINIĘTE] 1 encji:
+
+  doc_00042.png  adres=ul. Kopernika 102, 50-001 Białystok  → BRAK_W_OCR
+    OCR: DANE OSOBOWE WNIOSKODAWCY imię í narwisko Babara Wojcik Data urodzenia PESEL: o705. 1964 9080553713 t dowodu osobistego GGS202056 N paszporu LPSO17343 DANE KONTAKTOWE Ades zamieszkania Data Telefon Kopemika 102, 50-001 Bialystok Adres email 49 696 427 048 barbaraojcik69 @p p DANE PODATKOWE Podpis NP Qesl doyczy) 742-95380-13 ZGŁOSZENIE DO REJESTRU L1E)RODO
+
+[NUMER POMINIĘTE] 10 encji:
+
+  doc_00001.png  data_urodzenia=12.05.1993  → OCR_ZNIEKSZTAŁCONY
+    OCR: DANE OSOBOWE WNIOSKODAWCY Imię i nazwisko: Łukasz Kwiatkowski Data urodzenia: 12 05.1993 PESEL: 51091303585 Nr dowodu osobistego: MOY319589 DANE KONTAKTOWE Adres zamieszkania: ul. Krakowska 102/22, 87-100 Olsztyn Telefon +48 798 456 472 Adres e-mail lukaszkwiatkowski@gmail.com DANE PODATKOWE NIP Geśli dotyczy): 524-563-05-87 Oiiadzam, 2e podane dane sa zgodne ze stanem faktycanym Wyratam Data Podpis: WNIOSEK O WYDANIE ZAŚWIADCZENIA bowych agodnie z at ust 1 R b) RODO
+  doc_00005.png  sygnatura_administracyjna=IW.015168.2022  → BUG_SILNIKA
+    OCR: Sygn.: IW.0151682022 Data wydania: 12.06 2020 Na podstawie: po rozpatrzeniu wniosku: Beata Wożniak art 104 ustawy z dnia 14 czerwca 1960 r. - Kodeks postępowania administracyjnego (t.į. Dz. U. z 2023 r. poz. 775 ze zm.) P
+  doc_00016.png  numer_dzialki=873286.0068.5715  → BUG_SILNIKA
+    OCR: Kielce Telefon: +48 782 104 128 Adres e-mail: robert.dabrowski@o2,pl DANE PODATKOWE NIP (ješli dotyczy): 793-342-05-97 DANE NIERUCHOMOŚCI Nr księgi wieczystej GD1G/00974701/7 Nr działki ewidencyjnej: 873286.0068.5715 Ošwiadczam, że pod ane dane sa zgodne ze stanem faktycznym. Wyrażam zgode na przetwarzanie mo ich danych osobowych zgodnie z art. 6 ust 1 lit. b) RODO. Data: WNIOSEK O ZMIANE DANYCH Podpis:
+  doc_00020.png  sygnatura_administracyjna=KP.029057.2022  → OCR_ZNIEKSZTAŁCONY
+    OCR: Sygn KP 029057. 2022 Data wydania: 06.03 2021 Na podstawie po rozpatzenis wniosku Malgorzata Krawczyk art 104 ustawy z dnia 14 czerwca 1960r- Kodeks poslępowania administracyjnego (tị Dz. U. z 2023 r. poz. T75 ze zm) PESEL: 52 1219 16180 NIP. 239039-60-81 adres: ul. Piaskowa 21, 30-001 Bialystok ORZEKAM: UZASADNIENIE Zaklad Ubezpieczen Spolecznych Oddzia w Warszawie Organ orzekam o wpisanu podmiotu do rejestru pod numerem okre slonymw uzasadnieniu. POUCZENIE DECYZJA ADMINISTRACYJNA w sprawie wpisie do rejestru dzialalności Po przeprowadzeniu postepowania administracyjneg oi zebraniu materialu dowodowego organ stwierdzil, 2e zachodzą przeslanki uzasadniające wydan ie powyższego rozstrzygnięcia. Strona spelnila/nie spehila wymogi formalne i materialnoprawne. Sosnowiec, dnia 06032021 Podpisi piecze organu Od nriniejszej decyzj shuży stronie odwolanie do Sarmorzadowego Kolegium Odwolawczego, zbżone za pośrednictwem organu, któny wydal decyzje. w terminie 14 dni od dnia jej dorgczenia. Svgn:KPO29067 2022|Zakad Ubetpiecaeń Spolecanyon Oddeia w Waszaie
+  doc_00020.png  numer_kw=PO1P/00307613/3  → BRAK_W_OCR
+    OCR: Sygn KP 029057. 2022 Data wydania: 06.03 2021 Na podstawie po rozpatzenis wniosku Malgorzata Krawczyk art 104 ustawy z dnia 14 czerwca 1960r- Kodeks poslępowania administracyjnego (tị Dz. U. z 2023 r. poz. T75 ze zm) PESEL: 52 1219 16180 NIP. 239039-60-81 adres: ul. Piaskowa 21, 30-001 Bialystok ORZEKAM: UZASADNIENIE Zaklad Ubezpieczen Spolecznych Oddzia w Warszawie Organ orzekam o wpisanu podmiotu do rejestru pod numerem okre slonymw uzasadnieniu. POUCZENIE DECYZJA ADMINISTRACYJNA w sprawie wpisie do rejestru dzialalności Po przeprowadzeniu postepowania administracyjneg oi zebraniu materialu dowodowego organ stwierdzil, 2e zachodzą przeslanki uzasadniające wydan ie powyższego rozstrzygnięcia. Strona spelnila/nie spehila wymogi formalne i materialnoprawne. Sosnowiec, dnia 06032021 Podpisi piecze organu Od nriniejszej decyzj shuży stronie odwolanie do Sarmorzadowego Kolegium Odwolawczego, zbżone za pośrednictwem organu, któny wydal decyzje. w terminie 14 dni od dnia jej dorgczenia. Svgn:KPO29067 2022|Zakad Ubetpiecaeń Spolecanyon Oddeia w Waszaie
+  doc_00042.png  data_urodzenia=07.05.1984  → BRAK_W_OCR
+    OCR: DANE OSOBOWE WNIOSKODAWCY imię í narwisko Babara Wojcik Data urodzenia PESEL: o705. 1964 9080553713 t dowodu osobistego GGS202056 N paszporu LPSO17343 DANE KONTAKTOWE Ades zamieszkania Data Telefon Kopemika 102, 50-001 Bialystok Adres email 49 696 427 048 barbaraojcik69 @p p DANE PODATKOWE Podpis NP Qesl doyczy) 742-95380-13 ZGŁOSZENIE DO REJESTRU L1E)RODO
+  doc_00042.png  numer_paszportu=LP5017343  → BRAK_W_OCR
+    OCR: DANE OSOBOWE WNIOSKODAWCY imię í narwisko Babara Wojcik Data urodzenia PESEL: o705. 1964 9080553713 t dowodu osobistego GGS202056 N paszporu LPSO17343 DANE KONTAKTOWE Ades zamieszkania Data Telefon Kopemika 102, 50-001 Bialystok Adres email 49 696 427 048 barbaraojcik69 @p p DANE PODATKOWE Podpis NP Qesl doyczy) 742-95380-13 ZGŁOSZENIE DO REJESTRU L1E)RODO
+  doc_00054.png  sygnatura_administracyjna=SA.056834.2019  → BRAK_W_OCR
+    OCR: Sygn: SA 0568342019 Data wydania: 25.01 2024 Na podstawie: po rozpatrzeniu wniosku: Iwona Kowalska art 104 ustawy z dnia 14 czerwca 1960 r.- Kodeks postępowania administracyjnego (tị Dz. U.z 2023 r. poz. 775 ze zm.) PESEL: 61122695367 NIP: 476-792-17-51 adres: ul. Kopernika 113, 30-001 Toruń ORZEKAM: UZASADNIENIE Urząd Celno-Skarbowy w Gdańsku Organ ozekam o wpisaniu podmiotu do rejestru pod numerem okreslonym w u zasadn ieniu. POUCZENIE: DECYZJA ADMINISTRACYJNA w sprawie wpisie do rejestru dzialalności Po przeprowadzeniu postępowania administracyjnego i zebraniu materiału dowodowego organ stwierdzi, 2e zachodzą przeslanki uzasadniające wydanie powyższego rozstrzygnięcia. Stona spelnila/nie spehia wymogi formalne i mate rialinoprawne. Gdynia, dnia 25.01.2024 Podpis i pieczęć organu Od niniejszej decyzji shuży stron ie odwolanie do Samorządowe go Kolegium OdwolawCzego, zło2one za pośred nictwem organu, który wydał decyzie, w terminie 14 dni od dnia jej doręczenia. SygnSA050834 20 1o | Urzad Ceno-Skarbowyw Gdańsku
+  doc_00054.png  numer_kw=PO1P/00058248/6  → BRAK_W_OCR
+    OCR: Sygn: SA 0568342019 Data wydania: 25.01 2024 Na podstawie: po rozpatrzeniu wniosku: Iwona Kowalska art 104 ustawy z dnia 14 czerwca 1960 r.- Kodeks postępowania administracyjnego (tị Dz. U.z 2023 r. poz. 775 ze zm.) PESEL: 61122695367 NIP: 476-792-17-51 adres: ul. Kopernika 113, 30-001 Toruń ORZEKAM: UZASADNIENIE Urząd Celno-Skarbowy w Gdańsku Organ ozekam o wpisaniu podmiotu do rejestru pod numerem okreslonym w u zasadn ieniu. POUCZENIE: DECYZJA ADMINISTRACYJNA w sprawie wpisie do rejestru dzialalności Po przeprowadzeniu postępowania administracyjnego i zebraniu materiału dowodowego organ stwierdzi, 2e zachodzą przeslanki uzasadniające wydanie powyższego rozstrzygnięcia. Stona spelnila/nie spehia wymogi formalne i mate rialinoprawne. Gdynia, dnia 25.01.2024 Podpis i pieczęć organu Od niniejszej decyzji shuży stron ie odwolanie do Samorządowe go Kolegium OdwolawCzego, zło2one za pośred nictwem organu, który wydał decyzie, w terminie 14 dni od dnia jej doręczenia. SygnSA050834 20 1o | Urzad Ceno-Skarbowyw Gdańsku
+  doc_00056.png  numer_kw=LD1M/00881819/9  → BRAK_W_OCR
+    OCR: Sygn.: KP.085457.2024 Data wydania: 08.10.2024 Na podstawie: po rozpatrzen iu wniosku: Zofia Michalska art 104 ustawy z dnia 14 czerwca 1960 r. – Kodeks postępowania administracyjnego (t.j. Dz.U.z 2023 r. poz. 775 ze zm.) PESEL: 77032622638 NIP: 559-357-40-17 adres: ul. Piaskowa 135/40, 10-100 Zabrze ORZEKAM: UZASADNIENIE: Urząd Miejski w Krakowie, Wydział Spraw Administracyjnych Organ orzekam o zmianie decyzji pierwotnej z przyczyn wskazanych poniżej. POUCZENIE: DECYZJA ADMINISTRACYJNA W sprawie zmianie decyzji w sprawie świadczenia Po przeprowadzeniu postepowania administracyjnegoi zebraniu materiału dowodowego organ stwierdził, że zachodza przesłanki uzasadniające wydanie powyższego rozstrzygnięcia. Strona spełnita/nie spelnila wymogi formalne i mate rialnoprawne. Kraków, dnia 08.10.2024 Podpisi pieczeć organu Od niniejszej decyzji służy stronie odwoła nie do Samorzą dowe go Kolegium Odwoławczego, złożone za pośrednictwem organu, który wydał decyzje, w terminie 14 dni od dnia jej doręczen ia. Sygn.: KP.085457.2024 | Urzad Mieiski w Krakowie, Wydziat Spraw Administracyjnych
+
+[TOKENY POZA GT] 165 łącznie sekcja B — token spoza GT ≠ błąd silnika:
+  UX_FP=0 (realny problem czytelności)  REVIEW=64 (nieznane)  EXTRA_MASK_POLICY=101 (KWOTA/NUMER, zamierzone)  EXTRA_MASK_OK=0 (nachodzi na GT, zamierzone)
+
+Podział wg warstwy:
+
+  STRUCTURAL/NUMER/NUMER: 50
+    [EXTRA_MASK_POLICY] doc_00002.png  "19.03.2020"
+    [EXTRA_MASK_POLICY] doc_00002.png  "Sygn. akt Km 58272023"
+    [EXTRA_MASK_POLICY] doc_00004.png  "07.03.2020"
+    [EXTRA_MASK_POLICY] doc_00005.png  "12.06.2020"
+    [EXTRA_MASK_POLICY] doc_00005.png  "0151682022"
+    [EXTRA_MASK_POLICY] doc_00006.png  "10.11.2023"
+    [EXTRA_MASK_POLICY] doc_00006.png  "UMOWA/2018/NRIO537"
+    [EXTRA_MASK_POLICY] doc_00008.png  "09.10.2022"
+    [EXTRA_MASK_POLICY] doc_00011.png  "19.11.2020"
+    [EXTRA_MASK_POLICY] doc_00011.png  "Sygn. akt: Il Ns 1898/2019"
+    [EXTRA_MASK_POLICY] doc_00014.png  "25.11.2023"
+    [EXTRA_MASK_POLICY] doc_00015.png  "NIP: 981-544-00-69"
+    [EXTRA_MASK_POLICY] doc_00015.png  "10.07.2020"
+    [EXTRA_MASK_POLICY] doc_00019.png  "tel: 48 730 189 334"
+    [EXTRA_MASK_POLICY] doc_00020.png  "Sygn KP 029057"
+    [EXTRA_MASK_POLICY] doc_00020.png  "KPO29067"
+    [EXTRA_MASK_POLICY] doc_00020.png  "T75"
+    [EXTRA_MASK_POLICY] doc_00020.png  "06032021"
+    [EXTRA_MASK_POLICY] doc_00022.png  "02.01.2025"
+    [EXTRA_MASK_POLICY] doc_00024.png  "22.06.2023"
+    [EXTRA_MASK_POLICY] doc_00025.png  "05.03.2023"
+    [EXTRA_MASK_POLICY] doc_00027.png  "12.09.2021"
+    [EXTRA_MASK_POLICY] doc_00028.png  "16.12.2021"
+    [EXTRA_MASK_POLICY] doc_00031.png  "07.02.2021"
+    [EXTRA_MASK_POLICY] doc_00032.png  "18.12.2021"
+    [EXTRA_MASK_POLICY] doc_00033.png  "17.07.2024"
+    [EXTRA_MASK_POLICY] doc_00036.png  "27.10.2020"
+    [EXTRA_MASK_POLICY] doc_00037.png  "16.08.2024"
+    [EXTRA_MASK_POLICY] doc_00039.png  "01.02.2024"
+    [EXTRA_MASK_POLICY] doc_00042.png  "9080553713"
+    [EXTRA_MASK_POLICY] doc_00043.png  "11.12.2024"
+    [EXTRA_MASK_POLICY] doc_00043.png  "PT.013573 2024"
+    [EXTRA_MASK_POLICY] doc_00044.png  "13.01.2023"
+    [EXTRA_MASK_POLICY] doc_00045.png  "30.07.2020"
+    [EXTRA_MASK_POLICY] doc_00045.png  "FVI2024/06/0636"
+    [EXTRA_MASK_POLICY] doc_00047.png  "02.06.2024"
+    [EXTRA_MASK_POLICY] doc_00049.png  "03.03.2024"
+    [EXTRA_MASK_POLICY] doc_00054.png  "25.01.2024"
+    [EXTRA_MASK_POLICY] doc_00054.png  "Sygn: SA 0568342019"
+    [EXTRA_MASK_POLICY] doc_00056.png  "08.10.2024"
+    [EXTRA_MASK_POLICY] doc_00057.png  "29.08.2024"
+    [EXTRA_MASK_POLICY] doc_00057.png  "IW.000930 2022"
+    [EXTRA_MASK_POLICY] doc_00058.png  "26.05.2022"
+    [EXTRA_MASK_POLICY] doc_00059.png  "10.12.2022"
+    [EXTRA_MASK_POLICY] doc_00059.png  "9400/O8/2023"
+    [EXTRA_MASK_POLICY] doc_00060.png  "01.07.2023"
+    [EXTRA_MASK_POLICY] doc_00061.png  "13.04.2021"
+    [EXTRA_MASK_POLICY] doc_00061.png  "0031822024"
+    [EXTRA_MASK_POLICY] doc_00064.png  "08.10.2022"
+    [EXTRA_MASK_POLICY] doc_00066.png  "01.06.2022"
+  ANCHOR/KWOTA/KWOTA: 26
+    [EXTRA_MASK_POLICY] doc_00002.png  "23 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00004.png  "56 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00005.png  "12.06"
+    [EXTRA_MASK_POLICY] doc_00006.png  "76 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00014.png  "25.11"
+    [EXTRA_MASK_POLICY] doc_00015.png  "16 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00020.png  "o, zb"
+    [EXTRA_MASK_POLICY] doc_00020.png  "06.03"
+    [EXTRA_MASK_POLICY] doc_00022.png  "31 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00023.png  "06.12"
+    [EXTRA_MASK_POLICY] doc_00023.png  "4 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00025.png  "13 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00027.png  "48 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00028.png  "55 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00032.png  "79 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00035.png  "20.04"
+    [EXTRA_MASK_POLICY] doc_00036.png  "39 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00039.png  "43 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00041.png  "55 tysięecy"
+    [EXTRA_MASK_POLICY] doc_00049.png  "6 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00051.png  "13 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00053.png  "71 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00054.png  "25.01"
+    [EXTRA_MASK_POLICY] doc_00057.png  "29.08"
+    [EXTRA_MASK_POLICY] doc_00058.png  "49 tysięcy"
+    [EXTRA_MASK_POLICY] doc_00067.png  "01.02"
+  STRUCTURAL/KWOTA/KWOTA: 24
+    [EXTRA_MASK_POLICY] doc_00002.png  "23,072 PLN"
+    [EXTRA_MASK_POLICY] doc_00004.png  "56,470 PLN"
+    [EXTRA_MASK_POLICY] doc_00006.png  "76,057 PLN"
+    [EXTRA_MASK_POLICY] doc_00015.png  "16418 PLN"
+    [EXTRA_MASK_POLICY] doc_00022.png  "31,533 PLN"
+    [EXTRA_MASK_POLICY] doc_00023.png  "4,077 PLN"
+    [EXTRA_MASK_POLICY] doc_00025.png  "13,282 PLN"
+    [EXTRA_MASK_POLICY] doc_00027.png  "48,324 PLN"
+    [EXTRA_MASK_POLICY] doc_00028.png  "55,918 PLN"
+    [EXTRA_MASK_POLICY] doc_00032.png  "79,944 PLN"
+    [EXTRA_MASK_POLICY] doc_00033.png  "5261 PLN"
+    [EXTRA_MASK_POLICY] doc_00036.png  "39,028 PLN"
+    [EXTRA_MASK_POLICY] doc_00037.png  "24870 PLN"
+    [EXTRA_MASK_POLICY] doc_00039.png  "43,364 PLN"
+    [EXTRA_MASK_POLICY] doc_00041.png  "55,465 PLN"
+    [EXTRA_MASK_POLICY] doc_00045.png  "35558 PLN"
+    [EXTRA_MASK_POLICY] doc_00049.png  "6,628 PLN"
+    [EXTRA_MASK_POLICY] doc_00051.png  "13,691 PLN"
+    [EXTRA_MASK_POLICY] doc_00053.png  "1,438 PLN"
+    [EXTRA_MASK_POLICY] doc_00057.png  "4,336 PLN"
+    [EXTRA_MASK_POLICY] doc_00058.png  "49,684 PLN"
+    [EXTRA_MASK_POLICY] doc_00059.png  "36105 PLN"
+    [EXTRA_MASK_POLICY] doc_00060.png  "45254 PLN"
+    [EXTRA_MASK_POLICY] doc_00064.png  "12829 PLN"
+  NAME_ENGINE/CONTEXTUAL/OSOBA: 22
+    [REVIEW] doc_00002.png  "Piotr Nowacki"
+    [REVIEW] doc_00004.png  "Piotr Nowacki"
+    [REVIEW] doc_00004.png  "Anna"
+    [REVIEW] doc_00005.png  "Beata"
+    [REVIEW] doc_00022.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00022.png  "Jan"
+    [REVIEW] doc_00023.png  "Anna"
+    [REVIEW] doc_00025.png  "Piotr Nowacki"
+    [REVIEW] doc_00027.png  "Marta Kędzierska"
+    [REVIEW] doc_00027.png  "Góra"
+    [REVIEW] doc_00028.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00031.png  "Ewa"
+    [REVIEW] doc_00036.png  "Anna Zielińska"
+    [REVIEW] doc_00041.png  "Tomasz Malinowski"
+    [REVIEW] doc_00047.png  "Bielsko"
+    [REVIEW] doc_00047.png  "Biała"
+    [REVIEW] doc_00047.png  "Piotr"
+    [REVIEW] doc_00049.png  "Tomasz Malinowski"
+    [REVIEW] doc_00049.png  "Zając"
+    [REVIEW] doc_00051.png  "Janusz Wierzbicki"
+    [REVIEW] doc_00059.png  "Jana"
+    [REVIEW] doc_00059.png  "Pawła"
+  NAME_ENGINE/CONTEXTUAL/ADRES: 12
+    [REVIEW] doc_00002.png  "Nowa Huta"
+    [REVIEW] doc_00004.png  "Nowa Huta"
+    [REVIEW] doc_00005.png  "Warszawie"
+    [REVIEW] doc_00005.png  "Zielona Góra"
+    [REVIEW] doc_00011.png  "Warszawie"
+    [REVIEW] doc_00014.png  "Poznaniu"
+    [REVIEW] doc_00019.png  "Poznaniu"
+    [REVIEW] doc_00020.png  "Warszawie"
+    [REVIEW] doc_00025.png  "Nowa Huta"
+    [REVIEW] doc_00047.png  "Radomiu"
+    [REVIEW] doc_00054.png  "Gdańsku"
+    [REVIEW] doc_00056.png  "Krakowie"
+  ADDRESS_ENGINE/STREET_NO_ZIP/ADRES: 12
+    [REVIEW] doc_00004.png  "ul. Lipowa 9739"
+    [REVIEW] doc_00013.png  "ul. Sjenkiewicza 86"
+    [REVIEW] doc_00023.png  "al. Jana Pawła 11"
+    [REVIEW] doc_00033.png  "ul. Polna 41"
+    [REVIEW] doc_00037.png  "ul. Kwiatowa 32"
+    [REVIEW] doc_00045.png  "ul. Zielona 82/16"
+    [REVIEW] doc_00051.png  "ul, Kolejowa 193/36"
+    [REVIEW] doc_00053.png  "ul. Sienkiewicza 224"
+    [REVIEW] doc_00059.png  "ul. Ogrodowa 115/25"
+    [REVIEW] doc_00060.png  "ul. Sienkiewicza 127"
+    [REVIEW] doc_00061.png  "ul. Kopernika 533"
+    [REVIEW] doc_00064.png  "ul. Kwiatowa 69/10"
+  ADDRESS_ENGINE/POSTAL_K1/ADRES: 10
+    [REVIEW] doc_00019.png  "66-001 Kielce"
+    [REVIEW] doc_00022.png  "03-300 Biafystok"
+    [REVIEW] doc_00033.png  "41-200 Gliwice"
+    [REVIEW] doc_00037.png  "41-200 Gdańsk"
+    [REVIEW] doc_00041.png  "60-001 Radon"
+    [REVIEW] doc_00045.png  "44-100 Rzeszów"
+    [REVIEW] doc_00053.png  "41-200 Biesko"
+    [REVIEW] doc_00059.png  "41-200 Gliwice"
+    [REVIEW] doc_00060.png  "87-100 Białystok"
+    [REVIEW] doc_00064.png  "90-001 Olsztyn"
+  NAME_ENGINE/CONTEXTUAL/FIRMA: 4
+    [REVIEW] doc_00033.png  "Doradztwo Biznesowe EXPERT Sp. z o.o."
+    [REVIEW] doc_00037.png  "Serwis AGD ELEKTRO Sp. z o.o."
+    [REVIEW] doc_00059.png  "Przedsiębiorstwo Budowlane MARBUD S.A."
+    [REVIEW] doc_00060.png  "Firma Logistyczna TRANS Sp. z o.o."
+  ANCHOR/NUMER/NUMER: 1
+    [EXTRA_MASK_POLICY] doc_00031.png  "Sygn.: KP.O98304,2019 | Urzad Regulac Energetyki"
+  ANCHOR/ADRES/ADRES: 1
+    [REVIEW] doc_00041.png  "36/6"
+  ADDRESS_ENGINE/STREET_FULL/ADRES: 1
+    [REVIEW] doc_00042.png  "Kopemika 102, 50-001 Bialystok"
+  ANCHOR/EMAIL/EMAIL: 1
+    [REVIEW] doc_00042.png  "barbaraojcik69@p"
+  ADDRESS_ENGINE/POSTAL_K3/ADRES: 1
+    [REVIEW] doc_00053.png  "60-001"
+

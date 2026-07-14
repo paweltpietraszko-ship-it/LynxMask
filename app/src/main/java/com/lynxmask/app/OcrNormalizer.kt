@@ -105,16 +105,49 @@ object OcrNormalizer {
 
     // ----------------------------------------------------------
     // OCR: cyfry mylone z literami — TYLKO gdy otoczone literami po obu stronach
+    // BUG-1-JAKO-L-NA-KODZIE (12.07): "PO1P/00793300/9" (numer księgi wieczystej, czysty
+    // tekst) miało cyfrę '1' otoczoną literami — dokładnie kształt który ta reguła naprawia
+    // dla tekstu po OCR, ale tu '1' było prawdziwą cyfrą kodu. PIERWSZA próba fixu (negatywny
+    // lookahead "nie podmieniaj gdy zaraz potem jest /cyfra") była łatką pod TEN JEDEN
+    // przykład — złapana przez właściciela: VIN ("WVWZZZ1JZXW000001", bez ukośnika) psuł się
+    // dalej. Prawdziwie ogólna zasada (ta sama co fixNameLetterConfusion niżej): podmieniaj
+    // TYLKO gdy wynik STAJE SIĘ rozpoznawalnym słowem (pełny słownik Morfologika — nie tylko
+    // nazwiska — LUB imię/nazwisko), którym oryginał NIE BYŁ. Struktura kodu (VIN/KW/sygnatura)
+    // nigdy nie staje się słowem niezależnie od tego którą cyfrę podmienimy — zostaje
+    // nietknięta z konstrukcji, nie dzięki zgadywaniu kolejnego kształtu interpunkcji.
     // ----------------------------------------------------------
-    private val OCR_ONE_AS_L = Regex(
-        """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])1(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
-    )
-    private val OCR_ZERO_AS_O = Regex(
-        """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])0(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
-    )
     private val OCR_PIPE_AS_L = Regex(
         """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])\|(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
     )
+
+    private val OCR_DIGIT_LETTER_WORD = Regex(
+        """\b[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9]{1,19}\b"""
+    )
+
+    private fun isRecognizedWord(word: String): Boolean {
+        val lower = word.lowercase()
+        if (LookupTables.surnamesForms.contains(lower) || LookupTables.namesForms.contains(lower)) return true
+        return MorfologikHelper.tags(word).isNotEmpty()
+    }
+
+    private fun fixDigitLetterConfusion(word: String): String? {
+        if (word.none { it == '1' || it == '0' }) return null
+        if (isRecognizedWord(word)) return null  // już poprawne słowo/kod-jak-wyglądający — nie zgaduj dalej
+        val hits = mutableSetOf<String>()
+        for (i in word.indices) {
+            val replacement = when (word[i]) {
+                '1' -> 'l'
+                '0' -> 'o'
+                else -> null
+            } ?: continue
+            val prevIsLetter = i > 0 && word[i - 1].isLetter()
+            val nextIsLetter = i < word.length - 1 && word[i + 1].isLetter()
+            if (!prevIsLetter || !nextIsLetter) continue
+            val candidate = word.substring(0, i) + replacement + word.substring(i + 1)
+            if (isRecognizedWord(candidate)) hits += candidate
+        }
+        return hits.singleOrNull()
+    }
 
     // ----------------------------------------------------------
     // OCR: spacja w środku nazwy ulicy po prefiksie
@@ -227,6 +260,36 @@ object OcrNormalizer {
     )
 
     // ----------------------------------------------------------
+    // OCR_NAME_L_AS_I (12.07, diagnoza Cursor): litera 'l' zamiast 'i' w nazwisku/imieniu —
+    // ten sam mechanizm co OCR_SURNAME_MIDSPACE (sprawdza LookupTables), ale dla pomyłki
+    // LITERY w środku jednego słowa, nie brakującej spacji. "Kamlnska" (OCR: 'i'→'l') nie
+    // trafiało do surnamesForms w ŻADNYM miejscu silnika — naprawa TU, u źródła.
+    // Bezpieczne z konstrukcji: poprawka TYLKO gdy podstawienie 'l'→'i' w JEDNEJ pozycji
+    // odblokowuje jednoznaczne trafienie w słowniku — słowo już poprawne, albo dla którego
+    // zero/wiele podstawień daje trafienie, zostaje nietknięte.
+    // ----------------------------------------------------------
+    private val OCR_NAME_CANDIDATE = Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,19})\b""")
+
+    private fun fixNameLetterConfusion(word: String): String? {
+        if ('l' !in word) return null
+        // BUG-NAME-CONFUSION-GUARD-FIX (ultrareview): brakował ten sam strażnik co w
+        // fixDigitLetterConfusion (isRecognizedWord — słownik nazwisk/imion + Morfologik).
+        // Bez niego zwykłe polskie słowo z 'l' (nie tylko nazwisko) było poddawane zgadywaniu
+        // podstawienia, jeśli podstawienie przypadkiem trafiało w słownik nazwisk.
+        if (isRecognizedWord(word)) return null
+        val hits = mutableSetOf<String>()
+        for (i in word.indices) {
+            if (word[i] != 'l') continue
+            val candidate = word.substring(0, i) + "i" + word.substring(i + 1)
+            val candidateLower = candidate.lowercase()
+            if (LookupTables.surnamesForms.contains(candidateLower) || LookupTables.namesForms.contains(candidateLower)) {
+                hits += candidate
+            }
+        }
+        return hits.singleOrNull()
+    }
+
+    // ----------------------------------------------------------
     // OCR_EMAIL_AT_Q v1.7: naprawa '@' zamienionego na 'Q' przez OCR
     //
     // "lukaszszymanski Qinteria.pl" → "lukaszszymanski@interia.pl"
@@ -266,13 +329,20 @@ object OcrNormalizer {
     )
 
     // OCR_EMAIL_COMPACT (krok 0b): spacje wewnątrz emaila przed pozostałymi krokami email
-    private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)\s+([a-zA-Z0-9])""")
+    // BUG-EMAIL-CROSS-NEWLINE-FIX (09.07, diagnoza: test_email_izolowany_09_07.txt, linie
+    // 1-6 sklejały się w jeden token): goły \s+ w tych trzech wzorcach obejmował \n, więc
+    // "naprawa spacji" mostkowała koniec jednego maila (np. "...kancelaria.pl") przez znak
+    // nowej linii do POCZĄTKU zupełnie innego, niepowiązanego maila w kolejnej linii
+    // ("m.kowalczyk@...") i sklejała je w jeden zdegradowany ciąg. Ten sam mechanizm co
+    // BUG-KWOTA-CROSS-NEWLINE-FIX/BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07) — [^\S\n]+ zamiast
+    // \s+, żeby "napraw spację w tej linii" nie mostkowało do sąsiedniej.
+    private val OCR_EMAIL_SPACE_AFTER_AT = Regex("""(@)[^\S\n]+([a-zA-Z0-9])""")
     // Tylko typowe artefakty OCR — nie skleja "krzysztof nowakowski@" (→ LOCALSPACE _)
     private val OCR_EMAIL_SPACE_BEFORE_AT_DOT = Regex(
-        """([a-zA-Z0-9._%+\-]*\.[a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]+@)"""
+        """([a-zA-Z0-9._%+\-]*\.[a-zA-Z0-9._%+\-]+)[^\S\n]+([a-zA-Z0-9._%+\-]+@)"""
     )
     private val OCR_EMAIL_SPACE_BEFORE_AT_DIGITS = Regex(
-        """([a-zA-Z0-9._%+\-]+)\s+([a-zA-Z0-9._%+\-]*\d[a-zA-Z0-9._%+\-]*@)"""
+        """([a-zA-Z0-9._%+\-]+)[^\S\n]+([a-zA-Z0-9._%+\-]*\d[a-zA-Z0-9._%+\-]*@)"""
     )
 
     // ----------------------------------------------------------
@@ -303,7 +373,7 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_ADDR_PREFIX (04.07, diagnoza Cursor — BUG-PI-WOLHOCI): analogicznie do OCR_UL_PREFIX,
     // ale dla al./os./pl. — "pI. Nazwa" (duże I zamiast małego l), "aI.", "o5." itp.
-    // AnchorEngine A.11 i StructuralEngine ADDRESS_PATTERNS wymagają dosłownie "pl\."/"al\."/"os\." —
+    // AnchorEngine A.11 i AddressEngine wymagają dosłownie "pl\."/"al\."/"os\." —
     // bez tej normalizacji zdegradowany prefiks nigdy nie trafia w żadną z tych kotwic.
     // "ul." NIE tu — w pełni obsłużone już przez OCR_UL_PREFIX powyżej.
     // ----------------------------------------------------------
@@ -363,8 +433,11 @@ object OcrNormalizer {
     // Przykład: "PESE1: T2030375656" → "PESE1: 72030375656"
     // Przykład: "PESEL T2030375656"  → "PESEL 72030375656"
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} (keyword->wartość, oba wystąpienia)
+    // -> [^\S\n]{0,3} — "PESEL" na końcu linii nie może wziąć 11 cyfropodobnych znaków
+    // z POCZĄTKU zupełnie innej, niepowiązanej linii.
     private val OCR_PESEL_WORD = Regex(
-        """(?i)(?<![a-zA-Z0-9])P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3}([TIlOSBGZ0-9]{11})(?!\d)"""
+        """(?i)(?<![a-zA-Z0-9])P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|][^\S\n]{0,3}:?[^\S\n]{0,3}([TIlOSBGZ0-9]{11})(?!\d)"""
     )
     private val OCR_NUMERIC_CHAR_MAP = mapOf(
         'T' to '7', 'I' to '1', 'l' to '1',
@@ -404,8 +477,12 @@ object OcrNormalizer {
     // zamiast prostej klasy znaków ze spacją — spacja dozwolona jako separator TYLKO
     // gdy nie zaczyna kształtu kodu pocztowego (\d{2}-).
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): pierwsze dwa \s{0,3} (keyword->wartość) ->
+    // [^\S\n]{0,3}. WEWNĘTRZNY \s(?!\d{2}-) (kontynuacja cyfr WEWNĄTRZ wartości PESEL,
+    // BUG-PESEL-KOD-SKLEJENIE-FIX 01.07) zostaje bez zmian — inny podtyp, świadomie
+    // toleruje \n między cyframi tej samej wartości.
     private val OCR_PESEL_SPLIT = Regex(
-        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|]\s{0,3}:?\s{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
+        """(?i)(P[^\S\n]?[E3][^\S\n]?[S5B8][^\S\n]?[E3][^\S\n]?[LlI1i|][^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOo0-9](?:[TIlOo0-9]|\s(?!\d{2}-)){9,13}[TIlOo0-9])"""
     )
 
     // ----------------------------------------------------------
@@ -413,8 +490,9 @@ object OcrNormalizer {
     // Obsługuje "NIP:" i "NIP modyfikator:" (nabywcy, świadka, sprzedawcy itp.).
     // Gr. 1 = keyword + opcjonalny modyfikator + separator; Gr. 2 = garbled cyfry.
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} -> [^\S\n]{0,3}
     private val OCR_NIP_DIGITS = Regex(
-        """(?i)(NIP\s{0,3}(?:\w{1,16}\s{0,3})?:?\s{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
+        """(?i)(NIP[^\S\n]{0,3}(?:\w{1,16}[^\S\n]{0,3})?:?[^\S\n]{0,3})([TIlOSBGZ0-9][TIlOSBGZ0-9\-]{8,11}[TIlOSBGZ0-9])(?!\d)"""
     )
 
     // ----------------------------------------------------------
@@ -540,8 +618,9 @@ object OcrNormalizer {
     // ----------------------------------------------------------
     // OCR_REGON_DIGITS: REGON 9-cyfrowy lub 14-cyfrowy
     // ----------------------------------------------------------
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,3} -> [^\S\n]{0,3}
     private val OCR_REGON_DIGITS = Regex(
-        """(?i)(?<=REGON\s{0,3}:?\s{0,3})([TIlOSBGZ0-9]{9}(?:[TIlOSBGZ0-9]{5})?)(?!\d)"""
+        """(?i)(?<=REGON[^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOSBGZ0-9]{9}(?:[TIlOSBGZ0-9]{5})?)(?!\d)"""
     )
 
     // ----------------------------------------------------------
@@ -581,6 +660,20 @@ object OcrNormalizer {
     private val OCR_DIGIT_IN_CONTEXT = Regex("""(?<=\d)[lOIo]+(?=[\s\-./]*\d)""")
 
     // ----------------------------------------------------------
+    // OCR_ZERO_RUN_IN_AMOUNT (krok 14b, Paweł 08.07): OCR_DIGIT_IN_CONTEXT wymaga cyfry
+    // BEZPOŚREDNIO przed literą — nie łapie "15 OOO,OO" (spacja między "15" a "OOO" łamie
+    // lookbehind) ani "5OO" gdy po nim nie ma już cyfry tylko waluta ("5OO PLN"). Zasada
+    // Pawła: w wyrażeniu zaczynającym się od cyfry, RUN 2+ wielkich liter "O" to prawie na
+    // pewno zera (prawdziwe polskie słowo nigdy nie ma "OO"/"OOO" pod rząd) — dotyczy to
+    // całego wyrażenia liczbowego (grupy tysięcy + część dziesiętna), nie tylko sąsiedztwa
+    // pojedynczej cyfry. Fix u źródła (Warstwa 0) zamiast w D-klasie każdego silnika osobno.
+    // Pojedyncze "O" (bez rundy 2+) NIE jest konwertowane — zbyt duże ryzyko FP na "5O1" itp.
+    // ----------------------------------------------------------
+    private val OCR_ZERO_RUN_IN_AMOUNT = Regex(
+        """\b\d[\dO]{0,5}(?:[^\S\n][\dO]{3,4}){0,4}(?:[^\S\n]?[,.][^\S\n]?[\dO]{1,2})?\b"""
+    )
+
+    // ----------------------------------------------------------
     // DE-LEET (krok 15): cyfry jako litery w tokenach zaczynających się wielką
     // literą — tylko gdy wynik trafia w słownik imion lub nazwisk.
     // "Be4ta" → "Beata", "Krzy5zt0f" → "Krzysztof", "N0w1ck1" → "Nowicki"
@@ -611,12 +704,16 @@ object OcrNormalizer {
     // Bez lookbehind — Android ICU wymaga bounded lookbehind; \w* / \s* w (?<=…) crashuje test.
     // {24,32} = max middle dla PL IBAN z spacjami (P + 32 + last = 34 znaków total).
     // Bez (?!\w): regex matchuje nawet gdy IBAN przylega bez separatora do kolejnego tokenu.
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s{0,1}/\s+/\s{0,3} -> [^\S\n] warianty —
+    // "IBAN"/"konto" na końcu linii nie może wziąć znaków z POCZĄTKU innej, niepowiązanej linii.
     private val OCR_IBAN_DIGITS = Regex(
-        """(?i)((?:IBAN|Nr\s{0,1}kont\w{0,6}|kont\w{0,4}|N\s+kort\w{0,6})\s{0,3}:?\s{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,32}[TIlOSBGZ0-9A-Z])"""
+        """(?i)((?:IBAN|Nr[^\S\n]{0,1}kont\w{0,6}|kont\w{0,4}|N[^\S\n]+kort\w{0,6})[^\S\n]{0,3}:?[^\S\n]{0,3})([TIlOSBGZ0-9A-Z][TIlOSBGZ0-9A-Z ]{24,32}[TIlOSBGZ0-9A-Z])"""
     )
 
     // OCR_IBAN_PL_LOOSE: zdeformowany PL… bez poprawnej struktury (benchmark lvl 1–2)
-    private val OCR_IBAN_PL_LOOSE = Regex("""\bPL([TIlOSBGZ0-9A-Za-z\s]{20,40})\b""")
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s w klasie wartości -> spacja/tab dosłowne
+    // (bez \n) — "PL" na końcu linii nie może wciągnąć całej NASTĘPNEJ, niepowiązanej linii.
+    private val OCR_IBAN_PL_LOOSE = Regex("""\bPL([TIlOSBGZ0-9A-Za-z \t]{20,40})\b""")
 
     private fun isGarbledPlIban(raw: String): Boolean {
         val body = raw.drop(2)
@@ -685,16 +782,18 @@ object OcrNormalizer {
             "${m.groupValues[1]}o."
         }
 
-        // 2. Cyfra 1 między literami → l
-        text = OCR_ONE_AS_L.replace(text) { m ->
-            corrections++
-            "l"
-        }
-
-        // 3. Cyfra 0 między literami → o
-        text = OCR_ZERO_AS_O.replace(text) { m ->
-            corrections++
-            "o"
+        // 2+3. Cyfra 1/0 między literami → l/o — TYLKO gdy podstawienie odblokowuje
+        // rozpoznawalne słowo (słownik Morfologika + imiona/nazwiska), którym oryginał nie
+        // był. Kody strukturalne (VIN/KW/sygnatura) nigdy nie stają się słowem, więc
+        // zostają nietknięte niezależnie od kształtu interpunkcji wokół nich.
+        text = OCR_DIGIT_LETTER_WORD.replace(text) { m ->
+            val fixed = fixDigitLetterConfusion(m.value)
+            if (fixed != null) {
+                corrections++
+                fixed
+            } else {
+                m.value
+            }
         }
 
         // 4. Pipe | między literami → l
@@ -729,6 +828,20 @@ object OcrNormalizer {
                 if (LookupTables.surnamesForms.contains(candidate.lowercase())) {
                     corrections++
                     candidate
+                } else {
+                    m.value
+                }
+            }
+        }
+
+        // 6d. OCR: litera 'l' zamiast 'i' w nazwisku/imieniu — sprawdza LookupTables
+        //     "Kamlnska" → "Kaminska" gdy podstawienie jednoznacznie trafia w słownik
+        if (LookupTables.initialized) {
+            text = OCR_NAME_CANDIDATE.replace(text) { m ->
+                val fixed = fixNameLetterConfusion(m.groupValues[1])
+                if (fixed != null) {
+                    corrections++
+                    fixed
                 } else {
                     m.value
                 }
@@ -955,6 +1068,15 @@ object OcrNormalizer {
         text = OCR_DIGIT_IN_CONTEXT.replace(text) { m ->
             val fixed = m.value.map { OCR_NUMERIC_CHAR_MAP[it] ?: it }.joinToString("")
             if (fixed != m.value) corrections++
+            fixed
+        }
+
+        // 14b. OCR: run 2+ liter "O" w wyrażeniu liczbowym (nawet oddzielonym spacją od
+        // cyfry) → zera. Patrz OCR_ZERO_RUN_IN_AMOUNT wyżej.
+        text = OCR_ZERO_RUN_IN_AMOUNT.replace(text) { m ->
+            if (!m.value.contains("OO")) return@replace m.value
+            val fixed = m.value.map { if (it == 'O') '0' else it }.joinToString("")
+            corrections++
             fixed
         }
 

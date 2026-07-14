@@ -1,0 +1,52 @@
+=============================================================
+TEST NUMER FAKTURY — 20 WARIANTÓW (CZYSTE + IMITACJA OCR)
+Cel: zamknięcie sesji KWOTA_001 (NUMER_003 jako kotwica w AnchorEngine).
+Każda linia to osobny przypadek — sprawdź w Podglądzie tekstu czy
+CAŁY numer faktury zniknął (token NUMER_xxx), bez jawnej resztki.
+Punkt 10 jest KONTROLNY — "23%" to stawka VAT, NIE numer faktury,
+MUSI zostać widoczne w tekście (nie powinno się zamaskować).
+=============================================================
+
+--- SEKCJA 1: ZAPISY CZYSTE (bez degradacji OCR) ---
+
+1) Faktura VAT nr NUMER_004
+
+2) FAKTURA VAT Nr NUMER_005
+
+3) Faktura NUMER_013
+
+4) nr faktury: NUMER_006
+
+5) Faktura NUMER_012
+
+6) NUMER_018
+
+7) NUMER_007
+
+8) NUMER_011
+
+9) Faktura VAT NUMER_001
+
+10) Faktura VAT 23%
+
+--- SEKCJA 2: IMITACJA DEGRADACJI OCR ---
+
+11) FAKTURA VAT Nr NUMER_009
+
+12) NUMER_017
+
+13) FAKTURA VAT NUMER_016
+
+14) Faktura VAT FV NUMER_010
+
+15) FAKTURA VAT Nr NUMER_009
+
+16) Faktura VAT NR F.V. NUMER_002
+
+17) FAKTURA VAT NUMER_015
+
+18) FAKTURA VAT  NUMER_014
+
+19) FAKTURA VAT Nr NUMER_008
+
+20) Faktura VAT NUMER_002

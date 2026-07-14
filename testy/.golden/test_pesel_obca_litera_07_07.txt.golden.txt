@@ -1,0 +1,5 @@
+Data NUMER_004 Sporzadzila: OSOBA_001 Dotyczy: interwencji dotyczącej zaduzenia czynszowego. W dniu NUMER_004 do biura zglosila się nastepująca osoba OSOBA_002 NUMER_001 Adres: ADRES_002, ADRES_005 NUMER_008.
+
+Komornik Sadowy przy SR dla Wroclawia-Fabrycznej OSOBA_003 NUMER_006 Data NUMER_005 OSOBA_004, ADRES_001, ADRES_004, na podstawie tytulu wykonawczego komornik sadowy zawiadamia, ze w sprawie prowadzonej pod NUMER_007 wszczeto postepowanie egzekucyjne przeciwko dluznikowi OSOBA_004, NUMER_002 zamieszkalej ADRES_003.
+
+Kontrahent NUMER_003 zarejestrowany w ADRES_006.

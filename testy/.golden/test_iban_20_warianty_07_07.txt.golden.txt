@@ -1,0 +1,40 @@
+IBAN: NUMER_001
+
+Nr konta: NUMER_002
+
+Przelew na konto: NUMER_003
+
+Rachunek bankowy NUMER_004
+
+IBAN NUMER_001
+
+konto komornika: NUMER_005
+
+Wplata na NUMER_001 prosze
+
+IBAN: NUMER_001
+
+numer konta:NUMER_002
+
+Nr rachunku: NUMER_006 1 2 8 7 4
+
+konto: NUMER_001
+
+NUMER_008
+
+Platnosc NUMER_009 2agraniczna
+
+konto
+NUMER_001
+
+Nr konta bankowego do zwrotu: NUMER_007
+
+NUMER_001
+
+IBAN:NUMER_001.
+
+Wplynelo na konto NUMER_001
+
+konto bankowe: NUMER_001
+
+Zwrot na rachunek, IBAN: NUMER_001, w terminie 7 dni

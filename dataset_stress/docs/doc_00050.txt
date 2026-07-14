@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV-03506/08/2025
+
+Data wystawienia: 09.07.2021
+Numer klienta: KL-80592
+
+----------------------------------------
+SPRZEDAWCA:
+ALFA Sp. z o.o.
+Adres: ul. Pokładowa 129, 31-001 Łyczaków
+NIP: 886-527-85-83   REGON: 444375756
+Nr konta: PL06325000034419866524041574
+
+NABYWCA:
+Rakesh Kiljanek
+Adres: ul. Bławatka 181/14, 70-001 Podzakrzówek
+NIP: 649-733-48-48
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa serwisowa                  2    1310   8%     2620     2830
+2.   Naprawa sprzętu                   1    1421   8%     1421     1535
+3.   Naprawa sprzętu                   1     255  23%      255      314
+4.   Szkolenie zawodowe                8     255   8%     2040     2203
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         6882 PLN
+
+Płatność przelewem: PL06325000034419866524041574
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

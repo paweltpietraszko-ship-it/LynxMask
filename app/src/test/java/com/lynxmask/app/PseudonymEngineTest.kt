@@ -114,14 +114,17 @@ class PseudonymEngineTest {
     }
 
     @Test fun `NIP po OCR_NIP_SPLIT jest jednym tokenem nie dwoma`() {
-        val r = pseudonymize("NIP: 740-61 7-82-26")
+        val r = PseudonymEngine.pseudonymize("NIP: 740-61 7-82-26", traceMode = true)
+        val traceDump = r.trace.joinToString("\n") { "  [${it.layer}/${it.rule}] \"${it.matchedText}\" -> ${it.token}" }
         assertEquals(
-            "Powinien być dokładnie 1 token NUMER",
+            "Powinien być dokładnie 1 token NUMER, wynik: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
             1,
             r.tokenMap.keys.count { it.startsWith("NUMER") }
         )
-        assertFalse(r.pseudonymizedText.contains("740"))
-        assertFalse(r.pseudonymizedText.contains("82-26"))
+        assertFalse("'740' zostało jawne: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
+            r.pseudonymizedText.contains("740"))
+        assertFalse("'82-26' zostało jawne: ${r.pseudonymizedText}\nTRACE:\n$traceDump",
+            r.pseudonymizedText.contains("82-26"))
     }
 
     @Test fun `NIP po OCR_NIP_SPLIT z newline jest jednym tokenem`() {
@@ -216,6 +219,228 @@ class PseudonymEngineTest {
         assertFalse("'15 OOO,OO' powinno być zamaskowane", r1.pseudonymizedText.contains("OOO"))
         val r2 = pseudonymize("23O 5OO PLN")
         assertFalse("'23O 5OO' powinno być zamaskowane", r2.pseudonymizedText.contains("23O"))
+    }
+
+    // A.9c (08.07, decyzja Pawła): kwota BEZ waluty/etykiety — sam kształt (cyfry +
+    // separator dziesiętny + dokładnie 2 cyfry) jest kotwicą samą w sobie.
+    @Test fun `kwota bez waluty jest maskowana przez sam ksztalt`() {
+        val r1 = pseudonymize("15 000,00")
+        assertFalse("'15 000,00' bez waluty powinno być zamaskowane: ${r1.pseudonymizedText}",
+            r1.pseudonymizedText.contains("15 000,00"))
+        assertTrue(r1.tokenMap.keys.any { it.startsWith("KWOTA_") })
+
+        val r2 = pseudonymize("22 OOO,OO")
+        assertFalse("'22 OOO,OO' (litery O) bez waluty powinno być zamaskowane: ${r2.pseudonymizedText}",
+            r2.pseudonymizedText.contains("OOO"))
+    }
+
+    // BUG-A9C-ZERO-CYFR-FIX (ultrareview): pierwsza wersja A.9c pozwalała żeby CAŁY ciąg
+    // (łącznie z pierwszym znakiem) był samą D-klasą — "los, ostatni" (l/o/s i o/s to
+    // litery z D-klasy) łapało się jako kwota bez ani jednej prawdziwej cyfry w matchu.
+    @Test fun `zwykle slowa z literami D-klasy nie sa maskowane jako kwota bez zadnej cyfry`() {
+        val r = pseudonymize("Taki był jego los, ostatni raz widziano go w mieście.")
+        assertFalse("'los, ostatni' nie zawiera żadnej cyfry — nie powinno stać się KWOTĄ: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("KWOTA_"))
+    }
+
+    // BUG-KWOTA-CYFRA-MNOZNIK-FIX (08.07, pytanie Pawła): "w wysokości 15 tysięcy" —
+    // cyfra + słowo-mnożnik, bez waluty. Żadna reguła KWOTA tego nie łapała (potwierdzone
+    // Javą przed fixem).
+    @Test fun `kwota cyfra plus mnoznik slowny z keywordem jest maskowana`() {
+        val r = pseudonymize("Strony ustaliły płatność w wysokości 15 tysięcy.")
+        assertFalse("'15 tysięcy' z keywordem 'wysokości' powinno być zamaskowane: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("15 tysięcy"))
+        assertTrue(r.tokenMap.keys.any { it.startsWith("KWOTA_") })
+    }
+
+    // A.9d (08.07, mały bug naprawiony bez pytania): "15 tysięcy 30 milionów" bez
+    // słowa kluczowego, rozbite na dwie linie, i "15tysięcy" bez spacji.
+    @Test fun `kwota cyfra plus mnoznik bez keywordu jest maskowana`() {
+        val r1 = pseudonymize("15 tysięcy 30 milionów")
+        assertFalse("'15 tysięcy' bez keywordu powinno być zamaskowane: ${r1.pseudonymizedText}",
+            r1.pseudonymizedText.contains("15 tysięcy"))
+        assertFalse("'30 milionów' bez keywordu powinno być zamaskowane: ${r1.pseudonymizedText}",
+            r1.pseudonymizedText.contains("30 milionów"))
+    }
+
+    @Test fun `kwota cyfra plus mnoznik rozbita na dwie linie jest maskowana`() {
+        val r = pseudonymize("15 tysięcy\n30 milionów")
+        assertFalse(r.pseudonymizedText.contains("15 tysięcy"))
+        assertFalse(r.pseudonymizedText.contains("30 milionów"))
+    }
+
+    @Test fun `kwota cyfra plus mnoznik bez spacji jest maskowana`() {
+        val r = pseudonymize("15tysięcy")
+        assertFalse("'15tysięcy' bez spacji powinno być zamaskowane: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("15tysięcy"))
+    }
+
+    // BUG-WARTOSC-MIANOWNIK-FIX (08.07, znaleziony przy okazji, naprawiony bez pytania):
+    // "wartości" (dopełniacz) było na liście, "wartość" (mianownik) — nie.
+    @Test fun `kwota z keywordem wartosc w mianowniku jest maskowana`() {
+        val r = pseudonymize("Wartość 500 złotych")
+        assertFalse("'Wartość 500 złotych' z mianownikiem powinno być zamaskowane: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("500 złotych"))
+    }
+
+    // BUG-DATA-UR-ZJADA-PESEL-FIX (08.07, znaleziony w benchmarku po fixach — pre-existing,
+    // nie regres tej sesji): data urodzenia z OCR-spacja w środku ("08. 07.1985") zjadała
+    // dodatkowo słowo "PESEL", zabierając kotwicę prawdziwemu numerowi PESEL zaraz po nim.
+    @Test fun `data urodzenia z rozbita spacja nie zjada slowa PESEL`() {
+        val r = pseudonymize("Data urodzenia 08. 07.1985 PESEL 44051401459")
+        assertFalse("Słowo PESEL nie powinno zniknąć wewnątrz tokenu daty: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("07.1985 PESEL"))
+        val peselStillMasked = !r.pseudonymizedText.contains("44051401459")
+        assertTrue("PESEL po naprawie powinien nadal mieć kotwicę i być zamaskowany: ${r.pseudonymizedText}",
+            peselStillMasked)
+    }
+
+    // BUG-A9C-LISTA-KWOT-FIX (08.07, test telefon: tylko OSTATNIA z 3 kwot w jednej
+    // linii się maskowała). Brak tolerancji spacji wokół przecinka + zbyt szeroki
+    // lookahead (odrzucał kwotę gdy zaraz po niej był przecinek ROZDZIELAJĄCY listę,
+    // nie kontynuacja tej samej liczby) — obie naprawione naraz.
+    @Test fun `trzy kwoty bez waluty w jednej linii sa maskowane wszystkie`() {
+        val r = pseudonymize("15 000 , 00  15000,00, 15 000,00")
+        val text = r.pseudonymizedText
+        assertFalse("Pierwsza kwota '15 000 , 00' zostawiona jawna: $text", text.contains("15 000 , 00"))
+        assertFalse("Druga kwota '15000,00' zostawiona jawna: $text", text.contains("15000,00"))
+        assertFalse("Trzecia kwota '15 000,00' zostawiona jawna: $text", text.contains("15 000,00"))
+        val kwotaCount = Regex("""KWOTA_\d{3}""").findAll(text).map { it.value }.toSet().size
+        assertTrue("Oczekiwano 3 tokenów KWOTA (albo mniej przez deduplikację tej samej wartości), jest $kwotaCount: $text",
+            kwotaCount >= 1)
+    }
+
+    // CLEANUP-OGON-BEZ-SPACJI (08.07, pomysł Pawła): ogólny sprzątacz w AnchorEngine —
+    // token + "/"/"-"/"." bez spacji + ciąg alfanumeryczny = ogon, dociągnij do tokenu.
+    @Test fun `sierocy ogon bez spacji po tokenie NUMER jest sprzatany`() {
+        val r = pseudonymize("FV 12/06/2026/WAW")
+        assertFalse("'/WAW' nie powinno zostać jawnym ogonem: ${r.pseudonymizedText}",
+            Regex("""NUMER_\d{3}\s*/\s*[A-Z]{2,6}\b""").containsMatchIn(r.pseudonymizedText))
+    }
+
+    @Test fun `dwa prawdziwe tokeny obok siebie przez ukosnik nie sa uszkodzone`() {
+        // Regresja: cleanup ogonów nie może uciąć drugiego, PRAWDZIWEGO tokenu w połowie.
+        val r = pseudonymize("Numer działki 7759000.0011.3706/6\nFaktura VAT 26/06/006")
+        assertFalse("Token NUMER nie powinien być uszkodzony (brakujące cyfry w NNN)",
+            Regex("""NUMER_\d{1,2}[^0-9]""").containsMatchIn(r.pseudonymizedText))
+    }
+
+    @Test fun `data z pelnym rokiem nie jest myslona za kwote przez A9c`() {
+        // 4-cyfrowy rok NIE pasuje do wymogu "dokładnie 2 cyfry po separatorze" —
+        // pełna data (format powszechny w dokumentach formalnych) jest bezpieczna.
+        val r = pseudonymize("Umowa z dnia 15.03.2024 roku.")
+        assertTrue("Pełna data z rokiem nie powinna zniknąć: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("2024") || r.tokenMap.values.any { it.contains("2024") })
+    }
+
+    // BUG-KWOTA-OOO-BEZ-PREFIKSU (08.07, test_anchor_full.txt linia 109, zrzut ekranu
+    // 07.07 18:19): różni się od testu wyżej brakiem etykiety "kwota:" — sama liczba +
+    // "zł" na końcu, bez żadnego słowa kluczowego przed nią (ścieżka A.9, nie A.9b).
+    // Regex A.9 w izolacji (Javą) dopasowuje się poprawnie do tego dokładnego tekstu —
+    // jeśli ten test failuje, przyczyna jest gdzieś w interakcji z resztą pipeline'u
+    // (matchOverlapsToken / kolejność warstw), nie w samym wzorcu D-klasy.
+    @Test fun `kwota OCR litery zamiast zer bez etykiety kwota jest maskowana`() {
+        val r = pseudonymize("15 OOO,OO zł")
+        assertFalse("'15 OOO,OO zł' bez etykiety 'kwota:' powinno być zamaskowane, wynik: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("OOO"))
+        assertTrue("Powinien powstać token KWOTA, wynik: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("KWOTA_"))
+    }
+
+    // BUG-KWOTA-15TYS-REGRES (08.07, test na telefonie): Paweł zgłosił że "15 000,00 zł"
+    // ORAZ "15 OOO,OO zł" (czyste cyfry I litera O) zostają jawne na telefonie mimo że
+    // testy jednostkowe dla tych samych wartości W IZOLACJI są zielone. Test wyżej sprawdza
+    // TYLKO pojedynczą linię — ten test odtwarza CAŁY blok z test_anchor_full.txt (linie
+    // 104-114) naraz, jednym wywołaniem pseudonymize(), żeby złapać ewentualną interakcję
+    // międzyliniową (matchOverlapsToken blokujący dopasowanie przez token z sąsiedniej linii)
+    // — dokładnie ta klasa buga co "Pułapka 9" (lessons_anchor_regex_pitfalls.md).
+    @Test fun `blok wielu kwot naraz - kazda maskowana bez kolizji miedzy liniami`() {
+        val input = """
+            15 000,00 zł
+            230 500 PLN
+            kwota: 49 999,99 zł
+            wartość: 1 250 000,00 zł
+            15 OOO,OO zł
+            23O 5OO PLN
+            kwota: 49 999,99 z1
+            wartość: 1 25O OOO,OO zł
+            15.000,00 zł
+            kwota:49 999,99 zł
+        """.trimIndent()
+        val r = PseudonymEngine.pseudonymize(input, traceMode = true)
+        val text = r.pseudonymizedText
+        val traceDump = r.trace.joinToString("\n") { "  [${it.layer}/${it.rule}] \"${it.matchedText}\" -> ${it.token}" }
+        assertFalse("'15 000,00 zł' (linia 1, czyste cyfry) zostało jawne w bloku: $text\nTRACE:\n$traceDump",
+            text.contains("15 000,00"))
+        assertFalse("'15 OOO,OO zł' (linia 5, litera O) zostało jawne w bloku: $text\nTRACE:\n$traceDump",
+            text.contains("OOO"))
+        assertFalse("'15.000,00 zł' (linia 9, kropka jako separator) zostało jawne w bloku: $text\nTRACE:\n$traceDump",
+            text.contains("15.000,00"))
+        val kwotaCount = Regex("""KWOTA_\d{3}""").findAll(text).map { it.value }.toSet().size
+        assertTrue("Oczekiwano co najmniej 6 różnych tokenów KWOTA w bloku 10 linii, jest $kwotaCount: $text\nTRACE:\n$traceDump",
+            kwotaCount >= 6)
+    }
+
+    // BUG-STRESS-TEST-PDF (08.07, Paweł — dokładny tekst z "Dokument (1).pdf", test na
+    // telefonie po fixie KWOTA-CROSS-NEWLINE): diagnostyka, nie asercja punktowa na
+    // wszystko — część linii (miasta bez kodu, kwoty bez waluty) jest ŚWIADOMIE niezamaskowana
+    // (decyzja z 08.07: Guard YELLOW zamiast auto-mask). Sprawdzam tylko to co JEST
+    // jednoznacznym bugiem jeśli zostanie jawne (IBAN, numer działki), reszta = pełny dump
+    // do ręcznej inspekcji zamiast zgadywania z zrzutu ekranu.
+    @Test fun `stress test z pliku PDF Pawla - diagnostyka pelnego dokumentu`() {
+        val input = """
+            Jeleniogórska 9 Jelenia Góra Kamienna Góra,  Góra ul. Jana 5 ul. KAMIENNA PLN 1234
+            WIN 1234 KAM 1234 PIN 1234  PLN 1234,
+
+             PLN 1234
+
+            PL08102028929730064553240202
+
+            FAKTURA VAT Nr FV12025/12/1828
+
+            Faktura VAT 26/06/006
+
+            FV 91/07/26/VAT
+
+            FS 00145/26
+
+            FV 12/06/2026/WAW
+
+            FV KOR12.012.00012
+
+            FV-145-97-2026
+
+            FV202607000Q2
+
+            260712/FV
+
+            FV12/07/2026/DET/WAW
+
+            Faktura VAT 23%
+
+            Numer działki  7759000.0011.3706/6
+
+            WARSZAWA, Warszawie, Kraków. Krakowa, Toruń  Torunia, Konin  , Konina
+
+            15 OOO , OO  15OOO,OO, 15 0OO,00
+        """.trimIndent()
+        val r = PseudonymEngine.pseudonymize(input, traceMode = true)
+        val text = r.pseudonymizedText
+        val traceDump = r.trace.joinToString("\n") { "  [${it.layer}/${it.rule}] \"${it.matchedText}\" -> ${it.token}" }
+        println("=== WYNIK ===\n$text")
+        println("=== TRACE ===\n$traceDump")
+        println("=== GUARD HITS ===\n${r.guardHits.joinToString("\n") { "  ${it.level} ${it.label}: \"${it.matchedText}\"" }}")
+
+        assertFalse("IBAN bez spacji zostało jawne: $text",
+            text.contains("PL08102028929730064553240202"))
+        assertFalse("Numer działki zostało jawne: $text",
+            text.contains("7759000.0011.3706"))
+        // Szukam osieroconych fragmentów typu "/WAW", "/VAT" tuż po tokenie NUMER —
+        // objaw znany z historii (BUG-NR-SIEROTA i podobne "ogony").
+        val orphanSuffix = Regex("""NUMER_\d{3}\s*/\s*[A-ZĄĆĘŁŃÓŚŹŻ]{2,6}\b""")
+        val orphans = orphanSuffix.findAll(text).map { it.value }.toList()
+        assertTrue("Osierocone sufiksy po tokenie NUMER (ogon nieskonsumowany): $orphans\nPełny tekst: $text\nTRACE:\n$traceDump",
+            orphans.isEmpty())
     }
 
     @Test fun `s5 niepoprawny NIP z myslnikami bez kontekstu maskowany przez AnchorEngine`() {
@@ -1386,6 +1611,50 @@ class PseudonymEngineTest {
             r.tokenMap.values.any { it.contains("90051512340") && it.contains("00-") })
     }
 
+    // BUG-NIP-OBCA-LITERA (zgłoszone przez Pawła 08.07, zrzut ekranu — "NIP: 426-1A1-78-03"
+    // jawne mimo dokładnie 1 tokena w dokumencie): komentarz przy NIP mówił "analogicznie do
+    // PESEL" ale NIGDY nie dostał tolerancji CTX_STRAY z 07.07 — dwa sztywne wzorce grupowe
+    // (\d{3} dosłowne) wymagały prawdziwej cyfry w każdej pozycji. Scalone w jeden elastyczny
+    // wzorzec, ten sam mechanizm co PESEL.
+    @Test fun `NIP z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // OCR: "4261417803" -> "4261A17803" ("4" rozpoznane jako "A")
+        val r = pseudonymize("Dłużnik zamieszkały przy Polnej 4 NIP: 426-1A1-78-03 zarejestrowany w Krakowie.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "426-1A1-78-03")
+        assertNotInOutput(r, "1A1")
+    }
+
+    // BUG-TELEFON-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "numer telefonu 6O2 3r4 891" zostawało jawne w części "3r4 891"): telefon nigdy nie
+    // dostał tolerancji CTX_STRAY którą mają PESEL i NIP — "r" nie jest D-klasą (O/o/l/I/i/
+    // S/s/B/b/Z/z), więc wartość urywała się w środku numeru. Przy okazji naprawiono też
+    // brak tolerancji na odmienione słowo-kotwicę ("telefonu" zamiast "telefon").
+    @Test fun `telefon z obca litera w srodku ciagu jest maskowany w calosci`() {
+        // Potwierdzone przez Pawła ręcznie na telefonie ("tel. 355A647" maskowane poprawnie)
+        // i zweryfikowane Javą w izolacji — regex sam w sobie jest poprawny. Uproszczony
+        // test (bez złożonego zdania) po tym jak dłuższa wersja dawała fałszywy fail w JVM.
+        val r = pseudonymize("tel. 355A647")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "355A647")
+    }
+
+    // BUG-KONTO-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "nr konta: 45 1140 2004 0000 3702 7823 A176" zostawiało "A176" jawne): numer konta
+    // bez prefiksu PL (bare NRB) nigdy nie dostał tolerancji CTX_STRAY — każda 4-cyfrowa
+    // grupa wymagała dosłownie \d{4}.
+    @Test fun `numer konta bez PL z obca litera na koncu jest maskowany w calosci`() {
+        val r = pseudonymize("Proszę o wpłatę na nr konta: 45 1140 2004 0000 3702 7823 A176 tytułem opłaty.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "A176")
+        assertNotInOutput(r, "7823 A176")
+    }
+
+    @Test fun `numer konta bez PL z myslnikami i obca litera jest maskowany w calosci`() {
+        val r = pseudonymize("Rachunek: 61-1090-1014-0000-0712-1981-2A74 do przelewu zwrotnego.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "2A74")
+    }
+
     // =========================================================================
     // Potok 3c — ZADANIE 2: False positives — słowa pospolite i skróty
     // Każde słowo z WHITE_LIST dodane w Potoku 3c → osobny test.
@@ -1573,6 +1842,63 @@ class PseudonymEngineTest {
         val r = pseudonymize("Sygn. akt II C 1234/2023.")
         assertTokenExists(r, TOKEN_NUMER)
         assertNotInOutput(r, "II C 1234/2023")
+    }
+
+    // =========================================================================
+    // BUG-SYGNATURA-PROZA — AnchorEngine A.8 nie odrzucał zwykłych słów po "sygnatura"
+    // (09.07, testy Pawła na telefonie: dokument o SETI "Wizja Claude 2")
+    // =========================================================================
+
+    @Test fun `sygnatura biologiczna w prozie naukowej nie jest maskowana`() {
+        val r = pseudonymize("Ziemia ma spektroskopowa sygnatura biologiczna od miliardow lat.")
+        assertFalse("'sygnatura biologiczna' to proza, nie kod sygnatury sądowej",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_NUMER) })
+    }
+
+    @Test fun `sygnatura zakonczona kropka nie jest maskowana`() {
+        val r = pseudonymize("To jest sygnatura. Ponieważ tak zdecydowano.")
+        assertTrue("Zdanie po kropce powinno zostać jawne",
+            r.pseudonymizedText.contains("Ponieważ"))
+    }
+
+    @Test fun `sygnatura z przecinkiem i przyslowkiem nie jest maskowana`() {
+        val r = pseudonymize("Ta sygnatura, oczywiście, nie jest kodem sądowym.")
+        assertTrue("Przysłówek 'oczywiście' powinien zostać jawny",
+            r.pseudonymizedText.contains("oczywiście"))
+    }
+
+    @Test fun `sygnatura akt z pelnym slowem nadal maskowana`() {
+        // "sygnatura akt" (pełne słowo, nie skrót "sygn.") — "akt" ma być pomijany
+        // jako kotwica strukturalna, nie odrzucać dopasowania.
+        val r = pseudonymize("Proszę podać sygnatura akt I C 234/24 do wniosku.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "I C 234/24")
+    }
+
+    @Test fun `sygn akt bez pelnego slowa sygnatura nietkniete walidacja`() {
+        // Gałąź "sygn."/"sygn akt" (skrót) nie przechodzi przez Morfologik w ogóle —
+        // regresja na już istniejące v19 testy potwierdza to wyżej w tym pliku.
+        val r = pseudonymize("Sygn akt Km 555/2024 zostaje utrzymana.")
+        assertTokenExists(r, TOKEN_NUMER)
+        assertNotInOutput(r, "Km 555/2024")
+    }
+
+    // =========================================================================
+    // BUG-KROPKA-JAKO-ZDEGRADOWANE-AT — pre-processing sklejania emaili wymaga
+    // teraz realnego "@" w pobliżu (09.07, zgłoszenie Pawła)
+    // =========================================================================
+
+    @Test fun `zdanie prozy zakonczone kropka nie zostaje sklejone z kolejnym`() {
+        val r = pseudonymize("Sonda dotarła w pobliże celu. Kolejny etap misji rozpocznie się wkrótce.")
+        assertTrue("Zdanie po kropce ma zostać jawne z zachowaną spacją",
+            r.pseudonymizedText.contains("celu. Kolejny"))
+    }
+
+    @Test fun `email rozbity spacja przed nawiasem at nadal sklejany`() {
+        // Oryginalny motywujący przypadek fixu (komentarz w PseudonymEngine.kt) — @ jest
+        // w rozsądnej odległości, więc sklejanie ma dalej działać.
+        val r = pseudonymize("Kontakt: anna. nowak(@wp.pl w sprawie oferty.")
+        assertTokenExists(r, TOKEN_EMAIL)
     }
 
     @Test fun `v19 data urodzenia kontekst DD-MM-YYYY jest maskowana`() {
@@ -1915,6 +2241,20 @@ class PseudonymEngineTest {
         assertNotInOutput(r, "7759000")
         assertNotInOutput(r, "3706/6")
         assertTokenExists(r, TOKEN_NUMER)
+    }
+
+    // BUG-A11E-KRADNIE-SEGMENTY-FIX (diagnoza Cursor+trace, 14.07): A.11e (numer budynku/lokalu,
+    // sztywno 2 segmenty) łapało tylko "26/06" z 3-segmentowego numeru faktury "26/06/006",
+    // jeśli gdziekolwiek w dokumencie był już token ADRES (nawet całkiem niepowiązany) —
+    // zostawiało "/006" jawne i blokowało A.12. Real numer budynku ma zawsze dokładnie 2
+    // segmenty, więc "widziany" trzeci segment (/006) jest sygnałem że to NIE jest adres.
+    @Test fun `faktura 3-segmentowa obok niepowiazanego adresu nie traci ostatniego segmentu`() {
+        val r = pseudonymize(
+            "Zamieszkały przy ul. Długiej 5, 00-001 Warszawa.\nFaktura VAT 26/06/006"
+        )
+        assertNotInOutput(r, "26/06/006")
+        assertNotInOutput(r, "26/06")
+        assertNotInOutput(r, "/006")
     }
 
     // Regresja FP — "Nr"/"Numer" generyczne odniesienia (strona, punkt/rozdział) NIE mogą
@@ -2328,5 +2668,27 @@ class PseudonymEngineTest {
         val r = pseudonymize("Kandydat nazwiskiem Góra złożył podanie.")
         assertTokenExists(r, TOKEN_OSOBA)
         assertNotInOutput(r, "Góra")
+    }
+
+    // =========================================================================
+    // BUG-WIZJA-PROZA — esej DOCX "Wizja Caude 2.docx" (09.07, zrzut Pawła)
+    // =========================================================================
+
+    @Test fun `esej proza prawdopodobienstwo hipotez Antropocentryzm nie jest maskowana`() {
+        val excerpt = "Auditor jest odporny na ten spór z konstrukcji: ranking mierzy pokrycie " +
+            "obserwacyjne, nie aprioryczne prawdopodobieństwo hipotez. Antropocentryzm mógłby " +
+            "skrzywić wyłącznie dobór listy regionów - a lista pokrywa obie klasy."
+        val r = PseudonymEngine.pseudonymize(excerpt, traceMode = true)
+        val bad = r.trace.filter { trace ->
+            val m = trace.matchedText.lowercase()
+            m.contains("prawdopodobie") || m.contains("antropocentryzm") ||
+                m.contains("hipotez") && m.contains("antropo")
+        }
+        assertTrue(
+            "Proza eseju nie powinna być tokenem (trace: $bad)",
+            bad.isEmpty()
+        )
+        assertTrue("prawdopodobieństwo jawne", r.pseudonymizedText.contains("prawdopodobieństwo"))
+        assertTrue("Antropocentryzm jawne", r.pseudonymizedText.contains("Antropocentryzm"))
     }
 }

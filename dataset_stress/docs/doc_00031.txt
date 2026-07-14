@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Ilkhom Bubnova
+Data urodzenia:
+05.08.1988
+PESEL:
+92122186715
+Nr dowodu osobistego:
+PZO115921
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Ślężna 134/42, 01-100 Bliskowice
+Telefon:
++48 514 998 569
+Adres e-mail:
+ilkhom_bubnova@poczta.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+218-367-36-52
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

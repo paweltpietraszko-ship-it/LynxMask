@@ -1,0 +1,76 @@
+BENCHMARK CZYSTY (bez OCR) — 2026-07-14_1436
+Dataset: C:\Projects\LynxMask\dataset_clean (300 dokumentów)
+============================================================
+
+Recall:    99,4%  (1977/1988)
+Precision: 68,6%
+F1:        0,812
+Krytyczne niewykryte (PESEL/NIP/IBAN/dowód/paszport): 0
+FP razem: 907  REVIEW=480, EXTRA_MASK_POLICY=427
+
+── Wg typu dokumentu ──
+  skarga                       n=44   recall=100,0%  precision=54,7%
+  faktura                      n=43   recall=100,0%  precision=60,6%
+  umowa                        n=42   recall=100,0%  precision=73,3%
+  wezwanie                     n=40   recall=100,0%  precision=53,3%
+  formularz                    n=39   recall=97,4%  precision=97,9%
+  pismo_urzedowe               n=31   recall=100,0%  precision=74,2%
+  notatka                      n=31   recall=100,0%  precision=80,7%
+  decyzja_administracyjna      n=30   recall=98,7%  precision=73,9%
+
+── Braki (recall) ──
+  docs/doc_00001.txt [formularz]: numer_dzialki='711878.0052.5931/5' → ewidencyjnej:⏎711878.0052.5931/5⏎⏎Oświadczam, że pod
+  docs/doc_00019.txt [formularz]: numer_dzialki='232413.0082.8043/1' → ewidencyjnej:⏎232413.0082.8043/1⏎⏎Oświadczam, że pod
+  docs/doc_00100.txt [formularz]: numer_dzialki='786789.0041.203' → ewidencyjnej:⏎786789.0041.203⏎⏎Oświadczam, że podane
+  docs/doc_00108.txt [decyzja_administracyjna]: numer_kw='KR1P/00802682/9' → (wartość GT nie znaleziona w tekście źródłowym — literówka w generatorze?)
+  docs/doc_00191.txt [formularz]: numer_dzialki='116656.0090.3084' → ewidencyjnej:⏎116656.0090.3084⏎⏎Oświadczam, że podan; numer_kw='KA1K/00024549/3' → i wieczystej:⏎KAlK/00024549/3⏎Nr działki ewidencyjnej
+  docs/doc_00199.txt [formularz]: numer_dzialki='492649.0039.4817' → ewidencyjnej:⏎492649.0039.4817⏎⏎Oświadczam, że podan; numer_kw='KA1K/00133461/5' → i wieczystej:⏎KAlK/00133461/5⏎Nr działki ewidencyjnej
+  docs/doc_00243.txt [formularz]: numer_dzialki='384682.0027.3016/19' → ewidencyjnej:⏎384682.0027.3016/19⏎⏎Oświadczam, że po
+  docs/doc_00276.txt [formularz]: numer_dzialki='309215.0039.4998/19' → ewidencyjnej:⏎309215.0039.4998/19⏎⏎Oświadczam, że po
+  docs/doc_00283.txt [decyzja_administracyjna]: numer_kw='GD1G/00462476/7' → (wartość GT nie znaleziona w tekście źródłowym — literówka w generatorze?)
+
+── FP bucket REVIEW — wymaga oceny czy to bug czy encja spoza GT ──
+(480 wystąpień, 270 unikalnych wartości;
+ wartość powtarzająca się w wielu dokumentach = podejrzenie słownika, nie GT-gap)
+
+  x18  Biała  (np. docs/doc_00000.txt [formularz])
+  x15  al. Jana Pawła 11  (np. docs/doc_00038.txt [faktura])
+  x11  Paweł  (np. docs/doc_00000.txt [formularz])
+  x11  Poznaniu  (np. docs/doc_00023.txt [pismo_urzedowe])
+  x10  Warszawie  (np. docs/doc_00016.txt [decyzja_administracyjna])
+  x10  Tomasz Malinowski  (np. docs/doc_00027.txt [wezwanie])
+  x9  Rafał  (np. docs/doc_00014.txt [formularz])
+  x9  Piotr Nowacki  (np. docs/doc_00036.txt [wezwanie])
+  x9  Nowa Huta  (np. docs/doc_00036.txt [wezwanie])
+  x8  Krakowie  (np. docs/doc_00042.txt [pismo_urzedowe])
+  x8  Marta Kędzierska  (np. docs/doc_00058.txt [wezwanie])
+  x7  Gdańsku  (np. docs/doc_00015.txt [decyzja_administracyjna])
+  x7  Handel i Usługi Sp. z o.o.  (np. docs/doc_00062.txt [faktura])
+  x7  Janusz Wierzbicki  (np. docs/doc_00066.txt [wezwanie])
+  x6  Anna Zielińska  (np. docs/doc_00010.txt [wezwanie])
+  x5  Szczecinie  (np. docs/doc_00006.txt [skarga])
+  x5  Centrum Medyczne MEDYK Sp. z o.o.  (np. docs/doc_00045.txt [faktura])
+  x5  GAMMA Sp. z o.o.  (np. docs/doc_00135.txt [faktura])
+  x4  Dudka  (np. docs/doc_00002.txt [skarga])
+  x4  Dudek  (np. docs/doc_00006.txt [skarga])
+  x4  Toruniu  (np. docs/doc_00013.txt [skarga])
+  x4  BETA S.A.  (np. docs/doc_00018.txt [faktura])
+  x4  Radomiu  (np. docs/doc_00034.txt [decyzja_administracyjna])
+  x4  Kwiatkowskiego  (np. docs/doc_00043.txt [skarga])
+  x3  Kamila  (np. docs/doc_00012.txt [skarga])
+  x3  Zbigniewa  (np. docs/doc_00013.txt [skarga])
+  x3  Serwis AGD ELEKTRO Sp. z o.o.  (np. docs/doc_00021.txt [faktura])
+  x3  Bielsku  (np. docs/doc_00035.txt [skarga])
+  x3  Białej  (np. docs/doc_00035.txt [skarga])
+  x3  Katowicach  (np. docs/doc_00039.txt [skarga])
+  x3  Mariusza  (np. docs/doc_00059.txt [skarga])
+  x3  Hurtownia Materiałów BUDMAT Sp. z o.o.  (np. docs/doc_00067.txt [faktura])
+  x3  ALFA Sp. z o.o.  (np. docs/doc_00128.txt [faktura])
+  x3  Częstochowie  (np. docs/doc_00178.txt [skarga])
+  x2  Olsztynie  (np. docs/doc_00012.txt [skarga])
+  x2  Pawłowskiego  (np. docs/doc_00013.txt [skarga])
+  x2  Zielonej Górze  (np. docs/doc_00017.txt [skarga])
+  x2  Rzeszowie  (np. docs/doc_00040.txt [skarga])
+  x2  Michalskiego  (np. docs/doc_00040.txt [skarga])
+  x2  Tomasza  (np. docs/doc_00040.txt [skarga])
+  ... i 230 innych wartości (obcięte, patrz kod jeśli potrzeba pełnej listy)

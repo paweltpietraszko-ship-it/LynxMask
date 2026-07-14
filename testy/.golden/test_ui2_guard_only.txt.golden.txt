@@ -1,0 +1,79 @@
+================================================================
+PLIK TESTOWY — UI-2 Guard-only v2
+Cel: sekcja YELLOW w UI-2 (Guard po maskowaniu silnika)
+Instrukcja: Share → LynxMask, nie obsługuj ręcznie
+================================================================
+
+UWAGA DLA TESTERA (ten blok też zostanie zamaskowany — to OK):
+  Silnik ZAWSZE maskuje email/tel/NUMER_006ód z sekcji RED poniżej.
+  Sekcji RED na ekranie NIE BĘDZIE — to oczekiwane.
+  Ten plik testuje YELLOW: PESEL błędny, ur. w mieście, sygnatura, EMAIL_007
+  Podgląd tokenu (toggle) — testuj na pliku test_ui2_encje_silnik.txt gdzie są OSOBA_001.
+
+================================================================
+WNIOSEK — uzupełnienie rubryk formularza
+Ref. wewn. UI2-GUARD
+================================================================
+
+Szanowni Państwo,
+
+Prosimy o uzupełnienie rubryk oznaczonych jako wymagające weryfikacji.
+
+Rubryka A — numer identyfikacyjny wpisany błędnie:
+NUMER_008
+
+Rubryka B — powtórzenie przez operatora:
+NUMER_009
+
+Rubryka C — OCR ze spacjami w numerze:
+NUMER_011
+
+Rubryka D — miejsce urodzenia:
+ur. w ADRES_001
+
+Rubryka E — sygnatura aktu notarialnego:
+poz. 4/2022
+
+Rubryka F — fragment adresu email w kopii (ucięty):
+EMAIL_006 G — inny fragment email:
+EMAIL_004
+
+Rubryka H — sygnatura sprawy (z kotwicą „sygn.”):
+sygn. nr 1204/NUMER_007
+
+Rubryka I — numer polisy (z kotwicą „nr polisy”):
+nr polisy NUMER_010
+
+-- Poniższe silnik maskuje → Guard RED nie zobaczy (test produkcyjny OK) --
+Kontakt: EMAIL_001
+NUMER_005
+NUMER_004
+IBAN: NUMER_001
+NUMER_003
+
+-- Negatywne (Guard NIE powinien flagować) --
+Data zawarcia: piętnastego marca dwa tysiące dwudziestego czwartego roku
+Podstawa prawna: art. 23 ust. 1 RODO
+Paginacja dokumentu: strona pierwsza z trzech
+Skrót: paragraf piąty ustęp pierwszy (bez ukośnika NUMER_012
+
+================================================================
+OCZEKIWANY EKRAN PO MASKOWANIU (v2 — realistyczny)
+================================================================
+
+YELLOW „Do sprawdzenia” — ok. 6–8 pozycji:
+  NUMER_002, NUMER_009, NUMER_011
+  MIEJSCE_UR: ur. w ADRES_001
+  SYGNATURA: 4/2022, opcjonalnie 1204/NUMER_007
+  LICZBA: NUMER_010 (jeśli silnik nie zamaskował)
+  EMAIL_FRAGMENT: EMAIL_005 EMAIL_004
+
+RED: brak (silnik maskuje wycieki — OK)
+
+Kopiuj + Dodaj do biblioteki: aktywne (brak RED)
+
+NIE powinno być: EMAIL_003 z checklisty, EMAIL_002
+
+================================================================
+KONIEC
+================================================================

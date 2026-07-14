@@ -2,8 +2,9 @@ package com.lynxmask.app
 
 // AddressEngineTest.kt — Faza A planu migracji ADRES (PLAN_AddressEngine_Claude_2026-07-04.md,
 // sekcja A1). Testy sprawdzają wynik CAŁEGO potoku (pseudonymize) — AddressEngine biegnie jako
-// Warstwa 0b, przed wszystkim innym, więc jeśli poprawnie skonsumuje adres, stare warstwy
-// (NameEngine/AnchorEngine) nie mają już czego dotykać. Testy celowo NIE sprawdzają konkretnej
+// Warstwa 0b, przed wszystkim innym, więc jeśli poprawnie skonsumuje adres, reszta potoku nie ma
+// już czego dotykać (NameEngine.applyStreetLookup usunięty 07.07 — duplikat; AnchorEngine A.11*
+// zostaje aktywny jako kotwica na resztkach, patrz TOKEN_RE guard). Testy celowo NIE sprawdzają konkretnej
 // reguły/warstwy (STREET_DICT vs STREET_NO_ZIP itd.) tam gdzie plan dopuszcza kilka poprawnych
 // wariantów ("co najmniej 2x ADRES lub 1 duży ADRES") — liczy się brak PII w wyniku, nie
 // wewnętrzny mechanizm (zasada CLAUDE.md: silnik MASKUJE, nie POPRAWIA).
@@ -113,5 +114,56 @@ class AddressEngineTest {
         assertNotInOutput(r, "31-610")
         val adresCount = r.tokenMap.keys.count { it.startsWith(TOKEN_ADRES) }
         assertEquals("Oczekiwano dokładnie 3 tokenów ADRES — tokenMap: ${r.tokenMap}", 3, adresCount)
+    }
+
+    // BUG-ADRES-ZLEPIONE-KODY (07.07, test ręczny na telefonie): [^\S\n]+ w POSTAL_K1/K2
+    // wymagał co najmniej jednej spacji między kodem a miastem — gdy zlepione bez separatora
+    // (kilka adresów pod rząd bez spacji, realny przypadek OCR), dopasowanie w ogóle nie
+    // odpalało, zostawiając WSZYSTKO jawne (nie tylko brzydko, kompletnie niezamaskowane).
+    @Test fun `kod pocztowy zlepiony z miastem bez spacji jest maskowany`() {
+        val r = pseudonymize("00-001Warszawa")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-001")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
+    @Test fun `trzy pary kod miasto zlepione bez spacji sa maskowane osobno`() {
+        val r = pseudonymize("70-001Szczecin80-001Gdańsk31-610Kraków")
+        assertNotInOutput(r, "Szczecin")
+        assertNotInOutput(r, "Gdańsk")
+        assertNotInOutput(r, "Kraków")
+        assertNotInOutput(r, "70-001")
+        assertNotInOutput(r, "80-001")
+        assertNotInOutput(r, "31-610")
+        val adresCount = r.tokenMap.keys.count { it.startsWith(TOKEN_ADRES) }
+        assertEquals("Oczekiwano dokładnie 3 tokenów ADRES — tokenMap: ${r.tokenMap}", 3, adresCount)
+    }
+
+    @Test fun `miasto zlepione z kodem pocztowym bez spacji jest maskowane`() {
+        val r = pseudonymize("Warszawa00-001")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-001")
+        assertTokenExists(r, TOKEN_ADRES)
+    }
+
+    // BUG-ADRES-ZLEPIONY-BEZ-SPACJI (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "ul.Polna8,00-950Warszawa" w ogóle się nie odpalało): prefiks→nazwa, nazwa→numer,
+    // przecinek→kod, kod→miasto wszystkie wymagały co najmniej jednej spacji. Przy pełnym
+    // sklejeniu (bez spacji wcale) cały adres zostawał jawny, a nazwa ulicy trafiała do
+    // NameEngine i była błędnie maskowana jako nazwisko (OSOBA zamiast ADRES).
+    @Test fun `adres calkowicie zlepiony bez spacji jest maskowany jednym tokenem`() {
+        val r = pseudonymize("ul.Lipowa8,00-950Warszawa")
+        assertNotInOutput(r, "Lipowa")
+        assertNotInOutput(r, "Warszawa")
+        assertNotInOutput(r, "00-950")
+        assertTokenExists(r, TOKEN_ADRES)
+        assertFalse("Nazwa ulicy nie powinna trafić do OSOBA",
+            r.tokenMap.keys.any { it.startsWith(TOKEN_OSOBA) })
+    }
+
+    @Test fun `adres zlepiony bez kodu pocztowego jest maskowany`() {
+        val r = pseudonymize("Proszę o kontakt: ul.Lipowa8 to mój adres.")
+        assertNotInOutput(r, "Lipowa")
+        assertTokenExists(r, TOKEN_ADRES)
     }
 }

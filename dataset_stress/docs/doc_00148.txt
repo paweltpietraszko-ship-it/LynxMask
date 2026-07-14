@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Alojzy Słaboszewska
+Data urodzenia:
+13.01.1978
+PESEL:
+77110479417
+Nr dowodu osobistego:
+RYE307681
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Herberta 49/31, 44-100 Sutno
+Telefon:
++48 484 091 570
+Adres e-mail:
+alojzyslaboszewska@gmail.com
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+194-353-34-43
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

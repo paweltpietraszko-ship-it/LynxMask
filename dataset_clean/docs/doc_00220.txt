@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr FV-06367/06/2024
+
+Data wystawienia: 25.12.2020
+Numer klienta: KL-53522
+
+----------------------------------------
+SPRZEDAWCA:
+BETA S.A.
+Adres: al. Jana Pawła II 50, 40-001 Łódź
+NIP: 915-583-93-86   REGON: 165063739
+Nr konta: PL96109010144950136497189241
+
+NABYWCA:
+Adam Nowak
+Adres: ul. Kościuszki 171/11, 90-001 Kraków
+NIP: 761-331-55-22
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         2     736   8%     1472     1590
+2.   Usługa projektowa                10     969  23%     9690    11919
+3.   Obsługa prawna                    4    1081   8%     4324     4670
+4.   Naprawa sprzętu                   1    1312   8%     1312     1417
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        19596 PLN
+
+Płatność przelewem: PL96109010144950136497189241
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

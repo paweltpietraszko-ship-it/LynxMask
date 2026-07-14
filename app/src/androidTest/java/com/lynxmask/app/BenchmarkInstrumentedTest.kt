@@ -226,6 +226,37 @@ class BenchmarkInstrumentedTest {
         "email" to "EMAIL",
     )
 
+    // BUG-FP-METRYKA-MYLACA (audyt Cursor 09.07): "token spoza GT" nie znaczy "błąd silnika" —
+    // GT nie opisuje kwot/sygnatur/dat, a silnik maskuje je celowo (brief: overmasking OK, nie
+    // blokuje release). Jeden płaski licznik FP mieszał trzy różne rzeczy: (1) zamierzone
+    // maskowanie ponad zakres GT, (2) typy produktowo zawsze maskowane niezależnie od GT
+    // (KWOTA/NUMER), (3) prawdziwy problem czytelności (nagłówek/śmieć jako OSOBA/FIRMA).
+    // Klasyfikacja niżej rozdziela je na 4 kubełki — realny KPI czytelności to tylko UX_FP,
+    // reszta to metryka rozjazdu z GT, nie jakość silnika.
+    private val POLICY_MASK_TYPES = setOf("KWOTA", "NUMER")
+
+    // Znane frazy-śmieci (nagłówki formularzy, złamane słowa OCR) potwierdzone w benchmarkach
+    // 08-09.07 jako realny problem czytelności, nie zamierzone maskowanie. Rośnie z czasem —
+    // dopisywać tu dopiero po ręcznym potwierdzeniu (nie zgadywać).
+    private val UX_FP_DENYLIST = setOf(
+        "dane osobowe", "danych osobowych", "dane kontaktowe",
+    )
+
+    private fun classifyExtraToken(tok: DetectedToken, gtEntities: JSONObject): String {
+        val tokN = norm(tok.original)
+        val overlapsGtSameType = gtEntities.keys().asSequence().any { key ->
+            ENTITY_TYPE_MAP[key] == tok.type && norm(gtEntities.getString(key)).let { gn ->
+                tokN == gn || (tokN.length >= 6 && (tokN.contains(gn) || gn.contains(tokN)))
+            }
+        }
+        return when {
+            overlapsGtSameType -> "EXTRA_MASK_OK"
+            tok.type in POLICY_MASK_TYPES -> "EXTRA_MASK_POLICY"
+            (tok.type == "OSOBA" || tok.type == "FIRMA") && UX_FP_DENYLIST.any { tokN.contains(it) } -> "UX_FP"
+            else -> "REVIEW"
+        }
+    }
+
     private fun norm(v: String): String {
         val diacritics = mapOf(
             'ą' to 'a', 'ć' to 'c', 'ę' to 'e', 'ł' to 'l', 'ń' to 'n',
@@ -412,12 +443,16 @@ class BenchmarkInstrumentedTest {
 
         val total = entities.size
         val fpList = mutableListOf<DetectedToken>()
+        val fpCategories = mutableMapOf<String, String>() // tok.token (id tokenu) -> kubełek
         tokens.forEach { tok ->
             val on = norm(tok.original)
             val isFp = on.length >= 2 && gtNorms.none { gn ->
                 on == gn || (on.length >= 6 && (on.contains(gn) || gn.contains(on)))
             }
-            if (isFp) fpList.add(tok)
+            if (isFp) {
+                fpList.add(tok)
+                fpCategories[tok.token] = classifyExtraToken(tok, gtEntities)
+            }
         }
         val fp        = fpList.size
         val recall    = if (total > 0) detected.toDouble() / total else null
@@ -445,6 +480,7 @@ class BenchmarkInstrumentedTest {
             entities       = entities,
             fpCount        = fp,
             fpTokens       = fpList,
+            fpCategories   = fpCategories,
             missLabels     = missLabels,
             guardRedHits   = guardRedHits,
             guardRedDetails = guardRedDetails,
@@ -578,17 +614,30 @@ class BenchmarkInstrumentedTest {
         sb.appendLine("   Pominiętych:                     ${bEnt - bDet}")
         sb.appendLine("   RECALL ogólny:                   ${"%.1f".format(bRecall * 100)}%  (próg: ≥90%)")
         sb.appendLine("   RECALL encje krytyczne:          ${"%.1f".format(bCritRec * 100)}%  (próg: ≥95%)")
-        sb.appendLine("   PRECISION:                       ${"%.1f".format(bPrec * 100)}%")
-        sb.appendLine("   F1:                              ${"%.1f".format(bF1 * 100)}%")
         sb.appendLine()
         sb.appendLine("   ── BLOKERY RELEASE ─────────────────────────────────")
         sb.appendLine("   BUG_SILNIKA (kryt.):             $bBugSil   ${if (bBugSil == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
         sb.appendLine("   OCR_ZNIEKSZTAŁCONY (kryt.):      $bOcrZniek   ${if (bOcrZniek == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
         sb.appendLine("   Guard RED hits:                  $bGuardRed   ${if (bGuardRed == 0) "✓ OK" else "✗ FAIL — blokuje release"}")
-        sb.appendLine("   ── INFORMACYJNIE ───────────────────────────────────")
-        sb.appendLine("   BRAK_W_OCR (kryt.):              $bBrakWOcr   (nie blokuje — sufit OCR)")
-        sb.appendLine("   FP metryczne (token vs GT):      $bFp   (nie blokuje)")
+        sb.appendLine("   ── INFORMACYJNIE (nie blokuje release) ─────────────")
+        sb.appendLine("   BRAK_W_OCR (kryt.):              $bBrakWOcr   (sufit OCR)")
         sb.appendLine("   Błędy pipeline:                  $bErrors")
+        sb.appendLine("   PRECISION/F1 (metryka GT-gap, NIE jakość silnika — patrz TOKENY POZA GT niżej):")
+        sb.appendLine("     precision ${"%.1f".format(bPrec * 100)}%  f1 ${"%.1f".format(bF1 * 100)}%")
+
+        // BUG-FP-METRYKA-MYLACA (audyt Cursor 09.07): jeden płaski licznik FP sugerował że
+        // niski precision = zły silnik, choć GT celowo nie opisuje kwot/sygnatur/dat które
+        // produkt zawsze maskuje. Rozbicie na 4 kubełki (patrz classifyExtraToken) — realny
+        // KPI czytelności to UX_FP, reszta to rozjazd z zakresem GT, nie błąd silnika.
+        val bCatCounts = mutableMapOf<String, Int>()
+        secB.forEach { r -> r.fpCategories.values.forEach { cat -> bCatCounts[cat] = (bCatCounts[cat] ?: 0) + 1 } }
+        val bUxFp = bCatCounts["UX_FP"] ?: 0
+        sb.appendLine()
+        sb.appendLine("   TOKENY POZA GT:                  $bFp   (nie blokuje release; token spoza GT ≠ błąd)")
+        sb.appendLine("     EXTRA_MASK_OK     ${(bCatCounts["EXTRA_MASK_OK"] ?: 0)}   (nachodzi na encję GT tego samego typu — zamierzone)")
+        sb.appendLine("     EXTRA_MASK_POLICY ${(bCatCounts["EXTRA_MASK_POLICY"] ?: 0)}   (KWOTA/NUMER — produkt zawsze maskuje, GT nie opisuje)")
+        sb.appendLine("     UX_FP             $bUxFp   ← PRAWDZIWY problem czytelności, śledzić ten KPI")
+        sb.appendLine("     REVIEW            ${(bCatCounts["REVIEW"] ?: 0)}   (nieznane — do ręcznej oceny/denylist)")
 
         // FP per layer summary
         val fpLayerCounts = mutableMapOf<String, Int>()
@@ -601,7 +650,7 @@ class BenchmarkInstrumentedTest {
         }
         if (fpLayerCounts.isNotEmpty()) {
             sb.appendLine()
-            sb.appendLine("   FP PER WARSTWA (sekcja B)")
+            sb.appendLine("   TOKENY POZA GT — PER WARSTWA (sekcja B)")
             fpLayerCounts.entries.sortedByDescending { it.value }.forEach { (layer, cnt) ->
                 sb.appendLine("   ${layer.padEnd(18)} $cnt")
             }
@@ -796,27 +845,46 @@ class BenchmarkInstrumentedTest {
         }
 
         // FP breakdown by layer
-        val fpByLayer = mutableMapOf<String, MutableList<Pair<String, String>>>() // layer → [(original, docFile)]
+        // BUG-FP-LABEL-TYPE-ZLEPIONY (09.07): "rule" bywa współdzielone przez wiele pod-reguł
+        // o różnych typach tokenu (np. NAME_ENGINE/CONTEXTUAL obejmuje OSOBA, FIRMA i ADRES —
+        // patrz applyContextualBlacklist w NameEngine.kt). Bez typu tokenu w etykiecie raport
+        // wygląda jak "silnik myli firmę/miasto z osobą", choć to trzy różne, poprawne
+        // kategorie zlepione pod jednym layer/rule — sprawdzone i potwierdzone ręcznie na
+        // telefonie (100% poprawne). Dodano typ tokenu do etykiety, żeby to rozróżnienie było
+        // widoczne wprost w raporcie, bez czytania kodu.
+        // BUG-FP-METRYKA-MYLACA (audyt Cursor 09.07): każda pozycja teraz niesie swój kubełek
+        // (EXTRA_MASK_OK/POLICY/UX_FP/REVIEW) — patrz classifyExtraToken. Sortowanie w grupie
+        // wypycha UX_FP/REVIEW (warte spojrzenia) przed OK/POLICY (zamierzone, nie warto czytać).
+        val catOrder = mapOf("UX_FP" to 0, "REVIEW" to 1, "EXTRA_MASK_POLICY" to 2, "EXTRA_MASK_OK" to 3)
+        val fpByLayer = mutableMapOf<String, MutableList<Triple<String, String, String>>>() // layer → [(original, docFile, kategoria)]
         secB.forEach { r ->
             val traceByToken = r.trace.associateBy { it.token }
             r.fpTokens.forEach { tok ->
                 val trEntry = traceByToken[tok.token]
                 val layer = trEntry?.layer ?: "?"
                 val rule  = trEntry?.rule  ?: "?"
-                val label = "$layer/$rule"
+                val label = "$layer/$rule/${tok.type}"
+                val cat   = r.fpCategories[tok.token] ?: "REVIEW"
                 fpByLayer.getOrPut(label) { mutableListOf() }
-                    .add(Pair(tok.original, r.file.substringAfterLast("/")))
+                    .add(Triple(tok.original, r.file.substringAfterLast("/"), cat))
             }
         }
         if (fpByLayer.isNotEmpty()) {
-            bb.appendLine("[FALSE POSITIVES] Podział wg warstwy (${secB.sumOf { it.fpCount }} łącznie sekcja B):")
+            val bbCatCounts = mutableMapOf<String, Int>()
+            fpByLayer.values.flatten().forEach { (_, _, cat) -> bbCatCounts[cat] = (bbCatCounts[cat] ?: 0) + 1 }
+            bb.appendLine("[TOKENY POZA GT] ${secB.sumOf { it.fpCount }} łącznie sekcja B — token spoza GT ≠ błąd silnika:")
+            bb.appendLine("  UX_FP=${bbCatCounts["UX_FP"] ?: 0} (realny problem czytelności)  " +
+                "REVIEW=${bbCatCounts["REVIEW"] ?: 0} (nieznane)  " +
+                "EXTRA_MASK_POLICY=${bbCatCounts["EXTRA_MASK_POLICY"] ?: 0} (KWOTA/NUMER, zamierzone)  " +
+                "EXTRA_MASK_OK=${bbCatCounts["EXTRA_MASK_OK"] ?: 0} (nachodzi na GT, zamierzone)")
+            bb.appendLine()
+            bb.appendLine("Podział wg warstwy:")
             bb.appendLine()
             fpByLayer.entries.sortedByDescending { it.value.size }.forEach { (label, items) ->
                 bb.appendLine("  $label: ${items.size}")
-                items.take(5).forEach { (orig, file) ->
-                    bb.appendLine("    $file  \"${orig.take(60)}\"")
+                items.sortedBy { catOrder[it.third] ?: 9 }.forEach { (orig, file, cat) ->
+                    bb.appendLine("    [$cat] $file  \"${orig.take(60)}\"")
                 }
-                if (items.size > 5) bb.appendLine("    ... i ${items.size - 5} więcej")
             }
             bb.appendLine()
         }
@@ -997,6 +1065,7 @@ function exportSelected() {
         val tokens: List<DetectedToken>, val entities: List<EntityResult>,
         val fpCount: Int,
         val fpTokens: List<DetectedToken> = emptyList(),
+        val fpCategories: Map<String, String> = emptyMap(), // tok.token -> EXTRA_MASK_OK/POLICY/UX_FP/REVIEW
         val missLabels: Map<String, String>,
         val guardRedHits: Int,
         val guardRedDetails: List<String> = emptyList(),

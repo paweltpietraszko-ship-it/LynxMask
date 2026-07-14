@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr VAT/2023/2898
+
+Data wystawienia: 28.04.2020
+Numer klienta: KL-93165
+
+----------------------------------------
+SPRZEDAWCA:
+Przedsiębiorstwo Budowlane MARBUD S.A.
+Adres: ul. Różyckiego 172/20, 20-100 Wrzeczko
+NIP: 582-513-53-44   REGON: 199917385
+Nr konta: PL52109010146846022356972521
+
+NABYWCA:
+Indira Biała
+Adres: ul. Ścienna 143/7, 10-100 Niemojki
+NIP: 755-494-71-71
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         5     478   8%     2390     2581
+2.   Usługa projektowa                 3    1052   8%     3156     3408
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         5989 PLN
+
+Płatność przelewem: PL52109010146846022356972521
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

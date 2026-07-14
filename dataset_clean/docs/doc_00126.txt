@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr 1170/07/2022
+
+Data wystawienia: 28.01.2021
+Numer klienta: KL-33803
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Warszawska 196, 50-001 Zabrze
+NIP: 412-241-79-73   REGON: 121442709
+Nr konta: PL71102028921207356475705120
+
+NABYWCA:
+Zbigniew Szymański
+Adres: ul. Długa 167, 90-001 Lublin
+NIP: 597-350-20-82
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               1     299   8%      299      323
+2.   Usługa transportowa               8     556   8%     4448     4804
+3.   Naprawa sprzętu                   8    1555   8%    12440    13435
+4.   Obsługa prawna                    4    1018  23%     4072     5009
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        23571 PLN
+
+Płatność przelewem: PL71102028921207356475705120
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

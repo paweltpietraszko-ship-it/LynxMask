@@ -1,0 +1,88 @@
+BENCHMARK STRESS (Arena Cursor vs Claude Code) — 2026-07-14_1921
+Dataset: C:\Projects\LynxMask\dataset_stress (300 dokumentów)
+Pule: imiona ~3609, nazwiska ~39k, ulice ~11k, miasta ~31k
+============================================================
+
+Recall (wszystkie encje): 98,8%  (1949/1973)
+Precision: 73,7%
+F1: 0,844
+Krytyczne niewykryte: 0
+FP razem: 696  REVIEW=305, EXTRA_MASK_POLICY=391
+
+── Recall wg TYPU encji (anty-cheat: nie tylko OSOBA) ──
+  NUMER    1154/1173  recall=98,4%
+  OSOBA     407/ 412  recall=98,8%
+  ADRES     340/ 340  recall=100,0%
+  EMAIL      48/  48  recall=100,0%
+
+── Recall OSOBA wg tieru nazwiska ──
+  (extended_only = tylko 39k, poza top-1000)
+  extended_only    245/250  recall=98,0%
+  top1000           90/ 90  recall=100,0%
+  collision         72/ 72  recall=100,0%
+
+── Przykłady MISS OSOBA per tier (max 5/tier) ──
+  [extended_only]
+    kisiała via imie_nazwisko='Andrés Kisiała'
+    wiechciński via imie_nazwisko_zleceniodawca='Sándor Wiechcińska'
+    musioł via skarzacy='Andrés Musioł'
+    brzozowy via imie_nazwisko='Büşra Brzozowy'
+    witkowicz via imie_nazwisko='İsmai̇l Witkowicz'
+
+── MISS wg typu (max 5/tier) ──
+  [NUMER]
+    numer_dzialki='711878.0052.5931/5'
+    numer_dzialki='428838.0008.822'
+    numer_kw='WA1M/00661517/2'
+    numer_kw='WA1M/00425712/8'
+    numer_kw='KA1K/00189516/9'
+  [OSOBA]
+    imie_nazwisko='Andrés Kisiała'
+    imie_nazwisko_zleceniodawca='Sándor Wiechcińska'
+    skarzacy='Andrés Musioł'
+    imie_nazwisko='Büşra Brzozowy'
+    imie_nazwisko='İsmai̇l Witkowicz'
+
+── Braki (wszystkie typy, pierwsze 15 dok.) ──
+  docs/doc_00001.txt [formularz]:
+    numer_dzialki='711878.0052.5931/5'
+  docs/doc_00005.txt [formularz]:
+    numer_dzialki='428838.0008.822'
+  docs/doc_00008.txt [pismo_urzedowe]:
+    imie_nazwisko='Andrés Kisiała'
+  docs/doc_00015.txt [decyzja_administracyjna]:
+    numer_kw='WA1M/00661517/2'
+  docs/doc_00020.txt [umowa]:
+    imie_nazwisko_zleceniodawca='Sándor Wiechcińska'
+  docs/doc_00023.txt [skarga]:
+    skarzacy='Andrés Musioł'
+  docs/doc_00040.txt [decyzja_administracyjna]:
+    numer_kw='WA1M/00425712/8'
+  docs/doc_00046.txt [formularz]:
+    numer_kw='KA1K/00189516/9'
+  docs/doc_00056.txt [decyzja_administracyjna]:
+    numer_kw='WA1M/00156942/8'
+  docs/doc_00062.txt [wezwanie]:
+    imie_nazwisko='Büşra Brzozowy'
+  docs/doc_00114.txt [formularz]:
+    numer_dzialki='921861.0072.7905/18'
+  docs/doc_00124.txt [decyzja_administracyjna]:
+    numer_kw='KA1K/00629531/9'
+  docs/doc_00154.txt [decyzja_administracyjna]:
+    numer_kw='KR1P/00267143/7'
+  docs/doc_00164.txt [decyzja_administracyjna]:
+    imie_nazwisko='İsmai̇l Witkowicz'
+  docs/doc_00178.txt [decyzja_administracyjna]:
+    numer_kw='LD1M/00770427/7'
+
+── FP REVIEW (top 10 wartości) ──
+  x23  Warszawie
+  x9  Radomiu
+  x8  Marta Kędzierska
+  x8  Gdańsku
+  x7  Tomasz Malinowski
+  x7  Anna Zielińska
+  x6  Krakowie
+  x5  Poznaniu
+  x5  Gora
+  x5  Janusz Wierzbicki

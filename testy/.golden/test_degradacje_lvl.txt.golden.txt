@@ -1,0 +1,88 @@
+DOKUMENT TESTOWY — POZIOMY ZNIEKSZTAŁCEŃ OCR
+Cel: sprawdzenie silnika na tej samej treści w 4 wariantach degradacji
+Encje: te same w każdej sekcji — widać dokładnie gdzie silnik zaczyna tracić
+================================================================
+
+LISTA ENCJI (ground truth — te same dla wszystkich lvl):
+  OSOBA:    OSOBA_001, OSOBA_002
+  NUMER_002, NUMER_019
+  NUMER_006, NUMER_020
+  IBAN:     NUMER_001 NUMER_011, NUMER_017
+  EMAIL:    EMAIL_001, EMAIL_002
+  ADRES:    ADRES_003, ADRES_004
+  DOWÓD:    NUMER_018
+
+================================================================
+SEKCJA 1 — LVL 0 (czysty tekst, zero błędów)
+================================================================
+
+Zleceniodawca: OSOBA_001, NUMER_002, NUMER_006,
+zamieszkały ADRES_003, ADRES_004, NUMER_012,
+e-mail: EMAIL_001, NUMER_009.
+
+Zleceniobiorca: OSOBA_002, NUMER_003, NUMER_007,
+NUMER_013, e-mail: EMAIL_002.
+
+Konto: IBAN: NUMER_001.
+
+
+================================================================
+SEKCJA 2 — LVL 1 (lekki szum: O↔0, l↔1, spacje w numerach)
+================================================================
+
+Zleceniodawca: OSOBA_001, NUMER_002, NUMER_006,
+zamieszkały ADRES_003, ADRES_004, NUMER_012,
+e-mail: EMAIL_001, NUMER_009.
+
+Zleceniobiorca: OSOBA_003, NUMER_003, NUMER_007,
+NUMER_013, e-mail: EMAIL_002.
+
+Konto: IBAN: NUMER_001.
+
+
+================================================================
+SEKCJA 3 — LVL 2 (średni szum: zepsute polskie znaki, cyfry w nazwach, spacje w emailach)
+================================================================
+
+Zleceniodawca: OSOBA_004 N0wlckl, NUMER_002, NUMER_006,
+zamieszkaly ADRES_002, ADRES_004, NUMER_012,
+e-mail: EMAIL_003, NUMER_010.
+
+Zleceniobiorca: OSOBA_003, NUMER_004, NUMER_007,
+NUMER_013, e-mail: EMAIL_004.
+
+Konto: IBAN: NUMER_001.
+
+
+================================================================
+SEKCJA 4 — LVL 3 (ciężki szum: wiele artefaktów, bełkot fragmentów)
+================================================================
+
+Zleceniodawca: OSOBA_001, NUMER_002, NUMER_006,
+zamieszkaly ADRES_001 a 22, ADRES_004, NUMER_014,
+e-mail: EMAIL_005, dow0d 0sobisty: NUMER_018.
+
+Zleceniobiorca: OSOBA_003, NUMER_003, NUMER_007,
+NUMER_015, e-mall: EMAIL_006.
+
+Kont0: IBAN: NUMER_001.
+
+
+================================================================
+LISTA KONTROLNA — OCZEKIWANE WYNIKI PER POZIOM
+================================================================
+
+             LVL 0   LVL 1   LVL 2   LVL 3
+  OSOBA        2       2       ?       ?
+  NUMER_005       ?       ?
+  NUMER_008       ?       ?
+  IBAN         1       1       ?       ?
+  NUMER_016       ?       ?
+  EMAIL        2       2       ?       ?
+  ADRES        1+1     1+1     ?       ?
+  DOKUMENT     1       1       ?       ?
+
+  RAZEM        13      13      ?       ?
+
+Wpisz wyniki w wyniki_testy_reczne.txt jako TEST #002, #003, #004, #005.
+Każdy lvl to osobny test — widać gdzie silnik zaczyna się gubić.

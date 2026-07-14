@@ -1,0 +1,80 @@
+TEST — KWOTA regresja (15 tys. niezakryte mimo zielonych testów jednostkowych, NUMER_001)
+Cel: rozdzielić przypadki jeden-na-linię żeby wiedzieć DOKŁADNIE która odmiana psuje się na
+telefonie, skoro PseudonymEngineTest jest zielony dla tych samych wartości w izolacji.
+
+Jak czytać wynik:
+- JAWNE = cała kwota widoczna w tekście (problem)
+- CZĘŚCIOWO JAWNE = token powstał, ale kawałek liczby/waluty został obok jawny (problem)
+- TOKEN = pełny token KWOTA, zero jawnych cyfr/liter kwoty (OK)
+- Zapisz DOKŁADNIE który wariant (numer w nawiasie []) jest jawny — to najważniejsza informacja
+
+================================================================================
+GRUPA 1 — kontrolne kwoty które (wg Ciebie) DZIAŁAJĄ poprawnie
+================================================================================
+
+[K1]
+KWOTA_001
+
+[K2]
+kwota: KWOTA_002
+
+[K3]
+wartość: KWOTA_003
+
+================================================================================
+GRUPA 2 — "KWOTA_011" w różnych zapisach, KAŻDY NA WŁASNEJ LINII (izolowany)
+================================================================================
+
+[K4] czyste cyfry, bez etykiety
+KWOTA_004
+
+[K5] litera O zamiast zer, bez etykiety
+KWOTA_004
+
+[K6] czyste cyfry, Z etykietą "kwota:"
+kwota: KWOTA_004
+
+[K7] litera O zamiast zer, Z etykietą "kwota:"
+kwota: KWOTA_004
+
+[K8] czyste cyfry, bez grosze (całe złote)
+KWOTA_005
+
+[K9] litera O zamiast zer, bez grosze
+KWOTA_005
+
+================================================================================
+GRUPA 3 — czy liczba "15" akurat koliduje z czymś (kontrola z INNĄ liczbą, ten sam kształt)
+================================================================================
+
+[NUMER_002] ten sam kształt co K KWOTA_010 czba 22 zamiast 15
+KWOTA_006
+
+[NUMER_003] ten sam kształt co K KWOTA_009 czba 22 zamiast 15
+KWOTA_006
+
+================================================================================
+GRUPA 4 — dokładnie ten sam blok co w test_anchor_full.txt (linie 104-114), RAZEM
+Cel: sprawdzić czy problem pojawia się TYLKO gdy linie sąsiadują ze sobą (interakcja
+międzyliniowa / matchOverlapsToken), a nie gdy każda linia jest testowana osobno wyżej.
+================================================================================
+
+[NUMER_004] cały blok razem
+KWOTA_004
+KWOTA_001
+kwota: KWOTA_002
+wartość: KWOTA_003
+KWOTA_004
+KWOTA_001
+KWOTA_008
+wartość: KWOTA_003
+KWOTA_007
+kwota:KWOTA_002
+
+================================================================================
+NOTATKA DLA TESTERA
+Po pseudonimizacji wklej do wyniki_testy_reczne.txt:
+- dla KAŻDEGO numeru [K1]-[NUMER_004]: JAWNE / CZĘŚCIOWO JAWNE / TOKEN
+- jeśli JAWNE lub CZĘŚCIOWO — wklej dokładny fragment jaki widzisz (skopiuj z podglądu)
+- kolor tokenów (zielony/niebieski) jeśli DEBUG
+================================================================================

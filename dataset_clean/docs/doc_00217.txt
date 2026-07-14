@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV/2023/01/6040
+
+Data wystawienia: 31.10.2021
+Numer klienta: KL-32521
+
+----------------------------------------
+SPRZEDAWCA:
+Firma Logistyczna TRANS Sp. z o.o.
+Adres: ul. Polna 113, 00-001 Rzeszów
+NIP: 559-090-22-54   REGON: 259741218
+Nr konta: PL40114019878209702316433481
+
+NABYWCA:
+Paulina Kwiatkowska
+Adres: ul. Piaskowa 36, 60-001 Poznań
+NIP: 763-618-63-76
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               3     276   8%      828      894
+2.   Obsługa prawna                    7    1029   8%     7203     7779
+3.   Usługa transportowa               4     316   8%     1264     1365
+4.   Instalacja oprogramowania         7    1725  23%    12075    14852
+5.   Usługa serwisowa                 10    1227  23%    12270    15092
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        39982 PLN
+
+Płatność przelewem: PL40114019878209702316433481
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

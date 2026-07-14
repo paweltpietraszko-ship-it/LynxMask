@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 8571/11/2025
+
+Data wystawienia: 17.11.2024
+Numer klienta: KL-98877
+
+----------------------------------------
+SPRZEDAWCA:
+ALFA Sp. z o.o.
+Adres: pl. Wolności 32, 70-001 Gdynia
+NIP: 685-174-32-82   REGON: 832030936
+Nr konta: PL10240101356184787005050613
+
+NABYWCA:
+Robert Jabłoński
+Adres: ul. Sienkiewicza 78, 02-200 Olsztyn
+NIP: 163-461-57-17
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 4    1944   8%     7776     8398
+2.   Usługa doradcza                   3    1051   8%     3153     3405
+3.   Wynajem sprzętu biurowego        10     143   8%     1430     1544
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        13347 PLN
+
+Płatność przelewem: PL10240101356184787005050613
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

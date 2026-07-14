@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-01275/06/2021
+
+Data wystawienia: 16.10.2021
+Numer klienta: KL-55457
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Kwiatowa 85, 10-100 Szczecin
+NIP: 392-185-15-62   REGON: 389539269
+Nr konta: PL03150010134220969029593917
+
+NABYWCA:
+Dariusz Piotrowski
+Adres: al. Jana Pawła II 184/21, 00-001 Kraków
+NIP: 254-522-67-59
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            6     964   8%     5784     6247
+2.   Instalacja oprogramowania         4     561   8%     2244     2424
+3.   Szkolenie zawodowe                5    1661   8%     8305     8969
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        17640 PLN
+
+Płatność przelewem: PL03150010134220969029593917
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

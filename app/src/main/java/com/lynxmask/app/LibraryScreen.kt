@@ -9,6 +9,7 @@ package com.lynxmask.app
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,13 +39,26 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.lynxmask.app.document.rememberDocxExportLauncher
+import com.lynxmask.app.document.rememberPdfExportLauncher
+import com.lynxmask.app.document.rememberXlsxExportLauncher
 import com.lynxmask.app.ui.theme.LynxColors
 import com.lynxmask.app.ui.theme.LynxShapes
 import com.lynxmask.app.ui.components.LynxDangerTextButton
+import com.lynxmask.app.ui.components.LynxFilledButton
+import com.lynxmask.app.ui.components.LynxFlatRow
 import com.lynxmask.app.ui.components.LynxGhostButton
-import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.components.LynxScreenHeader
-import com.lynxmask.app.ui.components.LynxSecondaryButton
 import com.lynxmask.app.ui.theme.LynxSpacing
 import com.lynxmask.app.ui.theme.LynxTypography
 import kotlinx.coroutines.Dispatchers
@@ -156,6 +170,7 @@ private fun SessionListScreen(
             ) {
                 Text(
                     "Brak zapisanych sesji",
+                    fontFamily = LynxTypography.Sans,
                     color = LynxColors.TextSecondary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
@@ -163,15 +178,19 @@ private fun SessionListScreen(
                 Spacer(Modifier.height(LynxSpacing.sm))
                 Text(
                     "Ukryj dokument lub obraz — potem wróć tutaj.",
+                    fontFamily = LynxTypography.Sans,
                     color = LynxColors.TextMuted,
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(Modifier.height(LynxSpacing.lg))
-                LynxPrimaryButton(onClick = onGoToHub, modifier = Modifier.fillMaxWidth()) {
-                    Text("Ukryj pierwszy dokument")
-                }
+                LynxFilledButton(
+                    label = "Ukryj pierwszy dokument",
+                    icon = Icons.Outlined.UploadFile,
+                    onClick = onGoToHub,
+                    modifier = Modifier.fillMaxWidth(0.88f)
+                )
             }
 
             else -> LazyColumn(
@@ -239,6 +258,14 @@ private fun SessionDetailScreen(
     val clipboard      = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
 
+    // Document Rebuilder (10.07): eksport z Biblioteki dla sesji, które pochodzą z
+    // DOCX/PDF/Excel — ten sam zapis co z ekranu wyniku, tylko wołany stąd. Rejestrujemy
+    // wszystkie trzy bezwarunkowo (wymóg Compose — launcher musi być zarejestrowany zawsze,
+    // niezależnie od tego, czy przycisk się akurat pokaże).
+    val saveDocx = rememberDocxExportLauncher(coroutineScope)
+    val savePdf = rememberPdfExportLauncher(coroutineScope)
+    val saveXlsx = rememberXlsxExportLauncher(coroutineScope)
+
     var responses       by remember { mutableStateOf<List<SessionStore.ResponseRecord>>(emptyList()) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -263,14 +290,15 @@ private fun SessionDetailScreen(
     if (showRenameDialog) {
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
-            title = { Text("Zmie\u0144 nazw\u0119") },
+            title = { Text("Zmie\u0144 nazw\u0119", fontFamily = LynxTypography.Sans) },
             text  = {
                 OutlinedTextField(
                     value         = renameText,
                     onValueChange = { renameText = it },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),
-                    placeholder   = { Text("np. Umowa, S\u0105d...") },
+                    placeholder   = { Text("np. Umowa, S\u0105d...", fontFamily = LynxTypography.Sans) },
+                    shape         = RoundedCornerShape(LynxShapes.ButtonRadius),
                     colors        = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor   = LynxColors.Blue,
                         unfocusedBorderColor = LynxColors.Border
@@ -278,18 +306,21 @@ private fun SessionDetailScreen(
                 )
             },
             confirmButton = {
-                LynxPrimaryButton(onClick = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        SessionStore.updateDescription(context, session.sesjaId, renameText)
-                        withContext(Dispatchers.Main) {
-                            onSessionUpdated(session.copy(description = renameText))
-                            showRenameDialog = false
+                LynxFilledButton(
+                    label = "Zapisz",
+                    onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            SessionStore.updateDescription(context, session.sesjaId, renameText)
+                            withContext(Dispatchers.Main) {
+                                onSessionUpdated(session.copy(description = renameText))
+                                showRenameDialog = false
+                            }
                         }
                     }
-                }) { Text("Zapisz", fontWeight = FontWeight.Bold) }
+                )
             },
             dismissButton = {
-                LynxGhostButton(onClick = { showRenameDialog = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showRenameDialog = false }) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
@@ -299,10 +330,11 @@ private fun SessionDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Usuń dokument?") },
+            title = { Text("Usuń dokument?", fontFamily = LynxTypography.Sans) },
             text  = {
                 Text(
                     "Dokument zostanie trwale usunięty wraz z odpowiedziami AI.",
+                    fontFamily = LynxTypography.Sans,
                     lineHeight = 20.sp
                 )
             },
@@ -318,7 +350,7 @@ private fun SessionDetailScreen(
                 }, label = "Usuń")
             },
             dismissButton = {
-                LynxGhostButton(onClick = { showDeleteDialog = false }) { Text("Anuluj") }
+                LynxGhostButton(onClick = { showDeleteDialog = false }) { Text("Anuluj", fontFamily = LynxTypography.Sans) }
             },
             containerColor = LynxColors.Surface
         )
@@ -341,15 +373,16 @@ private fun SessionDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Text("Odpowied\u017a AI", fontWeight = FontWeight.Medium, color = LynxColors.TextPrimary)
+                        Text("Odpowied\u017a AI", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Medium, color = LynxColors.TextPrimary)
                         IconButton(onClick = { showPreview = false }) {
-                            Text("\u2715", color = LynxColors.TextMuted, fontSize = 16.sp)
+                            Text("\u2715", fontFamily = LynxTypography.Sans, color = LynxColors.TextMuted, fontSize = 16.sp)
                         }
                     }
                     Spacer(Modifier.height(LynxSpacing.sm))
                     Text(
                         text       = previewText!!,
                         modifier   = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                        fontFamily = LynxTypography.Sans,
                         fontSize   = 13.sp,
                         color      = LynxColors.TextPrimary,
                         lineHeight = 20.sp
@@ -398,61 +431,77 @@ private fun SessionDetailScreen(
                 }
             }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(LynxShapes.CardRadius),
-                colors = CardDefaults.cardColors(containerColor = LynxColors.Surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(LynxSpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.sm)
-                ) {
-                    Text(
-                        if (session.isImage) "OBRAZ" else "DOKUMENT",
-                        fontFamily = LynxTypography.Mono,
-                        fontSize = 9.sp,
-                        color = LynxColors.Blue,
-                        letterSpacing = 1.5.sp
-                    )
-                    if (session.isImage) {
-                        SessionActionButton(label = "Udostępnij do innej aplikacji") {
-                            coroutineScope.launch {
-                                val bmp = imageBitmap ?: withContext(Dispatchers.IO) {
-                                    SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
-                                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    if (session.isImage) "OBRAZ" else "DOKUMENT",
+                    fontFamily = LynxTypography.Mono,
+                    fontSize = 9.sp,
+                    color = LynxColors.Blue,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                if (session.isImage) {
+                    SessionActionButton(label = "Udostępnij do innej aplikacji", icon = Icons.Outlined.Share) {
+                        coroutineScope.launch {
+                            val bmp = imageBitmap ?: withContext(Dispatchers.IO) {
+                                SessionStore.loadRedactedImage(context, session.sesjaId)?.let { bytes ->
+                                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                }
+                            } ?: return@launch
+                            val uri = withContext(Dispatchers.IO) {
+                                ImageRedactionPipeline.saveToCache(bmp, context)
+                            }
+                            val fwd = Intent(Intent.ACTION_SEND).apply {
+                                type = "image/jpeg"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
+                        }
+                    }
+                } else {
+                    SessionActionButton(label = "Podgląd zamaskowanego", icon = Icons.Outlined.Visibility) {
+                        onDepseudo(DepseudoMode.MASKED_VIEW)
+                    }
+                    SessionActionButton(label = "Przywróć oryginał", icon = Icons.Outlined.Restore) {
+                        onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
+                    }
+                    SessionActionButton(label = "Dodaj odpowiedź AI", icon = Icons.Outlined.AutoAwesome) {
+                        onDepseudo(DepseudoMode.AI_RESPONSE)
+                    }
+                    val exportLabel = when (session.sourceFormat) {
+                        SessionStore.SOURCE_FORMAT_DOCX -> "Zapisz DOCX"
+                        SessionStore.SOURCE_FORMAT_PDF -> "Zapisz PDF"
+                        SessionStore.SOURCE_FORMAT_XLSX -> "Zapisz Excel"
+                        else -> null
+                    }
+                    if (exportLabel != null) {
+                        SessionActionButton(label = exportLabel, icon = Icons.Outlined.Download) {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val text = SessionStore.loadMaskedText(context, session.sesjaId)
+                                withContext(Dispatchers.Main) {
+                                    if (text == null) {
+                                        Toast.makeText(context, "Nie udało się wczytać tekstu sesji", Toast.LENGTH_SHORT).show()
+                                    } else when (session.sourceFormat) {
+                                        SessionStore.SOURCE_FORMAT_DOCX -> saveDocx(text)
+                                        SessionStore.SOURCE_FORMAT_PDF -> savePdf(text)
+                                        SessionStore.SOURCE_FORMAT_XLSX -> saveXlsx(text)
                                     }
-                                } ?: return@launch
-                                val uri = withContext(Dispatchers.IO) {
-                                    ImageRedactionPipeline.saveToCache(bmp, context)
                                 }
-                                val fwd = Intent(Intent.ACTION_SEND).apply {
-                                    type = "image/jpeg"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(fwd, "Udostępnij bezpieczny obraz"))
                             }
                         }
-                    } else {
-                        SessionActionButton(label = "Podgląd zamaskowanego") {
-                            onDepseudo(DepseudoMode.MASKED_VIEW)
-                        }
-                        SessionActionButton(label = "Przywróć oryginał") {
-                            onDepseudo(DepseudoMode.SOURCE_DOCUMENT)
-                        }
-                        SessionActionButton(label = "Dodaj odpowiedź AI") {
-                            onDepseudo(DepseudoMode.AI_RESPONSE)
-                        }
                     }
-                    SessionActionButton(label = "Zmień nazwę") {
-                        showRenameDialog = true
-                    }
+                }
+                SessionActionButton(label = "Zmień nazwę", icon = Icons.Outlined.Edit) {
+                    showRenameDialog = true
                 }
             }
 
+            HorizontalDivider(color = LynxColors.Border, thickness = 0.5.dp)
+
             SessionActionButton(
                 label = "Usuń dokument",
+                icon = Icons.Outlined.Delete,
                 isDestructive = true
             ) {
                 showDeleteDialog = true
@@ -475,6 +524,7 @@ private fun SessionDetailScreen(
                         Text(
                             "Brak zapisanych odpowiedzi.\nUżyj „Dodaj odpowiedź AI” po otrzymaniu wyniku z asystenta.",
                             modifier = Modifier.padding(LynxSpacing.md),
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 13.sp,
                             lineHeight = 19.sp,
                             color = LynxColors.TextSecondary
@@ -524,25 +574,18 @@ private fun SessionDetailScreen(
 @Composable
 private fun SessionActionButton(
     label: String,
+    icon: ImageVector,
     isDestructive: Boolean = false,
     onClick: () -> Unit
 ) {
-    if (isDestructive) {
-        LynxSecondaryButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            accent = LynxColors.Red
-        ) {
-            Text(label, color = LynxColors.Red)
-        }
-    } else {
-        LynxSecondaryButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(label)
-        }
-    }
+    LynxFlatRow(
+        label = label,
+        icon = icon,
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        iconTint = if (isDestructive) LynxColors.Red else LynxColors.BlueLight,
+        labelColor = if (isDestructive) LynxColors.Red else null
+    )
 }
 
 @Composable
@@ -562,24 +605,26 @@ private fun ResponseItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 response.content.take(50) + if (response.content.length > 50) "\u2026" else "",
+                fontFamily = LynxTypography.Sans,
                 fontSize  = 13.sp,
                 color     = LynxColors.TextSecondary,
                 maxLines  = 1
             )
             Text(
                 response.createdAt.take(10),
+                fontFamily = LynxTypography.Sans,
                 fontSize = 11.sp,
                 color    = LynxColors.TextDim
             )
         }
         LynxGhostButton(onClick = onPreview) {
-            Text("Podgl\u0105d", fontSize = 12.sp, color = LynxColors.Blue)
+            Text("Podgl\u0105d", fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = LynxColors.Blue)
         }
         LynxGhostButton(onClick = onCopy) {
-            Text("Kopiuj", fontSize = 12.sp, color = LynxColors.TextMuted)
+            Text("Kopiuj", fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = LynxColors.TextMuted)
         }
         IconButton(onClick = onDelete, modifier = Modifier.size(LynxSpacing.TouchTarget)) {
-            Text("\u2715", fontSize = 14.sp, color = LynxColors.Red.copy(alpha = 0.7f))
+            Text("\u2715", fontFamily = LynxTypography.Sans, fontSize = 14.sp, color = LynxColors.Red.copy(alpha = 0.7f))
         }
     }
 }

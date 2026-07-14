@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-08231/02/2025
+
+Data wystawienia: 16.10.2024
+Numer klienta: KL-34729
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Norwida 85, 30-001 Gdańsk
+NIP: 887-256-86-26   REGON: 156906745
+Nr konta: PL75150010137163928234143637
+
+NABYWCA:
+Mateusz Kwiatkowski
+Adres: pl. Wolności 171, 90-001 Wrocław
+NIP: 210-225-80-39
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Naprawa sprzętu                   2     320  23%      640      787
+2.   Usługa doradcza                   5     443   8%     2215     2392
+3.   Usługa transportowa               1    1312   8%     1312     1417
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         4596 PLN
+
+Płatność przelewem: PL75150010137163928234143637
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

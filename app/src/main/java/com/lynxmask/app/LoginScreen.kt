@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -23,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.compose.ui.focus.FocusRequester
@@ -39,6 +42,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lynxmask.app.ui.components.LynxDangerTextButton
+import com.lynxmask.app.ui.components.LynxFilledButton
 import com.lynxmask.app.ui.components.LynxGhostButton
 import com.lynxmask.app.ui.components.LynxPrimaryButton
 import com.lynxmask.app.ui.theme.LynxColors
@@ -238,6 +242,18 @@ fun LoginScreen(
                 .padding(horizontal = LynxSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // BUG-WERSJA-NIESPOJNA (11.07): ta sama etykieta co w Hub, ten sam róg —
+            // wcześniej wersja siedziała na dole ekranu logowania, inaczej niż wszędzie indziej.
+            Box(modifier = Modifier.fillMaxWidth().padding(top = LynxSpacing.sm)) {
+                Text(
+                    "${BuildConfig.VERSION_NAME}  LynxMask Mobile",
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    fontFamily = LynxTypography.Sans,
+                    fontSize = 10.sp,
+                    color = LynxColors.TextDim
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -247,19 +263,12 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 LynxLoginHeader()
-                Spacer(Modifier.height(LynxSpacing.lg))
+                Spacer(Modifier.height(LynxSpacing.xl))
 
-                Surface(
+                Column(
                     modifier = Modifier.fillMaxWidth(0.88f),
-                    shape = RoundedCornerShape(LynxShapes.CardRadius),
-                    color = LynxColors.Surface,
-                    tonalElevation = 0.dp,
-                    shadowElevation = 0.dp
+                    verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(LynxSpacing.md)
-                    ) {
                     if (recoveryStep == RecoveryStep.SHOW_KEY) {
                         ShowKeyContent(
                             key        = generatedKey,
@@ -295,26 +304,19 @@ fun LoginScreen(
                             }
                         )
                     } else if (showBiometricCard) {
-                        Text(
-                            "Odblokuj aplikację",
-                            fontSize = 14.sp,
-                            color = LynxColors.TextSecondary,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            textAlign = TextAlign.Center
+                        // BUG-LOGIN-TEKST-POWTORZONY (11.07): "Odblokuj aplikację" jako osobna
+                        // etykieta nad przyciskiem "Odblokuj" powtarzało to samo dwa razy —
+                        // jeden wypełniony przycisk z ikoną niesie ten sam komunikat raz.
+                        LynxFilledButton(
+                            label = "Odblokuj aplikację",
+                            icon = Icons.Outlined.Fingerprint,
+                            onClick = { biometricPrompt.authenticate(promptInfo) }
                         )
-                        LynxPrimaryButton(
-                            onClick = { biometricPrompt.authenticate(promptInfo) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Odblokuj", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                        }
                         LynxGhostButton(
                             onClick = { showPasswordForm = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Użyj hasła", fontSize = 12.sp, color = LynxColors.TextDim)
+                            Text("Użyj hasła", fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = LynxColors.TextDim)
                         }
                     } else {
                     if (migrationNeeded) {
@@ -327,6 +329,7 @@ fun LoginScreen(
                         ) {
                             Text(
                                 "Dla bezpieczeństwa konieczne jest ponowne ustawienie hasła.",
+                                fontFamily = LynxTypography.Sans,
                                 fontSize = 12.sp,
                                 lineHeight = 17.sp,
                                 color = LynxColors.TextSecondary
@@ -353,7 +356,7 @@ fun LoginScreen(
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
                             placeholder = {
-                                Text("Wpisz hasło...", color = LynxColors.TextDim, fontSize = 14.sp)
+                                Text("Wpisz hasło...", fontFamily = LynxTypography.Sans, color = LynxColors.TextDim, fontSize = 14.sp)
                             },
                             singleLine = true,
                             enabled = !isLoading,
@@ -396,33 +399,20 @@ fun LoginScreen(
                             )
                         )
                         if (errorMessage.isNotEmpty()) {
-                            Text(errorMessage, fontSize = 12.sp, color = LynxColors.Red)
+                            Text(errorMessage, fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = LynxColors.Red)
                         }
                     }
 
-                    LynxPrimaryButton(
-                        onClick = { if (!isLoading) submit() },
-                        enabled = password.isNotEmpty() && !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = LynxColors.TextPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                when {
-                                    recoveryStep == RecoveryStep.NEW_PASSWORD -> "Ustaw nowe hasło"
-                                    effectiveIsFirstRun -> "Ustaw i odblokuj"
-                                    else -> "Odblokuj"
-                                },
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
+                    LynxFilledButton(
+                        label = when {
+                            recoveryStep == RecoveryStep.NEW_PASSWORD -> "Ustaw nowe hasło"
+                            effectiveIsFirstRun -> "Ustaw i odblokuj"
+                            else -> "Odblokuj"
+                        },
+                        enabled = password.isNotEmpty(),
+                        loading = isLoading,
+                        onClick = { if (!isLoading) submit() }
+                    )
 
                     if (!effectiveIsFirstRun && recoveryStep == RecoveryStep.NONE) {
                         var showResetDialog by remember { mutableStateOf(false) }
@@ -432,10 +422,11 @@ fun LoginScreen(
                             AlertDialog(
                                 onDismissRequest = { showRecoveryChoice = false },
                                 shape = RoundedCornerShape(LynxShapes.CardRadius),
-                                title = { Text("Nie pamiętasz hasła?") },
+                                title = { Text("Nie pamiętasz hasła?", fontFamily = LynxTypography.Sans) },
                                 text = {
                                     Text(
                                         "Masz klucz dostępu wygenerowany przy pierwszym logowaniu?",
+                                        fontFamily = LynxTypography.Sans,
                                         fontSize = 13.sp, lineHeight = 19.sp
                                     )
                                 },
@@ -444,7 +435,7 @@ fun LoginScreen(
                                         showRecoveryChoice = false
                                         recoveryStep = RecoveryStep.ENTER_KEY
                                     }, modifier = Modifier.fillMaxWidth()) {
-                                        Text("Tak, mam klucz", fontSize = 13.sp)
+                                        Text("Tak, mam klucz", fontFamily = LynxTypography.Sans, fontSize = 13.sp)
                                     }
                                 },
                                 dismissButton = {
@@ -462,16 +453,18 @@ fun LoginScreen(
                             AlertDialog(
                                 onDismissRequest = { showResetDialog = false },
                                 shape = RoundedCornerShape(LynxShapes.CardRadius),
-                                title = { Text("Resetuj hasło?") },
+                                title = { Text("Resetuj hasło?", fontFamily = LynxTypography.Sans) },
                                 text = {
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Text(
                                             "UWAGA: cała biblioteka dokumentów zostanie trwale usunięta.",
+                                            fontFamily = LynxTypography.Sans,
                                             fontSize = 13.sp, lineHeight = 19.sp,
                                             fontWeight = FontWeight.Bold, color = LynxColors.Red
                                         )
                                         Text(
                                             "Reset jest nieodwracalny i służy tylko gdy hasło jest całkowicie zapomniane.",
+                                            fontFamily = LynxTypography.Sans,
                                             fontSize = 13.sp, lineHeight = 19.sp
                                         )
                                     }
@@ -497,7 +490,7 @@ fun LoginScreen(
                                 },
                                 dismissButton = {
                                     LynxGhostButton(onClick = { showResetDialog = false }) {
-                                        Text("Anuluj")
+                                        Text("Anuluj", fontFamily = LynxTypography.Sans)
                                     }
                                 },
                                 containerColor = LynxColors.Surface
@@ -508,13 +501,14 @@ fun LoginScreen(
                             onClick = { showRecoveryChoice = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Zapomniałem hasła", fontSize = 12.sp, color = LynxColors.TextDim)
+                            Text("Zapomniałem hasła", fontFamily = LynxTypography.Sans, fontSize = 12.sp, color = LynxColors.TextDim)
                         }
                     }
 
                     if (effectiveIsFirstRun) {
                         Text(
                             "Hasło zabezpiecza dostęp do sesji.\nBez niego dane są niedostępne.",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 11.sp,
                             color = LynxColors.TextDim,
                             lineHeight = 16.sp
@@ -522,7 +516,6 @@ fun LoginScreen(
                     }
                     } // else (password form)
                 }
-            }
             }
 
             Column(
@@ -538,6 +531,7 @@ fun LoginScreen(
                     ) {
                         Text(
                             "⚡ Tryb Express — bez logowania",
+                            fontFamily = LynxTypography.Sans,
                             fontSize = 12.sp,
                             color    = LynxColors.Amber
                         )
@@ -549,6 +543,7 @@ fun LoginScreen(
                 ) {
                     Text(
                         "Polityka prywatności",
+                        fontFamily = LynxTypography.Sans,
                         fontSize = 11.sp,
                         color    = LynxColors.TextDim
                     )
@@ -556,16 +551,11 @@ fun LoginScreen(
                 if (showPrivacyPolicy) {
                     PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
                 }
-                Text(
-                    BuildConfig.VERSION_NAME + " — lynxmask.app",
-                    fontFamily = LynxTypography.Mono,
-                    fontSize   = 10.sp,
-                    color      = LynxColors.TextDim
-                )
             }
         }
     }
 }
+
 
 @Composable
 private fun LynxLoginHeader() {
@@ -597,6 +587,7 @@ private fun LynxLoginHeader() {
         Spacer(Modifier.height(10.dp))
         Text(
             "Pseudonimizacja dokumentów",
+            fontFamily = LynxTypography.Sans,
             fontSize = 13.sp,
             color = LynxColors.TextSecondary
         )
@@ -616,9 +607,10 @@ private fun ShowKeyContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("Klucz dostępu", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("Klucz dostępu", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(
             "Zapisz klucz w bezpiecznym miejscu. Pozwoli odzyskać dostęp bez utraty danych gdy zapomnisz hasła.",
+            fontFamily = LynxTypography.Sans,
             fontSize = 13.sp, lineHeight = 19.sp, color = LynxColors.TextDim
         )
         Text(
@@ -632,7 +624,7 @@ private fun ShowKeyContent(
             onClick = { clipboard.setText(AnnotatedString(key)) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Kopiuj klucz", fontSize = 13.sp)
+            Text("Kopiuj klucz", fontFamily = LynxTypography.Sans, fontSize = 13.sp)
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -640,14 +632,14 @@ private fun ShowKeyContent(
         ) {
             Checkbox(checked = keySaved, onCheckedChange = onSavedChange)
             Spacer(Modifier.width(8.dp))
-            Text("Zapisałem klucz w bezpiecznym miejscu", fontSize = 13.sp)
+            Text("Zapisałem klucz w bezpiecznym miejscu", fontFamily = LynxTypography.Sans, fontSize = 13.sp)
         }
         LynxPrimaryButton(
             onClick = onConfirm,
             enabled = keySaved,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Kontynuuj", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            Text("Kontynuuj", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Medium, fontSize = 14.sp)
         }
     }
 }
@@ -664,21 +656,23 @@ private fun EnterKeyContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("Wpisz klucz dostępu", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("Wpisz klucz dostępu", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(
             "Wpisz 24-znakowy klucz wygenerowany przy pierwszym logowaniu (myślniki opcjonalne).",
+            fontFamily = LynxTypography.Sans,
             fontSize = 13.sp, lineHeight = 19.sp, color = LynxColors.TextDim
         )
         OutlinedTextField(
             value = input,
             onValueChange = onInputChange,
-            label = { Text("KLUCZ DOSTĘPU") },
+            label = { Text("KLUCZ DOSTĘPU", fontFamily = LynxTypography.Sans) },
             placeholder = { Text("XXXXXX-XXXXXX-XXXXXX-XXXXXX", fontFamily = LynxTypography.Mono) },
             isError = error.isNotEmpty(),
-            supportingText = if (error.isNotEmpty()) ({ Text(error, color = MaterialTheme.colorScheme.error) }) else null,
+            supportingText = if (error.isNotEmpty()) ({ Text(error, fontFamily = LynxTypography.Sans, color = MaterialTheme.colorScheme.error) }) else null,
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onVerify() }),
+            shape = RoundedCornerShape(LynxShapes.ButtonRadius),
             modifier = Modifier.fillMaxWidth(),
             textStyle = LocalTextStyle.current.copy(fontFamily = LynxTypography.Mono, letterSpacing = 1.sp)
         )
@@ -686,7 +680,7 @@ private fun EnterKeyContent(
             onClick = onVerify,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Zweryfikuj klucz", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            Text("Zweryfikuj klucz", fontFamily = LynxTypography.Sans, fontWeight = FontWeight.Medium, fontSize = 14.sp)
         }
     }
 }

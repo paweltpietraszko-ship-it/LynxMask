@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2024/3300
+
+Data wystawienia: 12.06.2020
+Numer klienta: KL-73068
+
+----------------------------------------
+SPRZEDAWCA:
+Doradztwo Biznesowe EXPERT Sp. z o.o.
+Adres: ul. Gomulickiego 72/49, 44-100 Bombla
+NIP: 455-338-03-35   REGON: 402321291
+Nr konta: PL43325000033381674233629344
+
+NABYWCA:
+Oliviia Wrobel
+Adres: ul. Popieluszki 166, 00-001 Szymanowice Górne
+NIP: 785-270-17-19
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               7     393  23%     2751     3384
+2.   Wynajem sprzętu biurowego         7    1084  23%     7588     9333
+3.   Usługa serwisowa                  8      90  23%      720      886
+4.   Usługa transportowa               2    1604  23%     3208     3946
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        17549 PLN
+
+Płatność przelewem: PL43325000033381674233629344
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

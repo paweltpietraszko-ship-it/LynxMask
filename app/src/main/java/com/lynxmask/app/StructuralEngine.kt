@@ -236,89 +236,6 @@ internal fun applyPeselShapeChecksum(
     return t
 }
 
-// ============================================================
-// POSTAL_CITY — kod pocztowy + miasto (oba kierunki), jeden właściciel pary
-// (plan Cursor 01.07, krok 1 — funkcja zdefiniowana, JESZCZE NIE podłączona do
-// pipeline. Podłączenie w kroku 2 jako warstwa 3a przed NameEngine.)
-//
-// Naprawia bug znaleziony testem ręcznym: 3+ adresów kod+miasto pod rząd (osobne
-// linie ORAZ sklejone bez spacji przez OCR) rozjeżdżało się na pomieszane tokeny —
-// stary wzorzec (StructuralEngine #597, teraz niżej) wymagał \b na granicy
-// dopasowania miasta, a \b NIE ISTNIEJE między literą (koniec miasta) a cyfrą
-// (początek NASTĘPNEGO kodu, gdy sklejone) bo oba są \w. Fix: (?<!\d) zamiast \b
-// na starcie kodu (nie zaczynaj w środku innego ciągu cyfr, ale POZWÓL zaczynać
-// zaraz po literze — to dokładnie przypadek sklejenia OCR), i brak \b na końcu
-// nazwy miasta (klasa znaków sama naturalnie zatrzymuje się na pierwszej cyfrze).
-// ============================================================
-// BUG-POSTALCITY-NIP-FIX (Cursor 01.07, drugi przypadek): ten sam guard co niżej
-// (postalCityBareCodeRe) — bez niego łapał "56-786" ze środka NIP-u "512-34-56-786"
-// jako fałszywy kod pocztowy, bo zaraz po nim była ", zamieszkały..." (przecinek+słowo
-// spełniał wymóg "miasta" — ten kierunek nie wymaga wielkiej litery ani słownika).
-private val postalCityCodeToNameRe = Regex(
-    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,30}"""
-)
-private val postalCityNameToCodeRe = Regex(
-    """\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+(?:[^\S\n][A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z]+)?)[,\s]+((?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4})"""
-)
-// BUG-POSTALCITY-NIP-FIX (test regresji 01.07): (?<!\d{2,3}-) i (?!-\d) dodane — bez nich
-// ten wzorzec łapał ostatni segment NIP-u jako fałszywy kod pocztowy (np. "56-786" z
-// "512-34-56-786" — NIP ma też kształt XX-XXX w swoim ostatnim segmencie). Guard: nie
-// matchuj jeśli bezpośrednio przed jest inny segment "cyfry-" (jesteśmy w środku
-// dłuższego łańcucha myślnikowego, czyli prawdopodobnie NIP/sygnatura, nie kod pocztowy)
-// ani jeśli bezpośrednio po jest kolejny "-cyfry".
-private val postalCityBareCodeRe = Regex(
-    """(?<!\d{2,3}-)(?<!\d)\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}(?!-\d)\b"""
-)
-
-// Kod pocztowy + miasto (oba kierunki) jako JEDEN token ADRES. Goły kod (bez miasta)
-// maskowany osobno, TYLKO gdy w tej samej linii nie ma słowa ze słownika miast (guard
-// przed konfliktem z dwoma powyższymi wzorcami, które już by go obsłużyły wcześniej).
-internal fun applyPostalCityPatterns(
-    text: String,
-    assignToken: (value: String, tokenType: String) -> String
-): String {
-    var t = text
-
-    fun replaceRangeAsToken(acc: String, range: IntRange, value: String): String {
-        val token = assignToken(value.trim(), TOKEN_ADRES)
-        val before = acc.getOrElse(range.first - 1) { ' ' }
-        val after = acc.getOrElse(range.last + 1) { ' ' }
-        val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
-        val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
-        return acc.replaceRange(range, pre + token + suf)
-    }
-
-    // Kierunek 1: kod → miasto ("00-001 Warszawa") — bez słownika, jak stare #597
-    t = postalCityCodeToNameRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-        if (TOKEN_RE.containsMatchIn(m.value)) acc else replaceRangeAsToken(acc, m.range, m.value)
-    }
-
-    // Kierunek 2: miasto → kod ("Warszawa, 00-001") — tylko gdy słowo jest w słowniku miast
-    if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
-        t = postalCityNameToCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-            if (TOKEN_RE.containsMatchIn(m.value)) acc
-            else if (!LookupTables.cityForms.contains(m.groupValues[1].lowercase())) acc
-            else replaceRangeAsToken(acc, m.range, m.value)
-        }
-    }
-
-    // Kierunek 3: goły kod bez miasta — tylko gdy w tej samej linii NIE ma słowa
-    // ze słownika miast (inaczej kierunek 1/2 powinny były to już obsłużyć)
-    t = postalCityBareCodeRe.findAll(t).toList().asReversed().fold(t) { acc, m ->
-        if (TOKEN_RE.containsMatchIn(m.value)) acc
-        else {
-            val lineStart = acc.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
-            val lineEnd = acc.indexOf('\n', m.range.last).let { if (it < 0) acc.length else it }
-            val line = acc.substring(lineStart, lineEnd).lowercase()
-            val hasCityWord = LookupTables.initialized &&
-                line.split(Regex("""\W+""")).any { it.isNotEmpty() && LookupTables.cityForms.contains(it) }
-            if (hasCityWord) acc else replaceRangeAsToken(acc, m.range, m.value)
-        }
-    }
-
-    return t
-}
-
 // CTX_STRAY (BUG-PESEL-OBCA-LITERA, 07.07): pojedyncza obca litera tolerowana w środku
 // ciągu cyfr kontekstowych, gdy zaraz po niej jest znowu prawdziwa cyfra — patrz komentarz
 // przy wzorcu PESEL niżej.
@@ -354,7 +271,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // TLD: [a-zA-Z][a-zA-Z0-9]{1,} — zaczyna się literą, może zawierać cyfry (OCR: "p1"→"pl", "c0m"→"com")
     TOKEN_EMAIL to Regex("""\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
     // Wzorzec z kontekstem — toleruje OCR: "e-nnail", "e-maii" (podwójne n/i)
-    TOKEN_EMAIL to Regex("""(?i)\be[- ]?m[na]{1,2}i{1,2}l\s*[:–\-]\s*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07, audyt ogólny po BUG-KWOTA-CROSS-NEWLINE): \s* -> [^\S\n]*
+    TOKEN_EMAIL to Regex("""(?i)\be[- ]?m[na]{1,2}i{1,2}l[^\S\n]*[:–\-][^\S\n]*[a-zA-Z0-9._%+\-@]+\.[a-zA-Z][a-zA-Z0-9]{1,}\b"""),
 
     // ============================================================
     // Blok 0 — Kontekstowe wzorce dokumentów tożsamości i uprawnień
@@ -376,7 +294,7 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // z klasy znaków — PESEL to ciągłe cyfry (max spacje/taby jako separator OCR), a
     // myślnik w tej klasie pozwalał dopasowaniu ciągnąć się w kod pocztowy/NIP (kształt
     // z myślnikami) sąsiadujący z PESEL-em. Prawdziwy fix jest w OcrNormalizer (Warstwa 0)
-    // i StructuralEngine.applyPostalCityPatterns (Warstwa 1b) — to dodatkowy pas bezpieczeństwa.
+    // i AddressEngine (Warstwa 0b, biegnie przed tym wzorcem) — to dodatkowy pas bezpieczeństwa.
     // BUG-PESEL-OBCA-LITERA (benchmark 500 dok. 07.07, doc_00025/doc_00355 — potwierdzone
     // ręcznym testem na telefonie): prawdziwy OCR na zaszumionym obrazie potrafi pomylić
     // POJEDYNCZĄ cyfrę z DOWOLNĄ literą, nie tylko znaną D-klasą ("4"→"A", "7"→"r" w dwóch
@@ -397,9 +315,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // OCR może przekręcić jedną cyfrę → suma błędna → bez tego wzorca prawidłowy NIP nie byłby maskowany.
     // Wzorce NIE są w NIP_PATTERN_STRINGS → S5 celowo nie stosowane.
     // (?:[^\S\n]+\w+)? — opcjonalny modyfikator: "NIP nabywcy:", "NIP świadka:", "NIP sprzedawcy:"
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{3}[-\s.]?\d{2}[-\s.]?\d{2}\b"""),
-    // BUG-NIP-CTX-3223: format 3-2-2-3 (XXX-XX-XX-XXX)
-    TOKEN_NUMER to Regex("""(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\d{3}[-\s.]?\d{2}[-\s.]?\d{2}[-\s.]?\d{3}\b"""),
+    // BUG-NIP-OBCA-LITERA (zgłoszone przez Pawła 08.07, "426-1A1-78-03" jawne): NIP miał
+    // komentarz "analogicznie do PESEL" ale NIGDY nie dostał tolerancji CTX_STRAY którą PESEL
+    // dostał 07.07 (BUG-PESEL-OBCA-LITERA) — dwa sztywne wzorce grupowe (3-3-2-2 i 3-2-2-3,
+    // \d{3} dosłowne) wymagały PRAWDZIWEJ cyfry w każdej pozycji, żadna nie tolerowała
+    // pojedynczej obcej litery OCR ("4"→"A"). Scalone w jeden elastyczny wzorzec (ten sam
+    // styl co PESEL) — nie dba o konkretne grupowanie, tylko o łączną długość cyfr+separatorów,
+    // z tolerancją jednej obcej litery gdy zaraz po niej jest znowu prawdziwa cyfra.
+    TOKEN_NUMER to Regex(
+        """(?i)\bN[IL1]P\b(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*""" +
+        """\d(?:[\d \t\-.]|$CTX_STRAY(?=[ \t]?\d)){6,14}\d\b"""
+    ),
 
     // Data urodzenia z kontekstem
     // dat[aą] ur(odzenia)? — obsługuje warianty:
@@ -414,12 +340,20 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // S-DATE-PL: data DD.MM.YYYY bez kontekstu — rok musi być 19xx lub 20xx
     // Separatory: kropka / ukośnik / przecinek (kreska jest lapana przez A.5b NIP-shape).
     // Rok poza zakresem (np. 1234) → brak masowania (test: "parametr 10.12.1234" → skip).
+    // BUG-DATE-OGON (08.07, test PDF Pawła): wzorzec łapał TYLKO kształt daty w numerach
+    // faktur wyglądających jak data na początku ("FV 12/06/2026/WAW"), zostawiając "/WAW"
+    // jawne. NIE naprawione tutaj punktowo — ten sam mechanizm bugu (wcześniejszy wzorzec
+    // kradnie prefiks numeru z ukośnikami) dotyczył już kilku innych reguł historycznie
+    // (BUG-NR-SIEROTA itd.); zamiast kolejnej punktowej łaty, ogólny "sprzątacz ogonów"
+    // w AnchorEngine.kt (CLEANUP na końcu applyAnchorEngine, Paweł 08.07) usuwa TAKI ogon
+    // po KAŻDYM tokenie niezależnie od tego która reguła go zostawiła.
     TOKEN_NUMER to Regex("""\b\d{1,2}[./,]\d{1,2}[./,](?:19|20)\d{2}\b"""),
 
     // S-DATE-CTX: data po słowie kluczowym Dnia/Data — akceptuje 2-cyfrowy rok
     // Kontekst słowny ("Dnia", "Data:") jest dowodem że to data, nie losowe liczby.
     // Separator: kropka / ukośnik / przecinek / kreska; rok 2–4 cyfry.
-    TOKEN_NUMER to Regex("""(?i)\b(?:dnia|dat[aą]\s*:?)[^\S\n]+\d{1,2}[./,\-]\d{1,2}[./,\-]\d{2,4}\b"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]*
+    TOKEN_NUMER to Regex("""(?i)\b(?:dnia|dat[aą][^\S\n]*:?)[^\S\n]+\d{1,2}[./,\-]\d{1,2}[./,\-]\d{2,4}\b"""),
 
     // Dowód osobisty z kontekstem
     // dow[oó]d — obsługuje OCR bez znaku ó ("dowod osobisty" ✓, "dowód" ✓)
@@ -523,28 +457,43 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Obsługuje: PL41169010149375012387120644 i PL41 1690 1014 9375 0123 8712 0644
     // \b na końcu usunięte: gdy IBAN przylega bezpośrednio do następnego tokenu (sklejone),
     // \b failuje (cyfra→cyfra). {6} jest precyzyjne więc regex nie przejada sąsiednich tokenów.
-    TOKEN_NUMER to Regex("""\bPL[-\s]?\d{2}(?:[-\s]?\d{4}){6}"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): [-\s]? -> (?:-|[^\S\n])? — separator TUŻ PO "PL"
+    // (kotwica) nie może przełknąć \n; wewnętrzne grupy cyfr (?:\s?\d{4}) zostają bez zmian
+    // (separator MIĘDZY cyframi TEJ SAMEJ wartości, nie kotwica->wartość — inny podtyp ryzyka).
+    TOKEN_NUMER to Regex("""\bPL(?:-|[^\S\n])?\d{2}(?:(?:-|[^\S\n])?\d{4}){6}"""),
     // IBAN z kontekstem "IBAN:" — dla polskich i zagranicznych numerów UE
     // BUG-IBAN-ZAGRANICZNY-FIX (Paweł 07.07): sztywne grupy WYŁĄCZNIE po 4 cyfry zakładały że
     // (całkowita długość - 2 cyfry kontrolne) dzieli się przez 4 bez reszty — prawda dla PL (26),
     // fałsz dla wielu innych krajów UE (np. DE: 20 cyfr po kodzie kraju, 18 BBAN nie dzieli się
     // przez 4 → "00" na końcu zostawało jawne; podobnie FR). Opcjonalna końcowa grupa 1-3 cyfr
     // obsługuje resztę z dzielenia, niezależnie od konkretnego kraju/długości.
-    TOKEN_NUMER to Regex("""(?i)\bIBAN\s*:?\s*[A-Z]{2}\d{2}(?:\s?\d{4}){2,7}(?:\s?\d{1,3})?"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* po "IBAN" -> [^\S\n]*.
+    TOKEN_NUMER to Regex("""(?i)\bIBAN[^\S\n]*:?[^\S\n]*[A-Z]{2}\d{2}(?:\s?\d{4}){2,7}(?:\s?\d{1,3})?"""),
     // IBAN z kontekstem "konto" — fallback gdy OCR wstawia spacje w nieregularnych miejscach
     // Łapie: "konto komornika: PL41 169010 14937..." niezależnie od podziału na grupy
-    TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}\s+\S{0,20}\s*[:–\-]\s*(PL[\d\s]{24,34})\b"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s+/\s* po "kont..." -> [^\S\n].
+    TOKEN_NUMER to Regex("""(?i)\bkont\w{0,3}[^\S\n]+\S{0,20}[^\S\n]*[:–\-][^\S\n]*(PL[\d\s]{24,34})\b"""),
     // IBAN garbled OCR — PL + 20–40 alfanum (bez lookahead — poprzedni wzorzec ReDoS na długim OCR)
     TOKEN_NUMER to Regex("""\bPL[A-Z0-9]{20,40}\b""", RegexOption.IGNORE_CASE),
+    // BUG-KONTO-OBCA-LITERA (zgłoszone przez Pawła 08.07, test stresowy 100 encji —
+    // "nr konta: 45 1140 2004 0000 3702 7823 A176" zostawiało "A176" jawne): numer konta
+    // bez prefiksu PL nigdy nie dostał tolerancji CTX_STRAY którą mają PESEL/NIP/telefon —
+    // każda z 4-cyfrowych grup wymagała dosłownie \d{4}, bez miejsca na obcą literę OCR.
+    // Grupa4Stray: 4 znaki gdzie DOKŁADNIE jeden może być obcą literą (na dowolnej z 4 pozycji).
     // Konto bez prefiksu PL ze spacjami grupującymi (61 1090 1014 0000 0712 1981 2874)
-    TOKEN_NUMER to Regex("""\b\d{2}(?:\s\d{4}){5,6}\b"""),
+    TOKEN_NUMER to Regex(
+        """\b\d{2}(?:\s(?:\d{3}\d|\d{2}$CTX_STRAY\d|\d$CTX_STRAY\d{2}|$CTX_STRAY\d{3})){5,6}\b"""
+    ),
     // Konto bez prefiksu PL z myślnikami (61-1090-1014-0000-0712-1981-2874)
-    TOKEN_NUMER to Regex("""\b\d{2}-\d[\d\-]{20,28}\d\b"""),
+    TOKEN_NUMER to Regex(
+        """\b\d{2}-\d(?:[\d\-]|$CTX_STRAY(?=-?\d)){20,28}\d\b"""
+    ),
 
     // --- Numery rejestrowe firm ---
-    TOKEN_NUMER to Regex("""\bKRS\s*\d{10}\b""", RegexOption.IGNORE_CASE),
-    TOKEN_NUMER to Regex("""\bHRB\s*\d{4,8}\b""", RegexOption.IGNORE_CASE), // Niemcy
-    TOKEN_NUMER to Regex("""\bBDO\s*\d{6,9}\b""", RegexOption.IGNORE_CASE),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s* -> [^\S\n]* (KRS/HRB/BDO)
+    TOKEN_NUMER to Regex("""\bKRS[^\S\n]*\d{10}\b""", RegexOption.IGNORE_CASE),
+    TOKEN_NUMER to Regex("""\bHRB[^\S\n]*\d{4,8}\b""", RegexOption.IGNORE_CASE), // Niemcy
+    TOKEN_NUMER to Regex("""\bBDO[^\S\n]*\d{6,9}\b""", RegexOption.IGNORE_CASE),
 
     // --- PESEL przed REGON ---
     TOKEN_NUMER to Regex("""(?<!\d)\d{11}(?!\d)"""),
@@ -569,7 +518,16 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Bez tego linia \b\d{3}...\d{3}\b kradnie cyfry, zostawiając "tel." / "kom." na widoku.
     //
     // Rozszerzone słowa kluczowe: komórka, wew, gsm, nr tel
-    TOKEN_NUMER to Regex("""(?i)\b(?:tel(?:efon)?|kom(?:órka)?|fax|faks|wew(?:nętrzny)?|gsm|nr[\s.]?tel)\.?(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d[\d\s\-\.\(\)]{5,20}\d\b"""),
+    // BUG-TELEFON-OBCA-LITERA (zgłoszone przez Pawła 08.07, "numer telefonu 6O2 3r4 891"
+    // jawne w części "3r4 891"): telefon nigdy nie dostał tolerancji CTX_STRAY którą mają
+    // PESEL i NIP — "r" nie jest D-klasą, więc wartość urywała się w środku numeru.
+    // Przy okazji: \w*+ (possessive) zamiast (?:efon)?/(?:órka)? na słowach-kotwicach —
+    // toleruje odmienione formy ("telefonu", "komórki") tak jak już robi to AnchorEngine A.3,
+    // ten sam mechanizm co "tel\w*+" tam (patrz komentarz przy A.3 o backtrackingu w D-klasę).
+    TOKEN_NUMER to Regex(
+        """(?i)\b(?:tel\w*+|kom(?:[oó]rk)?\w*+|fax\w*+|faks\w*+|wew\w*+|gsm\w*+|nr[\s.]?tel\w*+)\.?""" +
+        """(?:[^\S\n]+\w+)?[^\S\n]*[:–\-]?[^\S\n]*\+?\(?\d(?:[\d\s\-.()]|$CTX_STRAY(?=[ \t]?\d)){5,20}\d\b"""
+    ),
     // +48 / +4B (OCR: 8→B) z prefiksem
     TOKEN_NUMER to Regex("""\+4[8Bb][-\s.]?\d{3}[-\s.]?\d{3}[-\s.]?\d{3}(?!\d)"""),
     // samo 48 jako prefix (bez +) — np. "48 601 234 567" w OCR bez znaku plusa
@@ -590,9 +548,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?(?:[\s\-.]?\d{1,4}){1,4}"""),      // Międzynarodowy
 
     // --- Kwoty z walutami (format PL i EU) ---
-    // (?!00\s) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię
+    // (?!00[^\S\n]) wyklucza "00 PLN" — artifact OCR gdy "350,00 PLN" łamane przez linię
     TOKEN_KWOTA to Regex(
-        """\b(?!00\s)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\s*(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b""",
+        // BUG-DIAKRYTYKI-GRANICA: \b -> $WORD_END_UNICODE na końcu ("zł" kończy się na "ł",
+        // \b tam nigdy nie występuje — patrz WORD_END_UNICODE wyżej).
+        // BUG-KWOTA-CROSS-NEWLINE-FIX (08.07, diagnoza traceMode po zgłoszeniu Pawła —
+        // "15 000 zł" niezamaskowane w bloku wielu kwot): bare \s (obejmuje \n) zamiast
+        // [^\S\n] pozwalał tej regule sklejać liczbę z KOŃCA jednej linii ze słowem waluty
+        // z POCZĄTKU następnej (i odwrotnie w regule niżej) — "zł\n230 500" dopasowywało się
+        // jako jeden token, kradnąc "zł" właściwej kwocie z poprzedniej linii (Anchor A.9
+        // tracił kotwicę, "15 OOO,OO" zostawało jawne) i okrawając kwotę z następnej linii.
+        """\b(?!00[^\S\n])\d{1,6}(?:(?:[.,]|[^\S\n])\d{3})*(?:[.,]\d{1,2})?[^\S\n]*(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)$WORD_END_UNICODE""",
         RegexOption.IGNORE_CASE
     ),
     // BUG-PLN-KWOTA-SYMETRIA (05.07, decyzja Pawła): szyk waluta+liczba ("PLN 1234") był
@@ -601,8 +567,10 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // PESEL/adres/telefon), ale skoro engine i tak maskuje jeden szyk, drugi powinien być
     // spójny. Ten sam kształt liczby co wyżej, (?!00\b) analogicznie wyklucza artefakt OCR
     // "PLN 00" z rozbitego "PLN 350,00".
+    // BUG-KWOTA-CROSS-NEWLINE-FIX (08.07): ta sama poprawka co wyżej, [^\S\n] zamiast \s —
+    // to WŁAŚNIE ta reguła kradła "zł" z poprzedniej linii w zgłoszonym przypadku.
     TOKEN_KWOTA to Regex(
-        """\b(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\s*(?!00\b)\d{1,6}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\b""",
+        """\b(?:zł|PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)[^\S\n]*(?!00\b)\d{1,6}(?:(?:[.,]|[^\S\n])\d{3})*(?:[.,]\d{1,2})?\b""",
         RegexOption.IGNORE_CASE
     ),
 
@@ -620,14 +588,17 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // dokładnie 3 litery, więc próg długości złamałby prawdziwe serie).
     TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-Z]{3}[^\S\n]?\d{2,3}[^\S\n]?\d{3,4}\b"""),  // Dowód osobisty PL ze spacją (AWY57 1380)
     TOKEN_NUMER to Regex("""\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\d)[A-Z0-9]{3}\d{6}\b"""),  // Dowód compact — seria może mieć cyfrę OCR (2TS935950)
-    TOKEN_NUMER to Regex("""\b[A-Z]{3}\s+nr\s+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s+ -> [^\S\n]+ ("nr" jest kotwicą tu)
+    TOKEN_NUMER to Regex("""\b[A-Z]{3}[^\S\n]+nr[^\S\n]+\d{6}\b""", RegexOption.IGNORE_CASE), // Dowód "seria XXX nr NNNNNN"
     TOKEN_NUMER to Regex("""\b[A-Z]{2}\s?\d{7}\b"""),   // Paszport PL
     // PWZ lekarza — rozszerzony v1.1: "PWZ: 1234567", "nr 1234567", "nr. lekarza 1234567"
     // Kontekst wymagany żeby uniknąć false positive na każde 7 cyfr
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): [:\s]+/\s+ -> warianty [^\S\n] — "PWZ"/"nr" to
+    // kotwice, nie mogą przełknąć \n i ukraść 7 cyfr z zupełnie innej, niepowiązanej linii.
     TOKEN_NUMER to Regex(
-        """(?i)(?:PWZ[:\s]+|nr\.?\s+(?:lekarza|prawa\s+wyk[^\s]{0,20})\s+)\d{7}\b"""
+        """(?i)(?:PWZ(?::|[^\S\n])+|nr\.?[^\S\n]+(?:lekarza|prawa[^\S\n]+wyk[^\s]{0,20})[^\S\n]+)\d{7}\b"""
     ),
-    TOKEN_NUMER to Regex("""\bPWZ:\s?\d{7}\b"""),        // Nr lekarza (format jawny)
+    TOKEN_NUMER to Regex("""\bPWZ:[^\S\n]?\d{7}\b"""),        // Nr lekarza (format jawny)
 
     // --- Numery rejestracyjne pojazdów ---
     // BUG-05-FIX v1.4: zmieniono \d{2,5} → \d{4,5}.
@@ -658,7 +629,8 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     TOKEN_NUMER to Regex("""\b[A-Z]\d{2}(?:\.\d{1,2})?\b"""),
 
     // --- BIC/SWIFT (kontekstowy) ---
-    TOKEN_NUMER to Regex("""(?i)(?:BIC|SWIFT)[\s:]+([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b"""),
+    // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): [\s:]+ -> warianty [^\S\n]
+    TOKEN_NUMER to Regex("""(?i)(?:BIC|SWIFT)(?::|[^\S\n])+([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b"""),
 
     // --- Numery działek geodezyjnych ---
     // BUG-DZIALKA-FIX (Paweł 07.07): WYŁĄCZONE — kolejny wariant tego samego problemu co
@@ -755,8 +727,21 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
     // Wzorzec A — kontekst finansowy (wysoka precyzja):
     // Słowo kluczowe (kwota/suma/wynagrodzenie...) + słowa + kotwica walutowa.
     // Pokrywa: "kwota pięćset złotych", "wynagrodzenie w wysokości tysiąc zł".
+    // BUG-KWOTA-CYFRA-MNOZNIK-FIX (08.07, pytanie Pawła): "w wysokości 15 tysięcy" (cyfra +
+    // słowo-mnożnik, BEZ waluty) nie pasowało do żadnej reguły KWOTA — środkowa grupa
+    // \p{L}+ (tylko litery) nie przepuszczała cyfry "15", a wymóg końcowej waluty
+    // (złotych/zł) blokował "tysięcy" samo w sobie. Fix: środkowa grupa [\p{L}0-9]+
+    // (litery LUB cyfry), końcowa alternacja rozszerzona o goły mnożnik
+    // (tysi.../milion.../miliard...) — silne słowo-kotwica (kwota/wysokość/wynagrodzenie...)
+    // + mnożnik razem wystarczą, waluta nie jest już wymagana.
     TOKEN_KWOTA to Regex(
-        """(?i)\b(?:kwot\p{L}{0,5}|kwoci\p{L}{0,3}|sum[aęąy]\p{L}{0,3}|wysoko(?:ść|ści)\p{L}{0,2}|wartości\p{L}{0,4}|wynagrodzeni\p{L}{0,4}|honorari\p{L}{0,4}|odszkodowani\p{L}{0,4}|należno\p{L}{0,5}|pożyczk\p{L}{0,4})[^\S\n]+(?:\p{L}+[^\S\n]+){0,9}(?:złotych|złote|złoty|zł|groszy|grosze|grosz)\b"""
+        // BUG-DIAKRYTYKI-GRANICA: \b -> $WORD_END_UNICODE ("zł" kończy się na "ł", "grosz"
+        // itd. są bezpieczne ale stała jest wspólna dla całej alternacji, patrz wyżej).
+        // BUG-WARTOSC-MIANOWNIK-FIX (08.07, mały bug znaleziony przy okazji, naprawiony
+        // bez pytania): "wartości\p{L}{0,4}" wymagało dosłownie "wartości" (dopełniacz/l.mn.)
+        // — samo "wartość" (mianownik, "wartość 500 złotych") w ogóle nie pasowało. Fix:
+        // warto(?:ść|ści) — ten sam wzorzec co już działający wysoko(?:ść|ści) wyżej.
+        """(?i)\b(?:kwot\p{L}{0,5}|kwoci\p{L}{0,3}|sum[aęąy]\p{L}{0,3}|wysoko(?:ść|ści)\p{L}{0,2}|warto(?:ść|ści)\p{L}{0,2}|wynagrodzeni\p{L}{0,4}|honorari\p{L}{0,4}|odszkodowani\p{L}{0,4}|należno\p{L}{0,5}|pożyczk\p{L}{0,4})[^\S\n]+(?:[\p{L}0-9]+[^\S\n]+){0,9}(?:złotych|złote|złoty|zł|groszy|grosze|grosz|tysi\p{L}{0,5}|milion\p{L}{0,4}|miliard\p{L}{0,4})$WORD_END_UNICODE"""
     ),
 
     // Wzorzec B — liczebnik + skrót walutowy (bezpieczny):
@@ -776,61 +761,26 @@ internal val STRUCTURAL_PATTERNS: List<Pair<String, Regex>> = listOf(
 )
 
 // ============================================================
-// Warstwa adresowa — uruchamiana PO NameEngine (applyContextualBlacklist),
-// żeby NameEngine widział pełne adresy jako kontekst dla rozpoznania imion.
-// Przeniesione z STRUCTURAL_PATTERNS — zachowane wszystkie komentarze i fixy.
-// ============================================================
-// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy dla dwóch podobnie zbudowanych
-// regexów (poniżej + NameEngine.STREET_CANDIDATE_REGEX). Dodanie nowego znaku (apostrof,
-// kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach. Nie obejmuje linii
-// niżej "ulica bez kodu pocztowego" — ta ma odrębną, zagnieżdżoną budowę klasy znaków
-// (pozwala na spację w środku inaczej), do rozważenia osobno.
+// Wspólny zestaw znaków nazwy ulicy — JEDNO źródło prawdy, używane przez AddressEngine.kt
+// (jedyny silnik ADRES od 07.07) i NameEngine.STREET_CANDIDATE_REGEX. Dodanie nowego znaku
+// (apostrof, kolejny diakrytyk) — jedno miejsce, nie trzeba pamiętać o kopiach.
 internal const val STREET_NAME_CHARS = "A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ\\-"
 
-internal val ADDRESS_PATTERNS: List<Pair<String, Regex>> = listOf(
-
-    // --- Adresy z kodem pocztowym PL ---
-    // BUG-KOD-POCZTOWY-FIX v1.5:
-    // \d{2}-\d{3} → \d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}
-    // Lookahead przed cyframi kodu: "15-2024" (rok) nie przejdzie, bo po "-"
-    // lookahead widzi "20" + "\d{2}" + \b → blokuje.
-    // "65-5110" przejdzie: "51" nie pasuje do (?:19|20) → lookahead nic nie blokuje.
-    // "60-001" przejdzie: "00" nie pasuje do (?:19|20) → OK.
-    // BUG-ADRES-MYSLNIK-FIX (04.07, Paweł): brakujący `\-` w klasie znaków nazwy ulicy —
-    // sąsiednia reguła niżej (ulica bez kodu pocztowego) już go ma. Niespójność, nie świadomy
-    // brak. "Gdańska-Sopocka" bez myślnika w klasie łamało się na dwa osobne dopasowania.
-    // BUG-PLN-ADRES-FIX (05.07, diagnoza Cursor): ten sam duplikat wzorca istnieje też w
-    // AddressEngine.kt (STREET_FULL, naprawiony tam guardem na grupach). Ten TOKEN_ADRES nadal
-    // biegnie jako fallback (Warstwa 3d/Runda 2, Faza B jeszcze nie wyłączyła duplikatów) i ma
-    // TĘ SAMĄ lukę — prefiks "ul." opcjonalny pozwalał "PLN 1234, 00-001 Warszawa" dopasować
-    // się w całości, traktując "PLN" jak nazwę ulicy. Pętla w PseudonymEngine.kt nie ma
-    // per-wzorcowej walidacji grup (generyczna dla całej listy ADDRESS_PATTERNS), więc fix tu
-    // jest na poziomie regexu: alternatywa (prefiks+dowolna nazwa) LUB (brak prefiksu+nazwa
-    // NIE będąca skrótem waluty), zamiast jednego opcjonalnego prefiksu przed dowolną nazwą.
-    TOKEN_ADRES to Regex(
-        """(?:(?i:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+\b[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29}|\b(?!(?:PLN|EUR|USD|GBP|CHF|DKK|NOK|CZK|HUF|RON)\b)[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})(?:\s+[A-ZŁŚŹĆŃĄĘÓŻ][$STREET_NAME_CHARS]{1,29})?\s+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?[,\s]+\d{2}-(?!\s*(?:19|20)\d{2}\b)\d{3,4}[,\s]+[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ ,]{2,40}\b"""
-    ),
-    // Duplikat "kod + miejscowość" (dawny #597) usunięty 04.07 (migracja ADRES krok 4) —
-    // StructuralEngine.applyPostalCityPatterns kierunek 1 (Warstwa 1b) robi to samo wcześniej
-    // w potoku, para jest już tokenem zanim ADDRESS_PATTERNS w ogóle zobaczy tekst.
-
-    // --- Adres z ul./al./pl./os. bez kodu pocztowego ---
-    // ul. Długa 7, al. Róż 12A, ul. Kazimierza Wielkiego 14/3
-    // ADDR-FIX v1.2: [^\S\n] zamiast \s w nazwie ulicy — zapobiega dopasowaniu
-    // przez newline (np. łączeniu "ul. Długa" z akapitu 1 z "14/3" z akapitu 2)
-    TOKEN_ADRES to Regex(
-        """(?i)(?:ul[.,]|al\.|pl\.|os\.|u\.)[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźża-zA-Z[^\S\n]\-]{1,50}[^\S\n]+\d{1,4}[A-Za-z]?(?:/\d{1,4}[A-Za-z]?)?(?!/[\d])"""
-    ),
-
-    // --- Numer budynku/lokalu (np. 4/6, 12A/3B, 47/2) ---
-    // BUG-OCR-1-FIX v1.3: zmieniono \d{1,4} → \d{1,2} po ukośniku.
-    // Numer lokalu/apartamentu ma co najwyżej 2 cyfry (lokal 99 to już bardzo duże).
-    // Rok (2014, 1999) i grosze (100) mają 3-4 cyfry → nie mogą być numerem lokalu.
-    // Poprzednio: "651/2014" (rozporządzenie UE nr 651/2014) → fałszywy TOKEN_ADRES.
-    // Poprzednio: "00/100 złotych" (grosze w kwocie słownej) → fałszywy TOKEN_ADRES.
-    // (?!/[\d]) wyklucza daty złożone: 30/05/2026 (po 05 następuje /2026)
-    TOKEN_ADRES to Regex("""\b\d{1,4}[A-Za-z]?/\d{1,2}[A-Za-z]?(?!/[\d])\b"""),
-)
+// ============================================================
+// BUG-DIAKRYTYKI-GRANICA (07.07/08.07): `\b` w Kotlin/Java jest ASCII-only — polskie litery
+// diakrytyczne (ą,ć,ę,ł,ń,ó,ś,ź,ż) NIE są "znakiem słowa", więc wzorzec kończący się na takiej
+// literze tuż przed `\b` (np. "zł\b") ma granicę która nigdy nie występuje przy spacji/
+// interpunkcji/końcu tekstu po niej — dopasowanie pęka bezwarunkowo. Potwierdzone Javą i
+// niezależnie przez Cursora. `(?![\p{L}\p{N}_])` to Unicode-świadomy odpowiednik `\b` z tej
+// strony (kategorie ogólne, nie enumeracja liter) — używać zamiast `\b` WSZĘDZIE gdzie
+// bezpośrednio poprzedzający znak może być polską literą diakrytyczną. JEDNO miejsce —
+// nie kopiować tej stałej do innych plików, referencja jak STREET_NAME_CHARS wyżej.
+internal const val WORD_END_UNICODE = """(?![\p{L}\p{N}_])"""
+// Odpowiednik wiodący (leading) — dokładnie ten sam bug działa symetrycznie: \b tuż PRZED
+// wielką literą diakrytyczną (Ł,Ś,Ź,Ć,Ń,Ó,Ą,Ę,Ż) też się nie dopasowuje (np. "\bŁukasz" nie
+// łapie "test Łukasz" w ogóle — potwierdzone Javą 08.07). Używać zamiast wiodącego \b wszędzie
+// gdzie pierwszy znak dopasowania może być polską wielką literą diakrytyczną.
+internal const val WORD_START_UNICODE = """(?<![\p{L}\p{N}_])"""
 
 // ============================================================
 // S5 — Zestawy pattern stringów PESEL i NIP do walidacji checksumów

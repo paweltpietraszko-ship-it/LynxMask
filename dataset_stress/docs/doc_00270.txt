@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2020/4467
+
+Data wystawienia: 10.04.2020
+Numer klienta: KL-22820
+
+----------------------------------------
+SPRZEDAWCA:
+Biuro Rachunkowe RACHMISTRZ
+Adres: ul. Stanisława poniatowskiego 81, 41-200 Konstantów
+NIP: 456-798-36-35   REGON: 213072405
+Nr konta: PL11240101358754181563268685
+
+NABYWCA:
+Herbert Walat
+Adres: ul. Ługi 40, 10-100 Cisowe
+NIP: 246-249-12-75
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               4     652   8%     2608     2817
+2.   Usługa transportowa               3    1266  23%     3798     4672
+3.   Obsługa prawna                   10    1060  23%    10600    13038
+4.   Konsultacja techniczna            1    1373   8%     1373     1483
+5.   Konsultacja techniczna            4     285   8%     1140     1231
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        23241 PLN
+
+Płatność przelewem: PL11240101358754181563268685
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

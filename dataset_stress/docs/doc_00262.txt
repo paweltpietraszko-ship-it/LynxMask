@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-04264/11/2023
+
+Data wystawienia: 21.02.2021
+Numer klienta: KL-52258
+
+----------------------------------------
+SPRZEDAWCA:
+Zakład Ubezpieczeń POLISA S.A.
+Adres: ul. Roweckiego 106, 85-001 Rzeszutki
+NIP: 544-630-60-08   REGON: 738639601
+Nr konta: PL44169010149626265826312819
+
+NABYWCA:
+Dominic Stępniak
+Adres: ul. Aleja orzechowa 96, 60-001 Oleksin
+NIP: 125-895-52-95
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            1     945   8%      945     1021
+2.   Usługa projektowa                 3     106   8%      318      343
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         1364 PLN
+
+Płatność przelewem: PL44169010149626265826312819
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

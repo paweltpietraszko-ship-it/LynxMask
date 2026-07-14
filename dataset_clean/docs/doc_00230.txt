@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV-02070/11/2022
+
+Data wystawienia: 20.03.2022
+Numer klienta: KL-23970
+
+----------------------------------------
+SPRZEDAWCA:
+Usługi Informatyczne Jan Kowalski
+Adres: ul. Chopina 23/46, 20-100 Warszawa
+NIP: 812-871-53-95   REGON: 241115937
+Nr konta: PL33114019871952569040983665
+
+NABYWCA:
+Maciej Dudek
+Adres: al. Jana Pawła II 99, 50-001 Bydgoszcz
+NIP: 256-686-33-42
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Obsługa prawna                    8     697   8%     5576     6022
+2.   Instalacja oprogramowania         4    1073  23%     4292     5279
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        11301 PLN
+
+Płatność przelewem: PL33114019871952569040983665
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

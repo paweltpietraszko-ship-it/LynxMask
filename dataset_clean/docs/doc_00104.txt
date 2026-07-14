@@ -1,0 +1,42 @@
+FORMULARZ DANYCH OSOBOWYCH
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Iwona Piotrowska
+Data urodzenia:
+09.08.1990
+PESEL:
+97112429265
+Nr dowodu osobistego:
+ARD062003
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Szkolna 147, 90-001 Bytom
+Telefon:
++48 572 442 043
+Adres e-mail:
+iwona.piotrowska@poczta.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+298-386-38-45
+
+DANE NIERUCHOMOŚCI
+
+Nr księgi wieczystej:
+LD1M/00416380/6
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

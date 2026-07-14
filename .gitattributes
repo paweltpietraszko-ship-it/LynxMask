@@ -1,0 +1,19 @@
+# Wymuszony LF dla plików tekstowych, niezależnie od lokalnego core.autocrlf (Windows).
+# BUG-GOLDEN-CRLF-FALSZYWY-ALARM (14.07): bez tego git po każdym checkout/stash konwertuje
+# pliki tekstowe (testy/*.txt, testy/.golden/*.golden.txt, kod, JSON) na CRLF, co myliło
+# ManualTestRegressionTest (widział "zmianę" mimo identycznej treści) — naprawione też w
+# samym teście (normalizacja przed porównaniem), ale to jest naprawa u źródła, żeby ten sam
+# mechanizm nie wrócił gdzie indziej w projekcie.
+* text=auto eol=lf
+
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.jar binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.aab binary
+*.apk binary
+*.keystore binary
+*.jks binary

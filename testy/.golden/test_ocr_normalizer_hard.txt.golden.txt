@@ -1,0 +1,42 @@
+UMOWA ZLECENIA nr NUMER_013
+zawarta dnia I8 czerwca 2026 r. w ADRES_007
+
+ZLECENIODAWCA:
+Imię i nazwisko: OSOBA_001 Jab1oński
+NUMER_002
+NUMER_004
+Adres: ADRES_002 ści NUMER_012, ADRES_006
+NUMER_011 T2T
+e-mai1: EMAIL_001
+
+ZLECENIOBIORCA:
+Imię i nazwisko: Monka Nowakosa
+NUMER_003
+NUMER_005
+Adres: u Kopernka I2O, ADRES_005
+Nr konta: PL04 3250 000J 5633 9560 7883 1852
+e-mail: EMAIL_002
+
+DANE PODATKOWE:
+NUMER_006
+NUMER_007
+REGON: NUMER_010
+IBAN: NUMER_001
+
+DOWÓD OSOBISTY: FOH6 I4892
+NUMER_008
+
+Adres dostawy:
+ADRES_008
+ADRES_004
+
+Adres korespondencyjny:
+ADRES_001 ści 95, ADRES_003
+
+ORZEKAM:
+Na podstawie art. IO4 ustawy z dnia I4 czerwca I96O r.
+PESEL świadka: NUMER_009
+NUMER_014
+
+Podpisano: BARTOSZ JAB1OWSKI
+Data: I8.O6.2026

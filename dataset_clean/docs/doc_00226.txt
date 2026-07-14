@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Robert Kwiatkowski
+Data urodzenia:
+09.09.1957
+PESEL:
+65042318034
+Nr dowodu osobistego:
+GPF817932
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Warszawska 107, 90-001 Zielona Góra
+Telefon:
++48 530 234 679
+Adres e-mail:
+robertkwiatkowski38@gmail.com
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+714-150-93-76
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------
