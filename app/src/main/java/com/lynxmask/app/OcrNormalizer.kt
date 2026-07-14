@@ -105,16 +105,49 @@ object OcrNormalizer {
 
     // ----------------------------------------------------------
     // OCR: cyfry mylone z literami — TYLKO gdy otoczone literami po obu stronach
+    // BUG-1-JAKO-L-NA-KODZIE (12.07): "PO1P/00793300/9" (numer księgi wieczystej, czysty
+    // tekst) miało cyfrę '1' otoczoną literami — dokładnie kształt który ta reguła naprawia
+    // dla tekstu po OCR, ale tu '1' było prawdziwą cyfrą kodu. PIERWSZA próba fixu (negatywny
+    // lookahead "nie podmieniaj gdy zaraz potem jest /cyfra") była łatką pod TEN JEDEN
+    // przykład — złapana przez właściciela: VIN ("WVWZZZ1JZXW000001", bez ukośnika) psuł się
+    // dalej. Prawdziwie ogólna zasada (ta sama co fixNameLetterConfusion niżej): podmieniaj
+    // TYLKO gdy wynik STAJE SIĘ rozpoznawalnym słowem (pełny słownik Morfologika — nie tylko
+    // nazwiska — LUB imię/nazwisko), którym oryginał NIE BYŁ. Struktura kodu (VIN/KW/sygnatura)
+    // nigdy nie staje się słowem niezależnie od tego którą cyfrę podmienimy — zostaje
+    // nietknięta z konstrukcji, nie dzięki zgadywaniu kolejnego kształtu interpunkcji.
     // ----------------------------------------------------------
-    private val OCR_ONE_AS_L = Regex(
-        """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])1(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
-    )
-    private val OCR_ZERO_AS_O = Regex(
-        """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])0(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
-    )
     private val OCR_PIPE_AS_L = Regex(
         """(?<=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])\|(?=[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ])"""
     )
+
+    private val OCR_DIGIT_LETTER_WORD = Regex(
+        """\b[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ][A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9]{1,19}\b"""
+    )
+
+    private fun isRecognizedWord(word: String): Boolean {
+        val lower = word.lowercase()
+        if (LookupTables.surnamesForms.contains(lower) || LookupTables.namesForms.contains(lower)) return true
+        return MorfologikHelper.tags(word).isNotEmpty()
+    }
+
+    private fun fixDigitLetterConfusion(word: String): String? {
+        if (word.none { it == '1' || it == '0' }) return null
+        if (isRecognizedWord(word)) return null  // już poprawne słowo/kod-jak-wyglądający — nie zgaduj dalej
+        val hits = mutableSetOf<String>()
+        for (i in word.indices) {
+            val replacement = when (word[i]) {
+                '1' -> 'l'
+                '0' -> 'o'
+                else -> null
+            } ?: continue
+            val prevIsLetter = i > 0 && word[i - 1].isLetter()
+            val nextIsLetter = i < word.length - 1 && word[i + 1].isLetter()
+            if (!prevIsLetter || !nextIsLetter) continue
+            val candidate = word.substring(0, i) + replacement + word.substring(i + 1)
+            if (isRecognizedWord(candidate)) hits += candidate
+        }
+        return hits.singleOrNull()
+    }
 
     // ----------------------------------------------------------
     // OCR: spacja w środku nazwy ulicy po prefiksie
@@ -225,6 +258,33 @@ object OcrNormalizer {
     private val OCR_SURNAME_MIDSPACE = Regex(
         """([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,10})[^\S\n]+([a-ząćęłńóśźż]{2,8})"""
     )
+
+    // ----------------------------------------------------------
+    // OCR_NAME_L_AS_I (12.07, diagnoza Cursor): litera 'l' zamiast 'i' w nazwisku/imieniu —
+    // ten sam mechanizm co OCR_SURNAME_MIDSPACE (sprawdza LookupTables), ale dla pomyłki
+    // LITERY w środku jednego słowa, nie brakującej spacji. "Kamlnska" (OCR: 'i'→'l') nie
+    // trafiało do surnamesForms w ŻADNYM miejscu silnika — naprawa TU, u źródła.
+    // Bezpieczne z konstrukcji: poprawka TYLKO gdy podstawienie 'l'→'i' w JEDNEJ pozycji
+    // odblokowuje jednoznaczne trafienie w słowniku — słowo już poprawne, albo dla którego
+    // zero/wiele podstawień daje trafienie, zostaje nietknięte.
+    // ----------------------------------------------------------
+    private val OCR_NAME_CANDIDATE = Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,19})\b""")
+
+    private fun fixNameLetterConfusion(word: String): String? {
+        if ('l' !in word) return null
+        val lower = word.lowercase()
+        if (LookupTables.surnamesForms.contains(lower) || LookupTables.namesForms.contains(lower)) return null
+        val hits = mutableSetOf<String>()
+        for (i in word.indices) {
+            if (word[i] != 'l') continue
+            val candidate = word.substring(0, i) + "i" + word.substring(i + 1)
+            val candidateLower = candidate.lowercase()
+            if (LookupTables.surnamesForms.contains(candidateLower) || LookupTables.namesForms.contains(candidateLower)) {
+                hits += candidate
+            }
+        }
+        return hits.singleOrNull()
+    }
 
     // ----------------------------------------------------------
     // OCR_EMAIL_AT_Q v1.7: naprawa '@' zamienionego na 'Q' przez OCR
@@ -719,16 +779,18 @@ object OcrNormalizer {
             "${m.groupValues[1]}o."
         }
 
-        // 2. Cyfra 1 między literami → l
-        text = OCR_ONE_AS_L.replace(text) { m ->
-            corrections++
-            "l"
-        }
-
-        // 3. Cyfra 0 między literami → o
-        text = OCR_ZERO_AS_O.replace(text) { m ->
-            corrections++
-            "o"
+        // 2+3. Cyfra 1/0 między literami → l/o — TYLKO gdy podstawienie odblokowuje
+        // rozpoznawalne słowo (słownik Morfologika + imiona/nazwiska), którym oryginał nie
+        // był. Kody strukturalne (VIN/KW/sygnatura) nigdy nie stają się słowem, więc
+        // zostają nietknięte niezależnie od kształtu interpunkcji wokół nich.
+        text = OCR_DIGIT_LETTER_WORD.replace(text) { m ->
+            val fixed = fixDigitLetterConfusion(m.value)
+            if (fixed != null) {
+                corrections++
+                fixed
+            } else {
+                m.value
+            }
         }
 
         // 4. Pipe | między literami → l
@@ -763,6 +825,20 @@ object OcrNormalizer {
                 if (LookupTables.surnamesForms.contains(candidate.lowercase())) {
                     corrections++
                     candidate
+                } else {
+                    m.value
+                }
+            }
+        }
+
+        // 6d. OCR: litera 'l' zamiast 'i' w nazwisku/imieniu — sprawdza LookupTables
+        //     "Kamlnska" → "Kaminska" gdy podstawienie jednoznacznie trafia w słownik
+        if (LookupTables.initialized) {
+            text = OCR_NAME_CANDIDATE.replace(text) { m ->
+                val fixed = fixNameLetterConfusion(m.groupValues[1])
+                if (fixed != null) {
+                    corrections++
+                    fixed
                 } else {
                     m.value
                 }

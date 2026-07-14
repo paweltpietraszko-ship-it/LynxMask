@@ -46,6 +46,23 @@ private fun isSygnaturaA8Acceptable(m: MatchResult): Boolean {
     return MorfologikHelper.tags(word).isEmpty()
 }
 
+// Słowa tytułu w regexie A.10 — pomijane przy walidacji isA10NoCommonWordCollision, nie są
+// "nazwiskiem" i nie mają być oceniane jako słowo pospolite kontra nazwisko.
+private val ANCHOR_A10_TITLE_WORDS = setOf("dr", "hab", "prof", "mgr", "inż", "adw", "mec", "lek", "med")
+
+/**
+ * true = maskuj, false = odrzuć. DECYZJA WŁAŚCICIELA (14.07): AnchorEngine jest z założenia
+ * zachłanny, zero walidacji kształtu (patrz reszta pliku) — jedyny wyjątek to konkretne,
+ * już potwierdzone kolizje słownikowe (OSOBA_DENYLIST, ten sam mechanizm co w NameEngine.kt),
+ * nie szeroki filtr gramatyczny. Lepiej zamaskować słowo pospolite przy tytule niż zgubić
+ * realne nazwisko.
+ */
+private fun isA10NoCommonWordCollision(m: MatchResult): Boolean =
+    m.value.split(Regex("""[^\S\n]+"""))
+        .map { it.trim('.', ',') }
+        .filter { it.isNotBlank() && it.lowercase() !in ANCHOR_A10_TITLE_WORDS }
+        .none { it.lowercase() in OSOBA_DENYLIST }
+
 internal fun applyAnchorEngine(
     text: String,
     assignToken: (value: String, tokenType: String) -> String
@@ -428,6 +445,8 @@ internal fun applyAnchorEngine(
     // BUG-KEYWORD-CROSS-NEWLINE-FIX (08.07): \s+ -> [^\S\n]+ — tytuł ("dr"/"prof" itd.) na
     // końcu linii nie może przełknąć \n i wziąć przypadkowego wielkoliterowego słowa
     // z POCZĄTKU zupełnie innej, niepowiązanej linii jako rzekome imię/nazwisko.
+    // isA10NoCommonWordCollision (zdefiniowana na górze pliku) blokuje tylko konkretne,
+    // znane kolizje słownikowe (OSOBA_DENYLIST) — reszta zostaje zachłanna z założenia.
     applyAll(
         Regex(
             """(?i)(?:dr[^\S\n]+(?:hab\.?[^\S\n]+)?|prof\.?[^\S\n]+|mgr[^\S\n]+(?:inż\.?[^\S\n]+)?|inż\.?[^\S\n]+""" +
@@ -436,7 +455,8 @@ internal fun applyAnchorEngine(
             """[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,30}""" +
             """(?:[^\S\n]+[A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźżA-ZŁŚŹĆŃĄĘÓŻ\-]{1,40})?"""
         ),
-        TOKEN_OSOBA
+        TOKEN_OSOBA,
+        validate = ::isA10NoCommonWordCollision
     )
 
     // ------------------------------------------------------------------

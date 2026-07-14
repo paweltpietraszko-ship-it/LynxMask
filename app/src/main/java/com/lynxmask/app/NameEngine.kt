@@ -309,7 +309,35 @@ internal val OSOBA_DENYLIST: Set<String> = setOf(
     // we własnym słowniku, bez rozróżnienia na osobowe m1) — cofnięty na rzecz precyzyjnej
     // listy konkretnych potwierdzonych kolizji z benchmarku.
     "data", "dane", "danych", "nikach",
+    // DECYZJA WŁAŚCICIELA (14.07): filtr semantyczny Morfologika (isCommonWordNotSurname,
+    // usunięty niżej) blokował nie tylko te słowa, ale PRZY OKAZJI też realne nazwiska
+    // będące nazwami zwierząt/przedmiotów (Zając/Wróbel/Sowa/Kot/Karaś) — one mają się
+    // maskować ZAWSZE, nawet kosztem fałszywych trafień. Zamiast szerokiego filtra
+    // gramatycznego (blokuje obie klasy naraz, nie da się ich odróżnić regułą), te 4
+    // KONKRETNE, już potwierdzone słowa-kolizje (i ich odmiana) trafiają tu wprost —
+    // ten sam wzorzec co "data/dane/danych/nikach" wyżej.
+    "osoba", "osoby", "osobie", "osobę", "osobą", "osób", "osobom", "osobami", "osobach",
+    "zapłata", "zapłaty", "zapłacie", "zapłatę", "zapłatą", "zapłat", "zapłatom",
+    "zapłatami", "zapłatach",
+    "łączna", "łącznej", "łączną", "łączny", "łączne", "łącznego", "łącznemu",
+    "łącznym", "łącznych", "łącznymi",
+    "działający", "działająca", "działające", "działającego", "działającej",
+    "działającemu", "działającym", "działających", "działającymi", "działając",
+    // BUG-MUSIAL-CZASOWNIK (14.07): wpis nazwiska "Musiał" w słowniku ma zanieczyszczoną
+    // listę odmian — obok prawdziwych form nazwiska są tam też formy czasownika "musieć"
+    // (błąd generatora, przypadkiem ten sam rdzeń). Tylko formy które są WYŁĄCZNIE
+    // czasownikiem (nie mają żadnego prawdopodobnego odczytu jako nazwisko) — nie ruszam
+    // "musiała/musiało/musiały", bo te mogłyby być realną odmianą nazwiska.
+    "musi", "musisz", "musimy", "musicie", "muszę", "muszą",
 )
+
+// DECYZJA WŁAŚCICIELA (14.07): "Kot" (3 znaki) to prawdziwe nazwisko w słowniku, ale
+// wszędzie indziej w pliku obowiązuje próg "≤3 znaki = skrót/artefakt OCR" (LENGTH-FIX,
+// np. "Sp"/"Ko"/"pl") — bez wyjątku zostałoby jawne. Zamiast obniżać próg globalnie
+// (więcej śmieci OCR jako fałszywe nazwiska), jawna lista PRAWDZIWYCH krótkich nazwisk —
+// jedyny wyjątek od reguły długości, dopisywać kolejne tu gdy się pojawią, nie zmieniać
+// progu globalnie.
+internal val KNOWN_SHORT_SURNAMES: Set<String> = setOf("kot")
 
 private val WHITE_LIST_CALENDAR: Set<String> = setOf(
     "styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec",
@@ -374,6 +402,16 @@ private val VERB_ENDINGS = Regex(
 private val TITLE_ADJECTIVE_ENDINGS = Regex(
     """(?i)(?:owego|owej|owym|owych|iego|iej|iem|owy|owa|owe|ową|czny|czna|czne|cznego|cznej|wny|wna|wne|wnego|wnej)\b"""
 )
+
+// BUG-SLOWNIK-POSPOLITE-SLOWA (10.07) + BUG-ZAPLATY-CAPS-REGRESJA (12.07) + DECYZJA
+// WŁAŚCICIELA (14.07): był tu filtr semantyczny (Morfologik "czy to na pewno nie osoba"),
+// USUNIĘTY — blokował "Osoba"/"Zapłata"/"Łączna" (słusznie), ale PRZY OKAZJI blokował też
+// realne nazwiska będące nazwami zwierząt/przedmiotów (Zając/Wróbel/Sowa/Kot/Karaś), bo
+// gramatycznie nie da się ich odróżnić regułą — oba typy słów to zwykłe rzeczowniki/
+// przymiotniki dla Morfologika. Właściciel: nazwisko ma się maskować ZAWSZE, nawet kosztem
+// fałszywych trafień na słowach pospolitych. Te konkretne, potwierdzone kolizje (Osoba/
+// Zapłata/Łączna/Działający) są teraz w OSOBA_DENYLIST (precyzyjna lista, nie szeroki
+// filtr gramatyczny) — dokładnie ten sam wzorzec co "data/dane/danych/nikach" tamże.
 
 private fun isAdjective(word: String): Boolean {
     // surnamesForms ZAWSZE przed Morfologikiem — "Kowalski" jest przymiotnikiem
@@ -814,6 +852,24 @@ internal fun applyContextualBlacklist(
             }
     }
 
+    // 3a — Krótkie prawdziwe nazwiska (KNOWN_SHORT_SURNAMES) — "Kot" itp., 3 znaki, poniżej
+    // progu długości który reszta pliku traktuje jako skrót/artefakt OCR (patrz definicja
+    // KNOWN_SHORT_SURNAMES wyżej). Osobny, węższy regex (dokładnie 1 wielka + 2 małe litery)
+    // zamiast obniżania progu globalnie.
+    result = Regex("""(?<![A-ZŁŚŹĆŃĄĘÓŻa-ząćęłńóśźż])([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2})(?![a-ząćęłńóśźż])""")
+        .replace(result) { match ->
+            if (TOKEN_RE.containsMatchIn(match.value)) return@replace match.value
+            val word = match.groupValues[1]
+            if (word.lowercase() !in KNOWN_SHORT_SURNAMES) return@replace match.value
+            if (isOnWhiteList(word)) return@replace match.value
+            val token = assignToken(word, TOKEN_OSOBA)
+            val before = result.getOrElse(match.range.first - 1) { ' ' }
+            val after = result.getOrElse(match.range.last + 1) { ' ' }
+            val pre = if (before.isLetterOrDigit() || before == '_') " " else ""
+            val suf = if (after.isLetterOrDigit() || after == '_') " " else ""
+            "$pre$token$suf"
+        }
+
     // 3a — Samo nazwisko z surnamesForms (niski priorytet — po warstwach adresowych i firmowych)
     // BUG-ZIELONAGORA-FIX (04.07, diagnoza Cursor): pre/suf jak w AnchorEngine/ADDRESS —
     // obrona na wypadek gdyby jakiś inny krok potoku skleił to słowo z sąsiednim bez spacji
@@ -825,15 +881,6 @@ internal fun applyContextualBlacklist(
             if (!LookupTables.surnamesForms.contains(word.lowercase())) return@replace match.value
             if (isOnWhiteList(word)) return@replace match.value
             if (word.lowercase() in OSOBA_DENYLIST) return@replace match.value
-            // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07, przywrócenie Warstwy 1, patrz 08.07):
-            // słownik 39k wciąga z rejestru PESEL rzadkie, ale prawdziwe nazwiska identyczne
-            // z pospolitymi słowami ("Osoba", "Łączna"). Stosuj Morfologika TYLKO gdy słowo
-            // NIE ma kształtu nazwiska (żaden sufiks nazwiskotwórczy) i nie jest na liście
-            // znanych kolizji miasto/nazwisko (citySurnameOverlap, np. "Góra" — zamierzone).
-            val lower = word.lowercase()
-            val hasSurnameShape = LookupTables.surnameSuffixes.any { lower.endsWith(it) }
-            val isProtectedOverlap = LookupTables.citySurnameOverlap.contains(lower)
-            if (!hasSurnameShape && !isProtectedOverlap && MorfologikHelper.isDefinitelyNotPerson(word)) return@replace match.value
             val token = assignToken(word, TOKEN_OSOBA)
             val before = result.getOrElse(match.range.first - 1) { ' ' }
             val after = result.getOrElse(match.range.last + 1) { ' ' }

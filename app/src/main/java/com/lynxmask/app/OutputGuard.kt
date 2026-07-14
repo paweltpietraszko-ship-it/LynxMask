@@ -129,18 +129,37 @@ internal fun runOutputGuard(
     // miejsc gdzie kontekst już mocno sugeruje dane osobowe — miasta/ulice odfiltrowane
     // (mają własną regułę MIASTO_NIEZAMASKOWANE niżej), znane kolizje pospolite pomijane
     // przez OSOBA_DENYLIST (NameEngine.kt).
-    if (LookupTables.initialized && (LookupTables.namesForms.isNotEmpty() || LookupTables.surnamesForms.isNotEmpty())) {
+    // BUG-KADRY-SILENT-MISS (12.07, decyzja właściciela): surnamesForms (aktywne maskowanie)
+    // zawężony do top-1000 (usuwa kolizje typu Osoba/Zapłata/Łączna) — ale to samo zawężenie
+    // zostawiałoby CISZĄ rzadkie, prawdziwe nazwiska spoza tej listy (niebezpieczne dla
+    // dokumentów kadrowych/HR, PII wycieka bez ostrzeżenia). surnamesFormsExtended (39k) łata
+    // to TU — nie maskuje (ryzyko kolizji zbyt wysokie dla auto-akcji), tylko ostrzega.
+    // Ta sama kotwica CTX_OSOBA_LABEL i te same listy pomijania co reguła wyżej — celowo,
+    // to już zmierzone jako bezpieczne (bez kotwicy 25% szumu, patrz komentarz wyżej).
+    if (LookupTables.initialized && (LookupTables.namesForms.isNotEmpty() || LookupTables.surnamesForms.isNotEmpty() || LookupTables.surnamesFormsExtended.isNotEmpty())) {
         Regex("""\b([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})\b""").findAll(text).forEach { m ->
             val word = m.groupValues[1]
             val lower = word.lowercase()
             if (lower in NAMES_GUARD_CITY_SKIP) return@forEach
             if (lower in OSOBA_DENYLIST) return@forEach
-            if (LookupTables.cityForms.contains(lower) || LookupTables.streetForms.contains(lower)) return@forEach
             val isSurname = LookupTables.surnamesForms.contains(lower)
             val isFirstName = LookupTables.namesForms.contains(lower)
-            if (!isSurname && !isFirstName) return@forEach
+            val isRareSurname = !isSurname && LookupTables.surnamesFormsExtended.contains(lower)
+            // BUG-GUARD-CITY-SILENCES-SURNAME-FIX (14.07): wcześniej cityForms/streetForms
+            // wyciszało OSTRZEŻENIE bezwarunkowo — realne nazwiska pokrywające się z nazwą
+            // miejscowości (Zając, Wróbel, Sikora, Dudek — potwierdzone w cities_forms.json)
+            // nie dostawały nawet YELLOW. Miasto/ulica bez ŻADNEGO dowodu nazwiska zostaje
+            // wyciszone jak dotąd (unika podwójnego ostrzeżenia z MIASTO_NIEZAMASKOWANE
+            // niżej) — ale gdy słowo JEST znanym nazwiskiem, kolizja z miastem już nie milczy.
+            if ((LookupTables.cityForms.contains(lower) || LookupTables.streetForms.contains(lower)) &&
+                !isSurname && !isRareSurname) return@forEach
+            if (!isSurname && !isFirstName && !isRareSurname) return@forEach
             if (!CTX_OSOBA_LABEL.containsMatchIn(before80(m.range.first))) return@forEach
-            val label = if (isSurname) "NAZWISKO_NIEZAMASKOWANE" else "IMIE_NIEZAMASKOWANE"
+            val label = when {
+                isRareSurname -> "NAZWISKO_RZADKIE_NIEZAMASKOWANE"
+                isSurname -> "NAZWISKO_NIEZAMASKOWANE"
+                else -> "IMIE_NIEZAMASKOWANE"
+            }
             hits += GuardHit(label, "YELLOW", word, m.range.first, m.range.first + word.length)
         }
     }

@@ -31,6 +31,7 @@ object LookupTables {
 
     private var _namesForms: Set<String> = emptySet()
     private var _surnamesForms: Set<String> = emptySet()
+    private var _surnamesFormsExtended: Set<String> = emptySet()
     private var _streetForms: Set<String> = emptySet()
     private var _cityForms: Set<String> = emptySet()
     private var _medForms: Set<String> = emptySet()
@@ -41,15 +42,24 @@ object LookupTables {
     val initialized: Boolean get() = _initialized
     val namesForms: Set<String> get() = _namesForms
     val surnamesForms: Set<String> get() = _surnamesForms
+    // BUG-KADRY-SILENT-MISS (12.07): surnamesForms (aktywne maskowanie) zawężony do progu
+    // top-1000 (≥3296 osób w rejestrze PESEL) — usuwa kolizje pospolite (Osoba/Zapłata/
+    // Łączna), ale sam by ZOSTAWIAŁ CISZĄ rzadkie, prawdziwe nazwiska spoza tej listy
+    // (niebezpieczne dla dokumentów HR/kadrowych — PII wycieka bez ŻADNEGO ostrzeżenia).
+    // surnamesFormsExtended (39k, próg ≥100) rozwiązuje to w OutputGuard.kt: NIE maskuje
+    // (ryzyko kolizji zbyt wysokie dla auto-akcji), ale OSTRZEGA (YELLOW) — koszt złej flagi
+    // (człowiek sprawdza) jest dużo niższy niż koszt złego auto-maskowania. Właściciel 12.07:
+    // "mały słownik dla NameEngine, duży tylko dla Guard".
+    val surnamesFormsExtended: Set<String> get() = _surnamesFormsExtended
     val streetForms: Set<String> get() = _streetForms
     val cityForms: Set<String> get() = _cityForms
     val medForms: Set<String> get() = _medForms
-    // BUG-SLOWNIK-POSPOLITE-SLOWA (10.07, przywrócenie Warstwy 1 po diagnozie "chorego
-    // termometru" 09.07): rozszerzony słownik nazwisk (39k, próg ≥100 w rejestrze PESEL/GUS)
-    // łapie sporo rzadkich, ale prawdziwych nazwisk identycznych z pospolitymi słowami
-    // ("Osoba", "Łączna"). Sufiks nazwiskotwórczy (ski/cki/owicz/ak/uk...) jako sygnał
-    // kształtu — używany TYLKO jako strażnik w NameEngine, żaden osobny mechanizm
-    // rdzeń+sufiks (Warstwa 2, 08.07) nie jest tu przywracany.
+    // NIEUŻYWANE od 14.07 (DECYZJA WŁAŚCICIELA): był to sygnał kształtu dla strażnika
+    // Morfologika w NameEngine.isCommonWordNotSurname(), USUNIĘTEGO — blokował obok
+    // Osoba/Zapłata/Łączna też realne nazwiska-zwierzęta (Zając/Wróbel/Sowa/Kot).
+    // Zastąpione precyzyjną listą OSOBA_DENYLIST. Zostawione załadowane (koszt pomijalny,
+    // mały plik) na wypadek przyszłego przywrócenia — jeśli nikt go nie użyje do końca
+    // roku, usunąć razem z surname_suffixes.json.
     val surnameSuffixes: Set<String> get() = _surnameSuffixes
 
     // BUG-GORA-OSOBA-FIX (04.07): słowa będące jednocześnie drugim członem dwuwyrazowej
@@ -72,6 +82,7 @@ object LookupTables {
         val tA0 = System.currentTimeMillis()
         val names = loadFormsFromAsset(context, "names_inflected.json")
         val baseSurnames = loadFormsFromAsset(context, "surnames_top1000.json")
+        val baseSurnamesExtended = loadFormsFromAsset(context, "surnames_extended.json")
         val streets = loadFormsFromAsset(context, "street_names.json")
         val cities = loadFlatListFromAsset(context, "cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
@@ -82,6 +93,7 @@ object LookupTables {
 
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (baseSurnames + generateFeminineVariants(baseSurnames)).withAsciiVariants()
+        _surnamesFormsExtended = (baseSurnamesExtended + generateFeminineVariants(baseSurnamesExtended)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
@@ -145,10 +157,15 @@ object LookupTables {
             "szpital", "klinika", "przychodnia", "poradnia", "ambulatorium"
         ),
         citySurnameOverlap: Set<String> = setOf("góra", "górka", "górny", "róg", "kępa"),
-        surnameSuffixes: Set<String> = setOf("ski", "ska", "cki", "cka", "owicz", "ak", "uk")
+        surnameSuffixes: Set<String> = setOf("ski", "ska", "cki", "cka", "owicz", "ak", "uk"),
+        // Domyślnie = surnames (ten sam zestaw) — testy które nie sprawdzają jawnie reguły
+        // "rzadkie nazwisko spoza aktywnego słownika" dostają neutralne zachowanie
+        // (reguła strukturalnie nie odpala, bo extended==surnames, nic nowego nie "wystaje").
+        surnamesExtended: Set<String> = surnames
     ) {
         _namesForms    = names
         _surnamesForms = surnames
+        _surnamesFormsExtended = surnamesExtended
         _streetForms   = streets
         _cityForms     = cities
         _medForms      = med
@@ -164,6 +181,7 @@ object LookupTables {
         if (_initialized) return
         val names    = loadFormsFromClasspath("names_inflected.json")
         val surnames = loadFormsFromClasspath("surnames_top1000.json")
+        val surnamesExtended = loadFormsFromClasspath("surnames_extended.json")
         val streets  = loadFormsFromClasspath("street_names.json")
         val cities   = loadFlatListFromClasspath("cities_forms.json") { s ->
             s.length >= 4 && s.none { it.isDigit() }
@@ -173,6 +191,7 @@ object LookupTables {
         val suffixes = loadFlatListFromClasspath("surname_suffixes.json")
         _namesForms    = names.withAsciiVariants()
         _surnamesForms = (surnames + generateFeminineVariants(surnames)).withAsciiVariants()
+        _surnamesFormsExtended = (surnamesExtended + generateFeminineVariants(surnamesExtended)).withAsciiVariants()
         _streetForms   = streets.withAsciiVariants()
         _cityForms     = cities.withAsciiVariants()
         _medForms      = med.withAsciiVariants()
@@ -208,6 +227,7 @@ object LookupTables {
     fun resetForTesting() {
         _namesForms    = emptySet()
         _surnamesForms = emptySet()
+        _surnamesFormsExtended = emptySet()
         _streetForms   = emptySet()
         _cityForms     = emptySet()
         _medForms      = emptySet()
