@@ -167,6 +167,13 @@ class StressBenchmarkTest {
         val gt = JSONArray(File(datasetDir, "ground_truth.json").readText(Charsets.UTF_8))
 
         val results = mutableListOf<DocResult>()
+        // BUG-RUNDA2-MARTWY-KOD-AUDYT (14.07, pytanie Pawła przed mergem): czy pełne
+        // powtórzenie StructuralEngine+NameEngine po AnchorEngine ("Runda 2",
+        // PseudonymEngine.kt ~379-403) jeszcze cokolwiek łapie, czy jest martwym kodem
+        // po dzisiejszych konsolidacjach (audyt jeden-właściciel-na-encję). Zlicza
+        // trace.layer na całym korpusie 300 dokumentów — jeśli STRUCTURAL_R2/
+        // NAME_ENGINE_R2 wyjdą zero, to twardy dowód że Rundę 2 można bezpiecznie usunąć.
+        val layerCounts = mutableMapOf<String, Int>()
 
         for (i in 0 until gt.length()) {
             val entry = gt.getJSONObject(i)
@@ -177,6 +184,7 @@ class StressBenchmarkTest {
 
             val rawText = File(datasetDir, relFile).readText(Charsets.UTF_8)
             val engineResult = PseudonymEngine.pseudonymize(rawText, emptyList(), traceMode = true)
+            engineResult.trace.forEach { layerCounts[it.layer] = (layerCounts[it.layer] ?: 0) + 1 }
             val tokens = engineResult.tokenMap.map { (token, original) ->
                 DetectedToken(original = original, token = token, type = token.substringBefore("_"))
             }
@@ -415,6 +423,16 @@ class StressBenchmarkTest {
         File(reportDir, "arena_score.txt").writeText(arenaScore, Charsets.UTF_8)
         persistLatestCopy(repoRoot, reportDir, timestamp, report, arenaScore)
         updateArenaScoreboard(repoRoot, timestamp, arenaWinner, failures)
+
+        println("\n─── Rozkład tokenów per warstwa (${gt.length()} dokumentów) ───")
+        layerCounts.toSortedMap().forEach { (layer, count) -> println("  $layer: $count") }
+        val r2Total = (layerCounts["STRUCTURAL_R2"] ?: 0) + (layerCounts["NAME_ENGINE_R2"] ?: 0)
+        println(
+            if (r2Total == 0)
+                "  → Runda 2 (STRUCTURAL_R2 + NAME_ENGINE_R2): 0 na całym korpusie — martwy kod, bezpiecznie do usunięcia."
+            else
+                "  → Runda 2 (STRUCTURAL_R2 + NAME_ENGINE_R2): $r2Total — nadal coś łapie, NIE usuwać bez dalszej diagnozy."
+        )
 
         if (failures.isNotEmpty()) {
             Assert.fail("ARENA: CURSOR +1\n${failures.joinToString("\n") { "  - $it" }}")
