@@ -58,7 +58,15 @@ class ManualTestRegressionTest {
             // (ten sam wzorzec usuwania co ClipboardCheckActivity/IncomingDocumentFlow) —
             // bez tego migawka różniłaby się na starcie linii za każdym razem, niezależnie
             // od tego czy samo maskowanie się zmieniło.
-            val output = result.pseudonymizedText.removePrefix("SESJA_${result.sessionId}\n")
+            // BUG-GOLDEN-CRLF-FALSZYWY-ALARM (14.07, dwuczęściowy): git core.autocrlf=true na
+            // Windows konwertuje pliki .golden.txt ORAZ pliki wejściowe testy/test_*.txt na CRLF
+            // przy checkout/stash (rolling — który plik akurat "dotknięty" zależy od historii
+            // operacji gita, stąd za pierwszym razem inny zestaw plików niż za drugim). CRLF z
+            // pliku wejściowego przechodzi przez silnik nietknięty w niezamaskowanych fragmentach
+            // tekstu, więc samo normalizowanie strony golden (pierwsza wersja fixu) nie
+            // wystarczyło — output też mógł nieść \r\n. Normalizacja obu stron na \n przed
+            // porównaniem, zamiast ufać bajtom po stronie któregokolwiek pliku.
+            val output = result.pseudonymizedText.removePrefix("SESJA_${result.sessionId}\n").replace("\r\n", "\n")
 
             val goldenFile = File(goldenDir, "${f.name}.golden.txt")
             if (!goldenFile.exists()) {
@@ -66,11 +74,6 @@ class ManualTestRegressionTest {
                 created++
                 println("NOWA MIGAWKA: ${f.name} (pierwsze uruchomienie — brak punktu odniesienia)")
             } else {
-                // BUG-GOLDEN-CRLF-FALSZYWY-ALARM (14.07): git core.autocrlf=true na Windows
-                // konwertuje pliki .golden.txt na CRLF przy każdym checkout/stash — silnik w
-                // pamięci zawsze zwraca \n. Porównanie surowych bajtów widziało "zmianę" mimo
-                // identycznej treści linia-po-linii (0 różnic w pętli niżej = pewny sygnał tego
-                // mechanizmu). Normalizacja \r\n->\n przed porównaniem, zamiast ufać bajtom.
                 val golden = goldenFile.readText(Charsets.UTF_8).replace("\r\n", "\n")
                 if (golden != output) {
                     changed += f.name
