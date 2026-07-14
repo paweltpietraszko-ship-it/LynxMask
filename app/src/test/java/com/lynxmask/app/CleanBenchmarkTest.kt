@@ -166,7 +166,7 @@ class CleanBenchmarkTest {
             if (!docFile.exists()) error("Brakujący plik dokumentu: ${docFile.path}")
             val rawText = docFile.readText(Charsets.UTF_8)
 
-            val engineResult = PseudonymEngine.pseudonymize(rawText, emptyList(), traceMode = true, wentThroughOcr = false)
+            val engineResult = PseudonymEngine.pseudonymize(rawText, emptyList(), traceMode = true)
             val tokens = engineResult.tokenMap.map { (token, original) ->
                 DetectedToken(original = original, token = token, type = token.substringBefore("_"))
             }

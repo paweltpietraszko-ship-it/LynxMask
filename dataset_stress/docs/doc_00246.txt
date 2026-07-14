@@ -1,0 +1,37 @@
+FORMULARZ REJESTRACYJNY
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Gopal Socała
+Data urodzenia:
+23.12.1964
+PESEL:
+77011774235
+Nr dowodu osobistego:
+SEB236848
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Dopiewska 20, 70-001 Retno
+Telefon:
++48 605 716 176
+Adres e-mail:
+gopalsocala@poczta.pl
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+524-090-36-78
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

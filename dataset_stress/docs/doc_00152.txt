@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV/2023/12/5641
+
+Data wystawienia: 17.01.2020
+Numer klienta: KL-86379
+
+----------------------------------------
+SPRZEDAWCA:
+Kancelaria Prawna LEGIS S.C.
+Adres: ul. Kolonia 178, 90-001 Twardy Róg
+NIP: 297-199-75-86   REGON: 757013290
+Nr konta: PL97169010140227846997335494
+
+NABYWCA:
+Svyatoslav Kogut
+Adres: ul. Ugory 88, 20-100 Ilino
+NIP: 272-461-91-97
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa serwisowa                  5     177  23%      885     1089
+2.   Obsługa prawna                    1      51  23%       51       63
+3.   Konsultacja techniczna            5    1822   8%     9110     9839
+4.   Naprawa sprzętu                   7    1488  23%    10416    12812
+5.   Szkolenie zawodowe                7     881  23%     6167     7585
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        31388 PLN
+
+Płatność przelewem: PL97169010140227846997335494
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

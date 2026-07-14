@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2025/8502
+
+Data wystawienia: 20.05.2025
+Numer klienta: KL-31305
+
+----------------------------------------
+SPRZEDAWCA:
+BETA S.A.
+Adres: ul. Pusta 167, 00-001 Czchów
+NIP: 204-967-06-66   REGON: 508509549
+Nr konta: PL40169010149305966018648769
+
+NABYWCA:
+Eli̇f Krawczyszyn
+Adres: ul. Slonecznikowa 9/38, 60-001 Lichnowy
+NIP: 803-362-68-03
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         4     320   8%     1280     1382
+2.   Instalacja oprogramowania         5     225   8%     1125     1215
+3.   Obsługa prawna                    5     741  23%     3705     4557
+4.   Usługa doradcza                  10     611  23%     6110     7515
+5.   Instalacja oprogramowania         5    1652   8%     8260     8921
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        23590 PLN
+
+Płatność przelewem: PL40169010149305966018648769
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

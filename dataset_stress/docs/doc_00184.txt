@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr VAT/2022/6691
+
+Data wystawienia: 24.04.2020
+Numer klienta: KL-87264
+
+----------------------------------------
+SPRZEDAWCA:
+Zakład Ubezpieczeń POLISA S.A.
+Adres: ul. Wolkowa 61, 10-100 Czartoszowy
+NIP: 548-207-00-12   REGON: 419818986
+Nr konta: PL29150010137139155963632123
+
+NABYWCA:
+Krystyn Wróbel
+Adres: ul. Karlinskiego 8/20, 31-001 Nawóz
+NIP: 694-165-16-26
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Obsługa prawna                    6    1482   8%     8892     9603
+2.   Szkolenie zawodowe                9     917  23%     8253    10151
+3.   Naprawa sprzętu                   5    1851   8%     9255     9995
+4.   Szkolenie zawodowe                8    1515  23%    12120    14908
+5.   Instalacja oprogramowania         1    1371   8%     1371     1481
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        46138 PLN
+
+Płatność przelewem: PL29150010137139155963632123
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

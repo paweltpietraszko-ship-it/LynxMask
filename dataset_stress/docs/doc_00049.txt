@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 0437/12/2022
+
+Data wystawienia: 04.09.2023
+Numer klienta: KL-44803
+
+----------------------------------------
+SPRZEDAWCA:
+Przedsiębiorstwo Budowlane MARBUD S.A.
+Adres: ul. Słowiańska 72, 87-100 Rokitowiec
+NIP: 685-239-86-86   REGON: 925952693
+Nr konta: PL53114019874958887947055169
+
+NABYWCA:
+Bachana Laskowska
+Adres: ul. Filarecka 33, 80-001 Lubieniek
+NIP: 100-257-87-26
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa doradcza                  10    1033   8%    10330    11156
+2.   Obsługa prawna                   10    1636  23%    16360    20123
+3.   Usługa serwisowa                  4     114   8%      456      492
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        31771 PLN
+
+Płatność przelewem: PL53114019874958887947055169
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

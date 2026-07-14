@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV/2024/12/9563
+
+Data wystawienia: 07.08.2022
+Numer klienta: KL-69616
+
+----------------------------------------
+SPRZEDAWCA:
+Doradztwo Biznesowe EXPERT Sp. z o.o.
+Adres: ul. Wawrzyńca 142, 90-001 Chocicz
+NIP: 874-063-35-68   REGON: 906867172
+Nr konta: PL71240101353180632543107427
+
+NABYWCA:
+Ester Humen
+Adres: ul. Stopki 126, 65-001 Góra Włodowska
+NIP: 492-906-00-79
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa transportowa               3    1667  23%     5001     6151
+2.   Wynajem sprzętu biurowego         1    1812   8%     1812     1957
+3.   Usługa transportowa               6    1137   8%     6822     7368
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        15476 PLN
+
+Płatność przelewem: PL71240101353180632543107427
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,35 @@
+FAKTURA VAT
+Nr FV/2023/05/8583
+
+Data wystawienia: 29.12.2023
+Numer klienta: KL-44465
+
+----------------------------------------
+SPRZEDAWCA:
+ALFA Sp. z o.o.
+Adres: ul. Smiala 197, 85-001 Stare Podole
+NIP: 514-183-28-57   REGON: 717990424
+Nr konta: PL43109010140202758842524105
+
+NABYWCA:
+Mirosława Piekarska
+Adres: ul. Czermińska 164, 10-100 Reczpol
+NIP: 791-463-03-13
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego         8    1096  23%     8768    10785
+2.   Usługa doradcza                   8    1809   8%    14472    15630
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        26415 PLN
+
+Płatność przelewem: PL43109010140202758842524105
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

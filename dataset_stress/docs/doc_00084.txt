@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV-02236/06/2022
+
+Data wystawienia: 09.06.2024
+Numer klienta: KL-67261
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Warciańska 100/12, 40-001 Gawłowice
+NIP: 159-929-37-83   REGON: 187059324
+Nr konta: PL55150010132500292185156915
+
+NABYWCA:
+Anya Kolanowska
+Adres: ul. Wiosny ludow 82, 80-001 Stare Bojanowo
+NIP: 527-010-39-36
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                3    1498  23%     4494     5528
+2.   Naprawa sprzętu                  10    1718   8%    17180    18554
+3.   Usługa transportowa               5    1553  23%     7765     9551
+4.   Usługa serwisowa                  3    1542   8%     4626     4996
+5.   Usługa projektowa                 7    1792   8%    12544    13548
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        52177 PLN
+
+Płatność przelewem: PL55150010132500292185156915
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

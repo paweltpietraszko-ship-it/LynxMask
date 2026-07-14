@@ -1,0 +1,58 @@
+BENCHMARK LYNXMASK MOBILE v2 — RAPORT
+Data:    2026-07-14 15:10:49
+Dataset: ground_truth_lvl03.json
+════════════════════════════════════════════════════════════
+
+A. ENGINE-ONLY (testy JVM)
+   → gradlew :app:testDebugUnitTest
+   → wynik: patrz Claude_Code.txt (ostatni run JVM)
+
+B. IN-SCOPE ACCEPTED — GŁÓWNY KPI RELEASE
+   Dokumenty:                       51
+   Encji w ground truth:            339
+   Wykrytych i zamaskowanych:       327
+   Pominiętych:                     12
+   RECALL ogólny:                   96,5%  (próg: ≥90%)
+   RECALL encje krytyczne:          99,1%  (próg: ≥95%)
+
+   ── BLOKERY RELEASE ─────────────────────────────────
+   BUG_SILNIKA (kryt.):             0   ✓ OK
+   OCR_ZNIEKSZTAŁCONY (kryt.):      0   ✓ OK
+   Guard RED hits:                  0   ✓ OK
+   ── INFORMACYJNIE (nie blokuje release) ─────────────
+   BRAK_W_OCR (kryt.):              1   (sufit OCR)
+   Błędy pipeline:                  0
+   PRECISION/F1 (metryka GT-gap, NIE jakość silnika — patrz TOKENY POZA GT niżej):
+     precision 66,5%  f1 78,7%
+
+   TOKENY POZA GT:                  165   (nie blokuje release; token spoza GT ≠ błąd)
+     EXTRA_MASK_OK     0   (nachodzi na encję GT tego samego typu — zamierzone)
+     EXTRA_MASK_POLICY 101   (KWOTA/NUMER — produkt zawsze maskuje, GT nie opisuje)
+     UX_FP             0   ← PRAWDZIWY problem czytelności, śledzić ten KPI
+     REVIEW            64   (nieznane — do ręcznej oceny/denylist)
+
+   TOKENY POZA GT — PER WARSTWA (sekcja B)
+   STRUCTURAL         74
+   NAME_ENGINE        38
+   ANCHOR             29
+   ADDRESS_ENGINE     24
+
+   RECALL PER TYP ENCJI (sekcja B)
+   ADRES        98,2%  [███████████████░]  (56/57)
+   EMAIL        90,0%  [██████████████░░]  (9/10)
+   NUMER        95,3%  [███████████████░]  (201/211)
+   OSOBA        100,0%  [████████████████]  (61/61)
+
+   RECALL PER POZIOM DEGRADACJI (sekcja B)
+   Lvl 0 perfect scan   [███████████████████░] 97,6%  docs=17 ent=123
+   Lvl 1 light noise    [███████████████████░] 99,1%  docs=17 ent=110
+   Lvl 3 phone (good)   [██████████████████░░] 92,5%  docs=17 ent=106
+
+C. REJECTED (bramka OCR odrzuciła)
+   Dokumenty odrzucone:             6
+   Status:                          ✓ 100% poprawnie odrzucone
+   Lvl 2: 6 dok.
+
+D. OUT-OF-SCOPE (lvl2 accepted — informacyjnie)
+   Dokumenty:                       11  ← sygnał: obniżyć próg bramki?
+   Recall (sufit OCR na lvl2):      90,9%

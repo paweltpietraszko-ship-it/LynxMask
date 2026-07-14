@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr 2129/10/2020
+
+Data wystawienia: 13.04.2024
+Numer klienta: KL-96034
+
+----------------------------------------
+SPRZEDAWCA:
+Firma Logistyczna TRANS Sp. z o.o.
+Adres: ul. Swiecickiego 112/29, 70-001 Leśce
+NIP: 669-454-41-42   REGON: 900106182
+Nr konta: PL14109010147534430091093911
+
+NABYWCA:
+Mikola Drozdowska
+Adres: ul. Swidra 175, 45-001 Chworościany
+NIP: 773-938-52-59
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Konsultacja techniczna            3     568  23%     1704     2096
+2.   Wynajem sprzętu biurowego         2    1358  23%     2716     3341
+3.   Instalacja oprogramowania         7    1467  23%    10269    12631
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        18068 PLN
+
+Płatność przelewem: PL14109010147534430091093911
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

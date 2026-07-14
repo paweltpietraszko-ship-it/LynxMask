@@ -1,0 +1,42 @@
+FORMULARZ DANYCH OSOBOWYCH
+
+----------------------------------------
+
+DANE OSOBOWE WNIOSKODAWCY
+
+Imię i nazwisko:
+Nelya Grodziska
+Data urodzenia:
+20.07.1982
+PESEL:
+83052257781
+Nr dowodu osobistego:
+UFN256609
+
+DANE KONTAKTOWE
+
+Adres zamieszkania:
+ul. Szałwiowa 53/47, 30-001 Kakulin
+Telefon:
++48 531 418 186
+Adres e-mail:
+nelya_grodziska@gmail.com
+
+DANE PODATKOWE
+
+NIP (jeśli dotyczy):
+642-340-16-37
+
+DANE NIERUCHOMOŚCI
+
+Nr księgi wieczystej:
+KR1P/00194267/8
+
+Oświadczam, że podane dane są zgodne ze stanem faktycznym. Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z art. 6 ust. 1 lit. b) RODO.
+
+
+
+Data: ........................
+Podpis: ........................
+
+----------------------------------------

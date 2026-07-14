@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV-05061/02/2024
+
+Data wystawienia: 30.03.2024
+Numer klienta: KL-66164
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Flaminga 60/23, 20-100 Kowale Pańskie
+NIP: 473-149-50-18   REGON: 519562526
+Nr konta: PL42114019875715099768389030
+
+NABYWCA:
+Yan Kulig
+Adres: ul. Archimedesa 103, 85-001 Barnowiec
+NIP: 464-971-89-22
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 2     172   8%      344      372
+2.   Szkolenie zawodowe                8     657   8%     5256     5676
+3.   Usługa serwisowa                  7     468   8%     3276     3538
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                         9586 PLN
+
+Płatność przelewem: PL42114019875715099768389030
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

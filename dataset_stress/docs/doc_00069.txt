@@ -1,0 +1,37 @@
+FAKTURA VAT
+Nr VAT/2023/4056
+
+Data wystawienia: 10.07.2022
+Numer klienta: KL-14224
+
+----------------------------------------
+SPRZEDAWCA:
+Handel i Usługi Sp. z o.o.
+Adres: ul. Piwnika 108, 85-001 Powiercie
+NIP: 927-422-57-91   REGON: 134043847
+Nr konta: PL19102028927978819148580783
+
+NABYWCA:
+Nelli Kolodziej
+Adres: ul. Praga 48, 20-100 Perkowo Dolne
+NIP: 867-677-21-93
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                2     949   8%     1898     2050
+2.   Naprawa sprzętu                   4    1710  23%     6840     8413
+3.   Usługa projektowa                 7     389   8%     2723     2941
+4.   Naprawa sprzętu                   4    1699   8%     6796     7340
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        20744 PLN
+
+Płatność przelewem: PL19102028927978819148580783
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

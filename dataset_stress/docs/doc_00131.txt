@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV-09072/05/2025
+
+Data wystawienia: 18.03.2020
+Numer klienta: KL-22358
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Poplawskiego 192/41, 80-001 Poświętne
+NIP: 328-685-28-98   REGON: 498368458
+Nr konta: PL16240101357600490824043350
+
+NABYWCA:
+Freya Kolodziej
+Adres: ul. Rondo im. marszałka józefa piłsudskiego 180, 03-300 Zarębin
+NIP: 855-855-66-57
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Szkolenie zawodowe                3     333  23%      999     1229
+2.   Szkolenie zawodowe               10     561   8%     5610     6059
+3.   Instalacja oprogramowania         5     238  23%     1190     1464
+4.   Usługa projektowa                 4    1553   8%     6212     6709
+5.   Szkolenie zawodowe                8     404  23%     3232     3975
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        19436 PLN
+
+Płatność przelewem: PL16240101357600490824043350
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,21 @@
+{
+  "generator": "generator_stress.py",
+  "seed": 42,
+  "count": 300,
+  "scope": "business",
+  "tier_counts": {
+    "extended_only": 250,
+    "collision": 72,
+    "top1000": 90
+  },
+  "pool_sizes": {
+    "names_m": 2321,
+    "names_f": 1281,
+    "surnames_extended": 39318,
+    "surnames_top1000": 1000,
+    "surnames_extended_only": 38318,
+    "collision_candidates": 14,
+    "streets": 10959,
+    "cities": 31117
+  }
+}

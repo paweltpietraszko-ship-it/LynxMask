@@ -316,6 +316,14 @@ _PROSE_BUILDERS = {
     "wspomnienie": build_wspomnienie,
 }
 
+# DECYZJA ZAKRESU (12.07): silnik celuje w dokumenty formalne/urzędowe/biznesowe (kontekst
+# RODO), nie w wolną prozę/dokumenty prywatne — patrz TODO.md "DECYZJA ZAKRESU 12.07".
+# "skarga" strukturalnie jest formalnym pismem do urzędu (nagłówek, data+miasto, podpis,
+# żądanie działania) — ten sam rodzaj dokumentu co wezwanie/pismo_urzedowe, NIE osobista
+# narracja jak esej/list_osobisty/wspomnienie — więc liczy się jako "biznes", mimo że jej
+# builder mieszka technicznie w _PROSE_BUILDERS (bo to wolny tekst, nie pola etykieta:wartość).
+FROZEN_PROSE_TYPES = {"esej", "list_osobisty", "wspomnienie"}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 3 — Spłaszczenie istniejących szablonów biznesowych (Block -> tekst)
@@ -345,16 +353,16 @@ def build_business_as_text(doc_type: str, rng: random.Random) -> tuple[str, dict
 # SECTION 4 — Generowanie datasetu
 # ─────────────────────────────────────────────────────────────────────────────
 
-def generate_clean_dataset(count: int, out_dir: str, seed: int | None = None) -> None:
+def generate_clean_dataset(count: int, out_dir: str, seed: int | None = None, scope: str = "business") -> None:
     out_path = Path(out_dir)
     docs_path = out_path / "docs"
     docs_path.mkdir(parents=True, exist_ok=True)
 
     rng = random.Random(seed)
 
-    business_types = list(gen._BUILDERS.keys())
-    prose_types = list(_PROSE_BUILDERS.keys())
-    all_types = business_types + prose_types
+    business_types = list(gen._BUILDERS.keys()) + ["skarga"]  # skarga = pismo formalne, patrz FROZEN_PROSE_TYPES
+    prose_types = [t for t in _PROSE_BUILDERS if t in FROZEN_PROSE_TYPES]
+    all_types = business_types if scope == "business" else business_types + prose_types
 
     ground_truth: list[dict[str, Any]] = []
 
@@ -363,7 +371,7 @@ def generate_clean_dataset(count: int, out_dir: str, seed: int | None = None) ->
     print(f"  Dokumenty : {count}")
     print(f"  Wyjście   : {out_path.resolve()}")
     print(f"  Ziarno    : {seed if seed is not None else 'losowe (świeże za każdym razem)'}")
-    print(f"  Typy      : {len(business_types)} biznesowych + {len(prose_types)} prozy")
+    print(f"  Zakres    : {scope} ({len(all_types)} typów)")
     print()
 
     for i in range(count):
@@ -397,7 +405,7 @@ def generate_clean_dataset(count: int, out_dir: str, seed: int | None = None) ->
     print(f"  OK Ground truth -> {gt_path}")
     print(f"\n  Rozklad typow:")
     for dt, cnt in sorted(type_counts.items(), key=lambda x: -x[1]):
-        tag = "proza" if dt in _PROSE_BUILDERS else "biznes"
+        tag = "proza" if dt in FROZEN_PROSE_TYPES else "biznes"
         print(f"    [{tag:6s}] {dt:<28} {cnt:4d}  ({cnt/count*100:4.1f}%)")
     print()
 
@@ -407,8 +415,11 @@ def main() -> None:
     p.add_argument("--count", type=int, default=100)
     p.add_argument("--output", type=str, default="dataset_clean")
     p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--scope", type=str, choices=["business", "all"], default="business",
+                    help="business = tylko dokumenty formalne/RODO (domyślnie, decyzja 12.07); "
+                         "all = dokłada zamrożone szablony wolnej prozy (esej/list_osobisty/wspomnienie)")
     args = p.parse_args()
-    generate_clean_dataset(args.count, args.output, args.seed)
+    generate_clean_dataset(args.count, args.output, args.seed, args.scope)
 
 
 if __name__ == "__main__":

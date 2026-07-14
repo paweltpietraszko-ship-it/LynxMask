@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV/2020/03/9939
+
+Data wystawienia: 24.10.2024
+Numer klienta: KL-46780
+
+----------------------------------------
+SPRZEDAWCA:
+Centrum Medyczne MEDYK Sp. z o.o.
+Adres: ul. Brudzińskiego 193, 41-200 Piszczatka
+NIP: 239-755-23-19   REGON: 592995560
+Nr konta: PL25102028920533645257775478
+
+NABYWCA:
+Goga Łaszkiewicz
+Adres: ul. Zubrow 141/43, 50-001 Bujny Szlacheckie
+NIP: 591-357-75-96
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Obsługa prawna                    4     589   8%     2356     2544
+2.   Konsultacja techniczna            1    1789   8%     1789     1932
+3.   Usługa projektowa                10     879   8%     8790     9493
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        13969 PLN
+
+Płatność przelewem: PL25102028920533645257775478
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

@@ -1,0 +1,36 @@
+FAKTURA VAT
+Nr FV/2025/06/1280
+
+Data wystawienia: 24.08.2024
+Numer klienta: KL-18094
+
+----------------------------------------
+SPRZEDAWCA:
+GAMMA Sp. z o.o. S.K.A.
+Adres: ul. Nawrota 23, 20-100 Chrząstówka
+NIP: 737-454-99-02   REGON: 941459336
+Nr konta: PL46102028927279568783391878
+
+NABYWCA:
+Mykyta Tsurkan
+Adres: ul. Grawerska 123/16, 50-001 Baborowo
+NIP: 553-017-42-65
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Usługa projektowa                 9     356   8%     3204     3460
+2.   Szkolenie zawodowe                9     954   8%     8586     9273
+3.   Naprawa sprzętu                  10    1051   8%    10510    11351
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        24084 PLN
+
+Płatność przelewem: PL46102028927279568783391878
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................

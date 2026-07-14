@@ -1,0 +1,38 @@
+FAKTURA VAT
+Nr FV-08500/12/2024
+
+Data wystawienia: 05.02.2022
+Numer klienta: KL-68429
+
+----------------------------------------
+SPRZEDAWCA:
+Przedsiębiorstwo Budowlane MARBUD S.A.
+Adres: ul. Turkawki 52, 20-100 Pilichowo
+NIP: 841-672-43-46   REGON: 986805898
+Nr konta: PL61114019871135290965610143
+
+NABYWCA:
+Oliwer Zarzycka
+Adres: ul. Słowika 7, 30-001 Nalewajków
+NIP: 366-179-79-65
+
+----------------------------------------
+Lp.  Nazwa usługi                    Il.    Cena  VAT    Netto   Brutto
+----------------------------------------
+1.   Wynajem sprzętu biurowego        10    1464   8%    14640    15811
+2.   Szkolenie zawodowe                1    1038   8%     1038     1121
+3.   Instalacja oprogramowania         7    1935   8%    13545    14629
+4.   Konsultacja techniczna            3     763  23%     2289     2815
+5.   Szkolenie zawodowe                8    1656   8%    13248    14308
+----------------------------------------
+ŁĄCZNIE DO ZAPŁATY:                                        48684 PLN
+
+Płatność przelewem: PL61114019871135290965610143
+Termin płatności: 14 dni od daty wystawienia faktury.
+
+
+Wystawił/a:                        Odebrał/a:
+
+
+
+...........................        ...........................
