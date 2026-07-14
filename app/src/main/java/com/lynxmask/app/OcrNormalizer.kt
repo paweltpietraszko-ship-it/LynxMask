@@ -272,8 +272,11 @@ object OcrNormalizer {
 
     private fun fixNameLetterConfusion(word: String): String? {
         if ('l' !in word) return null
-        val lower = word.lowercase()
-        if (LookupTables.surnamesForms.contains(lower) || LookupTables.namesForms.contains(lower)) return null
+        // BUG-NAME-CONFUSION-GUARD-FIX (ultrareview): brakował ten sam strażnik co w
+        // fixDigitLetterConfusion (isRecognizedWord — słownik nazwisk/imion + Morfologik).
+        // Bez niego zwykłe polskie słowo z 'l' (nie tylko nazwisko) było poddawane zgadywaniu
+        // podstawienia, jeśli podstawienie przypadkiem trafiało w słownik nazwisk.
+        if (isRecognizedWord(word)) return null
         val hits = mutableSetOf<String>()
         for (i in word.indices) {
             if (word[i] != 'l') continue

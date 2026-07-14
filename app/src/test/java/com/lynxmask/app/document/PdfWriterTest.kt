@@ -96,6 +96,14 @@ class PdfWriterTest {
         assertTrue(isSectionMarker("§10 Odpowiedzialność stron"))
     }
 
+    // BUG-SECTION-COMMA-FIX (ultrareview): pierwsza wersja fixu odrzucała KAŻDY przecinek
+    // w tytule, nawet listę w tytule ("§3 Cele, zakres"). Przecinek + WIELKA litera po nim
+    // to lista w tytule, nie kontynuacja zdania — tylko przecinek + mała litera dyskwalifikuje.
+    @Test fun `tytul z przecinkiem-lista jest rozpoznany, zdanie z przecinkiem nie`() {
+        assertTrue(isSectionMarker("§3 Cele, Zakres"))
+        assertFalse(isSectionMarker("§3 stanowi, że każda ze stron zobowiązuje się"))
+    }
+
     @Test fun `zwykle zdanie zaczynajace sie od paragrafu nie jest naglowkiem`() {
         assertFalse(isSectionMarker("Zgodnie z § 3 niniejszej umowy"))
         assertFalse(isSectionMarker("§1 Postanowienia ogólne obowiązują od dnia podpisania niniejszej umowy przez obie strony."))

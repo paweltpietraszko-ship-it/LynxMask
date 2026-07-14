@@ -234,6 +234,15 @@ class PseudonymEngineTest {
             r2.pseudonymizedText.contains("OOO"))
     }
 
+    // BUG-A9C-ZERO-CYFR-FIX (ultrareview): pierwsza wersja A.9c pozwalała żeby CAŁY ciąg
+    // (łącznie z pierwszym znakiem) był samą D-klasą — "los, ostatni" (l/o/s i o/s to
+    // litery z D-klasy) łapało się jako kwota bez ani jednej prawdziwej cyfry w matchu.
+    @Test fun `zwykle slowa z literami D-klasy nie sa maskowane jako kwota bez zadnej cyfry`() {
+        val r = pseudonymize("Taki był jego los, ostatni raz widziano go w mieście.")
+        assertFalse("'los, ostatni' nie zawiera żadnej cyfry — nie powinno stać się KWOTĄ: ${r.pseudonymizedText}",
+            r.pseudonymizedText.contains("KWOTA_"))
+    }
+
     // BUG-KWOTA-CYFRA-MNOZNIK-FIX (08.07, pytanie Pawła): "w wysokości 15 tysięcy" —
     // cyfra + słowo-mnożnik, bez waluty. Żadna reguła KWOTA tego nie łapała (potwierdzone
     // Javą przed fixem).

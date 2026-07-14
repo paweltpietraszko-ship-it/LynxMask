@@ -175,26 +175,41 @@ internal fun runOutputGuard(
     // WORD_START_UNICODE/WORD_END_UNICODE (StructuralEngine.kt) — nazwa miasta może zaczynać
     // się lub kończyć na polską literę diakrytyczną (Łódź, Żywiec, Ostrów).
     if (LookupTables.initialized && LookupTables.cityForms.isNotEmpty()) {
-        val cityWordRe = Regex(
-            """$WORD_START_UNICODE([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})""" +
-                """(?:[^\S\n]([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,}))?$WORD_END_UNICODE"""
-        )
+        val cityWordRe = Regex("""$WORD_START_UNICODE([A-ZŁŚŹĆŃĄĘÓŻ][a-ząćęłńóśźż]{2,})$WORD_END_UNICODE""")
         val adresTokenRe = Regex("""\bADRES_\d{3}\b""")
-        cityWordRe.findAll(pseudonymizedText).forEach { m ->
+        // BUG-MIASTO-ZACHLANNA-PARA-FIX (ultrareview): stara wersja łapała OD RAZU parę
+        // "słowo1 słowo2" jednym matchem (opcjonalna druga grupa) — gdy para nie była
+        // dwuczłonowym miastem ("Wielka Warszawa"), findAll i tak konsumował oba słowa
+        // naraz i NIGDY nie sprawdzał drugiego słowa ("Warszawa") osobno jako miasto.
+        // Fix: dopasuj pojedyncze słowa, dla każdego opcjonalnie sprawdź sąsiada jako
+        // parę — jeśli para nie jest miastem, słowo-sąsiad zostaje sprawdzone osobno
+        // w kolejnej iteracji zamiast być bezpowrotnie "zjedzone".
+        val words = cityWordRe.findAll(pseudonymizedText).toList()
+        var idx = 0
+        while (idx < words.size) {
+            val m = words[idx]
+            val next = words.getOrNull(idx + 1)
+            val sep = pseudonymizedText.getOrNull(m.range.last + 1)
+            val adjacent = next != null && next.range.first == m.range.last + 2 &&
+                sep != null && sep != '\n' && sep.isWhitespace()
             val first = m.groupValues[1]
-            val second = m.groupValues[2]
-            val matchedCity = when {
-                second.isNotEmpty() && LookupTables.cityForms.contains("${first.lowercase()} ${second.lowercase()}") -> m.value
-                LookupTables.cityForms.contains(first.lowercase()) -> first
-                else -> null
-            } ?: return@forEach
+            val second = if (adjacent) next!!.groupValues[1] else null
+            val (matchedCity, consumedNext) = when {
+                second != null && LookupTables.cityForms.contains("${first.lowercase()} ${second.lowercase()}") ->
+                    pseudonymizedText.substring(m.range.first, next!!.range.last + 1) to true
+                LookupTables.cityForms.contains(first.lowercase()) -> first to false
+                else -> null to false
+            }
+            idx += if (consumedNext) 2 else 1
+            if (matchedCity == null) continue
             // Nazwa jest jednocześnie ulicą (np. "Gdańska") — zostaw ocenę kontekstu Guardowi ADRES/ulicy, nie duplikuj.
-            if (LookupTables.streetForms.contains(matchedCity.lowercase())) return@forEach
-            val lineStart = pseudonymizedText.lastIndexOf('\n', m.range.first).let { if (it < 0) 0 else it + 1 }
-            val lineEnd = pseudonymizedText.indexOf('\n', m.range.last).let { if (it < 0) pseudonymizedText.length else it }
-            val line = pseudonymizedText.substring(lineStart, lineEnd)
-            if (adresTokenRe.containsMatchIn(line)) return@forEach
+            if (LookupTables.streetForms.contains(matchedCity.lowercase())) continue
             val start = m.range.first
+            val matchEnd = start + matchedCity.length - 1
+            val lineStart = pseudonymizedText.lastIndexOf('\n', start).let { if (it < 0) 0 else it + 1 }
+            val lineEnd = pseudonymizedText.indexOf('\n', matchEnd).let { if (it < 0) pseudonymizedText.length else it }
+            val line = pseudonymizedText.substring(lineStart, lineEnd)
+            if (adresTokenRe.containsMatchIn(line)) continue
             hits += GuardHit("MIASTO_NIEZAMASKOWANE", "YELLOW", matchedCity, start, start + matchedCity.length)
         }
     }

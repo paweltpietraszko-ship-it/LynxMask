@@ -47,6 +47,11 @@ private const val FONT_SIZE = 12f
 private const val PARAGRAPH_GAP_FACTOR = 1.6f  // pusta linia (akapit) liczy się jako 1,6× wysokości linii
 private const val MAX_TITLE_WORDS = 8
 private val SENTENCE_END = setOf('.', ',', ';', '!', '?')
+private val STRONG_SENTENCE_END = setOf('.', ';', '!', '?')
+// Przecinek sam w sobie nie dyskwalifikuje tytułu — listy w tytułach też go używają
+// ("§3 Cele, zakres i definicje"). Sygnałem zdania jest przecinek + kontynuacja małą
+// literą ("stanowi, że...", "wynika, iż...") — to gramatyczna własność, nie przykład.
+private val COMMA_SENTENCE_CONTINUATION_RE = Regex(""",\s*\p{Ll}""")
 
 // Wąski, bezpieczny wzorzec — linia zaczynająca się od "§" + numeru, opcjonalnie z krótkim
 // tytułem obok ("§3", "§3 Definicje", "§3. Postanowienia ogólne") — ale NIE cały akapit,
@@ -59,10 +64,10 @@ internal fun isSectionMarker(line: String): Boolean {
     if (match.range.first != 0) return false
     val rest = trimmed.substring(match.value.length).trim()
     if (rest.isEmpty()) return true
-    // Interpunkcja zdania GDZIEKOLWIEK w reszcie, nie tylko na końcu — "§3 stanowi, że..."
-    // ma przecinek w środku (zwykłe zdanie), nie na końcu linii. Prawdziwy tytuł ("§3
-    // Definicje") nigdy nie ma wewnętrznej interpunkcji zdania.
-    if (rest.any { it in SENTENCE_END }) return false
+    // Mocna interpunkcja zdania GDZIEKOLWIEK w reszcie, nie tylko na końcu — "§3 stanowi,
+    // że..." ma przecinek w środku (zwykłe zdanie), nie na końcu linii.
+    if (rest.any { it in STRONG_SENTENCE_END }) return false
+    if (COMMA_SENTENCE_CONTINUATION_RE.containsMatchIn(rest)) return false
     val words = rest.split(Regex("""\s+"""))
     return words.size <= MAX_TITLE_WORDS
 }

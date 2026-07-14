@@ -373,6 +373,16 @@ class OutputGuardRedesignFpTpTest {
         assertTrue(hasLabel(yellow(guard("Łódź to duże miasto.")), "MIASTO_NIEZAMASKOWANE"))
     }
 
+    // BUG-MIASTO-ZACHLANNA-PARA-FIX (ultrareview): stara wersja regexu łapała parę
+    // "słowo1 słowo2" jednym matchem — gdy para nie była dwuczłonowym miastem, findAll
+    // konsumował oba słowa naraz i drugie słowo ("Warszawa") nigdy nie było sprawdzone
+    // osobno jako miasto jednoczłonowe.
+    @Test fun miastoPoprzedzoneInnymSlowemZWielkiejLiteryNadalWykryte() = withCities(setOf("warszawa")) {
+        assertTrue("Warszawa poprzedzona innym słowem z wielkiej litery ('Piękna') " +
+            "powinna nadal dać MIASTO_NIEZAMASKOWANE",
+            hasLabel(yellow(guard("Piękna Warszawa wita gości z całego świata.")), "MIASTO_NIEZAMASKOWANE"))
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // YELLOW: NAZWISKO_NIEZAMASKOWANE/NAZWISKO_RZADKIE_NIEZAMASKOWANE mimo kolizji
     // z cityForms (14.07, BUG-GUARD-CITY-SILENCES-SURNAME-FIX) — realne nazwiska

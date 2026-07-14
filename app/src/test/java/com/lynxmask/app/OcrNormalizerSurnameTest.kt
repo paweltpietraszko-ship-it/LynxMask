@@ -82,4 +82,21 @@ class OcrNormalizerSurnameTest {
         assertEquals("Brak trafienia w słowniku po podstawieniu = bez zmian",
             input, result.normalizedText)
     }
+
+    // BUG-NAME-CONFUSION-GUARD-FIX (ultrareview): fixNameLetterConfusion nie sprawdzał
+    // isRecognizedWord (jak jej bliźniacza fixDigitLetterConfusion) — zwykłe polskie
+    // słowo z 'l' było poddawane zgadywaniu, jeśli podstawienie PRZYPADKIEM trafiało
+    // w słownik nazwisk. "byli" (czasownik "być", czas przeszły) to prawdziwe, częste
+    // polskie słowo — fixture symuluje przypadkową kolizję (podstawienie 'l'->'i' daje
+    // "byii") żeby odtworzyć mechanizm bez polegania na prawdziwym 39k słowniku.
+    @Test
+    fun `S6b prawdziwe polskie slowo z litera l nie jest zamieniane mimo przypadkowej kolizji w slowniku`() {
+        LookupTables.initializeForTesting(
+            surnames = LookupTables.surnamesForms + "byii"
+        )
+        val input = "Wczoraj byli tam na miejscu."
+        val result = OcrNormalizer.normalize(input)
+        assertEquals("'byli' to prawdziwe słowo (czasownik) — nie może zostać zamienione na 'byii'",
+            input, result.normalizedText)
+    }
 }

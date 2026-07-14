@@ -414,8 +414,14 @@ internal fun applyAnchorEngine(
     // niej był przecinek ROZDZIELAJĄCY listę kolejnych kwot (nie kontynuacja tej samej
     // liczby), więc każda kwota oprócz ostatniej w linii ginęła.
     // ------------------------------------------------------------------
+    // BUG-A9C-ZERO-CYFR-FIX (ultrareview): pierwszy znak musiał też być D-klasą, więc
+    // ciąg złożony WYŁĄCZNIE z liter D-klasy ("los, ostatni" — l/o/s i o/s to litery
+    // z tego zbioru) łapał się jako kwota bez ANI JEDNEJ prawdziwej cyfry. Ten sam
+    // wymóg co A.9/A.9b (patrz komentarz wyżej: "[0-9] na początku — wymaga
+    // prawdziwej cyfry") — pierwszy znak musi być literalną cyfrą, D-klasa tylko
+    // dla kontynuacji wewnątrz już potwierdzonej liczby.
     applyAll(
-        Regex("""(?<![0-9OolIiSsBbZz])[0-9OolIiSsBbZz]{1,6}(?:(?:[.,]|[^\S\n])[0-9OolIiSsBbZz]{3})*[^\S\n]?[,.][^\S\n]?[0-9OolIiSsBbZz]{2}(?![0-9OolIiSsBbZz]|[,.][0-9OolIiSsBbZz])"""),
+        Regex("""(?<![0-9OolIiSsBbZz])[0-9][0-9OolIiSsBbZz]{0,5}(?:(?:[.,]|[^\S\n])[0-9OolIiSsBbZz]{3})*[^\S\n]?[,.][^\S\n]?[0-9OolIiSsBbZz]{2}(?![0-9OolIiSsBbZz]|[,.][0-9OolIiSsBbZz])"""),
         TOKEN_KWOTA
     )
 
