@@ -53,6 +53,58 @@ Właściciel projektu nie jest programistą — pisze kod przez Claude Code w te
 
 **Zmiana architektury = pytanie właściciela NAJPIERW.** Nie "naprawiam po cichu" rozgraniczenia warstw. To jest decyzja właściciela.
 
+**Ogólna reguła, nie przykład:** przy naprawie regexu/listy pod OCR lub kolizję słownika — szukaj wspólnego kształtu (wildcard, klasa znaków, próg), nie dopisuj pojedynczych znaków/słów z bieżącego testu. Wyjątek: raz ustalony, kompletny, udokumentowany zamknięty zbiór (np. D-class cyfropodobnych `[0-9OolISBZ]`) nie jest tym błędem — enumeracja PO KAŻDYM teście jest. Uwaga na kamuflaż: "systemowa" naprawa, która w praktyce wpisuje przykłady ze skargi do listy wyjątków, to ten sam błąd z inną etykietą — sprawdź czy naprawa faktycznie znajduje wszystkie przypadki (np. Morfeusz2 na całym słowniku), nie tylko zgłoszone. Zweryfikuj fix na przykładzie SPOZA zbioru który go motywował, zanim uznasz go za ogólny.
+
+**Jedno miejsce, nie rozproszone łaty:** gdy ta sama klasa buga może wystąpić w wielu regexach/miejscach, nie dopisuj tego samego guardu do każdego z osobna. Znajdź jedno miejsce wyżej w potoku (silniejsza/wcześniejsza reguła), które przechwytuje całość, zanim któreś z N miejsc dostanie szansę. Jeśli łapiesz się w pętli "napraw → wciąż bug → kolejne miejsce" — przerwij i szukaj wspólnego źródła.
+
+**Bug "silnik źle maskuje słowo" = zwykle jakość słownika, nie kod:** przed pisaniem kolejnego filtra sprawdź dane źródłowe (Morfeusz2: czy cała lista odmian danego klucza faktycznie pasuje do właściwej części mowy). Czyszczenie danych u źródła działa trwale; filtry w kodzie tylko przenoszą problem gdzie indziej.
+
+**Nie edytuj testu żeby przeszedł:** zmiana w samym teście uzasadniona TYLKO gdy przyczyna faktycznie leży w teście (zły fixture, zła asercja) — zawsze nazwij tę przyczynę wprost. W każdym innym przypadku napraw kod produkcyjny, nie test.
+
+**Prawdziwy test = telefon, nie benchmark:** ręczna inspekcja `testy/*.txt` na telefonie jest prawdą ostateczną. Benchmark bywa "chorym termometrem" (błędny scoring, zbyt gruboziarniste etykiety FP) — gdy metryka wygląda źle mimo poprawnego kodu, podejrzewaj najpierw sam pomiar, nie silnik. Kolejność: potwierdź bug na telefonie PRZED diagnozowaniem (nie tylko przed fixem) — gdy benchmark/Guard pokazuje coś nowego, zapytaj czy Paweł może sprawdzić, zanim zaczniesz analizować logi i wyciągać wnioski (nawet wstępne, nawet "to na pewno nie bug").
+
+**Pliki `testy/*.txt`:** wyłącznie tekst do zamaskowania, zero nagłówków/komentarzy w środku — appka przetwarza cały plik jako dokument. Kontekst/cel testu przekazuj w czacie, nie w pliku.
+
+**Zadania dla Cursora:** zawsze wklej czytelnym blokiem wprost w czacie, nie tylko zapisz w TODO.md.
+
+**Kolizja instalacja/benchmark:** nie instaluj/reinstaluj APK gdy jest ryzyko że Paweł w tym samym momencie odpala test na telefonie. Symptom: zero wyników (nie częściowych) bez FATAL EXCEPTION w logcacie = kolizja czasowa, nie bug silnika.
+
+**Guard YELLOW to świadomy kompromis:** audit-only warstwa toleruje fałszywe alarmy (recall > precyzja tam gdzie i tak jest ludzka ocena na końcu) — nie proponuj samodzielnie "poprawek czułości" bez sygnału Pawła.
+
+**Drobne bugi znalezione przy okazji — napraw od razu, bez pytania.** Nie dotyczy architektury, nowych silników, ani niejednoznacznych decyzji produktowych (np. "czy to w ogóle powinno się maskować" to decyzja produktowa, nie bug).
+
+**Tempo i zakres sesji ustala Claude, nie Paweł** — nawet gdy ma czas i naciska na kontynuację. Nie pytaj "zamykamy?" bez konkretnego, nazwanego powodu ryzyka (np. "5 zależnych zmian w tym samym pliku, żadna nie testowana osobno na telefonie").
+
+**Kompromisy implementacyjne:** przy uproszczeniu (Twoim albo Pawła) przedstaw konkretny scenariusz awarii, nie samo "tak"/"nie". Decyzja zostaje po jego stronie, ale ma być świadoma kosztu.
+
+**Pomysły poboczne, o które nikt nie prosił:** zgłoś jednym zdaniem, nie pisz sam bez pytania.
+
+**Powtarzalny krok migracji raz zatwierdzony przez właściciela** (np. wyłączanie starego mechanizmu po migracji encji do docelowej warstwy) — stosuj przy każdej kolejnej encji bez pytania osobno za każdym razem.
+
+**StructuralEngine.kt to moloch (>600 linii)** — przy wyborze dopisać-czy-nowy-plik domyślnie wybieraj nowy plik silnika (wzorzec: `AddressEngine.kt`).
+
+**Diagnoza routingu obrazów/klasyfikacji:** proponuj `adb logcat` przed jakimikolwiek zmianami kodu. Domyślny kierunek klasyfikatora binarnego: obciążenie dowodem leży po stronie rzadszego/wyjątkowego przypadku, nie po stronie reguły.
+
+---
+
+## Zasady AnchorEngine (kotwice)
+
+**Kotwica = jawny sygnał (słowo-klucz, znak, sufiks, kontekst), nigdy sam kształt tekstu.** "WIELKIE_SŁOWO+cyfry" bez sygnału nie jest sprawą AnchorEngine — to warstwa strukturalna (tam decyduje się czy kształt wystarcza). Jedyny wyjątek bez kotwicy: PESEL z poprawną sumą kontrolną.
+
+**Zasięg dopasowania po złapaniu kotwicy zatrzymuje się na granicy klasy znaku** (spacja / koniec ciągu liter-cyfr), nigdy na arbitralnym limicie znaków.
+
+**Identyfikatory (PESEL/NIP/FAKTURA/IBAN): zero sumy kontrolnej jako warunku maskowania.** Widząc kotwicę, AnchorEngine zgarnia cały ciąg cyfropodobny w prawo do końca. Suma kontrolna może wpływać na confidence później, nigdy na decyzję maskować/nie.
+
+**Kotwice luźne działają WYŁĄCZNIE na resztkach, po precyzyjnych regułach strukturalnych** — nigdy na początku potoku, niezależnie w jakim pliku mieszkają (cecha reguły, nie pliku).
+
+**Przed patchowaniem OcrNormalizer/StructuralEngine per przykład — sprawdź obliczeniowo (Python) czy AnchorEngine już łapie to jako fallback.** Jeśli tak, problem nie jest tam gdzie się wydawał. Sam test regexu w izolacji nie wystarcza — sprawdź też czy wcześniejsza warstwa (kontekstowy wzorzec z elastyczną klasą) nie skonsumowała kotwicy częściowo, zanim AnchorEngine w ogóle dostał tekst.
+
+**Nie lekceważ przeniesienia CAŁEJ encji ze StructuralEngine (walidacja kształtu) do AnchorEngine (kotwica, zero walidacji) jako "zbyt dużej zmiany"** — to sprawdzony, tani do przetestowania wzorzec (odwracalny przez zakomentowanie starego wzorca), nie jednorazowe ryzyko architektoniczne. Rozważ to, gdy encja dostaje trzecią/czwartą łatę pod rząd w StructuralEngine.
+
+**Techniczne pułapki regexów kotwicowych** (possessive quantifiers, letter-guardy, okna nakładania tokenów) — sprawdź `memory/lessons_anchor_regex_pitfalls.md` przed pisaniem/migracją reguł A.x.
+
+**Pełna specyfikacja kotwic** (matryca reguł A.1–A.12, 7 zakazów) — `AnchorEngine_brief_v2.docx` w repo / `memory/feedback_anchorengine_spec_violation.md`.
+
 ---
 
 ## Stan projektu Mobile (stan: 30.06.2026 wieczór)
