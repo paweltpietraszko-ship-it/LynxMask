@@ -8,42 +8,34 @@
 
 ---
 
-## PRIORYTET NASTĘPNEJ SESJI (14.07 wieczór) — wynik benchmarków po dzisiejszym sprzątaniu
+## PRIORYTET NASTĘPNEJ SESJI (stan po 14.07) — co zostało po mergu do master
 
-**Benchmarki puszczone po całym dniu pracy (14.07): zero potwierdzonego regresu.**
-- `stress` (Cursor, 300 dok. stały zestaw): recall 98,8% identyczny co do encji vs 12.07,
-  precyzja płaska (73,7 vs 73,8%), te same top FP co przed zmianami.
-- `clean` (300 dok., pula ~25 nazwisk — ograniczona różnorodność): recall 99,4% identyczny
-  co do encji vs 12.07, precyzja lekko w dół (68,6 vs 69,3%) ale te same top FP co wcześniej
-  (Biała/Paweł/Poznaniu) — nie nowy szum.
-- `stały`/`fresh`/`v2` (telefon, ground_truth_lvl03.json): 96,5–97,2% recall, powyżej progu
-  release (≥90%). `UX_FP=0` (prawdziwy problem czytelności) w obu przebiegach `stały`.
+**ZAMKNIĘTE 14.07 (nie otwierać ponownie):** commit w spójnych krokach ✅, merge `feature/document-export`
+→ `master` (`772c7b6`) ✅, push na GitHub (`github.com/paweltpietraszko-ship-it/LynxMask`) ✅, usunięcie
+Rundy 2 (`STRUCTURAL_R2`/`NAME_ENGINE_R2`, dowód: 0/300 dok.) ✅, naprawa 82 zbędnych przeładowań
+słownika w testach (2 min → 26 s) ✅, wyłączenie z gita 88MB+ danych źródłowych `tools/ULICE/` ✅,
+fix A.11e (kradzież segmentów faktury obok niepowiązanego adresu) ✅, fix Guard (nazwisko obok tokenu
+OSOBA bez etykiety kontekstowej) ✅, fałszywy alarm CRLF w migawkach + `.gitattributes` ✅.
 
-**BUG-CHORY-TERMOMETR (nowy, 14.07) — benchmark `stały` fałszywie oznacza doc_00026 jako
-blocker release.** `dowod_osobisty=LKW771657` oznaczone jako "OCR_ZNIEKSZTAŁCONY — bug
-silnika" — Paweł sprawdził na telefonie: **jest zamaskowane poprawnie, to fałszywy alarm
-narzędzia**. Powtarzalne (dwa identyczne przebiegi `stały`, ta sama liczba). Podejrzenie:
-pomieszane pola w WYGENEROWANYM dokumencie testowym (numer dowodu i PESEL zamienione w
-treści) — do zweryfikowania w `generator.py`, nie w silniku. Niepilne, nie blokuje niczego
-realnego (telefon rozstrzyga).
+**Otwarte, realne zadania na kolejną sesję:**
 
-**DO ZROBIENIA — ścieżka kontekstowa Guard nie w pełni korzysta z dzisiejszej poprawki
-Zając/Wróbel/Dudek/Biała.** W `benchmark_results/staly/2026-07-14_1521/benchmark_bugs.txt`,
-sekcja `NAME_ENGINE/CONTEXTUAL/OSOBA` — "Zajac", "Dudek", "Biała" nadal pojawiają się jako
-`[REVIEW]` (YELLOW, nie cichy wyciek, ale nie auto-maskowanie) w TEJ konkretnej ścieżce
-(dwuwyrazowy kontekstowy check w OutputGuard.kt, `OSOBA_NIEZAMASKOWANE` — różny od
-`NAZWISKO_NIEZAMASKOWANE`/`NAZWISKO_RZADKIE_NIEZAMASKOWANE` naprawionych dziś). Sprawdzić
-czy ten sam mechanizm (`NAMES_GUARD_CITY_SKIP`/`cityForms` early-return) blokuje też tu,
-analogicznie do naprawy z dzisiejszej sesji.
+1. **Ścieżka kontekstowa Guard nie w pełni korzysta z poprawki Zając/Wróbel/Dudek/Biała.**
+   `OSOBA_NIEZAMASKOWANE` (dwuwyrazowy kontekstowy check w OutputGuard.kt) — różna gałąź kodu od
+   `NAZWISKO_NIEZAMASKOWANE`/`NAZWISKO_RZADKIE_NIEZAMASKOWANE` naprawionych 14.07. Sprawdzić czy ten
+   sam mechanizm (`NAMES_GUARD_CITY_SKIP`/`cityForms` early-return) blokuje też tu.
+2. **39/77 pozycji REVIEW w benchmarku `stały` to adresy** (ulica bez kodu + kod osobno) — graniczne
+   dopasowanie tokenów względem ground truth, nie potwierdzony wyciek, wymaga dokładniejszego przeglądu.
+3. **ADRES ma dwóch właścicieli** (audyt jeden-właściciel-na-encję, 14.07) — AddressEngine.kt + dwie
+   reguły w NameEngine.kt (miasto po przyimku, miasto dwuczłonowe). Decyzja: zatwierdzić jako trwały
+   wyjątek w mapie architektury, albo przenieść do AddressEngine.
+4. **BUG-CHORY-TERMOMETR** (`generator.py`, doc_00026 `LKW771657`) — fałszywy alarm benchmarku
+   `stały`, potwierdzone na telefonie że silnik maskuje poprawnie. Podejrzenie: pomieszane pola w
+   wygenerowanym dokumencie. Niepilne.
+5. **Audyt pokrycia testów** (591 testów jednostkowych) — czy się nie pokrywają, czy są dziury w
+   pipeline. Teraz aktualne (migracja ADRES zamknięta, warunek z 07.07 spełniony).
 
-**DO ZROBIENIA — 39/77 pozycji REVIEW w `stały` to adresy (ulica bez kodu + kod osobno).**
-Wygląda na graniczne dopasowanie tokenów względem ground truth, nie potwierdzony wyciek —
-wymaga osobnego, dokładniejszego przeglądu, nie zrobione dziś z braku czasu.
-
-**Stan repo: WSZYSTKO nadal niescommitowane** (patrz sekcje niżej — cały dzień pracy 14.07
-+ dziedzictwo sprzed tej sesji). Cel dnia (przenieść na master) nieosiągnięty z braku
-czasu, nie z powodu problemów jakościowych — benchmarki i testy czyste. Zacząć następną
-sesję od: (1) commit w spójnych krokach, (2) merge do master.
+Reszta otwartych bugów/blokerów — patrz sekcje `BLOKERY RELEASE`, `OTWARTE BUGI SILNIKA`,
+`OTWARTE ZADANIA UI` niżej w tym pliku (bez zmian od 14.07).
 
 ---
 
@@ -184,8 +176,6 @@ między klasami testowymi zamiast przeliczania za każdym razem. Priorytet do us
 - **OcrNormalizer `fixDigitLetterConfusion`/`fixNameLetterConfusion`** nie sprawdzają
   `surnamesFormsExtended` (39k), tylko mały słownik top-1000 — cichy brak, nieudokumentowany
   jako świadoma decyzja (w przeciwieństwie do reszty splitu 1k/39k).
-- **Gradle wrapper 9.4→9.6.1** w tym samym niescommitowanym stanie — niezwiązane z silnikiem,
-  niejasne czy celowe (IDE?). Sprawdzić z Pawłem przed commitem czy zostaje czy revert.
 - **Ablewski** (nazwisko) — jawne, nie zbadane dlaczego.
 - **VIN samochodu** — jawny, nowy typ encji poza dotychczasowym scope.
 - **"15 tys" bez kotwicy** — kwota bez słowa-kotwicy jawna, spójne z zasadą projektu.
@@ -196,13 +186,6 @@ między klasami testowymi zamiast przeliczania za każdym razem. Priorytet do us
   dopisane teraz — polska deklinacja rzeczownikowa ma pułapki (rodzina "-ec" ma ruchome "e":
   "Kowalec"→dopełniacz "Kowalca", nie "Koweleca" — mechaniczne doklejenie końcówek jak przy
   -ski byłoby błędne). Zrobić dopiero z testem-najpierw na konkretnym przykładzie, nie zgadywać.
-- **Usunięcie Rundy 2 (`STRUCTURAL_R2`/`NAME_ENGINE_R2`, `PseudonymEngine.kt` ~379-403)** —
-  dowód już zebrany 14.07: `StressBenchmarkTest` liczy `trace.layer` na 300 dokumentach,
-  wynik **0 tokenów** przez Rundę 2 (STRUCTURAL: 1541, NAME_ENGINE: 591, ADDRESS_ENGINE: 697,
-  ANCHOR: 91 — Runda 2: 0). Spełnia kryterium z decyzji 04.07 ("usuń gdy dowód pokaże że nic
-  już nie przechodzi"). Świadomie odłożone na spokojniejszą sesję — Paweł: nie chce ryzykować
-  że "szybkie sprzątanie" znowu rozciągnie się na dni tuż przed mergem. Diagnostyka w
-  StressBenchmarkTest zostaje (tani do ponownego sprawdzenia po każdej zmianie silnika).
 - **ADRES ma dwóch właścicieli** (audyt jeden-właściciel-na-encję, 14.07): AddressEngine.kt
   deklaruje się jako jedyny silnik ADRES, ale NameEngine.kt niezależnie przypisuje ten sam
   token w dwóch miejscach (`applyCityLookup`/`CITY_PREP_REGEX` — miasto po przyimku, i blok
