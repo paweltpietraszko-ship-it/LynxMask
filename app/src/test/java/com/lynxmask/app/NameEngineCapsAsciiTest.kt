@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
-import org.junit.Before
-import org.junit.After
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -11,16 +11,21 @@ import org.junit.Assert.*
  */
 class NameEngineCapsAsciiTest {
 
-    @Before
-    fun setup() {
-        LookupTables.resetForTesting()
-        LookupTables.initializeFromClasspath()
-    }
+    companion object {
+        // BUG-TESTY-WOLNE-SLOWNIK-FIX (14.07): raz na klasę zamiast raz na każdy z 7 testów.
+        @BeforeClass
+        @JvmStatic
+        fun setupClass() {
+            LookupTables.resetForTesting()
+            LookupTables.initializeFromClasspath()
+        }
 
-    @After
-    fun teardown() {
-        LookupTables.resetForTesting()
-        resetRegexCache()
+        @AfterClass
+        @JvmStatic
+        fun teardownClass() {
+            LookupTables.resetForTesting()
+            resetRegexCache()
+        }
     }
 
     // ── S2 — ASCII imiona bez ogonków ──────────────────────────────────────

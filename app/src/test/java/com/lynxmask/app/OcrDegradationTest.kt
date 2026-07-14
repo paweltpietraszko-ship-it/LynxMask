@@ -1,7 +1,7 @@
 package com.lynxmask.app
 
-import org.junit.Before
-import org.junit.After
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -24,16 +24,24 @@ import org.junit.Assert.*
  */
 class OcrDegradationTest {
 
-    @Before
-    fun setup() {
+    companion object {
+        // BUG-TESTY-WOLNE-SLOWNIK-FIX (14.07): @Before/@After per-test wymuszało pełne
+        // przeładowanie słownika (39k+ nazwisk, 209k+ miast) PRZED KAŻDYM z 44 testów —
+        // @BeforeClass ładuje raz na całą klasę, @AfterClass sprząta raz na koniec.
         // initializeFromClasspath ładuje surnames_top1000.json i names_inflected.json
         // z src/test/resources/ — zawierają "nowicki", "kamiński", "krzysztof", "beata"
-        LookupTables.initializeFromClasspath()
-    }
+        @BeforeClass
+        @JvmStatic
+        fun setupClass() {
+            LookupTables.resetForTesting()
+            LookupTables.initializeFromClasspath()
+        }
 
-    @After
-    fun teardown() {
-        LookupTables.resetForTesting()
+        @AfterClass
+        @JvmStatic
+        fun teardownClass() {
+            LookupTables.resetForTesting()
+        }
     }
 
     // ── Teksty testowe (każdy LVL jako osobny string) ──────────────────────────

@@ -1,6 +1,7 @@
 package com.lynxmask.app
 
-import org.junit.Before
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -37,11 +38,21 @@ class MorfologikHelperOsobaTest {
         assertTrue("'działając' (pcon)", MorfologikHelper.isDefinitelyNotPerson("działając"))
     }
 
-    @Before
-    fun setupLookupTables() {
-        LookupTables.resetForTesting()
-        LookupTables.initializeFromClasspath()
-        if (!LookupTables.initialized) error("LookupTables nie załadowane — sprawdź src/test/resources/*.json")
+    companion object {
+        // BUG-TESTY-WOLNE-SLOWNIK-FIX (14.07): raz na klasę zamiast raz na każdy z 4 testów.
+        @BeforeClass
+        @JvmStatic
+        fun setupLookupTables() {
+            LookupTables.resetForTesting()
+            LookupTables.initializeFromClasspath()
+            if (!LookupTables.initialized) error("LookupTables nie załadowane — sprawdź src/test/resources/*.json")
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun teardownClass() {
+            LookupTables.resetForTesting()
+        }
     }
 
     /**

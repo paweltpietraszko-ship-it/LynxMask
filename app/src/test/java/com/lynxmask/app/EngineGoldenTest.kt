@@ -1,6 +1,7 @@
 package com.lynxmask.app
 
-import org.junit.Before
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 
 /**
@@ -14,15 +15,25 @@ import org.junit.Test
  */
 class EngineGoldenTest {
 
-    @Before
-    fun setup() {
-        LookupTables.resetForTesting()
-        LookupTables.initializeFromClasspath()
-        val ok = LookupTables.initialized
-        val names = LookupTables.namesForms.size
-        val surnames = LookupTables.surnamesForms.size
-        println("LookupTables: initialized=$ok  imiona=$names  nazwiska=$surnames")
-        if (!ok) error("LookupTables nie załadowane — sprawdź src/test/resources/*.json")
+    companion object {
+        // BUG-TESTY-WOLNE-SLOWNIK-FIX (14.07): raz na klasę zamiast raz na każdy z 2 testów.
+        @BeforeClass
+        @JvmStatic
+        fun setupClass() {
+            LookupTables.resetForTesting()
+            LookupTables.initializeFromClasspath()
+            val ok = LookupTables.initialized
+            val names = LookupTables.namesForms.size
+            val surnames = LookupTables.surnamesForms.size
+            println("LookupTables: initialized=$ok  imiona=$names  nazwiska=$surnames")
+            if (!ok) error("LookupTables nie załadowane — sprawdź src/test/resources/*.json")
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun teardownClass() {
+            LookupTables.resetForTesting()
+        }
     }
 
     @Test
