@@ -59,7 +59,10 @@ internal fun isSectionMarker(line: String): Boolean {
     if (match.range.first != 0) return false
     val rest = trimmed.substring(match.value.length).trim()
     if (rest.isEmpty()) return true
-    if (rest.last() in SENTENCE_END) return false
+    // Interpunkcja zdania GDZIEKOLWIEK w reszcie, nie tylko na końcu — "§3 stanowi, że..."
+    // ma przecinek w środku (zwykłe zdanie), nie na końcu linii. Prawdziwy tytuł ("§3
+    // Definicje") nigdy nie ma wewnętrznej interpunkcji zdania.
+    if (rest.any { it in SENTENCE_END }) return false
     val words = rest.split(Regex("""\s+"""))
     return words.size <= MAX_TITLE_WORDS
 }
