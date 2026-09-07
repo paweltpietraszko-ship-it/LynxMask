@@ -13,15 +13,13 @@ dataset_2026*/
 tools/ULICE/
 tools/ULIC_Adresowy.csv
 
+# Local AI/IDE state — never commit user-specific paths, devices or permissions.
+.claude/settings.local.json
+.idea/
+
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
 /build
 /captures
