@@ -64,6 +64,23 @@ Although Mobile and Desktop are independent implementations, several decisions a
 
 A local PASS on each platform is not enough if the shared contract diverges.
 
+## Repository map
+
+This is a real working repository, so benchmark evidence and some historical project records are intentionally retained rather than hidden for presentation.
+
+- `app/` — Android application source
+- `MASTER_LynxMask_Mobile.md` — Mobile state/history record
+- `TODO.md` — current task and bug list
+- `docs/` — evaluation, privacy and portfolio documentation
+- `benchmark_results/` — retained benchmark evidence
+- `dataset_clean/`, `dataset_stress/`, `dataset_v2_run/` — controlled evaluation datasets
+- `generator*.py`, `run_*benchmark*.bat` — benchmark tooling
+- `Google_Play/` — release/presentation assets
+
+`MASTER_LynxMask_Desktop.md` is retained as a historical cross-platform record. The active Desktop implementation is maintained in the separate repository linked above.
+
+See [`docs/REPOSITORY_HYGIENE.md`](docs/REPOSITORY_HYGIENE.md) for the conservative cleanup policy and an explanation of why benchmark material was not deleted merely to reduce repository size.
+
 ## What this project demonstrates
 
 - benchmark design and interpretation
