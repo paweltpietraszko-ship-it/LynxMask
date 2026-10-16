@@ -210,23 +210,28 @@ Kod aplikacji na `master` nie zmienił się od 14.07 (późniejsze commity to do
   3. przycisk „Maskuj jako obraz” ustawiający istniejący `FORCE_IMAGE_REDACT`.
 - **Do potwierdzenia na telefonie (CLAUDE.md: „diagnoza routingu — adb logcat”):** w logu diagnostycznym jest linia `Obraz: OCR=… zn., twarze=…, trasa=…, profil=…` (`IncomingDocumentFlow.kt:500-503`) — pokaże dokładnie, którą trasę wybrał silnik dla zgłoszonego zdjęcia.
 
-### 6.3 Ścieżka obraz → tekst gubi encje (zgłoszenie Pawła po teście 2026-10-16)
+### 6.3 Ścieżka obraz → tekst: nie działa odrzucanie złych skanów (POTWIERDZONE)
 
-- **Fakty [S, kod]:**
-  - obraz z trasą PAGE trafia do `finishWithText(ocrScan.plainText, goToReview = true)` (`IncomingDocumentFlow.kt:505-508`);
-  - `plainText = result.text.trim()` z ML Kit (`ImageRedactionPipeline.kt:60`);
-  - ekran Review przekazuje tekst bez zmian (`IncomingDocumentFlow.kt:672`), potem ten sam `PseudonymEngine.pseudonymize` co dla plików tekstowych.
-  - Silnik jest więc ten sam; różni się tylko **kształt tekstu wejściowego**.
-- **Hipoteza [P]:**
-  - `Text.text` z ML Kit składa tekst **blokami** (kolejność bloków), nie wierszami strony. W aplikacji nie ma składania tekstu po wierszach (brak sortowania `textBlocks/lines` po `boundingBox` — sprawdzone grep).
-  - Na formularzach i pismach etykieta („PESEL:”, „NIP:”, „Imię i nazwisko:”, „tel.”) i wartość mogą trafić do różnych bloków, a więc do różnych, odległych linii.
-  - Kotwice Mobile celowo nie przechodzą przez `\n` (BUG-KEYWORD-CROSS-NEWLINE-FIX, np. A.4 PESEL `[^0-9OolIiSsBbZz\n]{0,15}`, A.3 telefon, A.10 tytuł), a NameEngine opiera się na kontekście w linii. Po rozbiciu kotwica nie widzi wartości.
-  - Do tego dochodzą zwykłe błędy OCR zdjęcia (ł→l, ś→s, sklejone słowa).
-- **Dlaczego benchmark tego nie pokazał [S, kod]:** `BenchmarkService.kt:71-83` i `BenchmarkInstrumentedTest.kt:149-165` używają tego samego `result.text`, ale na obrazach z generatora (prosty układ jednokolumnowy, kolejność bloków zgodna z wierszami). Benchmark dodatkowo woła `OcrNormalizer.normalize` przed `pseudonymize` (podwójna normalizacja) — inna ścieżka niż w aplikacji.
-- **Test rozstrzygający (2 minuty na telefonie):** na ekranie Review skopiować cały tekst z OCR, zapisać jako `.txt` i zamaskować jak zwykły plik.
-  - Jeśli encje znów przejdą → przyczyna to kształt tekstu z ML Kit (kolejność bloków / błędy OCR). Naprawa: składanie tekstu po wierszach z `boundingBox` przed silnikiem.
-  - Jeśli z `.txt` zamaskuje się dobrze → różnica jest w samej ścieżce (stan/parametry), szukać dalej w `IncomingDocumentFlow`.
-  - Porównanie tekstu z Review z oryginalnym plikiem pokaże też, czy etykiety i wartości zostały rozdzielone.
-- **Proponowany kierunek (po teście, decyzja Pawła):**
-  - rekonstrukcja linii z `Text.textBlocks → lines → boundingBox` (grupowanie po osi Y, sortowanie po X) zamiast `result.text`, w jednym miejscu (`runOcrOnce`) — skorzystają też benchmark i ścieżka CARD;
-  - benchmark na zdjęciach o realnym układzie (dwie kolumny, etykieta-wartość w tabelce), żeby mierzył tę ścieżkę.
+**Korekta Pawła po teście (2026-10-16):** silnik działa. Grafik ze zdjęcia daje „gruz” zamiast tekstu (OCR 54%, ostrzeżenie o niskiej jakości), a aplikacja i tak go maskuje. Nie działa odrzucanie obrazów. Wcześniejsza hipoteza o kolejności bloków ML Kit jest drugorzędna.
+
+- **Przyczyna [S, kod + historia]:** bramka `isOcrQualityAcceptable` (`OcrQuality.kt`, próg `OCR_CONF_THRESHOLD = 0.60`) **nie jest wywoływana nigdzie w aplikacji**. Jedyne wywołanie to test benchmarku (`BenchmarkInstrumentedTest.kt:155`).
+  - Ekran odrzucenia `IncomingOcrRejectedContent` / stan `OcrRejected` (`IncomingDocumentFlow.kt:86, 255, 737`) istnieje, ale nic do niego nie prowadzi.
+  - Aplikacja ma tylko ostrzeżenie „słaby skan” (< 0,68 — `IncomingDocumentFlow.kt:521, 562`, `ImageRedactionScreen.kt:134`) i baner `assessQuality`. Żadne z nich nie zatrzymuje maskowania.
+- **Jak zniknęła (oś czasu):**
+  - `7817239` (25.06) „OCR hard reject — bramka blokująca w ShareTargetActivity” — dodana, decyzja zatwierdzona.
+  - `38f2367` (28.06) — przeniesiona przy refaktorze.
+  - `274be12` (29.06, „naprawa regresu po refaktorze Cursora”) — usunięta z głównej ścieżki; zostało jedno wywołanie, tylko w gałęzi `ImageRouteChoice → onTextPipeline`.
+  - `1fd32cf` (29.06, ten sam dzień) — „Usunięto martwy kod: AMBIGUOUS/PHOTO enum, ImageRouteChoice…”. Razem z tym „martwym kodem” wyleciało **ostatnie wywołanie bramki**. Od 29.06 żadna ścieżka OCR nie odrzuca skanów.
+- **Dlaczego benchmark tego nie pokazał:** benchmark ma bramkę we własnym kodzie (`BenchmarkInstrumentedTest.kt:155`), odrzuca słabe obrazy i liczy metryki tylko na zaakceptowanych. Aplikacja tej bramki nie ma, więc benchmark mierzył inną ścieżkę niż użytkownik dostaje.
+- **Proponowana naprawa (jedno miejsce):** na początku `finishWithText(rawText, goToReview, mlKitConfidence, …)` w `IncomingDocumentFlow.kt`:
+  ```kotlin
+  if (mlKitConfidence != null && !isOcrQualityAcceptable(mlKitConfidence, rawText.length)) {
+      DebugLogBuffer.log("IncomingDoc", "OCR odrzucony: conf=${(mlKitConfidence * 100).toInt()}%")
+      setState(IncomingDocState.OcrRejected(mlKitConfidence)); return
+  }
+  ```
+  - Obejmuje obraz (PAGE), PDF ze skanu i skaner GMS — wszystkie podają `mlKitConfidence`.
+  - Pliki tekstowe/DOCX mają `null`, więc nie są dotknięte.
+  - Do decyzji Pawła: próg 0,60 (bramka) vs 0,68 (ostrzeżenie). Przy 54% oba odrzucą.
+  - Test jednostkowy: wydzielić warunek do funkcji (np. `shouldRejectOcr(conf, chars)`) i przetestować 0,54 → odrzuć, 0,75 → przepuść, `null` → przepuść. Plus test na telefonie zdjęciem grafiku.
+- **Drugorzędne (po naprawie bramki):** ML Kit `result.text` składa tekst blokami, nie wierszami, a aplikacja nie odtwarza wierszy z `boundingBox`. Przy zdjęciach o układzie tabeli (grafik, formularz) to obniża jakość nawet powyżej progu. Rozważyć rekonstrukcję linii w `runOcrOnce` — osobne zadanie.
