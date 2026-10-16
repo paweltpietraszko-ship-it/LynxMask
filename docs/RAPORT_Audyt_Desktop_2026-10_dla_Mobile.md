@@ -177,3 +177,38 @@ Przyjęła lek. med. Anna Wiśniewska-Kot rano.
 ```
 
 Oczekiwane po poprawkach: „lek będzie podany”, „dr nie przyszedł”, „ok”, „bez”, „punkt nr 5.2”, „3. sz” zostają jawne. IBAN-y, kwota i całe nazwisko „Wiśniewska-Kot” zamaskowane. Po depseudonimizacji nazwisko wraca w całości.
+
+---
+
+## 6. Regres zgłoszony przez Pawła 2026-10-16: obraz idzie jako tekst + część nazwisk jawna
+
+Kod aplikacji na `master` nie zmienił się od 14.07 (późniejsze commity to dokumentacja i pliki IDE — sprawdzone `git show --stat`). Oba objawy wynikają ze zmian z 29.06 i 14.07. TODO.md z 14.07 zapisuje, że telefon miał wtedy „STARY build (sprzed dzisiejszych poprawek)”, więc te zmiany mogą być dopiero teraz widoczne na telefonie [P].
+
+### 6.1 Nazwiska — słownik do aktywnego maskowania zmniejszony 40×
+
+- **Co [S]:** commit `2e9a232` (14.07, opis: „Usunięto 14 wpisów z surnames_top1000.json”) w rzeczywistości podmienił zawartość pliku:
+  - `surnames_top1000.json` przed: **39 318 nazwisk / 369 670 form**; po: **986 nazwisk / 9 474 formy**;
+  - dawna zawartość trafiła do nowego `surnames_extended.json`, używanego tylko przez Guard (żółte ostrzeżenie, bez maskowania).
+- **Dlaczego to gubi nazwiska [S, kod]:** pary „Imię Nazwisko”, „Nazwisko Imię” i „Pan Imię Nazwisko” maskują się tylko, gdy nazwisko jest w `surnamesForms` — `hasSurnameEvidence`, `NameEngine.kt:472`, użyte w `:742, :774, :804`. Od 14.07 to tylko top-1000. Przykład: „Pietraszko” było w słowniku przed `2e9a232`, po nim jest tylko w `surnames_extended`.
+  - Wpis w TODO.md z 14.07 „Ablewski (nazwisko) — jawne, nie zbadane dlaczego” to dokładnie ten przypadek.
+- **Historia decyzji:** zawężenie do top-1000 to „plan A” z 12.07 (powód: kolizje typu Osoba/Zapłata/Łączna). Wieczorem 14.07 zapadła decyzja „Maskujemy nazwiska nawet jak grożą FP”, a te kolizje rozwiązano listą `OSOBA_DENYLIST`. Powód zawężenia zniknął, a zawężenie zostało.
+- **Propozycja (decyzja Pawła):**
+  - w `hasSurnameEvidence` sprawdzać `surnamesForms ∪ surnamesFormsExtended`. Para ma już dowód z drugiej strony (imię ze słownika + wielka litera), więc ryzyko kolizji jest niskie;
+  - reguła „samo nazwisko” zostaje na top-1000 (+ żółte ostrzeżenie z dużego słownika);
+  - opcjonalnie to samo w `OcrNormalizer.fixDigitLetterConfusion/fixNameLetterConfusion` (wpis „Odłożone świadomie 14.07”).
+  - Test na telefonie: „Jan Pietraszko”, „Anna Ablewska”, „Kowalski Jan” (kontrola).
+
+### 6.2 Obraz — od 29.06 zdjęcie z twarzą nie trafia do maskowania pikseli
+
+- **Co [S]:** commit `1fd32cf` (29.06, „routing obrazów — domyślnie OCR”) usunął z `classifyImageInput` (`ImageDocumentRoute.kt:28-32`) reguły „twarz → CARD” i „< 15 znaków OCR → CARD”. Powód z opisu commitu: pieczątki wykrywane jako twarze.
+  - Komentarz na górze pliku (l.4-8) nadal opisuje starą logikę.
+- **Obecnie:** maskowanie pikseli (CARD) tylko wtedy, gdy OCR zawiera markery dowodu/legitymacji/prawa jazdy/dowodu rejestracyjnego **i** ma < 400 znaków. Wszystko inne idzie do ścieżki tekstu (PAGE → ekran Review), również:
+  - zdjęcie osoby bez napisów (0 znaków → PAGE → „finishWithText("") pokaże Error screen”, test `ImageRouteTest.kt:29`);
+  - dowód z ostrym skanem (> 400 znaków OCR) — margines przyznany w opisie commitu.
+- **Brak obejścia [S]:** dodatek `LynxNavExtras.FORCE_IMAGE_REDACT` jest odczytywany (`IncomingDocumentFlow.kt:351`), ale nic w aplikacji go nie ustawia — w historii od 28.06 nigdy nie był wysyłany. Użytkownik nie może ręcznie wybrać „maskuj jako obraz”.
+- **Sprzeczność z decyzją zamkniętą:** MASTER §9 („Warstwa obrazu — P1 produktowy”, 22.06): blur twarzy dla „zdjęcia dokumentu w sieci” jest wymagany przed release.
+- **Propozycja (decyzja Pawła):**
+  1. przywrócić „twarz → CARD” tylko przy krótkim tekście (np. `faceCount > 0 && ocrCharCount < 400`) — pieczątka na dokumencie z dużą ilością tekstu nadal idzie do PAGE (test `ImageRouteTest.kt:186-193` zostaje zielony);
+  2. „< 15 znaków OCR → CARD” zamiast ekranu błędu;
+  3. przycisk „Maskuj jako obraz” ustawiający istniejący `FORCE_IMAGE_REDACT`.
+- **Do potwierdzenia na telefonie (CLAUDE.md: „diagnoza routingu — adb logcat”):** w logu diagnostycznym jest linia `Obraz: OCR=… zn., twarze=…, trasa=…, profil=…` (`IncomingDocumentFlow.kt:500-503`) — pokaże dokładnie, którą trasę wybrał silnik dla zgłoszonego zdjęcia.
