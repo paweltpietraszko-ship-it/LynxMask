@@ -516,6 +516,16 @@ private suspend fun routeImageInput(
                 finishWithText(ocrScan.plainText, goToReview = true, ocrScan.confidence, setState, context)
             }
             ImageInputKind.CARD -> {
+                // BUG-OCR-BRAMKA-ZNIKNELA (16.10): dokument (dowód/legitymacja/dowód rej.) jest
+                // zamazywany w miejscach znalezionych przez OCR — przy słabym OCR część napisów
+                // z danymi zostałaby jawna na obrazie. Ten sam próg co ścieżka tekstu.
+                // openImageRedact (wymuszone maskowanie) celowo bez bramki: twarze nie zależą od OCR.
+                if (shouldRejectOcr(ocrScan.confidence, ocrScan.plainText.length)) {
+                    DebugLogBuffer.log("IncomingDoc", "OCR odrzucony (dokument-obraz): conf=${ocrScan.confidence?.let { (it * 100).toInt() }}%")
+                    bmp.recycle()
+                    setState(IncomingDocState.OcrRejected(ocrScan.confidence))
+                    return
+                }
                 onProgress("Przygotowuję maskowanie dokumentu...")
                 val regions = withContext(Dispatchers.Default) {
                     ImageRedactionPipeline.detectRedactionRegions(
