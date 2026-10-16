@@ -437,6 +437,14 @@ private suspend fun finishWithText(
         ))
         return
     }
+    // BUG-OCR-BRAMKA-ZNIKNELA (16.10): jedno miejsce dla każdej ścieżki OCR (zdjęcie PAGE,
+    // PDF, skaner) — przed Review i przed maskowaniem. Bramka z 25.06 (7817239) wyleciała
+    // 29.06 razem z ImageRouteChoice (1fd32cf) i słabe skany szły do maskowania jako gruz.
+    if (shouldRejectOcr(mlKitConfidence, rawText.length)) {
+        DebugLogBuffer.log("IncomingDoc", "OCR odrzucony: conf=${mlKitConfidence?.let { (it * 100).toInt() }}%")
+        setState(IncomingDocState.OcrRejected(mlKitConfidence))
+        return
+    }
     DebugLogBuffer.log("IncomingDoc", "Tekst: ${rawText.length} znaków, review=$goToReview")
     if (goToReview) {
         setState(IncomingDocState.Review(rawText, mlKitConfidence, artifact, sourceUri))

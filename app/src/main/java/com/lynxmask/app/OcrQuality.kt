@@ -5,7 +5,9 @@ import com.google.mlkit.vision.text.Text
 // Próg pewności ML Kit poniżej którego dokument jest odrzucany.
 // ML Kit TextElement.confidence: 0.0 (brak pewności) – 1.0 (pełna pewność).
 // Dobre zdjęcia: 0.80–0.95. Telefon z ręki: 0.65–0.80. Mocno zniszczony: 0.30–0.55.
-internal const val OCR_CONF_THRESHOLD = 0.60f
+// 0.60 → 0.70 (16.10, Paweł: "68% jakości to też będzie gruz"). Ten sam próg co Desktop
+// (OCR-REJECT, conf < 70% → maskowanie katastrofalne). Zmienia też akceptację w benchmarku.
+internal const val OCR_CONF_THRESHOLD = 0.70f
 
 // Minimalna liczba znaków wynikowych OCR — zabezpieczenie gdy obraz jest kompletnie
 // nieczytelny (np. zdjęcie ściany) i confidence nie jest liczone z braku elementów.
@@ -33,3 +35,8 @@ internal fun isOcrQualityAcceptable(result: Text): Boolean {
 // Overload dla ścieżek gdzie mamy już obliczone conf i długość tekstu (bez obiektu Text).
 internal fun isOcrQualityAcceptable(conf: Float?, chars: Int): Boolean =
     if (conf != null && conf > 0f) conf >= OCR_CONF_THRESHOLD else chars >= OCR_MIN_CHARS
+
+// Bramka dla tekstu z OCR (zdjęcie, PDF, skaner) przed maskowaniem. conf == null oznacza
+// tekst bez OCR (DOCX / Excel / TXT) — nigdy nie odrzucany.
+internal fun shouldRejectOcr(conf: Float?, chars: Int): Boolean =
+    conf != null && !isOcrQualityAcceptable(conf, chars)
