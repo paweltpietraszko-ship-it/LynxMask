@@ -192,11 +192,8 @@ Kod aplikacji na `master` nie zmienił się od 14.07 (późniejsze commity to do
 - **Dlaczego to gubi nazwiska [S, kod]:** pary „Imię Nazwisko”, „Nazwisko Imię” i „Pan Imię Nazwisko” maskują się tylko, gdy nazwisko jest w `surnamesForms` — `hasSurnameEvidence`, `NameEngine.kt:472`, użyte w `:742, :774, :804`. Od 14.07 to tylko top-1000. Przykład: „Pietraszko” było w słowniku przed `2e9a232`, po nim jest tylko w `surnames_extended`.
   - Wpis w TODO.md z 14.07 „Ablewski (nazwisko) — jawne, nie zbadane dlaczego” to dokładnie ten przypadek.
 - **Historia decyzji:** zawężenie do top-1000 to „plan A” z 12.07 (powód: kolizje typu Osoba/Zapłata/Łączna). Wieczorem 14.07 zapadła decyzja „Maskujemy nazwiska nawet jak grożą FP”, a te kolizje rozwiązano listą `OSOBA_DENYLIST`. Powód zawężenia zniknął, a zawężenie zostało.
-- **Propozycja (decyzja Pawła):**
-  - w `hasSurnameEvidence` sprawdzać `surnamesForms ∪ surnamesFormsExtended`. Para ma już dowód z drugiej strony (imię ze słownika + wielka litera), więc ryzyko kolizji jest niskie;
-  - reguła „samo nazwisko” zostaje na top-1000 (+ żółte ostrzeżenie z dużego słownika);
-  - opcjonalnie to samo w `OcrNormalizer.fixDigitLetterConfusion/fixNameLetterConfusion` (wpis „Odłożone świadomie 14.07”).
-  - Test na telefonie: „Jan Pietraszko”, „Anna Ablewska”, „Kowalski Jan” (kontrola).
+- **Korekta po teście Pawła (2026-10-16):** na plikach tekstowych silnik działa poprawnie; problem jest w ścieżce obraz → tekst (6.3). Dużego słownika **nie** włączać do maskowania — został wycofany z powodu poważnych problemów. Moja wcześniejsza propozycja (`surnamesForms ∪ surnamesFormsExtended` w `hasSurnameEvidence`) jest **wycofana**.
+- **Kierunek Pawła:** duży słownik (`surnames_extended.json`, 39k) zamienić na **test szczelności**: każde nazwisko (w kilku formach i zdaniach) przez silnik; nazwiska, które po teście zostają jawne, dopisać do słownika programu (`surnames_top1000.json` lub słownik bazowy), żeby silnik maskował je ze swojego słownika, a nie z „magazynu”. Uwaga do wykonania: dopisywane nazwiska przechodzą przez `OSOBA_DENYLIST` (kolizje typu Osoba/Zapłata) i wymagają decyzji przy słowach pospolitych; test powtarzać po każdej zmianie silnika.
 
 ### 6.2 Obraz — od 29.06 zdjęcie z twarzą nie trafia do maskowania pikseli
 
@@ -212,3 +209,24 @@ Kod aplikacji na `master` nie zmienił się od 14.07 (późniejsze commity to do
   2. „< 15 znaków OCR → CARD” zamiast ekranu błędu;
   3. przycisk „Maskuj jako obraz” ustawiający istniejący `FORCE_IMAGE_REDACT`.
 - **Do potwierdzenia na telefonie (CLAUDE.md: „diagnoza routingu — adb logcat”):** w logu diagnostycznym jest linia `Obraz: OCR=… zn., twarze=…, trasa=…, profil=…` (`IncomingDocumentFlow.kt:500-503`) — pokaże dokładnie, którą trasę wybrał silnik dla zgłoszonego zdjęcia.
+
+### 6.3 Ścieżka obraz → tekst gubi encje (zgłoszenie Pawła po teście 2026-10-16)
+
+- **Fakty [S, kod]:**
+  - obraz z trasą PAGE trafia do `finishWithText(ocrScan.plainText, goToReview = true)` (`IncomingDocumentFlow.kt:505-508`);
+  - `plainText = result.text.trim()` z ML Kit (`ImageRedactionPipeline.kt:60`);
+  - ekran Review przekazuje tekst bez zmian (`IncomingDocumentFlow.kt:672`), potem ten sam `PseudonymEngine.pseudonymize` co dla plików tekstowych.
+  - Silnik jest więc ten sam; różni się tylko **kształt tekstu wejściowego**.
+- **Hipoteza [P]:**
+  - `Text.text` z ML Kit składa tekst **blokami** (kolejność bloków), nie wierszami strony. W aplikacji nie ma składania tekstu po wierszach (brak sortowania `textBlocks/lines` po `boundingBox` — sprawdzone grep).
+  - Na formularzach i pismach etykieta („PESEL:”, „NIP:”, „Imię i nazwisko:”, „tel.”) i wartość mogą trafić do różnych bloków, a więc do różnych, odległych linii.
+  - Kotwice Mobile celowo nie przechodzą przez `\n` (BUG-KEYWORD-CROSS-NEWLINE-FIX, np. A.4 PESEL `[^0-9OolIiSsBbZz\n]{0,15}`, A.3 telefon, A.10 tytuł), a NameEngine opiera się na kontekście w linii. Po rozbiciu kotwica nie widzi wartości.
+  - Do tego dochodzą zwykłe błędy OCR zdjęcia (ł→l, ś→s, sklejone słowa).
+- **Dlaczego benchmark tego nie pokazał [S, kod]:** `BenchmarkService.kt:71-83` i `BenchmarkInstrumentedTest.kt:149-165` używają tego samego `result.text`, ale na obrazach z generatora (prosty układ jednokolumnowy, kolejność bloków zgodna z wierszami). Benchmark dodatkowo woła `OcrNormalizer.normalize` przed `pseudonymize` (podwójna normalizacja) — inna ścieżka niż w aplikacji.
+- **Test rozstrzygający (2 minuty na telefonie):** na ekranie Review skopiować cały tekst z OCR, zapisać jako `.txt` i zamaskować jak zwykły plik.
+  - Jeśli encje znów przejdą → przyczyna to kształt tekstu z ML Kit (kolejność bloków / błędy OCR). Naprawa: składanie tekstu po wierszach z `boundingBox` przed silnikiem.
+  - Jeśli z `.txt` zamaskuje się dobrze → różnica jest w samej ścieżce (stan/parametry), szukać dalej w `IncomingDocumentFlow`.
+  - Porównanie tekstu z Review z oryginalnym plikiem pokaże też, czy etykiety i wartości zostały rozdzielone.
+- **Proponowany kierunek (po teście, decyzja Pawła):**
+  - rekonstrukcja linii z `Text.textBlocks → lines → boundingBox` (grupowanie po osi Y, sortowanie po X) zamiast `result.text`, w jednym miejscu (`runOcrOnce`) — skorzystają też benchmark i ścieżka CARD;
+  - benchmark na zdjęciach o realnym układzie (dwie kolumny, etykieta-wartość w tabelce), żeby mierzył tę ścieżkę.
