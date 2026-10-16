@@ -86,6 +86,7 @@ Pliki: generator.py (v1.2) + benchmark.py (v1.2), uruchamiane przez run_benchmar
 | pynvml deprecated → nvidia-ml-py | Niski |
 | Potok Metryczki — przenieść [FIX-XXX] z kodu do osobnych .md (po zamknięciu wszystkich aktywnych potoków) | Niski |
 | Podpisy odręczne (własny model, nie przed fine-tuningiem) | Backlog |
+| Integracja z Elnath Rota — serwerowe API maskowania wolnego tekstu (sekcja 9) | Średni — PO testach na dokumentach (decyzja Pawła 16.10) |
 
 ---
 
@@ -165,3 +166,24 @@ Wzorzec wizualny: shadcn/ui dark (paleta zinc). Decyzje właściciela:
 - **Terminologia UI:** „Zamaskuj/Przywróć/maskowanie" w UI; stare nazwy (pipeline.py, pseudominizer_api.py) w kodzie zostają.
 - **Zasady pracy z Claude Code:** kompletne pliki (nigdy fragmenty), ta sama nazwa = nadpisanie, czytaj realny kod przed pisaniem, nie dotykaj plików skończonych.
 - **AUD-13/14 PBKDF2:** zmiana iteracji/soli unieważnia istniejące mapy.enc — wymaga migracji użytkowników. Nie ruszać bez planu migracji.
+
+---
+
+## 9. INTEGRACJA Z ELNATH ROTA (planowana, dopisane 16.10.2026 przez CC z repo Elnath Rota)
+
+**Stan:** plan, nic nie zaczęte. **Kolejność Pawła:** najpierw testy LynxMask Desktop na dokumentach, dopiero potem ta integracja. Źródło po stronie Roty: `C:\Projects\Elnath Rota\BOARD.md`, wiersz ROTA-SERVICE-ONBOARDING.
+
+**Po co:** usługa online Roty (osobne repo, w budowie po stronie Roty) ma pomocnika AI przy formatce obiektu. Użytkownik wpisuje krótkie pytanie wolnym tekstem (np. „czemu Kowalskiemu nie dało soboty, ma L4 bo złamał nogę”). Zanim tekst trafi do zewnętrznego modelu (Claude przez API, USA), LynxMask musi zamaskować osoby; odpowiedź modelu wraca z przywróconymi nazwami. Cel RODO: należyta staranność (art. 24/32), nie absolutna szczelność — mierzona testem poniżej.
+
+**Czego Rota potrzebuje od LynxMask (kontrakt do ustalenia z Pawłem, propozycja):**
+1. Silnik Desktop (Python) uruchamialny **na serwerze Linux (Railway)** jako biblioteka albo lokalny HTTP — bez Tauri/UI, bez GPU, bez wywołań sieciowych, deterministyczny; czas dla tekstu ~500 znaków: ułamek sekundy.
+2. `mask(text, known_people=[...]) -> {masked_text, mapping}` — `known_people`: lista osób z obsady danego konta Roty (imię/nazwisko) jako wymuszony słownik (wyższa skuteczność niż samo NER), z odmianami; opcjonalnie pseudonim wskazany przez Rotę (np. „Pracownik 3”), żeby model widział te same oznaczenia co w formatce.
+3. `unmask(text, mapping) -> text` — przywrócenie w odpowiedzi modelu (także gdy model odmieni pseudonim).
+4. Mapping zwracany wywołującemu (bezstanowo) — Rota nie chce, żeby LynxMask trzymał stan między pytaniami.
+5. Kategorie minimum: OSOBA (imię, nazwisko, odmiany). Mile widziane: PESEL, telefon, e-mail, adres (gdyby ktoś wkleił).
+6. Format tokenu i TOKEN_RE — wspólne z Mobile (sekcja 4, właściciel Paweł); nie zmieniać jednostronnie dla Roty.
+
+**Test szczelności = dowód staranności (pomysł Pawła):** baza imion/nazwisk z odmianami (już w repo: `benchmark_results/cursor_stress/big_surnames_top1000.json`, `big_names_inflected.json`, `testy/test_imiona_nazwiska_*`) wstawiona w typowe zdania koordynatora grafiku (pytania o zmiany, nieobecności, L4, urlopy); wynik: ile form, ile przepuszczonych; przepuszczone → czarna lista/słownik; test powtarzany po każdej zmianie silnika; raport przechowywany jako artefakt RODO.
+
+**Czego NIE robić teraz:** nie zmieniać silnika pod Rotę przed testami na dokumentach; nie tworzyć osobnego repo/serwisu bez decyzji Pawła; API powyżej to propozycja do uzgodnienia, nie zamrożony kontrakt.
+
