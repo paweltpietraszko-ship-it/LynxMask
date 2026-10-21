@@ -1,0 +1,1021 @@
+{
+ "before": 9474,
+ "removed": 505,
+ "keys_affected": 251,
+ "kept_by": {
+  "b": 8307,
+  "e": 622,
+  "c": 14,
+  "d": 26
+ },
+ "empty_after": [],
+ "removed_by_base": {
+  "adamek": [
+   "adamko",
+   "adamkę"
+  ],
+  "andrzejewska": [
+   "andrzejewsku"
+  ],
+  "banach": [
+   "ban",
+   "bana",
+   "banami",
+   "banem",
+   "banom",
+   "banowi",
+   "banów"
+  ],
+  "baranowska": [
+   "baranowsko",
+   "baranowsku"
+  ],
+  "baranowski": [
+   "baranowsko"
+  ],
+  "bednarek": [
+   "bednarce",
+   "bednarko",
+   "bednarkę"
+  ],
+  "bednarska": [
+   "bednarsko",
+   "bednarsku"
+  ],
+  "bednarski": [
+   "bednarsko"
+  ],
+  "bielawska": [
+   "bielawsko",
+   "bielawsku"
+  ],
+  "bielawski": [
+   "bielawsko"
+  ],
+  "bielska": [
+   "bielsko",
+   "bielsku"
+  ],
+  "bilska": [
+   "bilsk",
+   "bilskach",
+   "bilskami",
+   "bilskiem",
+   "bilsko",
+   "bilskom",
+   "bilsku"
+  ],
+  "bogusz": [
+   "boguszo"
+  ],
+  "borkowska": [
+   "borkowsku"
+  ],
+  "borowska": [
+   "borowsko",
+   "borowsku"
+  ],
+  "borowski": [
+   "borowsko"
+  ],
+  "brzezińska": [
+   "brzezińsko",
+   "brzezińsku"
+  ],
+  "brzeziński": [
+   "brzezińsko"
+  ],
+  "brzozowska": [
+   "brzozowsko",
+   "brzozowsku"
+  ],
+  "brzozowski": [
+   "brzozowsko"
+  ],
+  "buczkowska": [
+   "buczkowsku"
+  ],
+  "budzyńska": [
+   "budzyńsko",
+   "budzyńsku"
+  ],
+  "budzyński": [
+   "budzyńsko"
+  ],
+  "bukowska": [
+   "bukowsko",
+   "bukowsku"
+  ],
+  "bukowski": [
+   "bukowsko"
+  ],
+  "bąkowska": [
+   "bąkowsko",
+   "bąkowsku"
+  ],
+  "bąkowski": [
+   "bąkowsko"
+  ],
+  "chojnowska": [
+   "chojnowsko",
+   "chojnowsku"
+  ],
+  "chojnowski": [
+   "chojnowsko"
+  ],
+  "chrzanowska": [
+   "chrzanowsko",
+   "chrzanowsku"
+  ],
+  "chrzanowski": [
+   "chrzanowsko"
+  ],
+  "chudy": [
+   "chudo"
+  ],
+  "cichy": [
+   "cicho"
+  ],
+  "ciesielska": [
+   "ciesielsko",
+   "ciesielsku"
+  ],
+  "ciesielski": [
+   "ciesielsko"
+  ],
+  "czajkowska": [
+   "czajkowsku"
+  ],
+  "czapla": [
+   "czaplego",
+   "czaplej",
+   "czaplemu",
+   "czaplich",
+   "czaplim",
+   "czaplimi"
+  ],
+  "czerwińska": [
+   "czerwińsko",
+   "czerwińsku"
+  ],
+  "czerwiński": [
+   "czerwińsko"
+  ],
+  "czyżewska": [
+   "czyżewsko",
+   "czyżewsku"
+  ],
+  "czyżewski": [
+   "czyżewsko"
+  ],
+  "dobrzyńska": [
+   "dobrzyńsko",
+   "dobrzyńsku"
+  ],
+  "dobrzyński": [
+   "dobrzyńsko"
+  ],
+  "dąbrowska": [
+   "dąbrowsko",
+   "dąbrowsku"
+  ],
+  "dąbrowski": [
+   "dąbrowsko"
+  ],
+  "dębowska": [
+   "dębowsku"
+  ],
+  "dębska": [
+   "dębsko",
+   "dębsku"
+  ],
+  "dębski": [
+   "dębsko"
+  ],
+  "grabowska": [
+   "grabowsko",
+   "grabowsku"
+  ],
+  "grabowski": [
+   "grabowsko"
+  ],
+  "grochowska": [
+   "grochowsko",
+   "grochowsku"
+  ],
+  "grochowski": [
+   "grochowsko"
+  ],
+  "grzybowska": [
+   "grzybowsko",
+   "grzybowsku"
+  ],
+  "grzybowski": [
+   "grzybowsko"
+  ],
+  "górecka": [
+   "górecko",
+   "górecku"
+  ],
+  "górecki": [
+   "górecko"
+  ],
+  "górna": [
+   "górniejsi",
+   "górniejsza",
+   "górniejsze",
+   "górniejszego",
+   "górniejszej",
+   "górniejszemu",
+   "górniejszy",
+   "górniejszych",
+   "górniejszym",
+   "górniejszymi",
+   "górniejszą",
+   "górno",
+   "najgórniejsi",
+   "najgórniejsza",
+   "najgórniejsze",
+   "najgórniejszego",
+   "najgórniejszej",
+   "najgórniejszemu",
+   "najgórniejszy",
+   "najgórniejszych",
+   "najgórniejszym",
+   "najgórniejszymi",
+   "najgórniejszą"
+  ],
+  "górny": [
+   "górno"
+  ],
+  "górska": [
+   "górsko",
+   "górsku"
+  ],
+  "górski": [
+   "górsko"
+  ],
+  "głogowska": [
+   "głogowsko",
+   "głogowsku"
+  ],
+  "głogowski": [
+   "głogowsko"
+  ],
+  "jabłońska": [
+   "jabłońsko",
+   "jabłońsku"
+  ],
+  "jabłoński": [
+   "jabłońsko"
+  ],
+  "jakubowska": [
+   "jakubowsko",
+   "jakubowsku"
+  ],
+  "jakubowski": [
+   "jakubowsko"
+  ],
+  "janowska": [
+   "janowsko",
+   "janowsku"
+  ],
+  "janowski": [
+   "janowsko"
+  ],
+  "jastrzębska": [
+   "jastrzębsko",
+   "jastrzębsku"
+  ],
+  "jastrzębski": [
+   "jastrzębsko"
+  ],
+  "jaworska": [
+   "jaworsko",
+   "jaworsku"
+  ],
+  "jaworski": [
+   "jaworsko"
+  ],
+  "jezierska": [
+   "jeziersko",
+   "jeziersku"
+  ],
+  "jezierski": [
+   "jeziersko"
+  ],
+  "kalinowska": [
+   "kalinowsku"
+  ],
+  "kamińska": [
+   "kamińsk",
+   "kamińskach",
+   "kamińskami",
+   "kamińskiem",
+   "kamińsko",
+   "kamińskom",
+   "kamińskowi",
+   "kamińsku",
+   "kamińsków"
+  ],
+  "kamiński": [
+   "kamińsk",
+   "kamińskach",
+   "kamińskami",
+   "kamińskiem",
+   "kamińskom",
+   "kamińskowi",
+   "kamińsku",
+   "kamińsków"
+  ],
+  "kania": [
+   "kanich",
+   "kaniego",
+   "kaniej",
+   "kaniemu",
+   "kanim",
+   "kanimi"
+  ],
+  "karczewska": [
+   "karczewsko",
+   "karczewsku"
+  ],
+  "karczewski": [
+   "karczewsko"
+  ],
+  "konieczna": [
+   "konieczniejsi",
+   "konieczniejsza",
+   "konieczniejsze",
+   "konieczniejszego",
+   "konieczniejszej",
+   "konieczniejszemu",
+   "konieczniejszy",
+   "konieczniejszych",
+   "konieczniejszym",
+   "konieczniejszymi",
+   "konieczniejszą",
+   "konieczno",
+   "najkonieczniejsi",
+   "najkonieczniejsza",
+   "najkonieczniejsze",
+   "najkonieczniejszego",
+   "najkonieczniejszej",
+   "najkonieczniejszemu",
+   "najkonieczniejszy",
+   "najkonieczniejszych",
+   "najkonieczniejszym",
+   "najkonieczniejszymi",
+   "najkonieczniejszą"
+  ],
+  "konieczny": [
+   "konieczno"
+  ],
+  "kosowska": [
+   "kosowsko",
+   "kosowsku"
+  ],
+  "kot": [
+   "koto",
+   "kotę"
+  ],
+  "kowalewska": [
+   "kowalewsko",
+   "kowalewsku"
+  ],
+  "kowalewski": [
+   "kowalewsko"
+  ],
+  "kowalska": [
+   "kowalsko",
+   "kowalsku"
+  ],
+  "kowalski": [
+   "kowalsko"
+  ],
+  "kozłowska": [
+   "kozłowsko",
+   "kozłowsku"
+  ],
+  "kozłowski": [
+   "kozłowsko"
+  ],
+  "kołodziejska": [
+   "kołodziejsko",
+   "kołodziejsku"
+  ],
+  "kołodziejski": [
+   "kołodziejsko"
+  ],
+  "krzyżanowska": [
+   "krzyżanowsko",
+   "krzyżanowsku"
+  ],
+  "krzyżanowski": [
+   "krzyżanowsko"
+  ],
+  "kucharska": [
+   "kucharsko",
+   "kucharsku"
+  ],
+  "kucharski": [
+   "kucharsko"
+  ],
+  "kujawska": [
+   "kujawsko",
+   "kujawsku"
+  ],
+  "kujawski": [
+   "kujawsko"
+  ],
+  "kurowska": [
+   "kurowsko",
+   "kurowsku"
+  ],
+  "kurowski": [
+   "kurowsko"
+  ],
+  "lach": [
+   "lacho",
+   "lachę",
+   "lasze"
+  ],
+  "laskowska": [
+   "laskowsku"
+  ],
+  "lech": [
+   "lecho",
+   "lechę"
+  ],
+  "leszczyńska": [
+   "leszczyńsko",
+   "leszczyńsku"
+  ],
+  "leszczyński": [
+   "leszczyńsko"
+  ],
+  "lewicka": [
+   "lewicko",
+   "lewicku"
+  ],
+  "lewicki": [
+   "lewicko"
+  ],
+  "lipińska": [
+   "lipińsku"
+  ],
+  "lipka": [
+   "lipcy",
+   "lipkich",
+   "lipkie",
+   "lipkiego",
+   "lipkiej",
+   "lipkiem",
+   "lipkiemu",
+   "lipkim",
+   "lipkimi",
+   "lipku"
+  ],
+  "lipska": [
+   "lipsko",
+   "lipsku"
+  ],
+  "lipski": [
+   "lipsko"
+  ],
+  "lisowska": [
+   "lisowsko",
+   "lisowsku"
+  ],
+  "lisowski": [
+   "lisowsko"
+  ],
+  "makowska": [
+   "makowsko",
+   "makowsku"
+  ],
+  "makowski": [
+   "makowsko"
+  ],
+  "markowska": [
+   "markowsko",
+   "markowsku"
+  ],
+  "markowski": [
+   "markowsko"
+  ],
+  "masłowska": [
+   "masłowsko",
+   "masłowsku"
+  ],
+  "masłowski": [
+   "masłowsko"
+  ],
+  "mazurek": [
+   "mazurce",
+   "mazurko",
+   "mazurkę"
+  ],
+  "michałowska": [
+   "michałowsko",
+   "michałowsku"
+  ],
+  "michałowski": [
+   "michałowsko"
+  ],
+  "misztal": [
+   "misztali"
+  ],
+  "morawska": [
+   "morawsko",
+   "morawsku"
+  ],
+  "morawski": [
+   "morawsko"
+  ],
+  "muszyńska": [
+   "muszyńsko",
+   "muszyńsku"
+  ],
+  "muszyński": [
+   "muszyńsko"
+  ],
+  "nawrocka": [
+   "nawrock",
+   "nawrockach",
+   "nawrockami",
+   "nawrockiem",
+   "nawrocko",
+   "nawrockom",
+   "nawrocku"
+  ],
+  "olszewska": [
+   "olszewsko",
+   "olszewsku"
+  ],
+  "olszewski": [
+   "olszewsko"
+  ],
+  "orzechowska": [
+   "orzechowsko",
+   "orzechowsku"
+  ],
+  "orzechowski": [
+   "orzechowsko"
+  ],
+  "orłowska": [
+   "orłowsko",
+   "orłowsku"
+  ],
+  "orłowski": [
+   "orłowsko"
+  ],
+  "osińska": [
+   "osińsko",
+   "osińsku"
+  ],
+  "osiński": [
+   "osińsko"
+  ],
+  "ostrowska": [
+   "ostrowsko",
+   "ostrowsku"
+  ],
+  "ostrowski": [
+   "ostrowsko"
+  ],
+  "owczarek": [
+   "owczarce",
+   "owczarko",
+   "owczarkę"
+  ],
+  "paczkowska": [
+   "paczkowsko",
+   "paczkowsku"
+  ],
+  "paczkowski": [
+   "paczkowsko"
+  ],
+  "pawłowska": [
+   "pawłowsko",
+   "pawłowsku"
+  ],
+  "pawłowski": [
+   "pawłowsko"
+  ],
+  "pałka": [
+   "pałcy",
+   "pałkich",
+   "pałkie",
+   "pałkiego",
+   "pałkiej",
+   "pałkiemu",
+   "pałkim",
+   "pałkimi"
+  ],
+  "piasecka": [
+   "piasecku"
+  ],
+  "piekarska": [
+   "piekarsko",
+   "piekarsku"
+  ],
+  "piekarski": [
+   "piekarsko"
+  ],
+  "piotrowska": [
+   "piotrowsko",
+   "piotrowsku"
+  ],
+  "piotrowski": [
+   "piotrowsko"
+  ],
+  "piątek": [
+   "piątce",
+   "piątko",
+   "piątkę"
+  ],
+  "piątkowska": [
+   "piątkowsku"
+  ],
+  "podgórska": [
+   "podgórsko",
+   "podgórsku"
+  ],
+  "podgórski": [
+   "podgórsko"
+  ],
+  "porębska": [
+   "porębsko",
+   "porębsku"
+  ],
+  "porębski": [
+   "porębsko"
+  ],
+  "prokop": [
+   "prokopo",
+   "prokopę",
+   "prokóp"
+  ],
+  "puchalska": [
+   "puchalsko",
+   "puchalsku"
+  ],
+  "puchalski": [
+   "puchalsko"
+  ],
+  "radecka": [
+   "radecko",
+   "radecku"
+  ],
+  "radomska": [
+   "radomsko",
+   "radomsku"
+  ],
+  "radomski": [
+   "radomsko"
+  ],
+  "rakowska": [
+   "rakowsko",
+   "rakowsku"
+  ],
+  "rakowski": [
+   "rakowsko"
+  ],
+  "rogowska": [
+   "rogowsko",
+   "rogowsku"
+  ],
+  "rogowski": [
+   "rogowsko"
+  ],
+  "rudnicka": [
+   "rudnicku"
+  ],
+  "rudzka": [
+   "rudzko",
+   "rudzku"
+  ],
+  "różańska": [
+   "różańsko",
+   "różańsku"
+  ],
+  "różański": [
+   "różańsko"
+  ],
+  "sadowska": [
+   "sadowsko",
+   "sadowsku"
+  ],
+  "sadowski": [
+   "sadowsko"
+  ],
+  "siedlecka": [
+   "siedlecko",
+   "siedlecku"
+  ],
+  "siedlecki": [
+   "siedlecko"
+  ],
+  "sieradzka": [
+   "sieradzko",
+   "sieradzku"
+  ],
+  "sieradzki": [
+   "sieradzko"
+  ],
+  "sikorska": [
+   "sikorsko"
+  ],
+  "sikorski": [
+   "sikorsko"
+  ],
+  "skalska": [
+   "skalsko",
+   "skalsku"
+  ],
+  "skalski": [
+   "skalsko"
+  ],
+  "skrzypek": [
+   "skrzypko",
+   "skrzypkę"
+  ],
+  "sobolewska": [
+   "sobolewsko",
+   "sobolewsku"
+  ],
+  "sobolewski": [
+   "sobolewsko"
+  ],
+  "sokołowska": [
+   "sokołowsko",
+   "sokołowsku"
+  ],
+  "sokołowski": [
+   "sokołowsko"
+  ],
+  "stolarska": [
+   "stolarsko",
+   "stolarsku"
+  ],
+  "stolarski": [
+   "stolarsko"
+  ],
+  "strzelecka": [
+   "strzelecko",
+   "strzelecku"
+  ],
+  "strzelecki": [
+   "strzelecko"
+  ],
+  "szydłowska": [
+   "szydłowsko",
+   "szydłowsku"
+  ],
+  "szydłowski": [
+   "szydłowsko"
+  ],
+  "sławińska": [
+   "sławińsko",
+   "sławińsku"
+  ],
+  "sławiński": [
+   "sławińsko"
+  ],
+  "słowińska": [
+   "słowińsko",
+   "słowińsku"
+  ],
+  "słowiński": [
+   "słowińsko"
+  ],
+  "tarnowska": [
+   "tarnowsko",
+   "tarnowsku"
+  ],
+  "tarnowski": [
+   "tarnowsko"
+  ],
+  "tokarska": [
+   "tokarsko",
+   "tokarsku"
+  ],
+  "tokarski": [
+   "tokarsko"
+  ],
+  "trojanowska": [
+   "trojanowsko",
+   "trojanowsku"
+  ],
+  "trojanowski": [
+   "trojanowsko"
+  ],
+  "trzcińska": [
+   "trzcińsko",
+   "trzcińsku"
+  ],
+  "trzciński": [
+   "trzcińsko"
+  ],
+  "twardowska": [
+   "twardowsko",
+   "twardowsku"
+  ],
+  "twardowski": [
+   "twardowsko"
+  ],
+  "wierzbicka": [
+   "wierzbicko",
+   "wierzbicku"
+  ],
+  "wierzbicki": [
+   "wierzbicko"
+  ],
+  "wilczyńska": [
+   "wilczyńsko",
+   "wilczyńsku"
+  ],
+  "wilczyński": [
+   "wilczyńsko"
+  ],
+  "winiarska": [
+   "winiarsko",
+   "winiarsku"
+  ],
+  "winiarski": [
+   "winiarsko"
+  ],
+  "witkowska": [
+   "witkowsko",
+   "witkowsku"
+  ],
+  "witkowski": [
+   "witkowsko"
+  ],
+  "wiącek": [
+   "wiącce",
+   "wiącko",
+   "wiąckę"
+  ],
+  "wiśniewska": [
+   "wiśniewsko",
+   "wiśniewsku"
+  ],
+  "wiśniewski": [
+   "wiśniewsko"
+  ],
+  "wnuk": [
+   "wnuce",
+   "wnuko",
+   "wnukę"
+  ],
+  "wojciechowska": [
+   "wojciechowsko",
+   "wojciechowsku"
+  ],
+  "wojciechowski": [
+   "wojciechowsko"
+  ],
+  "wolińska": [
+   "wolińsko",
+   "wolińsku"
+  ],
+  "woliński": [
+   "wolińsko"
+  ],
+  "wolny": [
+   "wolno"
+  ],
+  "wolska": [
+   "wolsko",
+   "wolsku"
+  ],
+  "wolski": [
+   "wolsko"
+  ],
+  "wrona": [
+   "wronego",
+   "wronej",
+   "wronemu",
+   "wroni",
+   "wronych",
+   "wronym",
+   "wronymi"
+  ],
+  "wrońska": [
+   "wrońskiem",
+   "wrońsko",
+   "wrońsku"
+  ],
+  "wróblewska": [
+   "wróblewsko",
+   "wróblewsku"
+  ],
+  "wróblewski": [
+   "wróblewsko"
+  ],
+  "wysocka": [
+   "wysocko",
+   "wysocku"
+  ],
+  "wysocki": [
+   "wysocko"
+  ],
+  "wójcicka": [
+   "wójcicko",
+   "wójcicku"
+  ],
+  "wójcicki": [
+   "wójcicko"
+  ],
+  "zaborowska": [
+   "zaborowsko",
+   "zaborowsku"
+  ],
+  "zaborowski": [
+   "zaborowsko"
+  ],
+  "zabłocka": [
+   "zabłocko",
+   "zabłocku"
+  ],
+  "zabłocki": [
+   "zabłocko"
+  ],
+  "zagórska": [
+   "zagórsko",
+   "zagórsku"
+  ],
+  "zagórski": [
+   "zagórsko"
+  ],
+  "zajączkowska": [
+   "zajączkowsko",
+   "zajączkowsku"
+  ],
+  "zajączkowski": [
+   "zajączkowsko"
+  ],
+  "zakrzewska": [
+   "zakrzewsko",
+   "zakrzewsku"
+  ],
+  "zakrzewski": [
+   "zakrzewsko"
+  ],
+  "zalewska": [
+   "zalewsko",
+   "zalewsku"
+  ],
+  "zalewski": [
+   "zalewsko"
+  ],
+  "zawadzka": [
+   "zawadzku"
+  ],
+  "zielińska": [
+   "zielińsk",
+   "zielińskach",
+   "zielińskami",
+   "zielińskiem",
+   "zielińskom",
+   "zielińskowi",
+   "zielińsku",
+   "zielińsków"
+  ],
+  "zieliński": [
+   "zielińsk",
+   "zielińskach",
+   "zielińskami",
+   "zielińskiem",
+   "zielińskom",
+   "zielińskowi",
+   "zielińsku",
+   "zielińsków"
+  ],
+  "świderska": [
+   "świdersko",
+   "świdersku"
+  ],
+  "świderski": [
+   "świdersko"
+  ],
+  "świerczyńska": [
+   "świerczyńsk",
+   "świerczyńskach",
+   "świerczyńskami",
+   "świerczyńskiem",
+   "świerczyńsko",
+   "świerczyńskom",
+   "świerczyńsku"
+  ],
+  "żukowska": [
+   "żukowsko",
+   "żukowsku"
+  ],
+  "żukowski": [
+   "żukowsko"
+  ]
+ }
+}
